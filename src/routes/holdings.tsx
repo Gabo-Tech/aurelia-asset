@@ -136,7 +136,7 @@ function HoldingsPage() {
     <>
       <PageHeader
         title="Holdings"
-        description={`${state.holdings.length} positions · ${maskUSD(total, privacy)}`}
+        description={`${state.holdings.length} positions · ${mask(total)}`}
         actions={
           <>
             <Button variant="outline" onClick={refreshPrices} disabled={refreshing}>
@@ -228,13 +228,13 @@ function HoldingsPage() {
                         {maskNumber(h.quantity, privacy, 6)}
                       </TableCell>
                       <TableCell className="text-right tabular-nums">
-                        {formatUSD(h.currentPrice)}
+                        {formatMoney(h.currentPrice, h.priceCurrency || "USD")}
                         {h.manualPrice != null && (
                           <span className="ml-1 text-[10px] text-muted-foreground">man</span>
                         )}
                       </TableCell>
                       <TableCell className="text-right tabular-nums font-medium">
-                        {maskUSD(h.marketValue, privacy)}
+                        {mask(h.marketValue)}
                       </TableCell>
                       <TableCell className="text-right tabular-nums text-muted-foreground">
                         {h.pct.toFixed(2)}%
