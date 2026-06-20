@@ -35,6 +35,7 @@ function loadState(): AppState {
 
 type Ctx = {
   state: AppState;
+  hydrated: boolean;
   setState: (updater: (s: AppState) => AppState) => void;
   addHolding: (h: Omit<Holding, "id">) => void;
   updateHolding: (id: string, patch: Partial<Holding>) => void;
