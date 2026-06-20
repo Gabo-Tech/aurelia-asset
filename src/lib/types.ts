@@ -1,5 +1,7 @@
 export type AssetType = "crypto" | "stock" | "etf" | "metal" | "other";
 
+export type CustomPricePoint = { t: number; p: number };
+
 export type Holding = {
   id: string;
   symbol: string;
@@ -11,6 +13,10 @@ export type Holding = {
   color: string;
   coinGeckoId?: string;
   lastPriceAt?: number;
+  /** Custom asset (not on any market) — user-managed history (sorted ascending by t) */
+  customHistory?: CustomPricePoint[];
+  /** Free-form notes for custom holdings */
+  notes?: string;
 };
 
 export type CashflowEntry = {
