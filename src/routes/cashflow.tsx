@@ -114,6 +114,7 @@ function CashflowPage() {
 
       <div className="mt-5 grid gap-5 lg:grid-cols-2">
         <AddForm
+          defaultCurrency={currency}
           onAdd={(e) => {
             addCashflow(e);
             toast.success(`${e.kind === "income" ? "Income" : "Expense"} added`);
@@ -259,14 +260,22 @@ type FormVals = {
   source: string;
   category: string;
   amount: number;
+  currency: string;
   date: string;
 };
 
-function AddForm({ onAdd }: { onAdd: (e: FormVals) => void }) {
+function AddForm({
+  onAdd,
+  defaultCurrency,
+}: {
+  onAdd: (e: FormVals) => void;
+  defaultCurrency: string;
+}) {
   const [kind, setKind] = useState<"income" | "expense">("income");
   const [source, setSource] = useState("");
   const [category, setCategory] = useState("");
   const [amount, setAmount] = useState("");
+  const [entryCurrency, setEntryCurrency] = useState(defaultCurrency);
   const [date, setDate] = useState(format(new Date(), "yyyy-MM-dd"));
 
   function submit() {
@@ -274,7 +283,14 @@ function AddForm({ onAdd }: { onAdd: (e: FormVals) => void }) {
     if (!isFinite(a) || a <= 0) return toast.error("Amount must be > 0");
     if (kind === "income" && !source.trim()) return toast.error("Source required");
     if (kind === "expense" && !category.trim()) return toast.error("Category required");
-    onAdd({ kind, source, category, amount: a, date: new Date(date).toISOString() });
+    onAdd({
+      kind,
+      source,
+      category,
+      amount: a,
+      currency: entryCurrency,
+      date: new Date(date).toISOString(),
+    });
     setSource("");
     setCategory("");
     setAmount("");
@@ -321,7 +337,7 @@ function AddForm({ onAdd }: { onAdd: (e: FormVals) => void }) {
 
   function sharedFields() {
     return (
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-3 gap-3">
         <Field label="Amount">
           <Input
             type="number"
@@ -330,6 +346,20 @@ function AddForm({ onAdd }: { onAdd: (e: FormVals) => void }) {
             onChange={(e) => setAmount(e.target.value)}
             placeholder="0.00"
           />
+        </Field>
+        <Field label="Currency">
+          <Select value={entryCurrency} onValueChange={setEntryCurrency}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="max-h-72">
+              {CURRENCIES.map((c) => (
+                <SelectItem key={c.code} value={c.code}>
+                  {c.code} · {c.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </Field>
         <Field label="Date">
           <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
