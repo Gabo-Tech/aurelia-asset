@@ -289,7 +289,10 @@ function PerformancePage() {
                     wrapperStyle={{ fontSize: 11 }}
                     onClick={(e) => {
                       const name = e.dataKey as string;
-                      if (name === "Total") return;
+                      if (name === "Total") {
+                        setHideTotal((v) => !v);
+                        return;
+                      }
                       setHidden((h) => {
                         const s = new Set(h);
                         if (s.has(name)) s.delete(name);
@@ -304,6 +307,7 @@ function PerformancePage() {
                     stroke="var(--primary)"
                     strokeWidth={2.5}
                     dot={false}
+                    hide={hideTotal}
                     isAnimationActive
                   />
                   {state.holdings.map((h) => (
