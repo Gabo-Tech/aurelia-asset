@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { PageHeader } from "@/components/app-shell";
-import { formatUSD, maskUSD } from "@/lib/format";
+import { maskUSD } from "@/lib/format";
 import { Trash2, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
