@@ -214,7 +214,19 @@ function Dashboard() {
             )}
           </CardHeader>
           <CardContent>
-            <div className="h-96 [&_svg]:overflow-visible">
+            {visibleAllocation.length === 0 ? (
+              <div className="flex h-96 flex-col items-center justify-center text-center text-sm text-muted-foreground">
+                <p>All assets are hidden.</p>
+                <button
+                  type="button"
+                  onClick={showAll}
+                  className="mt-2 text-primary hover:underline"
+                >
+                  Show all assets
+                </button>
+              </div>
+            ) : (
+              <div className="h-96 [&_svg]:overflow-visible">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart margin={{ top: 32, right: 120, bottom: 32, left: 120 }}>
                   <Pie
