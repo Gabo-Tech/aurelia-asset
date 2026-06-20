@@ -248,86 +248,88 @@ function PerformancePage() {
           )}
         </CardHeader>
         <CardContent>
-          <div className="h-80">
-            {isLoading ? (
-              <Skeleton className="h-full w-full" />
-            ) : isError ? (
-              <div className="grid h-full place-items-center text-sm text-destructive">
-                Couldn't load price history. Try enabling the CORS proxy in Settings.
-              </div>
-            ) : !chartData.length ? (
-              <div className="grid h-full place-items-center text-sm text-muted-foreground">
-                No data
-              </div>
-            ) : (
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                  <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" vertical={false} />
-                  <XAxis
-                    dataKey="label"
-                    stroke="var(--muted-foreground)"
-                    tick={{ fontSize: 11 }}
-                    minTickGap={30}
-                  />
-                  <YAxis
-                    stroke="var(--muted-foreground)"
-                    tick={{ fontSize: 11 }}
-                    tickFormatter={(v) => (privacy ? MASK : formatMoney(v as number, currency, { compact: true }))}
-                    width={70}
-                    domain={yDomain}
-                    allowDataOverflow
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      background: "var(--popover)",
-                      border: "1px solid var(--border)",
-                      borderRadius: 10,
-                      fontSize: 12,
-                    }}
-                    formatter={(value: number) => mask(value)}
-                  />
-                  <Legend
-                    wrapperStyle={{ fontSize: 11 }}
-                    onClick={(e) => {
-                      const name = e.dataKey as string;
-                      if (name === "Total") {
-                        setHideTotal((v) => !v);
-                        return;
-                      }
-                      setHidden((h) => {
-                        const s = new Set(h);
-                        if (s.has(name)) s.delete(name);
-                        else s.add(name);
-                        return s;
-                      });
-                    }}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="Total"
-                    stroke="var(--primary)"
-                    strokeWidth={2.5}
-                    dot={false}
-                    hide={hideTotal}
-                    isAnimationActive
-                    style={{ filter: "drop-shadow(0 0 1.5px var(--background)) drop-shadow(0 0 0.5px var(--foreground))" }}
-                  />
-                  {state.holdings.map((h) => (
+          <ChartFrame filename="performance" title={`Portfolio value · ${period}`}>
+            <div className="h-72 sm:h-80">
+              {isLoading ? (
+                <Skeleton className="h-full w-full" />
+              ) : isError ? (
+                <div className="grid h-full place-items-center text-sm text-destructive">
+                  Couldn't load price history. Try enabling the CORS proxy in Settings.
+                </div>
+              ) : !chartData.length ? (
+                <div className="grid h-full place-items-center text-sm text-muted-foreground">
+                  No data
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                    <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" vertical={false} />
+                    <XAxis
+                      dataKey="label"
+                      stroke="var(--muted-foreground)"
+                      tick={{ fontSize: 11 }}
+                      minTickGap={30}
+                    />
+                    <YAxis
+                      stroke="var(--muted-foreground)"
+                      tick={{ fontSize: 11 }}
+                      tickFormatter={(v) => (privacy ? MASK : formatMoney(v as number, currency, { compact: true }))}
+                      width={60}
+                      domain={yDomain}
+                      allowDataOverflow
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        background: "var(--popover)",
+                        border: "1px solid var(--border)",
+                        borderRadius: 10,
+                        fontSize: 12,
+                      }}
+                      formatter={(value: number) => mask(value)}
+                    />
+                    <Legend
+                      wrapperStyle={{ fontSize: 11 }}
+                      onClick={(e) => {
+                        const name = e.dataKey as string;
+                        if (name === "Total") {
+                          setHideTotal((v) => !v);
+                          return;
+                        }
+                        setHidden((h) => {
+                          const s = new Set(h);
+                          if (s.has(name)) s.delete(name);
+                          else s.add(name);
+                          return s;
+                        });
+                      }}
+                    />
                     <Line
-                      key={h.id}
                       type="monotone"
-                      dataKey={h.symbol}
-                      stroke={h.color}
-                      strokeWidth={1.75}
+                      dataKey="Total"
+                      stroke="var(--primary)"
+                      strokeWidth={2.5}
                       dot={false}
-                      hide={hidden.has(h.symbol)}
+                      hide={hideTotal}
+                      isAnimationActive
                       style={{ filter: "drop-shadow(0 0 1.5px var(--background)) drop-shadow(0 0 0.5px var(--foreground))" }}
                     />
-                  ))}
-                </LineChart>
-              </ResponsiveContainer>
-            )}
-          </div>
+                    {state.holdings.map((h) => (
+                      <Line
+                        key={h.id}
+                        type="monotone"
+                        dataKey={h.symbol}
+                        stroke={h.color}
+                        strokeWidth={1.75}
+                        dot={false}
+                        hide={hidden.has(h.symbol)}
+                        style={{ filter: "drop-shadow(0 0 1.5px var(--background)) drop-shadow(0 0 0.5px var(--foreground))" }}
+                      />
+                    ))}
+                  </LineChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+          </ChartFrame>
         </CardContent>
       </Card>
 
