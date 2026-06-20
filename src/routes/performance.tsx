@@ -164,7 +164,7 @@ function PerformancePage() {
                       borderRadius: 10,
                       fontSize: 12,
                     }}
-                    formatter={(value: number) => formatUSD(value)}
+                    formatter={(value: number) => maskUSD(value, privacy)}
                   />
                   <Legend
                     wrapperStyle={{ fontSize: 11 }}
