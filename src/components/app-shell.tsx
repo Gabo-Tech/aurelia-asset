@@ -15,7 +15,7 @@ import { usePrivacy } from "@/lib/store";
 import { SponsorBanner } from "./sponsor-banner";
 
 const nav = [
-  { to: "/", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/holdings", label: "Holdings", icon: Wallet },
   { to: "/performance", label: "Performance", icon: TrendingUp },
   { to: "/cashflow", label: "Cashflow", icon: ArrowLeftRight },
@@ -63,7 +63,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <nav className="flex-1 px-3 space-y-1">
             {nav.map((item) => {
               const active =
-                item.to === "/" ? pathname === "/" : pathname.startsWith(item.to);
+                pathname === item.to || pathname.startsWith(item.to + "/");
               const Icon = item.icon;
               return (
                 <Link
@@ -113,7 +113,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <div className="grid grid-cols-5">
           {nav.map((item) => {
             const active =
-              item.to === "/" ? pathname === "/" : pathname.startsWith(item.to);
+              pathname === item.to || pathname.startsWith(item.to + "/");
             const Icon = item.icon;
             return (
               <Link

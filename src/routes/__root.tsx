@@ -4,6 +4,7 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
@@ -79,24 +80,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "Portfolio Tracker" },
-      {
-        name: "description",
-        content:
-          "Track your stocks, crypto, ETFs and metals with elegant charts. Client-side, private, no signup.",
-      },
-      { property: "og:title", content: "Portfolio Tracker" },
-      {
-        property: "og:description",
-        content: "Elegant client-side portfolio tracker for stocks, crypto, ETFs and metals.",
-      },
+      { property: "og:site_name", content: "Portfolio Tracker" },
       { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
-      { name: "twitter:title", content: "Portfolio Tracker" },
-      { name: "description", content: "Elegant Portfolio Tracker is a client-side React app for managing and visualizing investment portfolios." },
-      { property: "og:description", content: "Elegant Portfolio Tracker is a client-side React app for managing and visualizing investment portfolios." },
-      { name: "twitter:description", content: "Elegant Portfolio Tracker is a client-side React app for managing and visualizing investment portfolios." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/1d9991ee-e308-44b0-ad20-1eb489a2da74/id-preview-4950e4f3--c8e820b7-6ae8-4377-943a-0e5181cbbc73.lovable.app-1781927384080.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/1d9991ee-e308-44b0-ad20-1eb489a2da74/id-preview-4950e4f3--c8e820b7-6ae8-4377-943a-0e5181cbbc73.lovable.app-1781927384080.png" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "theme-color", content: "#0b0f19" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
@@ -130,14 +117,21 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  // Landing page is standalone (no app shell).
+  const isLanding = pathname === "/";
 
   return (
     <QueryClientProvider client={queryClient}>
       <StoreProvider>
         <FxProvider>
-          <AppShell>
+          {isLanding ? (
             <Outlet />
-          </AppShell>
+          ) : (
+            <AppShell>
+              <Outlet />
+            </AppShell>
+          )}
           <Toaster position="top-right" richColors />
         </FxProvider>
       </StoreProvider>

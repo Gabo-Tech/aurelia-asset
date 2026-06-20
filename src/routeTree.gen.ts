@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as PerformanceRouteImport } from './routes/performance'
 import { Route as HoldingsRouteImport } from './routes/holdings'
+import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as CashflowRouteImport } from './routes/cashflow'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
@@ -29,6 +30,11 @@ const PerformanceRoute = PerformanceRouteImport.update({
 const HoldingsRoute = HoldingsRouteImport.update({
   id: '/holdings',
   path: '/holdings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CashflowRoute = CashflowRouteImport.update({
@@ -51,6 +57,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/cashflow': typeof CashflowRoute
+  '/dashboard': typeof DashboardRoute
   '/holdings': typeof HoldingsRoute
   '/performance': typeof PerformanceRoute
   '/settings': typeof SettingsRoute
@@ -59,6 +66,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/cashflow': typeof CashflowRoute
+  '/dashboard': typeof DashboardRoute
   '/holdings': typeof HoldingsRoute
   '/performance': typeof PerformanceRoute
   '/settings': typeof SettingsRoute
@@ -68,6 +76,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/cashflow': typeof CashflowRoute
+  '/dashboard': typeof DashboardRoute
   '/holdings': typeof HoldingsRoute
   '/performance': typeof PerformanceRoute
   '/settings': typeof SettingsRoute
@@ -78,16 +87,25 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/cashflow'
+    | '/dashboard'
     | '/holdings'
     | '/performance'
     | '/settings'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/admin' | '/cashflow' | '/holdings' | '/performance' | '/settings'
+  to:
+    | '/'
+    | '/admin'
+    | '/cashflow'
+    | '/dashboard'
+    | '/holdings'
+    | '/performance'
+    | '/settings'
   id:
     | '__root__'
     | '/'
     | '/admin'
     | '/cashflow'
+    | '/dashboard'
     | '/holdings'
     | '/performance'
     | '/settings'
@@ -97,6 +115,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
   CashflowRoute: typeof CashflowRoute
+  DashboardRoute: typeof DashboardRoute
   HoldingsRoute: typeof HoldingsRoute
   PerformanceRoute: typeof PerformanceRoute
   SettingsRoute: typeof SettingsRoute
@@ -123,6 +142,13 @@ declare module '@tanstack/react-router' {
       path: '/holdings'
       fullPath: '/holdings'
       preLoaderRoute: typeof HoldingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/cashflow': {
@@ -153,6 +179,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
   CashflowRoute: CashflowRoute,
+  DashboardRoute: DashboardRoute,
   HoldingsRoute: HoldingsRoute,
   PerformanceRoute: PerformanceRoute,
   SettingsRoute: SettingsRoute,
