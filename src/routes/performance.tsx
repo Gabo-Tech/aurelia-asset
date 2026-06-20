@@ -61,31 +61,43 @@ function PerformancePage() {
   const chartData = useMemo(() => {
     if (!data) return [];
     return data.map((d) => {
+      let total = 0;
       const row: Record<string, number | string> = {
         date: d.date,
         label: format(new Date(d.date), period === "1D" ? "HH:mm" : "MMM d"),
-        Total: Math.round(d.total * 100) / 100,
+        Total: 0,
       };
       for (const h of state.holdings) {
-        row[h.symbol] = Math.round((d.perAsset[h.id] ?? 0) * 100) / 100;
+        const v = (d.perAsset[h.id] ?? 0) * (fxByHolding[h.id] ?? 1);
+        row[h.symbol] = Math.round(v * 100) / 100;
+        total += v;
       }
+      row.Total = Math.round(total * 100) / 100;
       return row;
     });
-  }, [data, period, state.holdings]);
+  }, [data, period, state.holdings, fxByHolding]);
 
   const metrics = useMemo(() => {
     if (!data || data.length < 2) return null;
     const first = data[0];
     const last = data[data.length - 1];
     const perAsset = state.holdings.map((h) => {
-      const start = first.perAsset[h.id] ?? 0;
-      const end = last.perAsset[h.id] ?? 0;
+      const m = fxByHolding[h.id] ?? 1;
+      const start = (first.perAsset[h.id] ?? 0) * m;
+      const end = (last.perAsset[h.id] ?? 0) * m;
       const pct = start ? ((end - start) / start) * 100 : 0;
       return { h, start, end, abs: end - start, pct };
     });
-    const totalPct = first.total ? ((last.total - first.total) / first.total) * 100 : 0;
-    return { first, last, perAsset, totalPct };
-  }, [data, state.holdings]);
+    const firstTotal = perAsset.reduce((s, x) => s + x.start, 0);
+    const lastTotal = perAsset.reduce((s, x) => s + x.end, 0);
+    const totalPct = firstTotal ? ((lastTotal - firstTotal) / firstTotal) * 100 : 0;
+    return {
+      first: { total: firstTotal },
+      last: { total: lastTotal },
+      perAsset,
+      totalPct,
+    };
+  }, [data, state.holdings, fxByHolding]);
 
   if (!state.holdings.length) {
     return (
