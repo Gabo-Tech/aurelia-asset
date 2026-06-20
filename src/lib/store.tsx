@@ -22,6 +22,10 @@ function loadState(): AppState {
     return {
       ...DEFAULT_STATE,
       ...parsed,
+      categories:
+        Array.isArray(parsed.categories) && parsed.categories.length > 0
+          ? parsed.categories
+          : DEFAULT_CATEGORIES,
       settings: { ...DEFAULT_STATE.settings, ...(parsed.settings ?? {}) },
     };
   } catch {
