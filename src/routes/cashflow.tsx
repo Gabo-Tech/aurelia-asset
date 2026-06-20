@@ -173,6 +173,10 @@ function CashflowPage() {
       <div className="mt-5 grid gap-5 lg:grid-cols-2">
         <AddForm
           defaultCurrency={currency}
+          categories={categories}
+          onAddCategory={addCategory}
+          onUpdateCategory={updateCategory}
+          onRemoveCategory={removeCategory}
           onAdd={(e) => {
             addCashflow(e);
             toast.success(`${e.kind === "income" ? "Income" : "Expense"} added`);
