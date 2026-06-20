@@ -12,13 +12,14 @@ import {
   Legend,
 } from "recharts";
 import { format } from "date-fns";
-import { useStore, usePrivacy } from "@/lib/store";
+import { useStore, useMoney } from "@/lib/store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PageHeader } from "@/components/app-shell";
 import { fetchPortfolioHistory, PERIODS, type PeriodId } from "@/lib/finance";
-import { formatPct, formatUSD, maskUSD, MASK } from "@/lib/format";
+import { formatPct, formatMoney, MASK } from "@/lib/format";
+import { convert } from "@/lib/finance/fx";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/performance")({
@@ -33,9 +34,18 @@ export const Route = createFileRoute("/performance")({
 
 function PerformancePage() {
   const { state } = useStore();
-  const { privacy } = usePrivacy();
+  const { currency, rates, mask, privacy } = useMoney();
   const [period, setPeriod] = useState<PeriodId>("1M");
   const [hidden, setHidden] = useState<Set<string>>(new Set());
+
+  // Per-holding FX multiplier from its native priceCurrency -> display currency.
+  const fxByHolding = useMemo(() => {
+    const m: Record<string, number> = {};
+    for (const h of state.holdings) {
+      m[h.id] = convert(1, h.priceCurrency || "USD", currency, rates);
+    }
+    return m;
+  }, [state.holdings, currency, rates]);
 
   const holdingsKey = state.holdings
     .map((h) => `${h.id}:${h.symbol}:${h.coinGeckoId ?? ""}:${h.quantity}`)
