@@ -1,19 +1,7 @@
-## Sponsor banner placement
+Remove the background-colored stroke/halo from the pie-chart labels in `src/routes/dashboard.tsx`.
 
-Mirror Threadly's pattern: keep the sidebar card AND add an inline sponsor strip at the bottom of every page, just above the existing "Local-only · data stays in your browser" footer line. Visible on both desktop and mobile.
+1. In the `LabelledSector` component, strip the `paintOrder`, `stroke`, and `strokeWidth` inline styles from the two `<text>` elements that render the label name and percentage.
+2. Keep the existing fonts, colors, positions, and leader lines unchanged so the chart remains readable.
+3. Verify the labels no longer have a visible white/light border.
 
-### Changes
-
-**`src/components/app-shell.tsx`**
-- Inside `<main>`, after `{children}`, add a page-bottom footer block:
-  - A thin top border, centered layout, small muted text
-  - Left/center: existing tagline "Local-only · data stays in your browser" (moved from the sidebar bottom into this shared footer so mobile also sees it)
-  - Right (or wrapping below on mobile): `<SponsorBanner variant="inline" />`
-- Keep the sidebar `<SponsorBanner variant="card" />` as-is for desktop.
-- Remove the duplicated tagline at the bottom of the desktop sidebar (now lives in the shared page footer) — or keep it; will keep sidebar tagline removed to avoid duplication.
-- Ensure mobile bottom-nav (`pb-24`) padding still clears the new footer; adjust spacing if needed.
-
-### Result
-- Desktop: sponsor card in sidebar + inline sponsor pill in page footer.
-- Mobile: inline sponsor pill in page footer (above the fixed bottom nav).
-- No changes to admin panel, data layer, or rotation logic.
+Scope: a single UI-only change in `src/routes/dashboard.tsx`. No backend or data changes.

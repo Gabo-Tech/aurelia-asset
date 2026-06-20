@@ -466,7 +466,6 @@ function LabelledSector(
             fill="var(--foreground)"
             fontSize={compact ? 10 : 11}
             fontWeight={600}
-            style={{ paintOrder: "stroke", stroke: "var(--background)", strokeWidth: 3 }}
           >
             {payload.name}
           </text>
@@ -476,7 +475,6 @@ function LabelledSector(
             textAnchor={textAnchor}
             fill="var(--muted-foreground)"
             fontSize={compact ? 9 : 10}
-            style={{ paintOrder: "stroke", stroke: "var(--background)", strokeWidth: 3 }}
           >
             {privacy ? "••••" : `${pct.toFixed(1)}%`}
           </text>
