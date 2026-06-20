@@ -110,6 +110,57 @@ function PerformancePage() {
         ))}
       </div>
 
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          Assets
+        </span>
+        {state.holdings.map((h) => (
+          <button
+            key={h.id}
+            onClick={() => {
+              setHidden((prev) => {
+                const next = new Set(prev);
+                if (next.has(h.symbol)) next.delete(h.symbol);
+                else next.add(h.symbol);
+                return next;
+              });
+            }}
+            className={cn(
+              "inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs font-medium transition-colors",
+              hidden.has(h.symbol)
+                ? "border-border/60 bg-muted text-muted-foreground opacity-60"
+                : "border-border bg-card text-foreground hover:bg-accent"
+            )}
+          >
+            <span
+              className="h-1.5 w-1.5 rounded-full ring-1 ring-black/10"
+              style={{ backgroundColor: h.color }}
+            />
+            {h.symbol}
+          </button>
+        ))}
+        {state.holdings.length > 1 && (
+          <div className="ml-auto flex items-center gap-1.5">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 px-2 text-xs"
+              onClick={() => setHidden(new Set())}
+            >
+              Show all
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 px-2 text-xs"
+              onClick={() => setHidden(new Set(state.holdings.map((h) => h.symbol)))}
+            >
+              Hide all
+            </Button>
+          </div>
+        )}
+      </div>
+
       <Card className="border-border/60">
         <CardHeader className="flex flex-row items-baseline justify-between flex-wrap gap-2">
           <CardTitle>Portfolio value</CardTitle>
