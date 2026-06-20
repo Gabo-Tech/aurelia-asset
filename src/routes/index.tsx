@@ -300,7 +300,6 @@ function EmptyState() {
           </Link>
         </Button>
       </CardContent>
-      </CardContent>
     </Card>
   );
 }
