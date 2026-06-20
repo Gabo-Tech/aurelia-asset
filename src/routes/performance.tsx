@@ -273,6 +273,8 @@ function PerformancePage() {
                     tick={{ fontSize: 11 }}
                     tickFormatter={(v) => (privacy ? MASK : formatMoney(v as number, currency, { compact: true }))}
                     width={70}
+                    domain={yDomain}
+                    allowDataOverflow
                   />
                   <Tooltip
                     contentStyle={{
