@@ -263,6 +263,7 @@ function Dashboard() {
                 </PieChart>
               </ResponsiveContainer>
             </div>
+            )}
           </CardContent>
         </Card>
 
