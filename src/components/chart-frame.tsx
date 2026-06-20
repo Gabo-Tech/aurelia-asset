@@ -113,7 +113,6 @@ export function ChartFrame({ children, filename = "chart", title, className, ext
                 {extras}
                 <ToolButton onClick={screenshot} icon={Camera} label="Save as PNG" disabled={shooting} />
                 <ToolButton onClick={() => setFull(false)} icon={X} label="Close fullscreen" />
-                <ToolButton onClick={() => setFull(false)} icon={Minimize2} label="Exit fullscreen" />
               </div>
             </div>
             <div ref={fullRef} className="min-h-0 flex-1 bg-background p-3 sm:p-6">
