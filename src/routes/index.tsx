@@ -189,7 +189,7 @@ function Dashboard() {
                       </div>
                     </div>
                     <div className="text-xs text-muted-foreground tabular-nums">
-                      {formatUSD(a.value)}
+                      {maskUSD(a.value, privacy)}
                     </div>
                   </div>
                 </div>
