@@ -268,10 +268,15 @@ function CashflowPage() {
                         </td>
                         <td className="py-2.5">{c.kind === "income" ? c.source : c.category}</td>
                         <td className="py-2.5 text-right tabular-nums font-medium">
-                          {mask(c.amount, c.currency)}
-                          {c.currency && c.currency !== currency && (
-                            <span className="ml-1.5 text-[10px] uppercase text-muted-foreground">
-                              {c.currency}
+                          {privacy
+                            ? MASK
+                            : formatMoney(c.amount, (c.currency || currency).toUpperCase())}
+                          {c.currency && c.currency.toUpperCase() !== currency && (
+                            <span
+                              className="ml-1.5 text-[10px] uppercase text-muted-foreground"
+                              title={`≈ ${mask(c.amount, c.currency)} in ${currency}`}
+                            >
+                              ≈ {mask(c.amount, c.currency)}
                             </span>
                           )}
                         </td>
