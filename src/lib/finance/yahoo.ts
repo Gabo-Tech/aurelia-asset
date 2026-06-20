@@ -1,4 +1,4 @@
-import { fetchJson, proxied } from "./client";
+import { fetchJsonWithFallback } from "./client";
 import { getCache, setCache } from "./cache";
 import type { AssetType, PricePoint, SearchResult } from "../types";
 
@@ -28,14 +28,22 @@ export async function searchYahoo(query: string): Promise<SearchResult[]> {
   const key = `yh:search:${query.toLowerCase()}`;
   const cached = getCache<SearchResult[]>(key);
   if (cached) return cached;
-  const data = await fetchJson<{
-    quotes?: Array<{ symbol: string; shortname?: string; longname?: string; quoteType?: string }>;
-  }>(proxied(`${SEARCH}?q=${encodeURIComponent(query)}`));
-  const results: SearchResult[] = (data.quotes ?? []).slice(0, 10).map((q) => ({
-    symbol: q.symbol,
-    name: q.shortname || q.longname || q.symbol,
-    type: mapType(q.quoteType, q.symbol),
-  }));
+  const data = await fetchJsonWithFallback<{
+    quotes?: Array<{
+      symbol: string;
+      shortname?: string;
+      longname?: string;
+      quoteType?: string;
+    }>;
+  }>(`${SEARCH}?q=${encodeURIComponent(query)}`);
+  const results: SearchResult[] = (data.quotes ?? [])
+    .filter((q) => !!q.symbol)
+    .slice(0, 10)
+    .map((q) => ({
+      symbol: q.symbol,
+      name: q.shortname || q.longname || q.symbol,
+      type: mapType(q.quoteType, q.symbol),
+    }));
   setCache(key, results, 10 * 60 * 1000);
   return results;
 }
@@ -44,9 +52,9 @@ export async function getYahooQuote(symbol: string): Promise<number> {
   const key = `yh:q:${symbol}`;
   const cached = getCache<number>(key);
   if (cached) return cached;
-  const data = await fetchJson<{
+  const data = await fetchJsonWithFallback<{
     quoteResponse?: { result?: Array<{ regularMarketPrice?: number }> };
-  }>(proxied(`${QUOTE}?symbols=${encodeURIComponent(symbol)}`));
+  }>(`${QUOTE}?symbols=${encodeURIComponent(symbol)}`);
   const p = data.quoteResponse?.result?.[0]?.regularMarketPrice ?? 0;
   if (p) setCache(key, p, 5 * 60 * 1000);
   return p;
@@ -54,19 +62,19 @@ export async function getYahooQuote(symbol: string): Promise<number> {
 
 export async function getYahooHistory(
   symbol: string,
-  range: string
+  range: string,
 ): Promise<PricePoint[]> {
   const key = `yh:hist:${symbol}:${range}`;
   const cached = getCache<{ t: number; p: number }[]>(key);
   if (cached) return cached.map((x) => ({ date: new Date(x.t), price: x.p }));
-  const data = await fetchJson<{
+  const data = await fetchJsonWithFallback<{
     chart?: {
       result?: Array<{
         timestamp?: number[];
         indicators?: { quote?: Array<{ close?: (number | null)[] }> };
       }>;
     };
-  }>(proxied(`${CHART}/${encodeURIComponent(symbol)}?interval=1d&range=${range}`));
+  }>(`${CHART}/${encodeURIComponent(symbol)}?interval=1d&range=${range}`);
   const r = data.chart?.result?.[0];
   if (!r) return [];
   const ts = r.timestamp ?? [];
@@ -79,7 +87,7 @@ export async function getYahooHistory(
   setCache(
     key,
     points.map((x) => ({ t: x.date.getTime(), p: x.price })),
-    60 * 60 * 1000
+    60 * 60 * 1000,
   );
   return points;
 }

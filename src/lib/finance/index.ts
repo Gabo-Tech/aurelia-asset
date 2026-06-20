@@ -20,6 +20,13 @@ export async function fetchCurrentPrice(h: Holding): Promise<number> {
       return h.currentPrice ?? 0;
     }
   }
+  // Custom holding (no market data) — use latest user-supplied history point
+  if (h.type === "other") {
+    const last = h.customHistory?.length
+      ? h.customHistory[h.customHistory.length - 1].p
+      : undefined;
+    return last ?? h.currentPrice ?? 0;
+  }
   try {
     const p = await getYahooQuote(h.symbol);
     if (p) return p;
@@ -52,6 +59,14 @@ export async function fetchHistorical(h: Holding, period: PeriodId): Promise<Pri
     } catch {
       return [];
     }
+  }
+  if (h.type === "other") {
+    const hist = h.customHistory ?? [];
+    if (!hist.length) return [];
+    const cutoff = period === "Max" ? 0 : Date.now() - p.days * 86400000;
+    return hist
+      .filter((x) => x.t >= cutoff)
+      .map((x) => ({ date: new Date(x.t), price: x.p }));
   }
   try {
     const data = await getYahooHistory(h.symbol, p.yhRange);
