@@ -117,7 +117,7 @@ export function ChartFrame({ children, filename = "chart", title, className, ext
             </div>
             <div
               ref={fullRef}
-              className="min-h-0 flex-1 bg-background p-3 sm:p-6 [&>div]:!h-full [&>div]:!max-h-full"
+              className="flex min-h-0 flex-1 items-center justify-center bg-background p-3 sm:p-6 [&>div]:!h-full [&>div]:!max-h-full"
             >
               {children}
             </div>
