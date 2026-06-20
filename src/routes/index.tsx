@@ -165,8 +165,12 @@ function Dashboard() {
                           ? [activeIdx]
                           : []
                     }
-                    activeShape={(props: AllocShapeProps) => (
-                      <LabelledSector {...props} privacy={privacy} total={total} />
+                    activeShape={(props: unknown) => (
+                      <LabelledSector
+                        {...(props as AllocShapeProps)}
+                        privacy={privacy}
+                        total={total}
+                      />
                     )}
                     onMouseEnter={(_, i) => setActiveIdx(i)}
                     onMouseLeave={() => setActiveIdx(null)}
