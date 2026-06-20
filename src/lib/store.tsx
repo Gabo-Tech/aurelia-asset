@@ -7,7 +7,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { AppState, DEFAULT_STATE, Holding, CashflowEntry, Settings } from "./types";
+import { AppState, DEFAULT_STATE, DEFAULT_CATEGORIES, Holding, CashflowEntry, Category, Settings } from "./types";
 import { getFxRates, convert, type FxRates } from "./finance/fx";
 import { formatMoney, maskMoney, MASK } from "./format";
 
