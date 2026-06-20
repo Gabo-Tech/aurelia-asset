@@ -158,6 +158,10 @@ export function useFxRates(): FxRates {
   return useContext(FxContext) ?? { USD: 1 };
 }
 
+export function useFxReady(): boolean {
+  return useContext(FxContext) !== null;
+}
+
 /**
  * Display-aware money helpers. Converts any input from its source currency
  * (default USD) to the user's display currency, and honors privacy mode.
