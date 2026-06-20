@@ -211,7 +211,7 @@ export function HoldingDialog({ open, onOpenChange, editing }: Props) {
         color,
         manualPrice: manual,
         currentPrice: manual ?? 0,
-        priceCurrency: selected.type === "crypto" ? "USD" : currency,
+        priceCurrency: currency,
         lastPriceAt: Date.now(),
       };
       if (manual == null) {
