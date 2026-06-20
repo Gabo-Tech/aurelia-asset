@@ -77,6 +77,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         : Math.random().toString(36).slice(2);
     return {
       state,
+      hydrated,
       setState,
       addHolding: (h) =>
         setState((s) => ({ ...s, holdings: [...s.holdings, { ...h, id: uid() }] })),
