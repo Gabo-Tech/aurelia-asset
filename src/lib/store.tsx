@@ -100,3 +100,14 @@ export function useStore() {
   if (!ctx) throw new Error("useStore must be used within StoreProvider");
   return ctx;
 }
+
+/** Convenience hook: privacy flag + toggle. */
+export function usePrivacy() {
+  const { state, updateSettings } = useStore();
+  const privacy = !!state.settings.privacyMode;
+  return {
+    privacy,
+    toggle: () => updateSettings({ privacyMode: !privacy }),
+    setPrivacy: (v: boolean) => updateSettings({ privacyMode: v }),
+  };
+}

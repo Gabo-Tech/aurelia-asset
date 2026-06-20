@@ -1,14 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { Sankey, Tooltip, ResponsiveContainer, Layer, Rectangle } from "recharts";
-import { useStore } from "@/lib/store";
+import { useStore, usePrivacy } from "@/lib/store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { PageHeader } from "@/components/app-shell";
-import { formatUSD } from "@/lib/format";
+import { maskUSD } from "@/lib/format";
 import { Trash2, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -38,6 +38,7 @@ const PALETTE = [
 
 function CashflowPage() {
   const { state, addCashflow, removeCashflow } = useStore();
+  const { privacy } = usePrivacy();
   const { cashflows } = state;
 
   const totals = useMemo(() => {
@@ -92,11 +93,11 @@ function CashflowPage() {
       <PageHeader title="Cashflow" description="Income and expenses, visualized." />
 
       <div className="grid gap-5 md:grid-cols-3">
-        <StatCard label="Income" value={formatUSD(totals.income)} tone="success" />
-        <StatCard label="Expenses" value={formatUSD(totals.expense)} tone="destructive" />
+        <StatCard label="Income" value={maskUSD(totals.income, privacy)} tone="success" />
+        <StatCard label="Expenses" value={maskUSD(totals.expense, privacy)} tone="destructive" />
         <StatCard
           label="Net"
-          value={`${totals.net >= 0 ? "+" : "-"}${formatUSD(Math.abs(totals.net))}`}
+          value={`${totals.net >= 0 ? "+" : "-"}${maskUSD(Math.abs(totals.net), privacy)}`}
           tone={totals.net >= 0 ? "success" : "destructive"}
         />
       </div>
@@ -131,7 +132,7 @@ function CashflowPage() {
                         borderRadius: 10,
                         fontSize: 12,
                       }}
-                      formatter={(value: number) => formatUSD(value)}
+                      formatter={(value: number) => maskUSD(value, privacy)}
                     />
                   </Sankey>
                 </ResponsiveContainer>
@@ -189,7 +190,7 @@ function CashflowPage() {
                           {c.kind === "income" ? c.source : c.category}
                         </td>
                         <td className="py-2.5 text-right tabular-nums font-medium">
-                          {formatUSD(c.amount)}
+                          {maskUSD(c.amount, privacy)}
                         </td>
                         <td className="py-2.5 text-right">
                           <Button

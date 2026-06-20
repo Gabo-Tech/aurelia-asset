@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { useStore } from "@/lib/store";
+import { useStore, usePrivacy } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -28,7 +28,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Plus, MoreVertical, RefreshCw, ArrowUpDown, Trash2, Pencil, Loader2 } from "lucide-react";
 import { PageHeader } from "@/components/app-shell";
 import { HoldingDialog } from "@/components/holding-dialog";
-import { formatNumber, formatPct, formatUSD } from "@/lib/format";
+import { formatNumber, formatPct, formatUSD, maskNumber, maskUSD } from "@/lib/format";
 import { fetchCurrentPrice } from "@/lib/finance";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -48,6 +48,7 @@ type SortKey = "symbol" | "type" | "quantity" | "currentPrice" | "marketValue" |
 
 function HoldingsPage() {
   const { state, removeHolding, updateHolding } = useStore();
+  const { privacy } = usePrivacy();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Holding | null>(null);
   const [search, setSearch] = useState("");
@@ -123,7 +124,7 @@ function HoldingsPage() {
     <>
       <PageHeader
         title="Holdings"
-        description={`${state.holdings.length} positions · ${formatUSD(total)}`}
+        description={`${state.holdings.length} positions · ${maskUSD(total, privacy)}`}
         actions={
           <>
             <Button variant="outline" onClick={refreshPrices} disabled={refreshing}>
@@ -212,7 +213,7 @@ function HoldingsPage() {
                         </span>
                       </TableCell>
                       <TableCell className="text-right tabular-nums">
-                        {formatNumber(h.quantity, 6)}
+                        {maskNumber(h.quantity, privacy, 6)}
                       </TableCell>
                       <TableCell className="text-right tabular-nums">
                         {formatUSD(h.currentPrice)}
@@ -221,7 +222,7 @@ function HoldingsPage() {
                         )}
                       </TableCell>
                       <TableCell className="text-right tabular-nums font-medium">
-                        {formatUSD(h.marketValue)}
+                        {maskUSD(h.marketValue, privacy)}
                       </TableCell>
                       <TableCell className="text-right tabular-nums text-muted-foreground">
                         {h.pct.toFixed(2)}%

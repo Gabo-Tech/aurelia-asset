@@ -7,8 +7,11 @@ import {
   ArrowLeftRight,
   Settings as SettingsIcon,
   Sparkles,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { usePrivacy } from "@/lib/store";
 
 const nav = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -17,6 +20,26 @@ const nav = [
   { to: "/cashflow", label: "Cashflow", icon: ArrowLeftRight },
   { to: "/settings", label: "Settings", icon: SettingsIcon },
 ] as const;
+
+function PrivacyToggle({ className }: { className?: string }) {
+  const { privacy, toggle } = usePrivacy();
+  return (
+    <button
+      type="button"
+      onClick={toggle}
+      title={privacy ? "Show values" : "Hide values"}
+      aria-label={privacy ? "Show values" : "Hide values"}
+      aria-pressed={privacy}
+      className={cn(
+        "grid h-8 w-8 place-items-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-sidebar-accent/60 transition-colors",
+        privacy && "text-primary hover:text-primary",
+        className,
+      )}
+    >
+      {privacy ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+    </button>
+  );
+}
 
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -30,10 +53,11 @@ export function AppShell({ children }: { children: ReactNode }) {
             <div className="grid h-9 w-9 place-items-center rounded-xl bg-primary/15 text-primary">
               <Sparkles className="h-4 w-4" />
             </div>
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <div className="text-sm font-semibold tracking-tight">Elegant</div>
               <div className="text-xs text-muted-foreground">Portfolio Tracker</div>
             </div>
+            <PrivacyToggle />
           </div>
           <nav className="flex-1 px-3 space-y-1">
             {nav.map((item) => {
@@ -70,6 +94,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             </div>
             <div className="font-semibold text-sm">Elegant Portfolio</div>
           </div>
+          <PrivacyToggle />
         </header>
 
         {/* Main */}

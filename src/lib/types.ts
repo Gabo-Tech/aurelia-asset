@@ -32,6 +32,7 @@ export type Settings = {
   useCorsProxy: boolean;
   corsProxy: string;
   finnhubKey?: string;
+  privacyMode?: boolean;
 };
 
 export type AppState = {
@@ -43,7 +44,7 @@ export type AppState = {
 export const DEFAULT_STATE: AppState = {
   holdings: [],
   cashflows: [],
-  settings: { useCorsProxy: true, corsProxy: "https://corsproxy.io/?" },
+  settings: { useCorsProxy: true, corsProxy: "https://corsproxy.io/?", privacyMode: false },
 };
 
 export type SearchResult = {

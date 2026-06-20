@@ -12,13 +12,13 @@ import {
   Legend,
 } from "recharts";
 import { format } from "date-fns";
-import { useStore } from "@/lib/store";
+import { useStore, usePrivacy } from "@/lib/store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PageHeader } from "@/components/app-shell";
 import { fetchPortfolioHistory, PERIODS, type PeriodId } from "@/lib/finance";
-import { formatPct, formatUSD } from "@/lib/format";
+import { formatPct, formatUSD, maskUSD, MASK } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/performance")({
@@ -33,6 +33,7 @@ export const Route = createFileRoute("/performance")({
 
 function PerformancePage() {
   const { state } = useStore();
+  const { privacy } = usePrivacy();
   const [period, setPeriod] = useState<PeriodId>("1M");
   const [hidden, setHidden] = useState<Set<string>>(new Set());
 
@@ -115,7 +116,7 @@ function PerformancePage() {
           {metrics && (
             <div className="text-right">
               <div className="text-2xl font-semibold tabular-nums">
-                {formatUSD(metrics.last.total)}
+                {maskUSD(metrics.last.total, privacy)}
               </div>
               <div
                 className={cn(
@@ -153,7 +154,7 @@ function PerformancePage() {
                   <YAxis
                     stroke="var(--muted-foreground)"
                     tick={{ fontSize: 11 }}
-                    tickFormatter={(v) => formatUSD(v as number, { compact: true })}
+                    tickFormatter={(v) => (privacy ? MASK : formatUSD(v as number, { compact: true }))}
                     width={70}
                   />
                   <Tooltip
@@ -163,7 +164,7 @@ function PerformancePage() {
                       borderRadius: 10,
                       fontSize: 12,
                     }}
-                    formatter={(value: number) => formatUSD(value)}
+                    formatter={(value: number) => maskUSD(value, privacy)}
                   />
                   <Legend
                     wrapperStyle={{ fontSize: 11 }}
@@ -231,8 +232,8 @@ function PerformancePage() {
                         <span className="text-muted-foreground text-xs truncate">{h.name}</span>
                       </div>
                     </td>
-                    <td className="py-2.5 text-right tabular-nums">{formatUSD(start)}</td>
-                    <td className="py-2.5 text-right tabular-nums">{formatUSD(end)}</td>
+                    <td className="py-2.5 text-right tabular-nums">{maskUSD(start, privacy)}</td>
+                    <td className="py-2.5 text-right tabular-nums">{maskUSD(end, privacy)}</td>
                     <td
                       className={cn(
                         "py-2.5 text-right tabular-nums",
@@ -240,7 +241,7 @@ function PerformancePage() {
                       )}
                     >
                       {abs >= 0 ? "+" : "-"}
-                      {formatUSD(Math.abs(abs))}
+                      {maskUSD(Math.abs(abs), privacy)}
                     </td>
                     <td
                       className={cn(
@@ -255,10 +256,10 @@ function PerformancePage() {
                 <tr className="font-semibold">
                   <td className="py-2.5">Total</td>
                   <td className="py-2.5 text-right tabular-nums">
-                    {formatUSD(metrics.first.total)}
+                    {maskUSD(metrics.first.total, privacy)}
                   </td>
                   <td className="py-2.5 text-right tabular-nums">
-                    {formatUSD(metrics.last.total)}
+                    {maskUSD(metrics.last.total, privacy)}
                   </td>
                   <td
                     className={cn(
@@ -268,7 +269,7 @@ function PerformancePage() {
                         : "text-destructive"
                     )}
                   >
-                    {formatUSD(metrics.last.total - metrics.first.total)}
+                    {maskUSD(metrics.last.total - metrics.first.total, privacy)}
                   </td>
                   <td
                     className={cn(

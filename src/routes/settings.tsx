@@ -95,6 +95,20 @@ function SettingsPage() {
           <CardContent className="space-y-5">
             <div className="flex items-start justify-between gap-4">
               <div>
+                <Label className="text-sm">Privacy mode</Label>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Hide quantities and dollar values across the app (the eye icon in the
+                  sidebar does the same thing).
+                </p>
+              </div>
+              <Switch
+                checked={!!state.settings.privacyMode}
+                onCheckedChange={(v) => updateSettings({ privacyMode: v })}
+              />
+            </div>
+
+            <div className="flex items-start justify-between gap-4">
+              <div>
                 <Label className="text-sm">Use CORS proxy</Label>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   Enable if Yahoo Finance requests are blocked in your browser.

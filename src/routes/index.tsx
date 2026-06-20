@@ -7,10 +7,10 @@ import {
   ResponsiveContainer,
   Tooltip,
 } from "recharts";
-import { useStore } from "@/lib/store";
+import { useStore, usePrivacy } from "@/lib/store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { formatUSD, formatPct } from "@/lib/format";
+import { formatPct, maskUSD } from "@/lib/format";
 import { ArrowUpRight, Wallet, TrendingUp, TrendingDown, PiggyBank } from "lucide-react";
 import { PageHeader } from "@/components/app-shell";
 
@@ -26,6 +26,7 @@ export const Route = createFileRoute("/")({
 
 function Dashboard() {
   const { state } = useStore();
+  const { privacy } = usePrivacy();
   const { holdings, cashflows } = state;
 
   const total = useMemo(
@@ -89,7 +90,7 @@ function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-4xl sm:text-5xl font-semibold tracking-tight">
-              {formatUSD(total)}
+              {maskUSD(total, privacy)}
             </div>
             <div className="mt-2 text-sm text-muted-foreground">
               {holdings.length} {holdings.length === 1 ? "holding" : "holdings"}
@@ -117,7 +118,7 @@ function Dashboard() {
               }`}
             >
               {net30 >= 0 ? "+" : "-"}
-              {formatUSD(Math.abs(net30))}
+              {maskUSD(Math.abs(net30), privacy)}
             </div>
             <p className="mt-2 text-xs text-muted-foreground">Net income − expenses</p>
           </CardContent>
@@ -156,7 +157,7 @@ function Dashboard() {
                     formatter={(value: number, _name, item) => {
                       const pct = total ? (value / total) * 100 : 0;
                       return [
-                        `${formatUSD(value)} · ${pct.toFixed(1)}%`,
+                        `${maskUSD(value, privacy)} · ${pct.toFixed(1)}%`,
                         (item.payload as { fullName?: string })?.fullName ?? "",
                       ];
                     }}
@@ -188,7 +189,7 @@ function Dashboard() {
                       </div>
                     </div>
                     <div className="text-xs text-muted-foreground tabular-nums">
-                      {formatUSD(a.value)}
+                      {maskUSD(a.value, privacy)}
                     </div>
                   </div>
                 </div>
@@ -208,7 +209,7 @@ function Dashboard() {
           icon={<TrendingUp className="h-4 w-4 text-success" />}
           label="Top asset"
           value={topAlloc ? topAlloc.name : "—"}
-          sub={topAlloc ? formatUSD(topAlloc.value) : undefined}
+          sub={topAlloc ? maskUSD(topAlloc.value, privacy) : undefined}
         />
         <StatCard
           icon={
@@ -219,7 +220,7 @@ function Dashboard() {
             )
           }
           label="Net 30d"
-          value={`${net30 >= 0 ? "+" : "-"}${formatUSD(Math.abs(net30))}`}
+          value={`${net30 >= 0 ? "+" : "-"}${maskUSD(Math.abs(net30), privacy)}`}
         />
       </div>
     </>
