@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { usePrivacy } from "@/lib/store";
+import { SponsorBanner } from "./sponsor-banner";
 
 const nav = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
