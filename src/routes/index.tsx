@@ -146,15 +146,15 @@ function Dashboard() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="h-80">
+            <div className="h-96">
               <ResponsiveContainer width="100%" height="100%">
-                <PieChart margin={{ top: 24, right: 80, bottom: 24, left: 80 }}>
+                <PieChart margin={{ top: 32, right: 120, bottom: 32, left: 120 }}>
                   <Pie
                     data={allocation}
                     dataKey="value"
                     nameKey="name"
-                    innerRadius={62}
-                    outerRadius={100}
+                    innerRadius={58}
+                    outerRadius={92}
                     paddingAngle={1}
                     stroke="none"
                     isAnimationActive={false}
@@ -170,6 +170,7 @@ function Dashboard() {
                         {...(props as AllocShapeProps)}
                         privacy={privacy}
                         total={total}
+                        compact={showAllLabels}
                       />
                     )}
                     onMouseEnter={(_, i) => setActiveIdx(i)}
@@ -179,23 +180,6 @@ function Dashboard() {
                       <Cell key={a.id} fill={a.color} />
                     ))}
                   </Pie>
-                  <Tooltip
-                    contentStyle={{
-                      background: "var(--popover)",
-                      border: "1px solid var(--border)",
-                      borderRadius: 10,
-                      fontSize: 12,
-                      boxShadow: "0 8px 24px -8px rgb(0 0 0 / 0.6)",
-                      color: "var(--popover-foreground)",
-                    }}
-                    formatter={(value: number, _name, item) => {
-                      const pct = total ? (value / total) * 100 : 0;
-                      return [
-                        `${maskUSD(value, privacy)} · ${pct.toFixed(1)}%`,
-                        (item.payload as { fullName?: string })?.fullName ?? "",
-                      ];
-                    }}
-                  />
                 </PieChart>
               </ResponsiveContainer>
             </div>
