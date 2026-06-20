@@ -48,7 +48,7 @@ type SortKey = "symbol" | "type" | "quantity" | "currentPrice" | "marketValue" |
 
 function HoldingsPage() {
   const { state, removeHolding, updateHolding } = useStore();
-  const { mask, toDisplay, privacy } = useMoney();
+  const { mask, toDisplay, privacy, currency } = useMoney();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Holding | null>(null);
   const [search, setSearch] = useState("");
