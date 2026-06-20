@@ -38,6 +38,7 @@ const PALETTE = [
 
 function CashflowPage() {
   const { state, addCashflow, removeCashflow } = useStore();
+  const { privacy } = usePrivacy();
   const { cashflows } = state;
 
   const totals = useMemo(() => {
