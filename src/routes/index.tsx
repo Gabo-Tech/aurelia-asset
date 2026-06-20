@@ -308,7 +308,7 @@ type AllocShapeProps = {
 };
 
 function LabelledSector(
-  props: AllocShapeProps & { privacy: boolean; total: number },
+  props: AllocShapeProps & { privacy: boolean; total: number; compact?: boolean },
 ) {
   const {
     cx,
@@ -322,21 +322,31 @@ function LabelledSector(
     payload,
     privacy,
     total,
+    compact,
   } = props;
   const RAD = Math.PI / 180;
   const sin = Math.sin(-RAD * midAngle);
   const cos = Math.cos(-RAD * midAngle);
-  const sx = cx + (outerRadius + 2) * cos;
-  const sy = cy + (outerRadius + 2) * sin;
-  const mx = cx + (outerRadius + 14) * cos;
-  const my = cy + (outerRadius + 14) * sin;
-  const ex = mx + (cos >= 0 ? 1 : -1) * 18;
-  const ey = my;
-  const textAnchor = cos >= 0 ? "start" : "end";
   const pct = total ? (payload.value / total) * 100 : 0;
 
+  // Stagger leader-line length for tiny adjacent slices to reduce overlap
+  const tiny = pct < 3;
+  const leaderOut = compact ? (tiny ? 28 : 18) : 16;
+  const armOut = compact ? 22 : 18;
+
+  const sx = cx + (outerRadius + 2) * cos;
+  const sy = cy + (outerRadius + 2) * sin;
+  const mx = cx + (outerRadius + leaderOut) * cos;
+  const my = cy + (outerRadius + leaderOut) * sin;
+  const ex = mx + (cos >= 0 ? 1 : -1) * armOut;
+  const ey = my;
+  const textAnchor = cos >= 0 ? "start" : "end";
+
+  // Skip labels for negligible slices in compact (show-all) mode
+  const skipLabel = compact && pct < 0.6;
+
   return (
-    <g>
+    <g style={{ pointerEvents: "none" }}>
       {/* Slight outer ring on the slice for emphasis */}
       <Sector
         cx={cx}
@@ -347,35 +357,39 @@ function LabelledSector(
         endAngle={endAngle}
         fill={fill}
       />
-      {/* Leader line */}
-      <path
-        d={`M${sx},${sy}L${mx},${my}L${ex},${ey}`}
-        stroke={fill}
-        strokeWidth={1.25}
-        fill="none"
-        opacity={0.9}
-      />
-      <circle cx={ex} cy={ey} r={2} fill={fill} />
-      {/* Label */}
-      <text
-        x={ex + (cos >= 0 ? 5 : -5)}
-        y={ey - 2}
-        textAnchor={textAnchor}
-        fill="var(--foreground)"
-        fontSize={11}
-        fontWeight={600}
-      >
-        {payload.name}
-      </text>
-      <text
-        x={ex + (cos >= 0 ? 5 : -5)}
-        y={ey + 11}
-        textAnchor={textAnchor}
-        fill="var(--muted-foreground)"
-        fontSize={10}
-      >
-        {privacy ? "••••" : `${pct.toFixed(1)}%`}
-      </text>
+      {!skipLabel && (
+        <>
+          <path
+            d={`M${sx},${sy}L${mx},${my}L${ex},${ey}`}
+            stroke={fill}
+            strokeWidth={1.25}
+            fill="none"
+            opacity={0.9}
+          />
+          <circle cx={ex} cy={ey} r={2} fill={fill} />
+          <text
+            x={ex + (cos >= 0 ? 5 : -5)}
+            y={ey - 2}
+            textAnchor={textAnchor}
+            fill="var(--foreground)"
+            fontSize={compact ? 10 : 11}
+            fontWeight={600}
+            style={{ paintOrder: "stroke", stroke: "var(--background)", strokeWidth: 3 }}
+          >
+            {payload.name}
+          </text>
+          <text
+            x={ex + (cos >= 0 ? 5 : -5)}
+            y={ey + (compact ? 10 : 11)}
+            textAnchor={textAnchor}
+            fill="var(--muted-foreground)"
+            fontSize={compact ? 9 : 10}
+            style={{ paintOrder: "stroke", stroke: "var(--background)", strokeWidth: 3 }}
+          >
+            {privacy ? "••••" : `${pct.toFixed(1)}%`}
+          </text>
+        </>
+      )}
     </g>
   );
 }
