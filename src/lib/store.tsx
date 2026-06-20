@@ -35,6 +35,7 @@ function loadState(): AppState {
 
 type Ctx = {
   state: AppState;
+  hydrated: boolean;
   setState: (updater: (s: AppState) => AppState) => void;
   addHolding: (h: Omit<Holding, "id">) => void;
   updateHolding: (id: string, patch: Partial<Holding>) => void;
@@ -76,6 +77,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         : Math.random().toString(36).slice(2);
     return {
       state,
+      hydrated,
       setState,
       addHolding: (h) =>
         setState((s) => ({ ...s, holdings: [...s.holdings, { ...h, id: uid() }] })),
@@ -112,7 +114,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         })),
       reset: () => setState(() => DEFAULT_STATE),
     };
-  }, [state]);
+  }, [state, hydrated]);
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
 }
@@ -154,6 +156,10 @@ export function FxProvider({ children }: { children: ReactNode }) {
 
 export function useFxRates(): FxRates {
   return useContext(FxContext) ?? { USD: 1 };
+}
+
+export function useFxReady(): boolean {
+  return useContext(FxContext) !== null;
 }
 
 /**

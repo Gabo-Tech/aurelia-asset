@@ -11,8 +11,9 @@ import {
   EyeOff,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { usePrivacy } from "@/lib/store";
+import { usePrivacy, useStore, useFxReady } from "@/lib/store";
 import { SponsorBanner } from "./sponsor-banner";
+import { PageLoader } from "./page-loader";
 
 const nav = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -44,6 +45,9 @@ function PrivacyToggle({ className }: { className?: string }) {
 
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { hydrated } = useStore();
+  const fxReady = useFxReady();
+  const ready = hydrated && fxReady;
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -100,7 +104,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
         {/* Main */}
         <main className="flex-1 min-w-0 pb-24 md:pb-12 flex flex-col">
-          <div className="flex-1 px-4 sm:px-8 py-6 sm:py-10">{children}</div>
+          <div className="flex-1 px-4 sm:px-8 py-6 sm:py-10">{ready ? children : <PageLoader />}</div>
           <footer className="mt-8 border-t border-border/60 px-4 sm:px-8 py-4 flex flex-wrap items-center justify-between gap-3 text-[11px] text-muted-foreground/80">
             <span>Local-only · data stays in your browser</span>
             <SponsorBanner variant="inline" />
