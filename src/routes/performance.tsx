@@ -249,7 +249,7 @@ function PerformancePage() {
         </CardHeader>
         <CardContent>
           <ChartFrame filename="performance" title={`Portfolio value · ${period}`}>
-            <div className="h-72 sm:h-80">
+            <div className="flex h-72 items-center justify-center sm:h-80">
               {isLoading ? (
                 <Skeleton className="h-full w-full" />
               ) : isError ? (
