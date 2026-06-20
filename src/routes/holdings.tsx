@@ -28,7 +28,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Plus, MoreVertical, RefreshCw, ArrowUpDown, Trash2, Pencil, Loader2 } from "lucide-react";
 import { PageHeader } from "@/components/app-shell";
 import { HoldingDialog } from "@/components/holding-dialog";
-import { formatNumber, formatPct, formatMoney, maskNumber } from "@/lib/format";
+import { formatNumber, formatPct, formatMoney, maskNumber, maskMoney } from "@/lib/format";
 import { fetchCurrentQuote } from "@/lib/finance";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
