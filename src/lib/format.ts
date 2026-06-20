@@ -19,3 +19,14 @@ export function formatNumber(n: number, digits = 4) {
   if (!isFinite(n)) return "0";
   return new Intl.NumberFormat("en-US", { maximumFractionDigits: digits }).format(n);
 }
+
+/** Mask string for private values. */
+export const MASK = "••••";
+
+export function maskUSD(n: number, privacy: boolean, opts?: { compact?: boolean }) {
+  return privacy ? MASK : formatUSD(n, opts);
+}
+
+export function maskNumber(n: number, privacy: boolean, digits = 4) {
+  return privacy ? MASK : formatNumber(n, digits);
+}
