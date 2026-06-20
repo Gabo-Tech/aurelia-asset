@@ -93,11 +93,11 @@ function CashflowPage() {
       <PageHeader title="Cashflow" description="Income and expenses, visualized." />
 
       <div className="grid gap-5 md:grid-cols-3">
-        <StatCard label="Income" value={formatUSD(totals.income)} tone="success" />
-        <StatCard label="Expenses" value={formatUSD(totals.expense)} tone="destructive" />
+        <StatCard label="Income" value={maskUSD(totals.income, privacy)} tone="success" />
+        <StatCard label="Expenses" value={maskUSD(totals.expense, privacy)} tone="destructive" />
         <StatCard
           label="Net"
-          value={`${totals.net >= 0 ? "+" : "-"}${formatUSD(Math.abs(totals.net))}`}
+          value={`${totals.net >= 0 ? "+" : "-"}${maskUSD(Math.abs(totals.net), privacy)}`}
           tone={totals.net >= 0 ? "success" : "destructive"}
         />
       </div>
