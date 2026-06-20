@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { formatPct } from "@/lib/format";
 import { ArrowUpRight, Wallet, TrendingUp, TrendingDown, PiggyBank } from "lucide-react";
 import { PageHeader } from "@/components/app-shell";
+import { ChartFrame } from "@/components/chart-frame";
 
 export const Route = createFileRoute("/")({
   head: () => ({
