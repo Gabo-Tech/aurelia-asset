@@ -115,8 +115,13 @@ function HoldingsPage() {
       await Promise.all(
         state.holdings.map(async (h) => {
           if (h.manualPrice != null) return;
-          const p = await fetchCurrentPrice(h);
-          if (p) updateHolding(h.id, { currentPrice: p, lastPriceAt: Date.now() });
+          const q = await fetchCurrentQuote(h);
+          if (q.price)
+            updateHolding(h.id, {
+              currentPrice: q.price,
+              priceCurrency: q.currency ?? h.priceCurrency ?? "USD",
+              lastPriceAt: Date.now(),
+            });
         })
       );
       toast.success("Prices refreshed");
