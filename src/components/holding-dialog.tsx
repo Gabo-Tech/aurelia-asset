@@ -95,6 +95,7 @@ export function HoldingDialog({ open, onOpenChange, editing }: Props) {
       setQuantity(String(editing.quantity));
       setColor(editing.color);
       setManualPrice(editing.manualPrice != null ? String(editing.manualPrice) : "");
+      setCurrency(editing.priceCurrency || defaultCurrency);
       setCustomSymbol(editing.symbol);
       setCustomName(editing.name);
       setCustomNotes(editing.notes ?? "");
@@ -111,13 +112,14 @@ export function HoldingDialog({ open, onOpenChange, editing }: Props) {
       setQuantity("");
       setColor(PALETTE[Math.floor(Math.random() * PALETTE.length)]);
       setManualPrice("");
+      setCurrency(defaultCurrency);
       setCustomSymbol("");
       setCustomName("");
       setCustomNotes("");
       setHistoryText("");
       setHistory([]);
     }
-  }, [open, editing]);
+  }, [open, editing, defaultCurrency]);
 
   useEffect(() => {
     if (!open || editing || mode === "custom") return;
@@ -178,6 +180,7 @@ export function HoldingDialog({ open, onOpenChange, editing }: Props) {
           color,
           manualPrice: manual,
           currentPrice: price,
+          priceCurrency: currency,
           customHistory: history,
           notes: customNotes.trim() || undefined,
           lastPriceAt: Date.now(),
@@ -208,12 +211,14 @@ export function HoldingDialog({ open, onOpenChange, editing }: Props) {
         color,
         manualPrice: manual,
         currentPrice: manual ?? 0,
+        priceCurrency: selected.type === "crypto" ? "USD" : currency,
         lastPriceAt: Date.now(),
       };
       if (manual == null) {
         try {
-          const price = await fetchCurrentPrice({ ...base, id: "tmp" } as Holding);
-          base.currentPrice = price;
+          const q = await fetchCurrentQuote({ ...base, id: "tmp" } as Holding);
+          base.currentPrice = q.price;
+          if (q.currency) base.priceCurrency = q.currency;
         } catch {
           toast.warning("Couldn't fetch price — you can refresh later");
         }
