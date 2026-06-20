@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { Maximize2, Minimize2, Camera, X } from "lucide-react";
+import { Maximize2, Camera, X } from "lucide-react";
 import { toPng } from "html-to-image";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
