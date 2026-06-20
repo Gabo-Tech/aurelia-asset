@@ -18,7 +18,15 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { PageHeader } from "@/components/app-shell";
 import { ChartFrame } from "@/components/chart-frame";
 import { CURRENCIES } from "@/lib/currency";
-import { Trash2, Plus, Palette, RotateCcw } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Trash2, Plus, Palette, RotateCcw, Settings as SettingsIcon, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
