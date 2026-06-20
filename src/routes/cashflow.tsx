@@ -1,14 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { Sankey, Tooltip, ResponsiveContainer, Layer, Rectangle } from "recharts";
-import { useStore } from "@/lib/store";
+import { useStore, usePrivacy } from "@/lib/store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { PageHeader } from "@/components/app-shell";
-import { formatUSD } from "@/lib/format";
+import { formatUSD, maskUSD } from "@/lib/format";
 import { Trash2, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
