@@ -18,6 +18,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { PageHeader } from "@/components/app-shell";
 import { ChartFrame } from "@/components/chart-frame";
 import { CURRENCIES } from "@/lib/currency";
+import { formatMoney } from "@/lib/format";
 import {
   Dialog,
   DialogContent,
@@ -71,7 +72,7 @@ function loadPrefs(): Prefs {
 
 function CashflowPage() {
   const { state, addCashflow, removeCashflow, addCategory, updateCategory, removeCategory } = useStore();
-  const { mask, toDisplay, currency } = useMoney();
+  const { mask, toDisplay, currency, privacy, MASK } = useMoney();
   const { cashflows, categories } = state;
 
   const [prefs, setPrefs] = useState<Prefs>(() => loadPrefs());
@@ -268,10 +269,15 @@ function CashflowPage() {
                         </td>
                         <td className="py-2.5">{c.kind === "income" ? c.source : c.category}</td>
                         <td className="py-2.5 text-right tabular-nums font-medium">
-                          {mask(c.amount, c.currency)}
-                          {c.currency && c.currency !== currency && (
-                            <span className="ml-1.5 text-[10px] uppercase text-muted-foreground">
-                              {c.currency}
+                          {privacy
+                            ? MASK
+                            : formatMoney(c.amount, (c.currency || currency).toUpperCase())}
+                          {c.currency && c.currency.toUpperCase() !== currency && (
+                            <span
+                              className="ml-1.5 text-[10px] uppercase text-muted-foreground"
+                              title={`≈ ${mask(c.amount, c.currency)} in ${currency}`}
+                            >
+                              ≈ {mask(c.amount, c.currency)}
                             </span>
                           )}
                         </td>
