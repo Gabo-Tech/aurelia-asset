@@ -233,17 +233,19 @@ function Dashboard() {
                     data={visibleAllocation}
                     dataKey="value"
                     nameKey="name"
-                    innerRadius={58}
-                    outerRadius={92}
-                    paddingAngle={1}
-                    stroke="none"
+                    innerRadius={0}
+                    outerRadius={120}
+                    paddingAngle={0}
+                    stroke="var(--foreground)"
+                    strokeOpacity={0.3}
+                    strokeWidth={1.5}
                     isAnimationActive={false}
                     activeIndex={
                       showAllLabels
                         ? visibleAllocation.map((_, i) => i)
                         : activeIdx != null
                           ? [activeIdx]
-                          : []
+                          : undefined
                     }
                     activeShape={(props: unknown) => (
                       <LabelledSector
