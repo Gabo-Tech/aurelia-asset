@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { PageHeader } from "@/components/app-shell";
+import { ChartFrame } from "@/components/chart-frame";
 import { CURRENCIES } from "@/lib/currency";
 import { Trash2, Plus } from "lucide-react";
 import { toast } from "sonner";
