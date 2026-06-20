@@ -37,6 +37,14 @@ function PerformancePage() {
   const { currency, rates, mask, privacy } = useMoney();
   const [period, setPeriod] = useState<PeriodId>("1M");
   const [hidden, setHidden] = useState<Set<string>>(new Set());
+  const [hideTotal, setHideTotal] = useState(false);
+
+  const visibleKeys = useMemo(() => {
+    const keys: string[] = [];
+    if (!hideTotal) keys.push("Total");
+    for (const h of state.holdings) if (!hidden.has(h.symbol)) keys.push(h.symbol);
+    return keys;
+  }, [state.holdings, hidden, hideTotal]);
 
   // Per-holding FX multiplier from its native priceCurrency -> display currency.
   const fxByHolding = useMemo(() => {
@@ -76,6 +84,27 @@ function PerformancePage() {
       return row;
     });
   }, [data, period, state.holdings, fxByHolding]);
+
+  const yDomain = useMemo<[number, number]>(() => {
+    if (!chartData.length || !visibleKeys.length) return [0, 0];
+    let min = Infinity;
+    let max = -Infinity;
+    for (const row of chartData) {
+      for (const k of visibleKeys) {
+        const v = row[k] as number;
+        if (typeof v !== "number") continue;
+        if (v < min) min = v;
+        if (v > max) max = v;
+      }
+    }
+    if (!isFinite(min) || !isFinite(max)) return [0, 0];
+    if (min === max) {
+      const pad = Math.abs(min) * 0.05 || 1;
+      return [min - pad, max + pad];
+    }
+    const pad = (max - min) * 0.08;
+    return [Math.max(0, min - pad), max + pad];
+  }, [chartData, visibleKeys]);
 
   const metrics = useMemo(() => {
     if (!data || data.length < 2) return null;
@@ -136,6 +165,21 @@ function PerformancePage() {
         <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
           Assets
         </span>
+        <button
+          onClick={() => setHideTotal((v) => !v)}
+          className={cn(
+            "inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs font-medium transition-colors",
+            hideTotal
+              ? "border-border/60 bg-muted text-muted-foreground opacity-60"
+              : "border-border bg-card text-foreground hover:bg-accent"
+          )}
+        >
+          <span
+            className="h-1.5 w-1.5 rounded-full ring-1 ring-black/10"
+            style={{ backgroundColor: "var(--primary)" }}
+          />
+          Total
+        </button>
         {state.holdings.map((h) => (
           <button
             key={h.id}
@@ -229,6 +273,8 @@ function PerformancePage() {
                     tick={{ fontSize: 11 }}
                     tickFormatter={(v) => (privacy ? MASK : formatMoney(v as number, currency, { compact: true }))}
                     width={70}
+                    domain={yDomain}
+                    allowDataOverflow
                   />
                   <Tooltip
                     contentStyle={{
@@ -243,7 +289,10 @@ function PerformancePage() {
                     wrapperStyle={{ fontSize: 11 }}
                     onClick={(e) => {
                       const name = e.dataKey as string;
-                      if (name === "Total") return;
+                      if (name === "Total") {
+                        setHideTotal((v) => !v);
+                        return;
+                      }
                       setHidden((h) => {
                         const s = new Set(h);
                         if (s.has(name)) s.delete(name);
@@ -258,6 +307,7 @@ function PerformancePage() {
                     stroke="var(--primary)"
                     strokeWidth={2.5}
                     dot={false}
+                    hide={hideTotal}
                     isAnimationActive
                   />
                   {state.holdings.map((h) => (
