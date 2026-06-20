@@ -96,7 +96,7 @@ function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-4xl sm:text-5xl font-semibold tracking-tight">
-              {maskUSD(total, privacy)}
+              {mask(total)}
             </div>
             <div className="mt-2 text-sm text-muted-foreground">
               {holdings.length} {holdings.length === 1 ? "holding" : "holdings"}
@@ -124,7 +124,7 @@ function Dashboard() {
               }`}
             >
               {net30 >= 0 ? "+" : "-"}
-              {maskUSD(Math.abs(net30), privacy)}
+              {mask(Math.abs(net30))}
             </div>
             <p className="mt-2 text-xs text-muted-foreground">Net income − expenses</p>
           </CardContent>
@@ -208,7 +208,7 @@ function Dashboard() {
                       </div>
                     </div>
                     <div className="text-xs text-muted-foreground tabular-nums">
-                      {maskUSD(a.value, privacy)}
+                      {mask(a.value)}
                     </div>
                   </div>
                 </div>
@@ -228,7 +228,7 @@ function Dashboard() {
           icon={<TrendingUp className="h-4 w-4 text-success" />}
           label="Top asset"
           value={topAlloc ? topAlloc.name : "—"}
-          sub={topAlloc ? maskUSD(topAlloc.value, privacy) : undefined}
+          sub={topAlloc ? mask(topAlloc.value) : undefined}
         />
         <StatCard
           icon={
@@ -239,7 +239,7 @@ function Dashboard() {
             )
           }
           label="Net 30d"
-          value={`${net30 >= 0 ? "+" : "-"}${maskUSD(Math.abs(net30), privacy)}`}
+          value={`${net30 >= 0 ? "+" : "-"}${mask(Math.abs(net30))}`}
         />
       </div>
     </>
