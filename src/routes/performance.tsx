@@ -232,8 +232,8 @@ function PerformancePage() {
                         <span className="text-muted-foreground text-xs truncate">{h.name}</span>
                       </div>
                     </td>
-                    <td className="py-2.5 text-right tabular-nums">{formatUSD(start)}</td>
-                    <td className="py-2.5 text-right tabular-nums">{formatUSD(end)}</td>
+                    <td className="py-2.5 text-right tabular-nums">{maskUSD(start, privacy)}</td>
+                    <td className="py-2.5 text-right tabular-nums">{maskUSD(end, privacy)}</td>
                     <td
                       className={cn(
                         "py-2.5 text-right tabular-nums",
@@ -241,7 +241,7 @@ function PerformancePage() {
                       )}
                     >
                       {abs >= 0 ? "+" : "-"}
-                      {formatUSD(Math.abs(abs))}
+                      {maskUSD(Math.abs(abs), privacy)}
                     </td>
                     <td
                       className={cn(
