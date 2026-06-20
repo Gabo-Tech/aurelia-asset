@@ -31,6 +31,8 @@ function Dashboard() {
   const { state } = useStore();
   const { privacy } = usePrivacy();
   const { holdings, cashflows } = state;
+  const [showAllLabels, setShowAllLabels] = useState(false);
+  const [activeIdx, setActiveIdx] = useState<number | null>(null);
 
   const total = useMemo(
     () => holdings.reduce((s, h) => s + h.quantity * h.currentPrice, 0),
