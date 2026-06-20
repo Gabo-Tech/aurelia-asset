@@ -192,40 +192,21 @@ function CashflowPage() {
                 />
               }
             >
-              <div className="flex h-80 items-center justify-center sm:h-96">
+              <div className="min-h-80 sm:min-h-96">
                 {sankey ? (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <Sankey
-                      data={sankey}
-                      nodePadding={24}
-                      nodeWidth={14}
-                      iterations={64}
-                      margin={{ top: 16, left: 16, right: 140, bottom: 16 }}
-                      link={<SankeyLink nodes={sankey.nodes} />}
-                      node={
-                        <SankeyNode
-                          labelMode={prefs.labelMode}
-                          format={(v: number) => mask(v)}
-                        />
-                      }
-                    >
-                      <Tooltip
-                        contentStyle={{
-                          background: "var(--popover)",
-                          border: "1px solid var(--border)",
-                          borderRadius: 10,
-                          fontSize: 12,
-                        }}
-                        formatter={(value: number) => mask(value)}
-                      />
-                    </Sankey>
-                  </ResponsiveContainer>
+                  <SankeyChart
+                    data={sankey}
+                    height={420}
+                    labelMode={prefs.labelMode}
+                    format={(v: number) => mask(v)}
+                  />
                 ) : (
-                  <div className="grid h-full place-items-center text-sm text-muted-foreground">
+                  <div className="grid h-80 place-items-center text-sm text-muted-foreground">
                     Add some income and expenses to see the flow.
                   </div>
                 )}
               </div>
+
             </ChartFrame>
           </CardContent>
         </Card>
