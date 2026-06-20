@@ -154,7 +154,7 @@ function PerformancePage() {
                   <YAxis
                     stroke="var(--muted-foreground)"
                     tick={{ fontSize: 11 }}
-                    tickFormatter={(v) => formatUSD(v as number, { compact: true })}
+                    tickFormatter={(v) => (privacy ? MASK : formatUSD(v as number, { compact: true }))}
                     width={70}
                   />
                   <Tooltip
