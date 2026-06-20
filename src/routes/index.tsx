@@ -90,7 +90,7 @@ function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-4xl sm:text-5xl font-semibold tracking-tight">
-              {formatUSD(total)}
+              {maskUSD(total, privacy)}
             </div>
             <div className="mt-2 text-sm text-muted-foreground">
               {holdings.length} {holdings.length === 1 ? "holding" : "holdings"}
