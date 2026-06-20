@@ -12,13 +12,13 @@ import {
   Legend,
 } from "recharts";
 import { format } from "date-fns";
-import { useStore } from "@/lib/store";
+import { useStore, usePrivacy } from "@/lib/store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PageHeader } from "@/components/app-shell";
 import { fetchPortfolioHistory, PERIODS, type PeriodId } from "@/lib/finance";
-import { formatPct, formatUSD } from "@/lib/format";
+import { formatPct, formatUSD, maskUSD, MASK } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/performance")({
