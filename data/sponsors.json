@@ -1,4 +1,14 @@
 {
   "rotationSeconds": 20,
-  "sponsors": []
+  "sponsors": [
+    {
+      "id": "iqodc46t",
+      "name": "Langotalk",
+      "logoUrl": "https://play-lh.googleusercontent.com/Z1N3D_qpXIyhsYc1LMty7IhRs12ChsLcVYgqKWgUT2QLJrA6M0o3OpbqCHKhV76IfQBz8hPdfaXpdlFLsOwk6Hw",
+      "url": "https://langotalk.org/?ref=gabriel",
+      "tagline": "Learn Languages 6x Faster with AI Tutors",
+      "active": true,
+      "weight": 1
+    }
+  ]
 }
