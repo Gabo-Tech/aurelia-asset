@@ -1,15 +1,18 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   PieChart,
   Pie,
   Cell,
   ResponsiveContainer,
   Tooltip,
+  Sector,
 } from "recharts";
 import { useStore, usePrivacy } from "@/lib/store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { formatPct, maskUSD } from "@/lib/format";
 import { ArrowUpRight, Wallet, TrendingUp, TrendingDown, PiggyBank } from "lucide-react";
 import { PageHeader } from "@/components/app-shell";
@@ -28,6 +31,8 @@ function Dashboard() {
   const { state } = useStore();
   const { privacy } = usePrivacy();
   const { holdings, cashflows } = state;
+  const [showAllLabels, setShowAllLabels] = useState(false);
+  const [activeIdx, setActiveIdx] = useState<number | null>(null);
 
   const total = useMemo(
     () => holdings.reduce((s, h) => s + h.quantity * h.currentPrice, 0),
@@ -127,21 +132,48 @@ function Dashboard() {
 
       <div className="mt-5 grid gap-5 lg:grid-cols-5">
         <Card className="lg:col-span-3 border-border/60">
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between gap-4 flex-wrap">
             <CardTitle>Allocation</CardTitle>
+            <div className="flex items-center gap-2">
+              <Label htmlFor="all-labels" className="text-xs text-muted-foreground">
+                Show all labels
+              </Label>
+              <Switch
+                id="all-labels"
+                checked={showAllLabels}
+                onCheckedChange={setShowAllLabels}
+              />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="h-72">
+            <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
+                <PieChart margin={{ top: 24, right: 80, bottom: 24, left: 80 }}>
                   <Pie
                     data={allocation}
                     dataKey="value"
                     nameKey="name"
-                    innerRadius={70}
-                    outerRadius={110}
+                    innerRadius={62}
+                    outerRadius={100}
                     paddingAngle={1}
                     stroke="none"
+                    isAnimationActive={false}
+                    activeIndex={
+                      showAllLabels
+                        ? allocation.map((_, i) => i)
+                        : activeIdx != null
+                          ? [activeIdx]
+                          : []
+                    }
+                    activeShape={(props: unknown) => (
+                      <LabelledSector
+                        {...(props as AllocShapeProps)}
+                        privacy={privacy}
+                        total={total}
+                      />
+                    )}
+                    onMouseEnter={(_, i) => setActiveIdx(i)}
+                    onMouseLeave={() => setActiveIdx(null)}
                   >
                     {allocation.map((a) => (
                       <Cell key={a.id} fill={a.color} />
@@ -153,6 +185,8 @@ function Dashboard() {
                       border: "1px solid var(--border)",
                       borderRadius: 10,
                       fontSize: 12,
+                      boxShadow: "0 8px 24px -8px rgb(0 0 0 / 0.6)",
+                      color: "var(--popover-foreground)",
                     }}
                     formatter={(value: number, _name, item) => {
                       const pct = total ? (value / total) * 100 : 0;
@@ -271,5 +305,93 @@ function EmptyState() {
         </Button>
       </CardContent>
     </Card>
+  );
+}
+
+// ===== Pie chart label sector with leader line =====
+
+type AllocShapeProps = {
+  cx: number;
+  cy: number;
+  midAngle: number;
+  innerRadius: number;
+  outerRadius: number;
+  startAngle: number;
+  endAngle: number;
+  fill: string;
+  payload: { name: string; fullName?: string; value: number };
+  percent: number;
+};
+
+function LabelledSector(
+  props: AllocShapeProps & { privacy: boolean; total: number },
+) {
+  const {
+    cx,
+    cy,
+    midAngle,
+    innerRadius,
+    outerRadius,
+    startAngle,
+    endAngle,
+    fill,
+    payload,
+    privacy,
+    total,
+  } = props;
+  const RAD = Math.PI / 180;
+  const sin = Math.sin(-RAD * midAngle);
+  const cos = Math.cos(-RAD * midAngle);
+  const sx = cx + (outerRadius + 2) * cos;
+  const sy = cy + (outerRadius + 2) * sin;
+  const mx = cx + (outerRadius + 14) * cos;
+  const my = cy + (outerRadius + 14) * sin;
+  const ex = mx + (cos >= 0 ? 1 : -1) * 18;
+  const ey = my;
+  const textAnchor = cos >= 0 ? "start" : "end";
+  const pct = total ? (payload.value / total) * 100 : 0;
+
+  return (
+    <g>
+      {/* Slight outer ring on the slice for emphasis */}
+      <Sector
+        cx={cx}
+        cy={cy}
+        innerRadius={innerRadius}
+        outerRadius={outerRadius + 4}
+        startAngle={startAngle}
+        endAngle={endAngle}
+        fill={fill}
+      />
+      {/* Leader line */}
+      <path
+        d={`M${sx},${sy}L${mx},${my}L${ex},${ey}`}
+        stroke={fill}
+        strokeWidth={1.25}
+        fill="none"
+        opacity={0.9}
+      />
+      <circle cx={ex} cy={ey} r={2} fill={fill} />
+      {/* Label */}
+      <text
+        x={ex + (cos >= 0 ? 5 : -5)}
+        y={ey - 2}
+        textAnchor={textAnchor}
+        fill="var(--foreground)"
+        fontSize={11}
+        fontWeight={600}
+      >
+        {payload.name}
+      </text>
+      <text
+        x={ex + (cos >= 0 ? 5 : -5)}
+        y={ey + 11}
+        textAnchor={textAnchor}
+        fill="var(--muted-foreground)"
+        fontSize={10}
+      >
+        {privacy ? "••••" : `${pct.toFixed(1)}%`}
+      </text>
+    </g>
   );
 }
