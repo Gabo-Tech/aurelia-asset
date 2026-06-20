@@ -247,7 +247,7 @@ function Dashboard() {
                             ? visibleAllocation.map((_, i) => i)
                             : activeIdx != null
                               ? [activeIdx]
-                              : undefined
+                              : []
                         }
                         activeShape={(props: unknown) => (
                           <LabelledSector
