@@ -155,25 +155,70 @@ function Dashboard() {
 
       <div className="mt-5 grid gap-5 lg:grid-cols-5">
         <Card className="lg:col-span-3 border-border/60">
-          <CardHeader className="flex flex-row items-center justify-between gap-4 flex-wrap">
-            <CardTitle>Allocation</CardTitle>
-            <div className="flex items-center gap-2">
-              <Label htmlFor="all-labels" className="text-xs text-muted-foreground">
-                Show all labels
-              </Label>
-              <Switch
-                id="all-labels"
-                checked={showAllLabels}
-                onCheckedChange={setShowAllLabels}
-              />
+          <CardHeader className="flex flex-col gap-4">
+            <div className="flex flex-row items-center justify-between gap-4 flex-wrap">
+              <CardTitle>Allocation</CardTitle>
+              <div className="flex items-center gap-2">
+                <Label htmlFor="all-labels" className="text-xs text-muted-foreground">
+                  Show all labels
+                </Label>
+                <Switch
+                  id="all-labels"
+                  checked={showAllLabels}
+                  onCheckedChange={setShowAllLabels}
+                />
+              </div>
             </div>
+            {allocation.length > 1 && (
+              <div className="flex flex-wrap items-center gap-2">
+                {allocation.map((a) => {
+                  const isHidden = hidden.has(a.id);
+                  return (
+                    <button
+                      key={a.id}
+                      type="button"
+                      onClick={() => toggleAsset(a.id)}
+                      className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-1 text-xs transition-colors ${
+                        isHidden
+                          ? "border-border bg-transparent text-muted-foreground opacity-60"
+                          : "border-transparent bg-primary/10 text-foreground hover:bg-primary/20"
+                      }`}
+                      title={a.fullName}
+                    >
+                      <span
+                        className="h-2 w-2 rounded-full"
+                        style={{ backgroundColor: a.color }}
+                      />
+                      <span className="font-medium">{a.name}</span>
+                    </button>
+                  );
+                })}
+                <div className="ml-auto flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={showAll}
+                    className="text-xs text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
+                  >
+                    Show all
+                  </button>
+                  <span className="text-muted-foreground">·</span>
+                  <button
+                    type="button"
+                    onClick={hideAll}
+                    className="text-xs text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
+                  >
+                    Hide all
+                  </button>
+                </div>
+              </div>
+            )}
           </CardHeader>
           <CardContent>
             <div className="h-96 [&_svg]:overflow-visible">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart margin={{ top: 32, right: 120, bottom: 32, left: 120 }}>
                   <Pie
-                    data={allocation}
+                    data={visibleAllocation}
                     dataKey="value"
                     nameKey="name"
                     innerRadius={58}
@@ -183,7 +228,7 @@ function Dashboard() {
                     isAnimationActive={false}
                     activeIndex={
                       showAllLabels
-                        ? allocation.map((_, i) => i)
+                        ? visibleAllocation.map((_, i) => i)
                         : activeIdx != null
                           ? [activeIdx]
                           : []
@@ -192,14 +237,14 @@ function Dashboard() {
                       <LabelledSector
                         {...(props as AllocShapeProps)}
                         privacy={privacy}
-                        total={total}
+                        total={visibleTotal}
                         compact={showAllLabels}
                       />
                     )}
                     onMouseEnter={(_, i) => setActiveIdx(i)}
                     onMouseLeave={() => setActiveIdx(null)}
                   >
-                    {allocation.map((a) => (
+                    {visibleAllocation.map((a) => (
                       <Cell key={a.id} fill={a.color} />
                     ))}
                   </Pie>
