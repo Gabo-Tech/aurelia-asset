@@ -116,7 +116,7 @@ function PerformancePage() {
           {metrics && (
             <div className="text-right">
               <div className="text-2xl font-semibold tabular-nums">
-                {formatUSD(metrics.last.total)}
+                {maskUSD(metrics.last.total, privacy)}
               </div>
               <div
                 className={cn(
