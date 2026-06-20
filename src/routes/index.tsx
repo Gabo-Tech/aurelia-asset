@@ -157,7 +157,7 @@ function Dashboard() {
                     formatter={(value: number, _name, item) => {
                       const pct = total ? (value / total) * 100 : 0;
                       return [
-                        `${formatUSD(value)} · ${pct.toFixed(1)}%`,
+                        `${maskUSD(value, privacy)} · ${pct.toFixed(1)}%`,
                         (item.payload as { fullName?: string })?.fullName ?? "",
                       ];
                     }}
