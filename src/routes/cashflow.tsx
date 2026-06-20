@@ -103,11 +103,11 @@ function CashflowPage() {
       <PageHeader title="Cashflow" description="Income and expenses, visualized." />
 
       <div className="grid gap-5 md:grid-cols-3">
-        <StatCard label="Income" value={maskUSD(totals.income, privacy)} tone="success" />
-        <StatCard label="Expenses" value={maskUSD(totals.expense, privacy)} tone="destructive" />
+        <StatCard label="Income" value={mask(totals.income)} tone="success" />
+        <StatCard label="Expenses" value={mask(totals.expense)} tone="destructive" />
         <StatCard
           label="Net"
-          value={`${totals.net >= 0 ? "+" : "-"}${maskUSD(Math.abs(totals.net), privacy)}`}
+          value={`${totals.net >= 0 ? "+" : "-"}${mask(Math.abs(totals.net))}`}
           tone={totals.net >= 0 ? "success" : "destructive"}
         />
       </div>
@@ -142,7 +142,7 @@ function CashflowPage() {
                         borderRadius: 10,
                         fontSize: 12,
                       }}
-                      formatter={(value: number) => maskUSD(value, privacy)}
+                      formatter={(value: number) => mask(value)}
                     />
                   </Sankey>
                 </ResponsiveContainer>
@@ -200,7 +200,7 @@ function CashflowPage() {
                           {c.kind === "income" ? c.source : c.category}
                         </td>
                         <td className="py-2.5 text-right tabular-nums font-medium">
-                          {maskUSD(c.amount, privacy)}
+                          {mask(c.amount)}
                         </td>
                         <td className="py-2.5 text-right">
                           <Button
