@@ -259,8 +259,8 @@ function Dashboard() {
             <CardTitle>Breakdown</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            {allocation.slice(0, 8).map((a) => {
-              const pct = total ? (a.value / total) * 100 : 0;
+            {visibleAllocation.slice(0, 8).map((a) => {
+              const pct = visibleTotal ? (a.value / visibleTotal) * 100 : 0;
               return (
                 <div key={a.id} className="flex items-center gap-3">
                   <div
