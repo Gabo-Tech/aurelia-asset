@@ -12,8 +12,16 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { PALETTE, type CustomPricePoint, type Holding, type SearchResult } from "@/lib/types";
-import { searchAssets, fetchCurrentPrice } from "@/lib/finance";
+import { CURRENCIES } from "@/lib/currency";
+import { searchAssets, fetchCurrentQuote } from "@/lib/finance";
 import { Loader2, Search, Upload, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
