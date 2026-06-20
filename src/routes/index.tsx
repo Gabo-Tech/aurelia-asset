@@ -32,6 +32,7 @@ function Dashboard() {
   const { holdings, cashflows } = state;
   const [showAllLabels, setShowAllLabels] = useState(false);
   const [activeIdx, setActiveIdx] = useState<number | null>(null);
+  const [hidden, setHidden] = useState<Set<string>>(new Set());
 
   // Convert each holding's market value into the display currency once.
   const allocation = useMemo(
@@ -49,7 +50,28 @@ function Dashboard() {
     [holdings, toDisplay]
   );
 
-  const total = useMemo(() => allocation.reduce((s, a) => s + a.value, 0), [allocation]);
+  const visibleAllocation = useMemo(
+    () => allocation.filter((a) => !hidden.has(a.id)),
+    [allocation, hidden]
+  );
+
+  const portfolioTotal = useMemo(() => allocation.reduce((s, a) => s + a.value, 0), [allocation]);
+  const visibleTotal = useMemo(
+    () => visibleAllocation.reduce((s, a) => s + a.value, 0),
+    [visibleAllocation]
+  );
+
+  const toggleAsset = (id: string) => {
+    setHidden((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const showAll = () => setHidden(new Set());
+  const hideAll = () => setHidden(new Set(allocation.map((a) => a.id)));
 
   const net30 = useMemo(() => {
     const cutoff = Date.now() - 30 * 86400000;
@@ -96,7 +118,7 @@ function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-4xl sm:text-5xl font-semibold tracking-tight">
-              {mask(total)}
+              {mask(portfolioTotal)}
             </div>
             <div className="mt-2 text-sm text-muted-foreground">
               {holdings.length} {holdings.length === 1 ? "holding" : "holdings"}
@@ -104,7 +126,7 @@ function Dashboard() {
                 <>
                   {" · Top: "}
                   <span className="text-foreground font-medium">{topAlloc.name}</span>{" "}
-                  ({formatPct((topAlloc.value / total) * 100, 1).replace("+", "")})
+                  ({formatPct((topAlloc.value / portfolioTotal) * 100, 1).replace("+", "")})
                 </>
               ) : null}
             </div>
@@ -133,25 +155,82 @@ function Dashboard() {
 
       <div className="mt-5 grid gap-5 lg:grid-cols-5">
         <Card className="lg:col-span-3 border-border/60">
-          <CardHeader className="flex flex-row items-center justify-between gap-4 flex-wrap">
-            <CardTitle>Allocation</CardTitle>
-            <div className="flex items-center gap-2">
-              <Label htmlFor="all-labels" className="text-xs text-muted-foreground">
-                Show all labels
-              </Label>
-              <Switch
-                id="all-labels"
-                checked={showAllLabels}
-                onCheckedChange={setShowAllLabels}
-              />
+          <CardHeader className="flex flex-col gap-4">
+            <div className="flex flex-row items-center justify-between gap-4 flex-wrap">
+              <CardTitle>Allocation</CardTitle>
+              <div className="flex items-center gap-2">
+                <Label htmlFor="all-labels" className="text-xs text-muted-foreground">
+                  Show all labels
+                </Label>
+                <Switch
+                  id="all-labels"
+                  checked={showAllLabels}
+                  onCheckedChange={setShowAllLabels}
+                />
+              </div>
             </div>
+            {allocation.length > 1 && (
+              <div className="flex flex-wrap items-center gap-2">
+                {allocation.map((a) => {
+                  const isHidden = hidden.has(a.id);
+                  return (
+                    <button
+                      key={a.id}
+                      type="button"
+                      onClick={() => toggleAsset(a.id)}
+                      className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-1 text-xs transition-colors ${
+                        isHidden
+                          ? "border-border bg-transparent text-muted-foreground opacity-60"
+                          : "border-transparent bg-primary/10 text-foreground hover:bg-primary/20"
+                      }`}
+                      title={a.fullName}
+                    >
+                      <span
+                        className="h-2 w-2 rounded-full"
+                        style={{ backgroundColor: a.color }}
+                      />
+                      <span className="font-medium">{a.name}</span>
+                    </button>
+                  );
+                })}
+                <div className="ml-auto flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={showAll}
+                    className="text-xs text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
+                  >
+                    Show all
+                  </button>
+                  <span className="text-muted-foreground">·</span>
+                  <button
+                    type="button"
+                    onClick={hideAll}
+                    className="text-xs text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
+                  >
+                    Hide all
+                  </button>
+                </div>
+              </div>
+            )}
           </CardHeader>
           <CardContent>
-            <div className="h-96 [&_svg]:overflow-visible">
-              <ResponsiveContainer width="100%" height="100%">
+            {visibleAllocation.length === 0 ? (
+              <div className="flex h-96 flex-col items-center justify-center text-center text-sm text-muted-foreground">
+                <p>All assets are hidden.</p>
+                <button
+                  type="button"
+                  onClick={showAll}
+                  className="mt-2 text-primary hover:underline"
+                >
+                  Show all assets
+                </button>
+              </div>
+            ) : (
+              <div className="h-96 [&_svg]:overflow-visible">
+                <ResponsiveContainer width="100%" height="100%">
                 <PieChart margin={{ top: 32, right: 120, bottom: 32, left: 120 }}>
                   <Pie
-                    data={allocation}
+                    data={visibleAllocation}
                     dataKey="value"
                     nameKey="name"
                     innerRadius={58}
@@ -161,7 +240,7 @@ function Dashboard() {
                     isAnimationActive={false}
                     activeIndex={
                       showAllLabels
-                        ? allocation.map((_, i) => i)
+                        ? visibleAllocation.map((_, i) => i)
                         : activeIdx != null
                           ? [activeIdx]
                           : []
@@ -170,20 +249,21 @@ function Dashboard() {
                       <LabelledSector
                         {...(props as AllocShapeProps)}
                         privacy={privacy}
-                        total={total}
+                        total={visibleTotal}
                         compact={showAllLabels}
                       />
                     )}
                     onMouseEnter={(_, i) => setActiveIdx(i)}
                     onMouseLeave={() => setActiveIdx(null)}
                   >
-                    {allocation.map((a) => (
+                    {visibleAllocation.map((a) => (
                       <Cell key={a.id} fill={a.color} />
                     ))}
                   </Pie>
                 </PieChart>
               </ResponsiveContainer>
             </div>
+            )}
           </CardContent>
         </Card>
 
@@ -192,8 +272,8 @@ function Dashboard() {
             <CardTitle>Breakdown</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            {allocation.slice(0, 8).map((a) => {
-              const pct = total ? (a.value / total) * 100 : 0;
+            {visibleAllocation.slice(0, 8).map((a) => {
+              const pct = visibleTotal ? (a.value / visibleTotal) * 100 : 0;
               return (
                 <div key={a.id} className="flex items-center gap-3">
                   <div
