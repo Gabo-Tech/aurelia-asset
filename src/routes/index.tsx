@@ -209,7 +209,7 @@ function Dashboard() {
           icon={<TrendingUp className="h-4 w-4 text-success" />}
           label="Top asset"
           value={topAlloc ? topAlloc.name : "—"}
-          sub={topAlloc ? formatUSD(topAlloc.value) : undefined}
+          sub={topAlloc ? maskUSD(topAlloc.value, privacy) : undefined}
         />
         <StatCard
           icon={
@@ -220,7 +220,7 @@ function Dashboard() {
             )
           }
           label="Net 30d"
-          value={`${net30 >= 0 ? "+" : "-"}${formatUSD(Math.abs(net30))}`}
+          value={`${net30 >= 0 ? "+" : "-"}${maskUSD(Math.abs(net30), privacy)}`}
         />
       </div>
     </>
