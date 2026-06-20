@@ -136,7 +136,7 @@ function HoldingsPage() {
     <>
       <PageHeader
         title="Holdings"
-        description={`${state.holdings.length} positions · ${mask(total)}`}
+        description={`${state.holdings.length} positions · ${maskMoney(total, currency, privacy)}`}
         actions={
           <>
             <Button variant="outline" onClick={refreshPrices} disabled={refreshing}>
