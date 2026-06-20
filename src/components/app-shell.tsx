@@ -82,6 +82,9 @@ export function AppShell({ children }: { children: ReactNode }) {
               );
             })}
           </nav>
+          <div className="px-3 pb-3">
+            <SponsorBanner variant="card" />
+          </div>
           <div className="p-4 text-[11px] text-muted-foreground/70">
             Local-only · data stays in your browser
           </div>
