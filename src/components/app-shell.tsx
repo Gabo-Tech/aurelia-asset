@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { usePrivacy } from "@/lib/store";
+import { SponsorBanner } from "./sponsor-banner";
 
 const nav = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -81,6 +82,9 @@ export function AppShell({ children }: { children: ReactNode }) {
               );
             })}
           </nav>
+          <div className="px-3 pb-3">
+            <SponsorBanner variant="card" />
+          </div>
           <div className="p-4 text-[11px] text-muted-foreground/70">
             Local-only · data stays in your browser
           </div>
