@@ -189,7 +189,7 @@ function PerformancePage() {
           {metrics && (
             <div className="text-right">
               <div className="text-2xl font-semibold tabular-nums">
-                {maskUSD(metrics.last.total, privacy)}
+                {mask(metrics.last.total)}
               </div>
               <div
                 className={cn(
@@ -227,7 +227,7 @@ function PerformancePage() {
                   <YAxis
                     stroke="var(--muted-foreground)"
                     tick={{ fontSize: 11 }}
-                    tickFormatter={(v) => (privacy ? MASK : formatUSD(v as number, { compact: true }))}
+                    tickFormatter={(v) => (privacy ? MASK : formatMoney(v as number, currency, { compact: true }))}
                     width={70}
                   />
                   <Tooltip
@@ -237,7 +237,7 @@ function PerformancePage() {
                       borderRadius: 10,
                       fontSize: 12,
                     }}
-                    formatter={(value: number) => maskUSD(value, privacy)}
+                    formatter={(value: number) => mask(value)}
                   />
                   <Legend
                     wrapperStyle={{ fontSize: 11 }}
@@ -305,8 +305,8 @@ function PerformancePage() {
                         <span className="text-muted-foreground text-xs truncate">{h.name}</span>
                       </div>
                     </td>
-                    <td className="py-2.5 text-right tabular-nums">{maskUSD(start, privacy)}</td>
-                    <td className="py-2.5 text-right tabular-nums">{maskUSD(end, privacy)}</td>
+                    <td className="py-2.5 text-right tabular-nums">{mask(start)}</td>
+                    <td className="py-2.5 text-right tabular-nums">{mask(end)}</td>
                     <td
                       className={cn(
                         "py-2.5 text-right tabular-nums",
@@ -314,7 +314,7 @@ function PerformancePage() {
                       )}
                     >
                       {abs >= 0 ? "+" : "-"}
-                      {maskUSD(Math.abs(abs), privacy)}
+                      {mask(Math.abs(abs))}
                     </td>
                     <td
                       className={cn(
@@ -329,10 +329,10 @@ function PerformancePage() {
                 <tr className="font-semibold">
                   <td className="py-2.5">Total</td>
                   <td className="py-2.5 text-right tabular-nums">
-                    {maskUSD(metrics.first.total, privacy)}
+                    {mask(metrics.first.total)}
                   </td>
                   <td className="py-2.5 text-right tabular-nums">
-                    {maskUSD(metrics.last.total, privacy)}
+                    {mask(metrics.last.total)}
                   </td>
                   <td
                     className={cn(
@@ -342,7 +342,7 @@ function PerformancePage() {
                         : "text-destructive"
                     )}
                   >
-                    {maskUSD(metrics.last.total - metrics.first.total, privacy)}
+                    {mask(metrics.last.total - metrics.first.total)}
                   </td>
                   <td
                     className={cn(
