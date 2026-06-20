@@ -43,7 +43,7 @@ export type AppState = {
 export const DEFAULT_STATE: AppState = {
   holdings: [],
   cashflows: [],
-  settings: { useCorsProxy: false, corsProxy: "https://corsproxy.io/?" },
+  settings: { useCorsProxy: true, corsProxy: "https://corsproxy.io/?" },
 };
 
 export type SearchResult = {
