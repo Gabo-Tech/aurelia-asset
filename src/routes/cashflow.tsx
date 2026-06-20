@@ -132,7 +132,7 @@ function CashflowPage() {
                         borderRadius: 10,
                         fontSize: 12,
                       }}
-                      formatter={(value: number) => formatUSD(value)}
+                      formatter={(value: number) => maskUSD(value, privacy)}
                     />
                   </Sankey>
                 </ResponsiveContainer>
