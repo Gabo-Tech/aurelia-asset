@@ -20,6 +20,13 @@ export async function fetchCurrentPrice(h: Holding): Promise<number> {
       return h.currentPrice ?? 0;
     }
   }
+  // Custom holding (no market data) — use latest user-supplied history point
+  if (h.type === "other") {
+    const last = h.customHistory?.length
+      ? h.customHistory[h.customHistory.length - 1].p
+      : undefined;
+    return last ?? h.currentPrice ?? 0;
+  }
   try {
     const p = await getYahooQuote(h.symbol);
     if (p) return p;
