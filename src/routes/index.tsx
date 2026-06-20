@@ -118,7 +118,7 @@ function Dashboard() {
               }`}
             >
               {net30 >= 0 ? "+" : "-"}
-              {formatUSD(Math.abs(net30))}
+              {maskUSD(Math.abs(net30), privacy)}
             </div>
             <p className="mt-2 text-xs text-muted-foreground">Net income − expenses</p>
           </CardContent>
