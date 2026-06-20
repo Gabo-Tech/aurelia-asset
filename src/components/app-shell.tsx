@@ -94,6 +94,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             </div>
             <div className="font-semibold text-sm">Elegant Portfolio</div>
           </div>
+          <PrivacyToggle />
         </header>
 
         {/* Main */}
