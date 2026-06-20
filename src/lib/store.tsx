@@ -7,7 +7,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { AppState, DEFAULT_STATE, Holding, CashflowEntry, Settings } from "./types";
+import { AppState, DEFAULT_STATE, DEFAULT_CATEGORIES, Holding, CashflowEntry, Category, Settings } from "./types";
 import { getFxRates, convert, type FxRates } from "./finance/fx";
 import { formatMoney, maskMoney, MASK } from "./format";
 
@@ -22,6 +22,10 @@ function loadState(): AppState {
     return {
       ...DEFAULT_STATE,
       ...parsed,
+      categories:
+        Array.isArray(parsed.categories) && parsed.categories.length > 0
+          ? parsed.categories
+          : DEFAULT_CATEGORIES,
       settings: { ...DEFAULT_STATE.settings, ...(parsed.settings ?? {}) },
     };
   } catch {
@@ -37,6 +41,9 @@ type Ctx = {
   removeHolding: (id: string) => void;
   addCashflow: (c: Omit<CashflowEntry, "id">) => void;
   removeCashflow: (id: string) => void;
+  addCategory: (c: Omit<Category, "id">) => Category;
+  updateCategory: (id: string, patch: Partial<Category>) => void;
+  removeCategory: (id: string) => void;
   updateSettings: (patch: Partial<Settings>) => void;
   importState: (data: AppState) => void;
   reset: () => void;
@@ -83,6 +90,18 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         setState((s) => ({ ...s, cashflows: [...s.cashflows, { ...c, id: uid() }] })),
       removeCashflow: (id) =>
         setState((s) => ({ ...s, cashflows: s.cashflows.filter((c) => c.id !== id) })),
+      addCategory: (c) => {
+        const created: Category = { ...c, id: uid() };
+        setState((s) => ({ ...s, categories: [...s.categories, created] }));
+        return created;
+      },
+      updateCategory: (id, patch) =>
+        setState((s) => ({
+          ...s,
+          categories: s.categories.map((c) => (c.id === id ? { ...c, ...patch } : c)),
+        })),
+      removeCategory: (id) =>
+        setState((s) => ({ ...s, categories: s.categories.filter((c) => c.id !== id) })),
       updateSettings: (patch) =>
         setState((s) => ({ ...s, settings: { ...s.settings, ...patch } })),
       importState: (data) =>

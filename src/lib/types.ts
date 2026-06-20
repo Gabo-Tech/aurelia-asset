@@ -32,6 +32,22 @@ export type CashflowEntry = {
   date: string; // ISO
 };
 
+/**
+ * Categories classify cashflow entries. `kind` controls the cashflow direction
+ * (money in vs out), `group` controls coloring and intent (regular expense vs
+ * savings vs investment). Both income and expense entries pick a category of
+ * their kind.
+ */
+export type CategoryGroup = "income" | "expense" | "savings" | "investment";
+
+export type Category = {
+  id: string;
+  name: string;
+  kind: "income" | "expense";
+  group: CategoryGroup;
+  color: string;
+};
+
 export type Settings = {
   useCorsProxy: boolean;
   corsProxy: string;
@@ -44,12 +60,38 @@ export type Settings = {
 export type AppState = {
   holdings: Holding[];
   cashflows: CashflowEntry[];
+  categories: Category[];
   settings: Settings;
 };
+
+/** Default palette per category group. */
+export const GROUP_COLORS: Record<CategoryGroup, string> = {
+  income: "#22c55e",
+  expense: "#ef4444",
+  savings: "#0ea5e9",
+  investment: "#10b981",
+};
+
+export const DEFAULT_CATEGORIES: Category[] = [
+  // Income
+  { id: "cat-salary", name: "Salary", kind: "income", group: "income", color: "#22c55e" },
+  { id: "cat-freelance", name: "Freelance", kind: "income", group: "income", color: "#34d399" },
+  { id: "cat-dividends", name: "Dividends", kind: "income", group: "income", color: "#4ade80" },
+  { id: "cat-other-income", name: "Other Income", kind: "income", group: "income", color: "#86efac" },
+  // Expenses
+  { id: "cat-rent", name: "Rent", kind: "expense", group: "expense", color: "#ef4444" },
+  { id: "cat-food", name: "Food", kind: "expense", group: "expense", color: "#f97316" },
+  { id: "cat-transport", name: "Transport", kind: "expense", group: "expense", color: "#fb7185" },
+  { id: "cat-entertainment", name: "Entertainment", kind: "expense", group: "expense", color: "#f59e0b" },
+  // Savings / Investments (still outflows from the cash pool)
+  { id: "cat-savings", name: "Savings", kind: "expense", group: "savings", color: "#0ea5e9" },
+  { id: "cat-investments", name: "Investments", kind: "expense", group: "investment", color: "#10b981" },
+];
 
 export const DEFAULT_STATE: AppState = {
   holdings: [],
   cashflows: [],
+  categories: DEFAULT_CATEGORIES,
   settings: {
     useCorsProxy: true,
     corsProxy: "https://corsproxy.io/?",
@@ -57,6 +99,7 @@ export const DEFAULT_STATE: AppState = {
     displayCurrency: "USD",
   },
 };
+
 
 export type SearchResult = {
   symbol: string;
