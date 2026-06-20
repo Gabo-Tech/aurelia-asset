@@ -54,7 +54,8 @@ function parseCsvHistory(text: string): CustomPricePoint[] {
 }
 
 export function HoldingDialog({ open, onOpenChange, editing }: Props) {
-  const { addHolding, updateHolding } = useStore();
+  const { addHolding, updateHolding, state } = useStore();
+  const defaultCurrency = state.settings.displayCurrency || "USD";
   const [mode, setMode] = useState<Mode>("stock");
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
@@ -63,9 +64,7 @@ export function HoldingDialog({ open, onOpenChange, editing }: Props) {
   const [quantity, setQuantity] = useState("");
   const [color, setColor] = useState(PALETTE[0]);
   const [manualPrice, setManualPrice] = useState("");
-  const [currency, setCurrency] = useState(
-    () => (useStoreSafe()?.settings.displayCurrency || "USD"),
-  );
+  const [currency, setCurrency] = useState(defaultCurrency);
   const [saving, setSaving] = useState(false);
 
   // Custom holding fields
