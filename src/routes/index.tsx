@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { formatPct } from "@/lib/format";
 import { ArrowUpRight, Wallet, TrendingUp, TrendingDown, PiggyBank } from "lucide-react";
 import { PageHeader } from "@/components/app-shell";
+import { ChartFrame } from "@/components/chart-frame";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -215,7 +216,7 @@ function Dashboard() {
           </CardHeader>
           <CardContent>
             {visibleAllocation.length === 0 ? (
-              <div className="flex h-96 flex-col items-center justify-center text-center text-sm text-muted-foreground">
+              <div className="flex h-80 flex-col items-center justify-center text-center text-sm text-muted-foreground sm:h-96">
                 <p>All assets are hidden.</p>
                 <button
                   type="button"
@@ -226,45 +227,47 @@ function Dashboard() {
                 </button>
               </div>
             ) : (
-              <div className="h-96 [&_svg]:overflow-visible">
-                <ResponsiveContainer width="100%" height="100%">
-                <PieChart margin={{ top: 32, right: 120, bottom: 32, left: 120 }}>
-                  <Pie
-                    data={visibleAllocation}
-                    dataKey="value"
-                    nameKey="name"
-                    innerRadius={0}
-                    outerRadius={120}
-                    paddingAngle={0}
-                    stroke="var(--foreground)"
-                    strokeOpacity={0.3}
-                    strokeWidth={1.5}
-                    isAnimationActive={false}
-                    activeIndex={
-                      showAllLabels
-                        ? visibleAllocation.map((_, i) => i)
-                        : activeIdx != null
-                          ? [activeIdx]
-                          : undefined
-                    }
-                    activeShape={(props: unknown) => (
-                      <LabelledSector
-                        {...(props as AllocShapeProps)}
-                        privacy={privacy}
-                        total={visibleTotal}
-                        compact={showAllLabels}
-                      />
-                    )}
-                    onMouseEnter={(_, i) => setActiveIdx(i)}
-                    onMouseLeave={() => setActiveIdx(null)}
-                  >
-                    {visibleAllocation.map((a) => (
-                      <Cell key={a.id} fill={a.color} />
-                    ))}
-                  </Pie>
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
+              <ChartFrame filename="allocation" title="Allocation">
+                <div className="h-80 sm:h-96 [&_svg]:overflow-visible">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart margin={{ top: 28, right: 60, bottom: 28, left: 60 }}>
+                      <Pie
+                        data={visibleAllocation}
+                        dataKey="value"
+                        nameKey="name"
+                        innerRadius={0}
+                        outerRadius="78%"
+                        paddingAngle={0}
+                        stroke="var(--foreground)"
+                        strokeOpacity={0.3}
+                        strokeWidth={1.5}
+                        isAnimationActive={false}
+                        activeIndex={
+                          showAllLabels
+                            ? visibleAllocation.map((_, i) => i)
+                            : activeIdx != null
+                              ? [activeIdx]
+                              : undefined
+                        }
+                        activeShape={(props: unknown) => (
+                          <LabelledSector
+                            {...(props as AllocShapeProps)}
+                            privacy={privacy}
+                            total={visibleTotal}
+                            compact={showAllLabels}
+                          />
+                        )}
+                        onMouseEnter={(_, i) => setActiveIdx(i)}
+                        onMouseLeave={() => setActiveIdx(null)}
+                      >
+                        {visibleAllocation.map((a) => (
+                          <Cell key={a.id} fill={a.color} />
+                        ))}
+                      </Pie>
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              </ChartFrame>
             )}
           </CardContent>
         </Card>

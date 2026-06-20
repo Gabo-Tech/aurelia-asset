@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { PageHeader } from "@/components/app-shell";
+import { ChartFrame } from "@/components/chart-frame";
 import { CURRENCIES } from "@/lib/currency";
 import { Trash2, Plus } from "lucide-react";
 import { toast } from "sonner";
@@ -126,33 +127,35 @@ function CashflowPage() {
             <CardTitle>Flow</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-80">
-              {sankey ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <Sankey
-                    data={sankey}
-                    nodePadding={20}
-                    margin={{ top: 10, left: 10, right: 10, bottom: 10 }}
-                    link={{ stroke: "var(--muted-foreground)", strokeOpacity: 0.15 }}
-                    node={<SankeyNode />}
-                  >
-                    <Tooltip
-                      contentStyle={{
-                        background: "var(--popover)",
-                        border: "1px solid var(--border)",
-                        borderRadius: 10,
-                        fontSize: 12,
-                      }}
-                      formatter={(value: number) => mask(value)}
-                    />
-                  </Sankey>
-                </ResponsiveContainer>
-              ) : (
-                <div className="grid h-full place-items-center text-sm text-muted-foreground">
-                  Add some income and expenses to see the flow.
-                </div>
-              )}
-            </div>
+            <ChartFrame filename="cashflow" title="Cashflow">
+              <div className="h-72 sm:h-80">
+                {sankey ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <Sankey
+                      data={sankey}
+                      nodePadding={20}
+                      margin={{ top: 10, left: 10, right: 10, bottom: 10 }}
+                      link={{ stroke: "var(--muted-foreground)", strokeOpacity: 0.15 }}
+                      node={<SankeyNode />}
+                    >
+                      <Tooltip
+                        contentStyle={{
+                          background: "var(--popover)",
+                          border: "1px solid var(--border)",
+                          borderRadius: 10,
+                          fontSize: 12,
+                        }}
+                        formatter={(value: number) => mask(value)}
+                      />
+                    </Sankey>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="grid h-full place-items-center text-sm text-muted-foreground">
+                    Add some income and expenses to see the flow.
+                  </div>
+                )}
+              </div>
+            </ChartFrame>
           </CardContent>
         </Card>
       </div>
