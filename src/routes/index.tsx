@@ -26,6 +26,7 @@ export const Route = createFileRoute("/")({
 
 function Dashboard() {
   const { state } = useStore();
+  const { privacy } = usePrivacy();
   const { holdings, cashflows } = state;
 
   const total = useMemo(
