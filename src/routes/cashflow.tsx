@@ -200,7 +200,12 @@ function CashflowPage() {
                           {c.kind === "income" ? c.source : c.category}
                         </td>
                         <td className="py-2.5 text-right tabular-nums font-medium">
-                          {mask(c.amount)}
+                          {mask(c.amount, c.currency)}
+                          {c.currency && c.currency !== currency && (
+                            <span className="ml-1.5 text-[10px] uppercase text-muted-foreground">
+                              {c.currency}
+                            </span>
+                          )}
                         </td>
                         <td className="py-2.5 text-right">
                           <Button
