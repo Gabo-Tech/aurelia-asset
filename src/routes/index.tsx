@@ -73,6 +73,11 @@ function Dashboard() {
 
   const showAll = () => setHidden(new Set());
   const hideAll = () => setHidden(new Set(allocation.map((a) => a.id)));
+  const labelledIndexes = showAllLabels
+    ? visibleAllocation.map((_, i) => i)
+    : activeIdx != null
+      ? [activeIdx]
+      : [];
 
   const net30 = useMemo(() => {
     const cutoff = Date.now() - 30 * 86400000;
@@ -228,7 +233,10 @@ function Dashboard() {
               </div>
             ) : (
               <ChartFrame filename="allocation" title="Allocation">
-                <div className="flex h-80 items-center justify-center sm:h-96 [&_svg]:overflow-visible">
+                <div
+                  className="flex h-80 items-center justify-center sm:h-96 [&_svg]:overflow-visible"
+                  onMouseLeave={() => setActiveIdx(null)}
+                >
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart margin={{ top: 28, right: 60, bottom: 28, left: 60 }}>
                       <Pie
@@ -242,21 +250,19 @@ function Dashboard() {
                         strokeOpacity={0.3}
                         strokeWidth={1.5}
                         isAnimationActive={false}
-                        activeIndex={
-                          showAllLabels
-                            ? visibleAllocation.map((_, i) => i)
-                            : activeIdx != null
-                              ? [activeIdx]
-                              : []
+                        activeIndex={labelledIndexes}
+                        activeShape={
+                          labelledIndexes.length > 0
+                            ? (props: unknown) => (
+                                <LabelledSector
+                                  {...(props as AllocShapeProps)}
+                                  privacy={privacy}
+                                  total={visibleTotal}
+                                  compact={showAllLabels}
+                                />
+                              )
+                            : undefined
                         }
-                        activeShape={(props: unknown) => (
-                          <LabelledSector
-                            {...(props as AllocShapeProps)}
-                            privacy={privacy}
-                            total={visibleTotal}
-                            compact={showAllLabels}
-                          />
-                        )}
                         onMouseEnter={(_, i) => setActiveIdx(i)}
                         onMouseLeave={() => setActiveIdx(null)}
                       >
