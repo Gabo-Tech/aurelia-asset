@@ -62,9 +62,9 @@ function loadPrefs(): Prefs {
 
 
 function CashflowPage() {
-  const { state, addCashflow, removeCashflow } = useStore();
+  const { state, addCashflow, removeCashflow, addCategory, updateCategory, removeCategory } = useStore();
   const { mask, toDisplay, currency } = useMoney();
-  const { cashflows } = state;
+  const { cashflows, categories } = state;
 
   const [prefs, setPrefs] = useState<Prefs>(() => loadPrefs());
   useEffect(() => {
@@ -72,6 +72,16 @@ function CashflowPage() {
       window.localStorage.setItem(PREF_KEY, JSON.stringify(prefs));
     } catch {}
   }, [prefs]);
+
+  // Resolve the color/group for a given category name.
+  const catByName = useMemo(() => {
+    const m = new Map<string, Category>();
+    for (const c of categories) m.set(c.name, c);
+    return m;
+  }, [categories]);
+
+  const colorFor = (name: string, fallbackGroup: CategoryGroup) =>
+    prefs.nodeColors[name] ?? catByName.get(name)?.color ?? GROUP_COLORS[fallbackGroup];
 
   const totals = useMemo(() => {
     let income = 0;
@@ -90,7 +100,7 @@ function CashflowPage() {
     const expenses = cashflows.filter((c) => c.kind === "expense");
 
     const sources = Array.from(new Set(incomes.map((i) => i.source || "Other")));
-    const categories = Array.from(new Set(expenses.map((e) => e.category || "Other")));
+    const cats = Array.from(new Set(expenses.map((e) => e.category || "Other")));
     const POOL = "Cash Pool";
     const SAVED = "Saved";
 
@@ -101,21 +111,15 @@ function CashflowPage() {
     type NodeMeta = { name: string; kind: "income" | "pool" | "expense" | "saved"; fill: string };
     const nodes: NodeMeta[] = [];
 
-    sources.forEach((s, i) =>
-      nodes.push({
-        name: s,
-        kind: "income",
-        fill: prefs.nodeColors[s] ?? DEFAULT_INCOME_COLORS[i % DEFAULT_INCOME_COLORS.length],
-      }),
+    sources.forEach((s) =>
+      nodes.push({ name: s, kind: "income", fill: colorFor(s, "income") }),
     );
     nodes.push({ name: POOL, kind: "pool", fill: prefs.nodeColors[POOL] ?? POOL_COLOR });
-    categories.forEach((c, i) =>
-      nodes.push({
-        name: c,
-        kind: "expense",
-        fill: prefs.nodeColors[c] ?? DEFAULT_EXPENSE_COLORS[i % DEFAULT_EXPENSE_COLORS.length],
-      }),
-    );
+    cats.forEach((c) => {
+      const meta = catByName.get(c);
+      const group: CategoryGroup = meta?.group ?? "expense";
+      nodes.push({ name: c, kind: "expense", fill: colorFor(c, group) });
+    });
     if (saved > 0) {
       nodes.push({ name: SAVED, kind: "saved", fill: prefs.nodeColors[SAVED] ?? SAVED_COLOR });
     }
@@ -129,7 +133,7 @@ function CashflowPage() {
         .reduce((a, b) => a + toDisplay(b.amount, b.currency), 0);
       if (sum > 0) links.push({ source: idx(s), target: idx(POOL), value: sum });
     }
-    for (const c of categories) {
+    for (const c of cats) {
       const sum = expenses
         .filter((e) => (e.category || "Other") === c)
         .reduce((a, b) => a + toDisplay(b.amount, b.currency), 0);
@@ -139,7 +143,8 @@ function CashflowPage() {
 
     if (!links.length) return null;
     return { nodes, links };
-  }, [cashflows, toDisplay, prefs.nodeColors]);
+  }, [cashflows, toDisplay, prefs.nodeColors, catByName]);
+
 
   // Unique node names for the color customizer.
   const colorableNodes = useMemo(() => {
