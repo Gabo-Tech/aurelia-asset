@@ -213,7 +213,7 @@ function HoldingsPage() {
                         </span>
                       </TableCell>
                       <TableCell className="text-right tabular-nums">
-                        {formatNumber(h.quantity, 6)}
+                        {maskNumber(h.quantity, privacy, 6)}
                       </TableCell>
                       <TableCell className="text-right tabular-nums">
                         {formatUSD(h.currentPrice)}
@@ -222,7 +222,7 @@ function HoldingsPage() {
                         )}
                       </TableCell>
                       <TableCell className="text-right tabular-nums font-medium">
-                        {formatUSD(h.marketValue)}
+                        {maskUSD(h.marketValue, privacy)}
                       </TableCell>
                       <TableCell className="text-right tabular-nums text-muted-foreground">
                         {h.pct.toFixed(2)}%
