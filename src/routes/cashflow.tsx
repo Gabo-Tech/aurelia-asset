@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Sankey, Tooltip, ResponsiveContainer, Layer, Rectangle } from "recharts";
+import { SankeyChart } from "@/components/sankey-chart";
 import { useStore, useMoney } from "@/lib/store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -192,40 +192,21 @@ function CashflowPage() {
                 />
               }
             >
-              <div className="flex h-80 items-center justify-center sm:h-96">
+              <div className="min-h-80 sm:min-h-96">
                 {sankey ? (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <Sankey
-                      data={sankey}
-                      nodePadding={24}
-                      nodeWidth={14}
-                      iterations={64}
-                      margin={{ top: 16, left: 16, right: 140, bottom: 16 }}
-                      link={<SankeyLink nodes={sankey.nodes} />}
-                      node={
-                        <SankeyNode
-                          labelMode={prefs.labelMode}
-                          format={(v: number) => mask(v)}
-                        />
-                      }
-                    >
-                      <Tooltip
-                        contentStyle={{
-                          background: "var(--popover)",
-                          border: "1px solid var(--border)",
-                          borderRadius: 10,
-                          fontSize: 12,
-                        }}
-                        formatter={(value: number) => mask(value)}
-                      />
-                    </Sankey>
-                  </ResponsiveContainer>
+                  <SankeyChart
+                    data={sankey}
+                    height={420}
+                    labelMode={prefs.labelMode}
+                    format={(v: number) => mask(v)}
+                  />
                 ) : (
-                  <div className="grid h-full place-items-center text-sm text-muted-foreground">
+                  <div className="grid h-80 place-items-center text-sm text-muted-foreground">
                     Add some income and expenses to see the flow.
                   </div>
                 )}
               </div>
+
             </ChartFrame>
           </CardContent>
         </Card>
@@ -527,105 +508,3 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-/**
- * Custom Sankey node: rounded block with name + value label.
- * Label visibility honors the user-selected mode (always / hover / off).
- */
-function SankeyNode(props: any) {
-  const {
-    x,
-    y,
-    width,
-    height,
-    index,
-    payload,
-    containerWidth,
-    labelMode,
-    format,
-  }: {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-    index: number;
-    payload: { name: string; value: number; fill: string };
-    containerWidth: number;
-    labelMode: LabelMode;
-    format: (v: number) => string;
-  } = props;
-
-  const isOut = x + width + 6 > containerWidth - 20;
-  const showLabel = labelMode === "always" || labelMode === "hover";
-  const labelClass =
-    labelMode === "hover"
-      ? "opacity-0 transition-opacity duration-150 [g:hover>&]:opacity-100"
-      : "";
-
-  return (
-    <Layer key={`node-${index}`} className="group">
-      <Rectangle
-        x={x}
-        y={y}
-        width={width}
-        height={height}
-        fill={payload.fill}
-        fillOpacity={0.95}
-        radius={[3, 3, 3, 3] as any}
-      />
-      {showLabel && (
-        <g className={labelClass}>
-          <text
-            textAnchor={isOut ? "end" : "start"}
-            x={isOut ? x - 8 : x + width + 8}
-            y={y + height / 2 - 6}
-            fontSize="12"
-            fontWeight={600}
-            fill="var(--foreground)"
-          >
-            {payload.name}
-          </text>
-          <text
-            textAnchor={isOut ? "end" : "start"}
-            x={isOut ? x - 8 : x + width + 8}
-            y={y + height / 2 + 9}
-            fontSize="11"
-            fill="var(--muted-foreground)"
-          >
-            {format(payload.value)}
-          </text>
-        </g>
-      )}
-    </Layer>
-  );
-}
-
-/**
- * Colored, translucent ribbon — same hue as the source node so flows
- * read like the Microsoft-style example.
- */
-function SankeyLink(props: any) {
-  const {
-    sourceX,
-    targetX,
-    sourceY,
-    targetY,
-    sourceControlX,
-    targetControlX,
-    linkWidth,
-    nodes,
-    payload,
-  } = props;
-
-  const sourceIdx = typeof payload?.source === "object" ? payload.source.index : payload?.source;
-  const fill = nodes?.[sourceIdx]?.fill ?? "var(--muted-foreground)";
-
-  const d = `
-    M${sourceX},${sourceY}
-    C${sourceControlX},${sourceY} ${targetControlX},${targetY} ${targetX},${targetY}
-    L${targetX},${targetY + linkWidth}
-    C${targetControlX},${targetY + linkWidth} ${sourceControlX},${sourceY + linkWidth} ${sourceX},${sourceY + linkWidth}
-    Z
-  `;
-
-  return <path d={d} fill={fill} fillOpacity={0.28} stroke="none" />;
-}
