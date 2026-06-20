@@ -146,7 +146,7 @@ function Dashboard() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="h-96">
+            <div className="h-96 [&_svg]:overflow-visible">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart margin={{ top: 32, right: 120, bottom: 32, left: 120 }}>
                   <Pie
