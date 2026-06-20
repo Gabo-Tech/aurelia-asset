@@ -11,8 +11,9 @@ import {
   EyeOff,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { usePrivacy } from "@/lib/store";
+import { usePrivacy, useStore, useFxReady } from "@/lib/store";
 import { SponsorBanner } from "./sponsor-banner";
+import { PageLoader } from "./page-loader";
 
 const nav = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
