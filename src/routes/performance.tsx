@@ -256,10 +256,10 @@ function PerformancePage() {
                 <tr className="font-semibold">
                   <td className="py-2.5">Total</td>
                   <td className="py-2.5 text-right tabular-nums">
-                    {formatUSD(metrics.first.total)}
+                    {maskUSD(metrics.first.total, privacy)}
                   </td>
                   <td className="py-2.5 text-right tabular-nums">
-                    {formatUSD(metrics.last.total)}
+                    {maskUSD(metrics.last.total, privacy)}
                   </td>
                   <td
                     className={cn(
@@ -269,7 +269,7 @@ function PerformancePage() {
                         : "text-destructive"
                     )}
                   >
-                    {formatUSD(metrics.last.total - metrics.first.total)}
+                    {maskUSD(metrics.last.total - metrics.first.total, privacy)}
                   </td>
                   <td
                     className={cn(
