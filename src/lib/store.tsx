@@ -114,7 +114,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         })),
       reset: () => setState(() => DEFAULT_STATE),
     };
-  }, [state]);
+  }, [state, hydrated]);
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
 }
