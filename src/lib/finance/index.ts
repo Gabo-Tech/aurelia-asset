@@ -60,6 +60,14 @@ export async function fetchHistorical(h: Holding, period: PeriodId): Promise<Pri
       return [];
     }
   }
+  if (h.type === "other") {
+    const hist = h.customHistory ?? [];
+    if (!hist.length) return [];
+    const cutoff = period === "Max" ? 0 : Date.now() - p.days * 86400000;
+    return hist
+      .filter((x) => x.t >= cutoff)
+      .map((x) => ({ date: new Date(x.t), price: x.p }));
+  }
   try {
     const data = await getYahooHistory(h.symbol, p.yhRange);
     if (data.length) return data;
