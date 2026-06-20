@@ -28,7 +28,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Plus, MoreVertical, RefreshCw, ArrowUpDown, Trash2, Pencil, Loader2 } from "lucide-react";
 import { PageHeader } from "@/components/app-shell";
 import { HoldingDialog } from "@/components/holding-dialog";
-import { formatNumber, formatPct, formatMoney, maskNumber } from "@/lib/format";
+import { formatNumber, formatPct, formatMoney, maskNumber, maskMoney } from "@/lib/format";
 import { fetchCurrentQuote } from "@/lib/finance";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -48,7 +48,7 @@ type SortKey = "symbol" | "type" | "quantity" | "currentPrice" | "marketValue" |
 
 function HoldingsPage() {
   const { state, removeHolding, updateHolding } = useStore();
-  const { mask, toDisplay, privacy } = useMoney();
+  const { mask, toDisplay, privacy, currency } = useMoney();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Holding | null>(null);
   const [search, setSearch] = useState("");
@@ -136,7 +136,7 @@ function HoldingsPage() {
     <>
       <PageHeader
         title="Holdings"
-        description={`${state.holdings.length} positions · ${mask(total)}`}
+        description={`${state.holdings.length} positions · ${maskMoney(total, currency, privacy)}`}
         actions={
           <>
             <Button variant="outline" onClick={refreshPrices} disabled={refreshing}>
@@ -234,7 +234,7 @@ function HoldingsPage() {
                         )}
                       </TableCell>
                       <TableCell className="text-right tabular-nums font-medium">
-                        {mask(h.marketValue)}
+                        {maskMoney(h.marketValue, currency, privacy)}
                       </TableCell>
                       <TableCell className="text-right tabular-nums text-muted-foreground">
                         {h.pct.toFixed(2)}%
