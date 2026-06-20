@@ -37,6 +37,14 @@ function PerformancePage() {
   const { currency, rates, mask, privacy } = useMoney();
   const [period, setPeriod] = useState<PeriodId>("1M");
   const [hidden, setHidden] = useState<Set<string>>(new Set());
+  const [hideTotal, setHideTotal] = useState(false);
+
+  const yDomain = useMemo<[number | string, number | string]>(() => {
+    return [
+      (dataMin: number) => (dataMin > 0 ? dataMin * 0.95 : dataMin * 1.05),
+      (dataMax: number) => (dataMax > 0 ? dataMax * 1.05 : dataMax * 0.95),
+    ] as unknown as [number, number];
+  }, []);
 
   // Per-holding FX multiplier from its native priceCurrency -> display currency.
   const fxByHolding = useMemo(() => {
