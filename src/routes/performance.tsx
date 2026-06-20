@@ -309,6 +309,7 @@ function PerformancePage() {
                     dot={false}
                     hide={hideTotal}
                     isAnimationActive
+                    style={{ filter: "drop-shadow(0 0 1.5px var(--background)) drop-shadow(0 0 0.5px var(--foreground))" }}
                   />
                   {state.holdings.map((h) => (
                     <Line
@@ -316,10 +317,10 @@ function PerformancePage() {
                       type="monotone"
                       dataKey={h.symbol}
                       stroke={h.color}
-                      strokeWidth={1.3}
+                      strokeWidth={1.75}
                       dot={false}
                       hide={hidden.has(h.symbol)}
-                      opacity={0.85}
+                      style={{ filter: "drop-shadow(0 0 1.5px var(--background)) drop-shadow(0 0 0.5px var(--foreground))" }}
                     />
                   ))}
                 </LineChart>
