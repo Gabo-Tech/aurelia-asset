@@ -90,6 +90,18 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         setState((s) => ({ ...s, cashflows: [...s.cashflows, { ...c, id: uid() }] })),
       removeCashflow: (id) =>
         setState((s) => ({ ...s, cashflows: s.cashflows.filter((c) => c.id !== id) })),
+      addCategory: (c) => {
+        const created: Category = { ...c, id: uid() };
+        setState((s) => ({ ...s, categories: [...s.categories, created] }));
+        return created;
+      },
+      updateCategory: (id, patch) =>
+        setState((s) => ({
+          ...s,
+          categories: s.categories.map((c) => (c.id === id ? { ...c, ...patch } : c)),
+        })),
+      removeCategory: (id) =>
+        setState((s) => ({ ...s, categories: s.categories.filter((c) => c.id !== id) })),
       updateSettings: (patch) =>
         setState((s) => ({ ...s, settings: { ...s.settings, ...patch } })),
       importState: (data) =>
