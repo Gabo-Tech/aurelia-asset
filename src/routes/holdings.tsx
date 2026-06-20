@@ -234,7 +234,7 @@ function HoldingsPage() {
                         )}
                       </TableCell>
                       <TableCell className="text-right tabular-nums font-medium">
-                        {mask(h.marketValue)}
+                        {maskMoney(h.marketValue, currency, privacy)}
                       </TableCell>
                       <TableCell className="text-right tabular-nums text-muted-foreground">
                         {h.pct.toFixed(2)}%
