@@ -1,4 +1,4 @@
-import { fetchJson, proxied } from "./client";
+import { fetchJsonWithFallback } from "./client";
 import { getCache, setCache } from "./cache";
 import type { AssetType, PricePoint, SearchResult } from "../types";
 
