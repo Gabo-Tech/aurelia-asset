@@ -16,7 +16,6 @@ import { useStore, usePrivacy } from "@/lib/store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/app-shell";
 import { fetchPortfolioHistory, PERIODS, type PeriodId } from "@/lib/finance";
 import { formatPct, formatUSD, maskUSD, MASK } from "@/lib/format";
