@@ -8,23 +8,25 @@ import { cn } from "@/lib/utils";
 type Props = {
   children: ReactNode;
   filename?: string;
+  title?: string;
   className?: string;
   /** Extra controls rendered to the left of the screenshot/fullscreen buttons. */
   extras?: ReactNode;
 };
 
 /**
- * Wraps any chart with a Fullscreen + Screenshot toolbar.
- * In fullscreen mode the chart is rendered into a portal that covers the viewport,
- * so it works on mobile (no native fullscreen API needed).
+ * Wraps a chart with a Fullscreen + Screenshot toolbar. In fullscreen mode
+ * the chart is moved into a portal that covers the viewport (works on mobile
+ * — no native fullscreen API required). Children only mount in one place at
+ * a time, so chart state isn't duplicated.
  */
-export function ChartFrame({ children, filename = "chart", className, extras }: Props) {
-  const captureRef = useRef<HTMLDivElement>(null);
-  const fullCaptureRef = useRef<HTMLDivElement>(null);
+export function ChartFrame({ children, filename = "chart", title, className, extras }: Props) {
+  const inlineRef = useRef<HTMLDivElement>(null);
+  const fullRef = useRef<HTMLDivElement>(null);
   const [full, setFull] = useState(false);
   const [shooting, setShooting] = useState(false);
 
-  // Lock body scroll while fullscreen
+  // Lock body scroll while fullscreen, support ESC to close.
   useEffect(() => {
     if (!full) return;
     const prev = document.body.style.overflow;
@@ -38,17 +40,16 @@ export function ChartFrame({ children, filename = "chart", className, extras }: 
   }, [full]);
 
   async function screenshot() {
-    const node = full ? fullCaptureRef.current : captureRef.current;
+    const node = full ? fullRef.current : inlineRef.current;
     if (!node) return;
     setShooting(true);
     try {
-      const bg = getComputedStyle(document.documentElement).getPropertyValue("--card") ||
-        getComputedStyle(document.body).backgroundColor;
+      // Use the current card background for a clean export.
+      const bg = getComputedStyle(document.body).backgroundColor || "#ffffff";
       const dataUrl = await toPng(node, {
         pixelRatio: 2,
         cacheBust: true,
-        backgroundColor: bg.trim() || undefined,
-        style: { padding: "16px" },
+        backgroundColor: bg,
       });
       const a = document.createElement("a");
       a.href = dataUrl;
@@ -63,36 +64,43 @@ export function ChartFrame({ children, filename = "chart", className, extras }: 
     }
   }
 
-  const Toolbar = (
-    <div className="flex items-center gap-1.5">
-      {extras}
-      <button
-        type="button"
-        onClick={screenshot}
-        disabled={shooting}
-        title="Save as PNG"
-        aria-label="Save chart as PNG"
-        className="grid h-8 w-8 place-items-center rounded-md border border-border/60 bg-card text-muted-foreground hover:text-foreground hover:bg-accent transition-colors disabled:opacity-50"
-      >
-        <Camera className="h-4 w-4" />
-      </button>
-      <button
-        type="button"
-        onClick={() => setFull((f) => !f)}
-        title={full ? "Exit fullscreen" : "Fullscreen"}
-        aria-label={full ? "Exit fullscreen" : "Fullscreen"}
-        className="grid h-8 w-8 place-items-center rounded-md border border-border/60 bg-card text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-      >
-        {full ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
-      </button>
-    </div>
+  const ToolButton = ({
+    onClick,
+    icon: Icon,
+    label,
+    disabled,
+  }: {
+    onClick: () => void;
+    icon: typeof Camera;
+    label: string;
+    disabled?: boolean;
+  }) => (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      title={label}
+      aria-label={label}
+      className="grid h-8 w-8 place-items-center rounded-md border border-border/60 bg-card text-muted-foreground hover:text-foreground hover:bg-accent transition-colors disabled:opacity-50"
+    >
+      <Icon className="h-4 w-4" />
+    </button>
   );
 
   return (
     <>
       <div className={cn("relative", className)}>
-        <div className="absolute right-0 -top-12 sm:-top-11 z-10">{Toolbar}</div>
-        <div ref={captureRef}>{children}</div>
+        <div className="mb-2 flex items-center justify-end gap-1.5">
+          {extras}
+          <ToolButton onClick={screenshot} icon={Camera} label="Save as PNG" disabled={shooting} />
+          <ToolButton onClick={() => setFull(true)} icon={Maximize2} label="Fullscreen" />
+        </div>
+        {!full && <div ref={inlineRef}>{children}</div>}
+        {full && (
+          <div className="grid h-96 place-items-center text-xs text-muted-foreground">
+            Chart is open in fullscreen
+          </div>
+        )}
       </div>
 
       {full &&
@@ -100,34 +108,15 @@ export function ChartFrame({ children, filename = "chart", className, extras }: 
         createPortal(
           <div className="fixed inset-0 z-[100] flex flex-col bg-background">
             <div className="flex items-center justify-between gap-2 border-b border-border/60 px-3 py-2.5 sm:px-5">
-              <div className="text-sm font-medium truncate">{filename}</div>
+              <div className="truncate text-sm font-medium">{title ?? filename}</div>
               <div className="flex items-center gap-1.5">
                 {extras}
-                <button
-                  type="button"
-                  onClick={screenshot}
-                  disabled={shooting}
-                  title="Save as PNG"
-                  aria-label="Save chart as PNG"
-                  className="grid h-9 w-9 place-items-center rounded-md border border-border/60 bg-card text-muted-foreground hover:text-foreground hover:bg-accent transition-colors disabled:opacity-50"
-                >
-                  <Camera className="h-4 w-4" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setFull(false)}
-                  title="Close"
-                  aria-label="Close fullscreen"
-                  className="grid h-9 w-9 place-items-center rounded-md border border-border/60 bg-card text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-                >
-                  <X className="h-4 w-4" />
-                </button>
+                <ToolButton onClick={screenshot} icon={Camera} label="Save as PNG" disabled={shooting} />
+                <ToolButton onClick={() => setFull(false)} icon={X} label="Close fullscreen" />
+                <ToolButton onClick={() => setFull(false)} icon={Minimize2} label="Exit fullscreen" />
               </div>
             </div>
-            <div
-              ref={fullCaptureRef}
-              className="flex-1 min-h-0 p-3 sm:p-6 bg-background"
-            >
+            <div ref={fullRef} className="min-h-0 flex-1 bg-background p-3 sm:p-6">
               <div className="h-full w-full">{children}</div>
             </div>
           </div>,
