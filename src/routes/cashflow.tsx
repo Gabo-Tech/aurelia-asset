@@ -1,14 +1,21 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { Sankey, Tooltip, ResponsiveContainer, Layer, Rectangle } from "recharts";
-import { useStore, usePrivacy } from "@/lib/store";
+import { useStore, useMoney } from "@/lib/store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { PageHeader } from "@/components/app-shell";
-import { maskUSD } from "@/lib/format";
+import { CURRENCIES } from "@/lib/currency";
 import { Trash2, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -38,14 +45,19 @@ const PALETTE = [
 
 function CashflowPage() {
   const { state, addCashflow, removeCashflow } = useStore();
-  const { privacy } = usePrivacy();
+  const { mask, toDisplay, currency } = useMoney();
   const { cashflows } = state;
 
   const totals = useMemo(() => {
-    const income = cashflows.filter((c) => c.kind === "income").reduce((s, c) => s + c.amount, 0);
-    const expense = cashflows.filter((c) => c.kind === "expense").reduce((s, c) => s + c.amount, 0);
+    let income = 0;
+    let expense = 0;
+    for (const c of cashflows) {
+      const v = toDisplay(c.amount, c.currency);
+      if (c.kind === "income") income += v;
+      else expense += v;
+    }
     return { income, expense, net: income - expense };
-  }, [cashflows]);
+  }, [cashflows, toDisplay]);
 
   const sankey = useMemo(() => {
     if (!cashflows.length) return null;
@@ -57,26 +69,24 @@ function CashflowPage() {
     const pool = "Cash Pool";
     const savings = "Saved";
 
-    const totalIn = incomes.reduce((s, c) => s + c.amount, 0);
-    const totalOut = expenses.reduce((s, c) => s + c.amount, 0);
+    const totalIn = incomes.reduce((s, c) => s + toDisplay(c.amount, c.currency), 0);
+    const totalOut = expenses.reduce((s, c) => s + toDisplay(c.amount, c.currency), 0);
     const saved = Math.max(0, totalIn - totalOut);
 
     const nodeNames = [...sources, pool, ...categories, ...(saved > 0 ? [savings] : [])];
     const idxOf = (name: string) => nodeNames.indexOf(name);
     const links: { source: number; target: number; value: number }[] = [];
 
-    // Sources -> pool
     for (const s of sources) {
       const sum = incomes
         .filter((i) => `Src: ${i.source || "Other"}` === s)
-        .reduce((a, b) => a + b.amount, 0);
+        .reduce((a, b) => a + toDisplay(b.amount, b.currency), 0);
       if (sum > 0) links.push({ source: idxOf(s), target: idxOf(pool), value: sum });
     }
-    // Pool -> categories
     for (const c of categories) {
       const sum = expenses
         .filter((e) => `Cat: ${e.category || "Other"}` === c)
-        .reduce((a, b) => a + b.amount, 0);
+        .reduce((a, b) => a + toDisplay(b.amount, b.currency), 0);
       if (sum > 0) links.push({ source: idxOf(pool), target: idxOf(c), value: sum });
     }
     if (saved > 0) links.push({ source: idxOf(pool), target: idxOf(savings), value: saved });
@@ -86,7 +96,7 @@ function CashflowPage() {
       nodes: nodeNames.map((n, i) => ({ name: n, fill: PALETTE[i % PALETTE.length] })),
       links,
     };
-  }, [cashflows]);
+  }, [cashflows, toDisplay]);
 
   return (
     <>
