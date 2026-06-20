@@ -12,8 +12,16 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { PALETTE, type CustomPricePoint, type Holding, type SearchResult } from "@/lib/types";
-import { searchAssets, fetchCurrentPrice } from "@/lib/finance";
+import { CURRENCIES } from "@/lib/currency";
+import { searchAssets, fetchCurrentQuote } from "@/lib/finance";
 import { Loader2, Search, Upload, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -46,7 +54,8 @@ function parseCsvHistory(text: string): CustomPricePoint[] {
 }
 
 export function HoldingDialog({ open, onOpenChange, editing }: Props) {
-  const { addHolding, updateHolding } = useStore();
+  const { addHolding, updateHolding, state } = useStore();
+  const defaultCurrency = state.settings.displayCurrency || "USD";
   const [mode, setMode] = useState<Mode>("stock");
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
@@ -55,6 +64,7 @@ export function HoldingDialog({ open, onOpenChange, editing }: Props) {
   const [quantity, setQuantity] = useState("");
   const [color, setColor] = useState(PALETTE[0]);
   const [manualPrice, setManualPrice] = useState("");
+  const [currency, setCurrency] = useState(defaultCurrency);
   const [saving, setSaving] = useState(false);
 
   // Custom holding fields
@@ -85,6 +95,7 @@ export function HoldingDialog({ open, onOpenChange, editing }: Props) {
       setQuantity(String(editing.quantity));
       setColor(editing.color);
       setManualPrice(editing.manualPrice != null ? String(editing.manualPrice) : "");
+      setCurrency(editing.priceCurrency || defaultCurrency);
       setCustomSymbol(editing.symbol);
       setCustomName(editing.name);
       setCustomNotes(editing.notes ?? "");
@@ -101,13 +112,14 @@ export function HoldingDialog({ open, onOpenChange, editing }: Props) {
       setQuantity("");
       setColor(PALETTE[Math.floor(Math.random() * PALETTE.length)]);
       setManualPrice("");
+      setCurrency(defaultCurrency);
       setCustomSymbol("");
       setCustomName("");
       setCustomNotes("");
       setHistoryText("");
       setHistory([]);
     }
-  }, [open, editing]);
+  }, [open, editing, defaultCurrency]);
 
   useEffect(() => {
     if (!open || editing || mode === "custom") return;
@@ -168,6 +180,7 @@ export function HoldingDialog({ open, onOpenChange, editing }: Props) {
           color,
           manualPrice: manual,
           currentPrice: price,
+          priceCurrency: currency,
           customHistory: history,
           notes: customNotes.trim() || undefined,
           lastPriceAt: Date.now(),
@@ -198,12 +211,14 @@ export function HoldingDialog({ open, onOpenChange, editing }: Props) {
         color,
         manualPrice: manual,
         currentPrice: manual ?? 0,
+        priceCurrency: selected.type === "crypto" ? "USD" : currency,
         lastPriceAt: Date.now(),
       };
       if (manual == null) {
         try {
-          const price = await fetchCurrentPrice({ ...base, id: "tmp" } as Holding);
-          base.currentPrice = price;
+          const q = await fetchCurrentQuote({ ...base, id: "tmp" } as Holding);
+          base.currentPrice = q.price;
+          if (q.currency) base.priceCurrency = q.currency;
         } catch {
           toast.warning("Couldn't fetch price — you can refresh later");
         }
@@ -397,6 +412,31 @@ export function HoldingDialog({ open, onOpenChange, editing }: Props) {
             />
           </div>
         </div>
+
+        {mode !== "crypto" && (
+          <div>
+            <Label htmlFor="curr">
+              Price currency
+              {mode === "stock" && (
+                <span className="ml-2 text-xs font-normal text-muted-foreground">
+                  auto-detected on save; override if needed
+                </span>
+              )}
+            </Label>
+            <Select value={currency} onValueChange={setCurrency}>
+              <SelectTrigger id="curr" className="mt-1.5">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="max-h-72">
+                {CURRENCIES.map((c) => (
+                  <SelectItem key={c.code} value={c.code}>
+                    {c.code} · {c.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
 
         <div>
           <Label>Color</Label>

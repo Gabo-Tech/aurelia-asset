@@ -1,14 +1,21 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { Sankey, Tooltip, ResponsiveContainer, Layer, Rectangle } from "recharts";
-import { useStore, usePrivacy } from "@/lib/store";
+import { useStore, useMoney } from "@/lib/store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { PageHeader } from "@/components/app-shell";
-import { maskUSD } from "@/lib/format";
+import { CURRENCIES } from "@/lib/currency";
 import { Trash2, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -38,14 +45,19 @@ const PALETTE = [
 
 function CashflowPage() {
   const { state, addCashflow, removeCashflow } = useStore();
-  const { privacy } = usePrivacy();
+  const { mask, toDisplay, currency } = useMoney();
   const { cashflows } = state;
 
   const totals = useMemo(() => {
-    const income = cashflows.filter((c) => c.kind === "income").reduce((s, c) => s + c.amount, 0);
-    const expense = cashflows.filter((c) => c.kind === "expense").reduce((s, c) => s + c.amount, 0);
+    let income = 0;
+    let expense = 0;
+    for (const c of cashflows) {
+      const v = toDisplay(c.amount, c.currency);
+      if (c.kind === "income") income += v;
+      else expense += v;
+    }
     return { income, expense, net: income - expense };
-  }, [cashflows]);
+  }, [cashflows, toDisplay]);
 
   const sankey = useMemo(() => {
     if (!cashflows.length) return null;
@@ -57,26 +69,24 @@ function CashflowPage() {
     const pool = "Cash Pool";
     const savings = "Saved";
 
-    const totalIn = incomes.reduce((s, c) => s + c.amount, 0);
-    const totalOut = expenses.reduce((s, c) => s + c.amount, 0);
+    const totalIn = incomes.reduce((s, c) => s + toDisplay(c.amount, c.currency), 0);
+    const totalOut = expenses.reduce((s, c) => s + toDisplay(c.amount, c.currency), 0);
     const saved = Math.max(0, totalIn - totalOut);
 
     const nodeNames = [...sources, pool, ...categories, ...(saved > 0 ? [savings] : [])];
     const idxOf = (name: string) => nodeNames.indexOf(name);
     const links: { source: number; target: number; value: number }[] = [];
 
-    // Sources -> pool
     for (const s of sources) {
       const sum = incomes
         .filter((i) => `Src: ${i.source || "Other"}` === s)
-        .reduce((a, b) => a + b.amount, 0);
+        .reduce((a, b) => a + toDisplay(b.amount, b.currency), 0);
       if (sum > 0) links.push({ source: idxOf(s), target: idxOf(pool), value: sum });
     }
-    // Pool -> categories
     for (const c of categories) {
       const sum = expenses
         .filter((e) => `Cat: ${e.category || "Other"}` === c)
-        .reduce((a, b) => a + b.amount, 0);
+        .reduce((a, b) => a + toDisplay(b.amount, b.currency), 0);
       if (sum > 0) links.push({ source: idxOf(pool), target: idxOf(c), value: sum });
     }
     if (saved > 0) links.push({ source: idxOf(pool), target: idxOf(savings), value: saved });
@@ -86,24 +96,25 @@ function CashflowPage() {
       nodes: nodeNames.map((n, i) => ({ name: n, fill: PALETTE[i % PALETTE.length] })),
       links,
     };
-  }, [cashflows]);
+  }, [cashflows, toDisplay]);
 
   return (
     <>
       <PageHeader title="Cashflow" description="Income and expenses, visualized." />
 
       <div className="grid gap-5 md:grid-cols-3">
-        <StatCard label="Income" value={maskUSD(totals.income, privacy)} tone="success" />
-        <StatCard label="Expenses" value={maskUSD(totals.expense, privacy)} tone="destructive" />
+        <StatCard label="Income" value={mask(totals.income)} tone="success" />
+        <StatCard label="Expenses" value={mask(totals.expense)} tone="destructive" />
         <StatCard
           label="Net"
-          value={`${totals.net >= 0 ? "+" : "-"}${maskUSD(Math.abs(totals.net), privacy)}`}
+          value={`${totals.net >= 0 ? "+" : "-"}${mask(Math.abs(totals.net))}`}
           tone={totals.net >= 0 ? "success" : "destructive"}
         />
       </div>
 
       <div className="mt-5 grid gap-5 lg:grid-cols-2">
         <AddForm
+          defaultCurrency={currency}
           onAdd={(e) => {
             addCashflow(e);
             toast.success(`${e.kind === "income" ? "Income" : "Expense"} added`);
@@ -132,7 +143,7 @@ function CashflowPage() {
                         borderRadius: 10,
                         fontSize: 12,
                       }}
-                      formatter={(value: number) => maskUSD(value, privacy)}
+                      formatter={(value: number) => mask(value)}
                     />
                   </Sankey>
                 </ResponsiveContainer>
@@ -190,7 +201,12 @@ function CashflowPage() {
                           {c.kind === "income" ? c.source : c.category}
                         </td>
                         <td className="py-2.5 text-right tabular-nums font-medium">
-                          {maskUSD(c.amount, privacy)}
+                          {mask(c.amount, c.currency)}
+                          {c.currency && c.currency !== currency && (
+                            <span className="ml-1.5 text-[10px] uppercase text-muted-foreground">
+                              {c.currency}
+                            </span>
+                          )}
                         </td>
                         <td className="py-2.5 text-right">
                           <Button
@@ -244,14 +260,22 @@ type FormVals = {
   source: string;
   category: string;
   amount: number;
+  currency: string;
   date: string;
 };
 
-function AddForm({ onAdd }: { onAdd: (e: FormVals) => void }) {
+function AddForm({
+  onAdd,
+  defaultCurrency,
+}: {
+  onAdd: (e: FormVals) => void;
+  defaultCurrency: string;
+}) {
   const [kind, setKind] = useState<"income" | "expense">("income");
   const [source, setSource] = useState("");
   const [category, setCategory] = useState("");
   const [amount, setAmount] = useState("");
+  const [entryCurrency, setEntryCurrency] = useState(defaultCurrency);
   const [date, setDate] = useState(format(new Date(), "yyyy-MM-dd"));
 
   function submit() {
@@ -259,7 +283,14 @@ function AddForm({ onAdd }: { onAdd: (e: FormVals) => void }) {
     if (!isFinite(a) || a <= 0) return toast.error("Amount must be > 0");
     if (kind === "income" && !source.trim()) return toast.error("Source required");
     if (kind === "expense" && !category.trim()) return toast.error("Category required");
-    onAdd({ kind, source, category, amount: a, date: new Date(date).toISOString() });
+    onAdd({
+      kind,
+      source,
+      category,
+      amount: a,
+      currency: entryCurrency,
+      date: new Date(date).toISOString(),
+    });
     setSource("");
     setCategory("");
     setAmount("");
@@ -306,7 +337,7 @@ function AddForm({ onAdd }: { onAdd: (e: FormVals) => void }) {
 
   function sharedFields() {
     return (
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-3 gap-3">
         <Field label="Amount">
           <Input
             type="number"
@@ -315,6 +346,20 @@ function AddForm({ onAdd }: { onAdd: (e: FormVals) => void }) {
             onChange={(e) => setAmount(e.target.value)}
             placeholder="0.00"
           />
+        </Field>
+        <Field label="Currency">
+          <Select value={entryCurrency} onValueChange={setEntryCurrency}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="max-h-72">
+              {CURRENCIES.map((c) => (
+                <SelectItem key={c.code} value={c.code}>
+                  {c.code} · {c.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </Field>
         <Field label="Date">
           <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />

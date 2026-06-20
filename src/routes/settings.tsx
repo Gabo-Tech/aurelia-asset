@@ -28,6 +28,7 @@ import { PageHeader } from "@/components/app-shell";
 import { Download, Upload, RotateCcw, FileJson, FileSpreadsheet } from "lucide-react";
 import { toast } from "sonner";
 import type { AppState } from "@/lib/types";
+import { CURRENCIES } from "@/lib/currency";
 
 export const Route = createFileRoute("/settings")({
   head: () => ({
@@ -93,6 +94,29 @@ function SettingsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-5">
+            <div>
+              <Label className="text-sm">Display currency</Label>
+              <p className="text-xs text-muted-foreground mt-0.5 mb-2">
+                All values across the app are converted to this currency using live FX
+                rates (cached for 6 hours).
+              </p>
+              <Select
+                value={state.settings.displayCurrency || "USD"}
+                onValueChange={(v) => updateSettings({ displayCurrency: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="max-h-80">
+                  {CURRENCIES.map((c) => (
+                    <SelectItem key={c.code} value={c.code}>
+                      {c.code} · {c.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             <div className="flex items-start justify-between gap-4">
               <div>
                 <Label className="text-sm">Privacy mode</Label>

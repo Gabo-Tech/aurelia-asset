@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { useStore, usePrivacy } from "@/lib/store";
+import { useStore, useMoney } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -28,8 +28,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Plus, MoreVertical, RefreshCw, ArrowUpDown, Trash2, Pencil, Loader2 } from "lucide-react";
 import { PageHeader } from "@/components/app-shell";
 import { HoldingDialog } from "@/components/holding-dialog";
-import { formatNumber, formatPct, formatUSD, maskNumber, maskUSD } from "@/lib/format";
-import { fetchCurrentPrice } from "@/lib/finance";
+import { formatNumber, formatPct, formatMoney, maskNumber } from "@/lib/format";
+import { fetchCurrentQuote } from "@/lib/finance";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { Holding } from "@/lib/types";
@@ -48,7 +48,7 @@ type SortKey = "symbol" | "type" | "quantity" | "currentPrice" | "marketValue" |
 
 function HoldingsPage() {
   const { state, removeHolding, updateHolding } = useStore();
-  const { privacy } = usePrivacy();
+  const { mask, toDisplay, privacy } = useMoney();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Holding | null>(null);
   const [search, setSearch] = useState("");
@@ -62,8 +62,12 @@ function HoldingsPage() {
   const PAGE_SIZE = 10;
 
   const total = useMemo(
-    () => state.holdings.reduce((s, h) => s + h.quantity * h.currentPrice, 0),
-    [state.holdings]
+    () =>
+      state.holdings.reduce(
+        (s, h) => s + toDisplay(h.quantity * h.currentPrice, h.priceCurrency),
+        0,
+      ),
+    [state.holdings, toDisplay],
   );
 
   const rows = useMemo(() => {
@@ -77,11 +81,14 @@ function HoldingsPage() {
       return true;
     });
     return filtered
-      .map((h) => ({
-        ...h,
-        marketValue: h.quantity * h.currentPrice,
-        pct: total ? (h.quantity * h.currentPrice * 100) / total : 0,
-      }))
+      .map((h) => {
+        const mv = toDisplay(h.quantity * h.currentPrice, h.priceCurrency);
+        return {
+          ...h,
+          marketValue: mv,
+          pct: total ? (mv * 100) / total : 0,
+        };
+      })
       .sort((a, b) => {
         const dir = sort.dir === "asc" ? 1 : -1;
         const av = a[sort.key];
@@ -90,7 +97,7 @@ function HoldingsPage() {
           return av.localeCompare(bv) * dir;
         return ((av as number) - (bv as number)) * dir;
       });
-  }, [state.holdings, search, typeFilter, sort, total]);
+  }, [state.holdings, search, typeFilter, sort, total, toDisplay]);
 
   const paged = rows.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
   const pageCount = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
@@ -108,8 +115,13 @@ function HoldingsPage() {
       await Promise.all(
         state.holdings.map(async (h) => {
           if (h.manualPrice != null) return;
-          const p = await fetchCurrentPrice(h);
-          if (p) updateHolding(h.id, { currentPrice: p, lastPriceAt: Date.now() });
+          const q = await fetchCurrentQuote(h);
+          if (q.price)
+            updateHolding(h.id, {
+              currentPrice: q.price,
+              priceCurrency: q.currency ?? h.priceCurrency ?? "USD",
+              lastPriceAt: Date.now(),
+            });
         })
       );
       toast.success("Prices refreshed");
@@ -124,7 +136,7 @@ function HoldingsPage() {
     <>
       <PageHeader
         title="Holdings"
-        description={`${state.holdings.length} positions · ${maskUSD(total, privacy)}`}
+        description={`${state.holdings.length} positions · ${mask(total)}`}
         actions={
           <>
             <Button variant="outline" onClick={refreshPrices} disabled={refreshing}>
@@ -216,13 +228,13 @@ function HoldingsPage() {
                         {maskNumber(h.quantity, privacy, 6)}
                       </TableCell>
                       <TableCell className="text-right tabular-nums">
-                        {formatUSD(h.currentPrice)}
+                        {formatMoney(h.currentPrice, h.priceCurrency || "USD")}
                         {h.manualPrice != null && (
                           <span className="ml-1 text-[10px] text-muted-foreground">man</span>
                         )}
                       </TableCell>
                       <TableCell className="text-right tabular-nums font-medium">
-                        {maskUSD(h.marketValue, privacy)}
+                        {mask(h.marketValue)}
                       </TableCell>
                       <TableCell className="text-right tabular-nums text-muted-foreground">
                         {h.pct.toFixed(2)}%

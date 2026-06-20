@@ -1,12 +1,42 @@
+/** Mask string for private values. */
+export const MASK = "••••";
+
+export function formatMoney(
+  n: number,
+  currency = "USD",
+  opts: { compact?: boolean } = {},
+) {
+  if (!isFinite(n)) n = 0;
+  try {
+    return new Intl.NumberFormat(undefined, {
+      style: "currency",
+      currency,
+      maximumFractionDigits: 2,
+      minimumFractionDigits: 2,
+      notation: opts.compact && Math.abs(n) >= 10000 ? "compact" : "standard",
+    }).format(n);
+  } catch {
+    return `${currency} ${n.toFixed(2)}`;
+  }
+}
+
+export function maskMoney(
+  n: number,
+  currency: string,
+  privacy: boolean,
+  opts?: { compact?: boolean },
+) {
+  return privacy ? MASK : formatMoney(n, currency, opts);
+}
+
+/** @deprecated use formatMoney(n, "USD") */
 export function formatUSD(n: number, opts: { compact?: boolean } = {}) {
-  if (!isFinite(n)) return "$0.00";
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: opts.compact ? 2 : 2,
-    minimumFractionDigits: 2,
-    notation: opts.compact && Math.abs(n) >= 10000 ? "compact" : "standard",
-  }).format(n);
+  return formatMoney(n, "USD", opts);
+}
+
+/** @deprecated use maskMoney(n, "USD", privacy) */
+export function maskUSD(n: number, privacy: boolean, opts?: { compact?: boolean }) {
+  return privacy ? MASK : formatMoney(n, "USD", opts);
 }
 
 export function formatPct(n: number, digits = 2) {
@@ -18,13 +48,6 @@ export function formatPct(n: number, digits = 2) {
 export function formatNumber(n: number, digits = 4) {
   if (!isFinite(n)) return "0";
   return new Intl.NumberFormat("en-US", { maximumFractionDigits: digits }).format(n);
-}
-
-/** Mask string for private values. */
-export const MASK = "••••";
-
-export function maskUSD(n: number, privacy: boolean, opts?: { compact?: boolean }) {
-  return privacy ? MASK : formatUSD(n, opts);
 }
 
 export function maskNumber(n: number, privacy: boolean, digits = 4) {

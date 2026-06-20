@@ -1,5 +1,6 @@
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -7,6 +8,8 @@ import {
   type ReactNode,
 } from "react";
 import { AppState, DEFAULT_STATE, Holding, CashflowEntry, Settings } from "./types";
+import { getFxRates, convert, type FxRates } from "./finance/fx";
+import { formatMoney, maskMoney, MASK } from "./format";
 
 const STORAGE_KEY = "ept_state_v1";
 
@@ -111,3 +114,56 @@ export function usePrivacy() {
     setPrivacy: (v: boolean) => updateSettings({ privacyMode: v }),
   };
 }
+
+// ===== FX rates (USD-based) =====
+
+const FxContext = createContext<FxRates | null>(null);
+
+export function FxProvider({ children }: { children: ReactNode }) {
+  const [rates, setRates] = useState<FxRates | null>(null);
+  useEffect(() => {
+    let alive = true;
+    getFxRates().then((r) => {
+      if (alive) setRates(r);
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
+  return <FxContext.Provider value={rates}>{children}</FxContext.Provider>;
+}
+
+export function useFxRates(): FxRates {
+  return useContext(FxContext) ?? { USD: 1 };
+}
+
+/**
+ * Display-aware money helpers. Converts any input from its source currency
+ * (default USD) to the user's display currency, and honors privacy mode.
+ */
+export function useMoney() {
+  const { state } = useStore();
+  const { privacy } = usePrivacy();
+  const rates = useFxRates();
+  const displayCurrency = (state.settings.displayCurrency || "USD").toUpperCase();
+
+  const toDisplay = useCallback(
+    (amount: number, from?: string) => convert(amount, from || "USD", displayCurrency, rates),
+    [displayCurrency, rates],
+  );
+
+  const fmt = useCallback(
+    (amount: number, from?: string, opts?: { compact?: boolean }) =>
+      formatMoney(toDisplay(amount, from), displayCurrency, opts),
+    [toDisplay, displayCurrency],
+  );
+
+  const mask = useCallback(
+    (amount: number, from?: string, opts?: { compact?: boolean }) =>
+      maskMoney(toDisplay(amount, from), displayCurrency, privacy, opts),
+    [toDisplay, displayCurrency, privacy],
+  );
+
+  return { currency: displayCurrency, rates, toDisplay, fmt, mask, privacy, MASK };
+}
+

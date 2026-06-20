@@ -11,28 +11,35 @@ export async function searchAssets(
   return searchYahoo(query);
 }
 
-export async function fetchCurrentPrice(h: Holding): Promise<number> {
-  if (h.manualPrice != null) return h.manualPrice;
+export type FetchedQuote = { price: number; currency?: string };
+
+export async function fetchCurrentQuote(h: Holding): Promise<FetchedQuote> {
+  if (h.manualPrice != null) return { price: h.manualPrice, currency: h.priceCurrency };
   if (h.type === "crypto" && h.coinGeckoId) {
     try {
-      return await getCryptoPrice(h.coinGeckoId);
+      return { price: await getCryptoPrice(h.coinGeckoId), currency: "USD" };
     } catch {
-      return h.currentPrice ?? 0;
+      return { price: h.currentPrice ?? 0, currency: h.priceCurrency ?? "USD" };
     }
   }
-  // Custom holding (no market data) — use latest user-supplied history point
   if (h.type === "other") {
     const last = h.customHistory?.length
       ? h.customHistory[h.customHistory.length - 1].p
       : undefined;
-    return last ?? h.currentPrice ?? 0;
+    return { price: last ?? h.currentPrice ?? 0, currency: h.priceCurrency };
   }
   try {
-    const p = await getYahooQuote(h.symbol);
-    if (p) return p;
+    const q = await getYahooQuote(h.symbol);
+    if (q.price) return { price: q.price, currency: q.currency ?? h.priceCurrency };
   } catch {}
   const fb = await finnhubQuote(h.symbol);
-  return fb ?? h.currentPrice ?? 0;
+  if (fb != null) return { price: fb, currency: "USD" };
+  return { price: h.currentPrice ?? 0, currency: h.priceCurrency };
+}
+
+/** Back-compat: price only. */
+export async function fetchCurrentPrice(h: Holding): Promise<number> {
+  return (await fetchCurrentQuote(h)).price;
 }
 
 // Map UI period -> {cryptoDays, yahooRange, approxDays}

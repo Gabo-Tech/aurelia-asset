@@ -12,13 +12,14 @@ import {
   Legend,
 } from "recharts";
 import { format } from "date-fns";
-import { useStore, usePrivacy } from "@/lib/store";
+import { useStore, useMoney } from "@/lib/store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PageHeader } from "@/components/app-shell";
 import { fetchPortfolioHistory, PERIODS, type PeriodId } from "@/lib/finance";
-import { formatPct, formatUSD, maskUSD, MASK } from "@/lib/format";
+import { formatPct, formatMoney, MASK } from "@/lib/format";
+import { convert } from "@/lib/finance/fx";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/performance")({
@@ -33,9 +34,18 @@ export const Route = createFileRoute("/performance")({
 
 function PerformancePage() {
   const { state } = useStore();
-  const { privacy } = usePrivacy();
+  const { currency, rates, mask, privacy } = useMoney();
   const [period, setPeriod] = useState<PeriodId>("1M");
   const [hidden, setHidden] = useState<Set<string>>(new Set());
+
+  // Per-holding FX multiplier from its native priceCurrency -> display currency.
+  const fxByHolding = useMemo(() => {
+    const m: Record<string, number> = {};
+    for (const h of state.holdings) {
+      m[h.id] = convert(1, h.priceCurrency || "USD", currency, rates);
+    }
+    return m;
+  }, [state.holdings, currency, rates]);
 
   const holdingsKey = state.holdings
     .map((h) => `${h.id}:${h.symbol}:${h.coinGeckoId ?? ""}:${h.quantity}`)
@@ -51,31 +61,43 @@ function PerformancePage() {
   const chartData = useMemo(() => {
     if (!data) return [];
     return data.map((d) => {
+      let total = 0;
       const row: Record<string, number | string> = {
         date: d.date,
         label: format(new Date(d.date), period === "1D" ? "HH:mm" : "MMM d"),
-        Total: Math.round(d.total * 100) / 100,
+        Total: 0,
       };
       for (const h of state.holdings) {
-        row[h.symbol] = Math.round((d.perAsset[h.id] ?? 0) * 100) / 100;
+        const v = (d.perAsset[h.id] ?? 0) * (fxByHolding[h.id] ?? 1);
+        row[h.symbol] = Math.round(v * 100) / 100;
+        total += v;
       }
+      row.Total = Math.round(total * 100) / 100;
       return row;
     });
-  }, [data, period, state.holdings]);
+  }, [data, period, state.holdings, fxByHolding]);
 
   const metrics = useMemo(() => {
     if (!data || data.length < 2) return null;
     const first = data[0];
     const last = data[data.length - 1];
     const perAsset = state.holdings.map((h) => {
-      const start = first.perAsset[h.id] ?? 0;
-      const end = last.perAsset[h.id] ?? 0;
+      const m = fxByHolding[h.id] ?? 1;
+      const start = (first.perAsset[h.id] ?? 0) * m;
+      const end = (last.perAsset[h.id] ?? 0) * m;
       const pct = start ? ((end - start) / start) * 100 : 0;
       return { h, start, end, abs: end - start, pct };
     });
-    const totalPct = first.total ? ((last.total - first.total) / first.total) * 100 : 0;
-    return { first, last, perAsset, totalPct };
-  }, [data, state.holdings]);
+    const firstTotal = perAsset.reduce((s, x) => s + x.start, 0);
+    const lastTotal = perAsset.reduce((s, x) => s + x.end, 0);
+    const totalPct = firstTotal ? ((lastTotal - firstTotal) / firstTotal) * 100 : 0;
+    return {
+      first: { total: firstTotal },
+      last: { total: lastTotal },
+      perAsset,
+      totalPct,
+    };
+  }, [data, state.holdings, fxByHolding]);
 
   if (!state.holdings.length) {
     return (
@@ -167,7 +189,7 @@ function PerformancePage() {
           {metrics && (
             <div className="text-right">
               <div className="text-2xl font-semibold tabular-nums">
-                {maskUSD(metrics.last.total, privacy)}
+                {mask(metrics.last.total)}
               </div>
               <div
                 className={cn(
@@ -205,7 +227,7 @@ function PerformancePage() {
                   <YAxis
                     stroke="var(--muted-foreground)"
                     tick={{ fontSize: 11 }}
-                    tickFormatter={(v) => (privacy ? MASK : formatUSD(v as number, { compact: true }))}
+                    tickFormatter={(v) => (privacy ? MASK : formatMoney(v as number, currency, { compact: true }))}
                     width={70}
                   />
                   <Tooltip
@@ -215,7 +237,7 @@ function PerformancePage() {
                       borderRadius: 10,
                       fontSize: 12,
                     }}
-                    formatter={(value: number) => maskUSD(value, privacy)}
+                    formatter={(value: number) => mask(value)}
                   />
                   <Legend
                     wrapperStyle={{ fontSize: 11 }}
@@ -283,8 +305,8 @@ function PerformancePage() {
                         <span className="text-muted-foreground text-xs truncate">{h.name}</span>
                       </div>
                     </td>
-                    <td className="py-2.5 text-right tabular-nums">{maskUSD(start, privacy)}</td>
-                    <td className="py-2.5 text-right tabular-nums">{maskUSD(end, privacy)}</td>
+                    <td className="py-2.5 text-right tabular-nums">{mask(start)}</td>
+                    <td className="py-2.5 text-right tabular-nums">{mask(end)}</td>
                     <td
                       className={cn(
                         "py-2.5 text-right tabular-nums",
@@ -292,7 +314,7 @@ function PerformancePage() {
                       )}
                     >
                       {abs >= 0 ? "+" : "-"}
-                      {maskUSD(Math.abs(abs), privacy)}
+                      {mask(Math.abs(abs))}
                     </td>
                     <td
                       className={cn(
@@ -307,10 +329,10 @@ function PerformancePage() {
                 <tr className="font-semibold">
                   <td className="py-2.5">Total</td>
                   <td className="py-2.5 text-right tabular-nums">
-                    {maskUSD(metrics.first.total, privacy)}
+                    {mask(metrics.first.total)}
                   </td>
                   <td className="py-2.5 text-right tabular-nums">
-                    {maskUSD(metrics.last.total, privacy)}
+                    {mask(metrics.last.total)}
                   </td>
                   <td
                     className={cn(
@@ -320,7 +342,7 @@ function PerformancePage() {
                         : "text-destructive"
                     )}
                   >
-                    {maskUSD(metrics.last.total - metrics.first.total, privacy)}
+                    {mask(metrics.last.total - metrics.first.total)}
                   </td>
                   <td
                     className={cn(

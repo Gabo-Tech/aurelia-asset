@@ -7,12 +7,12 @@ import {
   ResponsiveContainer,
   Sector,
 } from "recharts";
-import { useStore, usePrivacy } from "@/lib/store";
+import { useStore, useMoney } from "@/lib/store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { formatPct, maskUSD } from "@/lib/format";
+import { formatPct } from "@/lib/format";
 import { ArrowUpRight, Wallet, TrendingUp, TrendingDown, PiggyBank } from "lucide-react";
 import { PageHeader } from "@/components/app-shell";
 
@@ -28,16 +28,12 @@ export const Route = createFileRoute("/")({
 
 function Dashboard() {
   const { state } = useStore();
-  const { privacy } = usePrivacy();
+  const { mask, toDisplay, privacy } = useMoney();
   const { holdings, cashflows } = state;
   const [showAllLabels, setShowAllLabels] = useState(false);
   const [activeIdx, setActiveIdx] = useState<number | null>(null);
 
-  const total = useMemo(
-    () => holdings.reduce((s, h) => s + h.quantity * h.currentPrice, 0),
-    [holdings]
-  );
-
+  // Convert each holding's market value into the display currency once.
   const allocation = useMemo(
     () =>
       holdings
@@ -46,19 +42,25 @@ function Dashboard() {
           name: h.symbol,
           fullName: h.name,
           color: h.color,
-          value: h.quantity * h.currentPrice,
+          value: toDisplay(h.quantity * h.currentPrice, h.priceCurrency),
         }))
         .filter((a) => a.value > 0)
         .sort((a, b) => b.value - a.value),
-    [holdings]
+    [holdings, toDisplay]
   );
+
+  const total = useMemo(() => allocation.reduce((s, a) => s + a.value, 0), [allocation]);
 
   const net30 = useMemo(() => {
     const cutoff = Date.now() - 30 * 86400000;
     return cashflows
       .filter((c) => new Date(c.date).getTime() >= cutoff)
-      .reduce((s, c) => s + (c.kind === "income" ? c.amount : -c.amount), 0);
-  }, [cashflows]);
+      .reduce(
+        (s, c) =>
+          s + (c.kind === "income" ? 1 : -1) * toDisplay(c.amount, c.currency),
+        0,
+      );
+  }, [cashflows, toDisplay]);
 
   const topAlloc = allocation[0];
 
@@ -94,7 +96,7 @@ function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-4xl sm:text-5xl font-semibold tracking-tight">
-              {maskUSD(total, privacy)}
+              {mask(total)}
             </div>
             <div className="mt-2 text-sm text-muted-foreground">
               {holdings.length} {holdings.length === 1 ? "holding" : "holdings"}
@@ -122,7 +124,7 @@ function Dashboard() {
               }`}
             >
               {net30 >= 0 ? "+" : "-"}
-              {maskUSD(Math.abs(net30), privacy)}
+              {mask(Math.abs(net30))}
             </div>
             <p className="mt-2 text-xs text-muted-foreground">Net income − expenses</p>
           </CardContent>
@@ -206,7 +208,7 @@ function Dashboard() {
                       </div>
                     </div>
                     <div className="text-xs text-muted-foreground tabular-nums">
-                      {maskUSD(a.value, privacy)}
+                      {mask(a.value)}
                     </div>
                   </div>
                 </div>
@@ -226,7 +228,7 @@ function Dashboard() {
           icon={<TrendingUp className="h-4 w-4 text-success" />}
           label="Top asset"
           value={topAlloc ? topAlloc.name : "—"}
-          sub={topAlloc ? maskUSD(topAlloc.value, privacy) : undefined}
+          sub={topAlloc ? mask(topAlloc.value) : undefined}
         />
         <StatCard
           icon={
@@ -237,7 +239,7 @@ function Dashboard() {
             )
           }
           label="Net 30d"
-          value={`${net30 >= 0 ? "+" : "-"}${maskUSD(Math.abs(net30), privacy)}`}
+          value={`${net30 >= 0 ? "+" : "-"}${mask(Math.abs(net30))}`}
         />
       </div>
     </>
