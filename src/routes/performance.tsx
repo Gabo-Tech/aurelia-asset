@@ -33,6 +33,7 @@ export const Route = createFileRoute("/performance")({
 
 function PerformancePage() {
   const { state } = useStore();
+  const { privacy } = usePrivacy();
   const [period, setPeriod] = useState<PeriodId>("1M");
   const [hidden, setHidden] = useState<Set<string>>(new Set());
 
