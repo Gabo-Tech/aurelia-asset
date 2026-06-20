@@ -165,6 +165,21 @@ function PerformancePage() {
         <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
           Assets
         </span>
+        <button
+          onClick={() => setHideTotal((v) => !v)}
+          className={cn(
+            "inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs font-medium transition-colors",
+            hideTotal
+              ? "border-border/60 bg-muted text-muted-foreground opacity-60"
+              : "border-border bg-card text-foreground hover:bg-accent"
+          )}
+        >
+          <span
+            className="h-1.5 w-1.5 rounded-full ring-1 ring-black/10"
+            style={{ backgroundColor: "var(--primary)" }}
+          />
+          Total
+        </button>
         {state.holdings.map((h) => (
           <button
             key={h.id}
