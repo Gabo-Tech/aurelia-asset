@@ -5,7 +5,6 @@ import {
   Pie,
   Cell,
   ResponsiveContainer,
-  Tooltip,
   Sector,
 } from "recharts";
 import { useStore, usePrivacy } from "@/lib/store";
