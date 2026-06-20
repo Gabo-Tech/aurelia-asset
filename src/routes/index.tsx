@@ -32,6 +32,7 @@ function Dashboard() {
   const { holdings, cashflows } = state;
   const [showAllLabels, setShowAllLabels] = useState(false);
   const [activeIdx, setActiveIdx] = useState<number | null>(null);
+  const [hidden, setHidden] = useState<Set<string>>(new Set());
 
   // Convert each holding's market value into the display currency once.
   const allocation = useMemo(
@@ -49,7 +50,28 @@ function Dashboard() {
     [holdings, toDisplay]
   );
 
-  const total = useMemo(() => allocation.reduce((s, a) => s + a.value, 0), [allocation]);
+  const visibleAllocation = useMemo(
+    () => allocation.filter((a) => !hidden.has(a.id)),
+    [allocation, hidden]
+  );
+
+  const portfolioTotal = useMemo(() => allocation.reduce((s, a) => s + a.value, 0), [allocation]);
+  const visibleTotal = useMemo(
+    () => visibleAllocation.reduce((s, a) => s + a.value, 0),
+    [visibleAllocation]
+  );
+
+  const toggleAsset = (id: string) => {
+    setHidden((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const showAll = () => setHidden(new Set());
+  const hideAll = () => setHidden(new Set(allocation.map((a) => a.id)));
 
   const net30 = useMemo(() => {
     const cutoff = Date.now() - 30 * 86400000;
