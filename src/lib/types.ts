@@ -10,6 +10,8 @@ export type Holding = {
   quantity: number;
   manualPrice?: number;
   currentPrice: number;
+  /** Currency of currentPrice / manualPrice / customHistory. Defaults to "USD". */
+  priceCurrency?: string;
   color: string;
   coinGeckoId?: string;
   lastPriceAt?: number;
@@ -25,6 +27,8 @@ export type CashflowEntry = {
   source: string;
   category: string;
   amount: number;
+  /** Currency of `amount`. Defaults to "USD" for legacy entries. */
+  currency?: string;
   date: string; // ISO
 };
 
@@ -33,6 +37,8 @@ export type Settings = {
   corsProxy: string;
   finnhubKey?: string;
   privacyMode?: boolean;
+  /** Currency the UI renders all values in. Default "USD". */
+  displayCurrency?: string;
 };
 
 export type AppState = {
@@ -44,7 +50,12 @@ export type AppState = {
 export const DEFAULT_STATE: AppState = {
   holdings: [],
   cashflows: [],
-  settings: { useCorsProxy: true, corsProxy: "https://corsproxy.io/?", privacyMode: false },
+  settings: {
+    useCorsProxy: true,
+    corsProxy: "https://corsproxy.io/?",
+    privacyMode: false,
+    displayCurrency: "USD",
+  },
 };
 
 export type SearchResult = {

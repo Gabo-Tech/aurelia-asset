@@ -48,16 +48,21 @@ export async function searchYahoo(query: string): Promise<SearchResult[]> {
   return results;
 }
 
-export async function getYahooQuote(symbol: string): Promise<number> {
-  const key = `yh:q:${symbol}`;
-  const cached = getCache<number>(key);
+export type Quote = { price: number; currency?: string };
+
+export async function getYahooQuote(symbol: string): Promise<Quote> {
+  const key = `yh:q2:${symbol}`;
+  const cached = getCache<Quote>(key);
   if (cached) return cached;
   const data = await fetchJsonWithFallback<{
-    quoteResponse?: { result?: Array<{ regularMarketPrice?: number }> };
+    quoteResponse?: {
+      result?: Array<{ regularMarketPrice?: number; currency?: string }>;
+    };
   }>(`${QUOTE}?symbols=${encodeURIComponent(symbol)}`);
-  const p = data.quoteResponse?.result?.[0]?.regularMarketPrice ?? 0;
-  if (p) setCache(key, p, 5 * 60 * 1000);
-  return p;
+  const r = data.quoteResponse?.result?.[0];
+  const q: Quote = { price: r?.regularMarketPrice ?? 0, currency: r?.currency };
+  if (q.price) setCache(key, q, 5 * 60 * 1000);
+  return q;
 }
 
 export async function getYahooHistory(
