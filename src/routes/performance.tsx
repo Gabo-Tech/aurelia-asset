@@ -85,6 +85,27 @@ function PerformancePage() {
     });
   }, [data, period, state.holdings, fxByHolding]);
 
+  const yDomain = useMemo<[number, number]>(() => {
+    if (!chartData.length || !visibleKeys.length) return [0, 0];
+    let min = Infinity;
+    let max = -Infinity;
+    for (const row of chartData) {
+      for (const k of visibleKeys) {
+        const v = row[k] as number;
+        if (typeof v !== "number") continue;
+        if (v < min) min = v;
+        if (v > max) max = v;
+      }
+    }
+    if (!isFinite(min) || !isFinite(max)) return [0, 0];
+    if (min === max) {
+      const pad = Math.abs(min) * 0.05 || 1;
+      return [min - pad, max + pad];
+    }
+    const pad = (max - min) * 0.08;
+    return [Math.max(0, min - pad), max + pad];
+  }, [chartData, visibleKeys]);
+
   const metrics = useMemo(() => {
     if (!data || data.length < 2) return null;
     const first = data[0];
