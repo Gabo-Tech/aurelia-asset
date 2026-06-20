@@ -132,21 +132,44 @@ function Dashboard() {
 
       <div className="mt-5 grid gap-5 lg:grid-cols-5">
         <Card className="lg:col-span-3 border-border/60">
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between gap-4 flex-wrap">
             <CardTitle>Allocation</CardTitle>
+            <div className="flex items-center gap-2">
+              <Label htmlFor="all-labels" className="text-xs text-muted-foreground">
+                Show all labels
+              </Label>
+              <Switch
+                id="all-labels"
+                checked={showAllLabels}
+                onCheckedChange={setShowAllLabels}
+              />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="h-72">
+            <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
+                <PieChart margin={{ top: 24, right: 80, bottom: 24, left: 80 }}>
                   <Pie
                     data={allocation}
                     dataKey="value"
                     nameKey="name"
-                    innerRadius={70}
-                    outerRadius={110}
+                    innerRadius={62}
+                    outerRadius={100}
                     paddingAngle={1}
                     stroke="none"
+                    isAnimationActive={false}
+                    activeIndex={
+                      showAllLabels
+                        ? allocation.map((_, i) => i)
+                        : activeIdx != null
+                          ? [activeIdx]
+                          : []
+                    }
+                    activeShape={(props: AllocShapeProps) => (
+                      <LabelledSector {...props} privacy={privacy} total={total} />
+                    )}
+                    onMouseEnter={(_, i) => setActiveIdx(i)}
+                    onMouseLeave={() => setActiveIdx(null)}
                   >
                     {allocation.map((a) => (
                       <Cell key={a.id} fill={a.color} />
@@ -158,6 +181,8 @@ function Dashboard() {
                       border: "1px solid var(--border)",
                       borderRadius: 10,
                       fontSize: 12,
+                      boxShadow: "0 8px 24px -8px rgb(0 0 0 / 0.6)",
+                      color: "var(--popover-foreground)",
                     }}
                     formatter={(value: number, _name, item) => {
                       const pct = total ? (value / total) * 100 : 0;
