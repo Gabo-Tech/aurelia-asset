@@ -228,7 +228,7 @@ function Dashboard() {
               </div>
             ) : (
               <ChartFrame filename="allocation" title="Allocation">
-                <div className="h-80 sm:h-96 [&_svg]:overflow-visible">
+                <div className="flex h-80 items-center justify-center sm:h-96 [&_svg]:overflow-visible">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart margin={{ top: 28, right: 60, bottom: 28, left: 60 }}>
                       <Pie

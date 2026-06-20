@@ -128,7 +128,7 @@ function CashflowPage() {
           </CardHeader>
           <CardContent>
             <ChartFrame filename="cashflow" title="Cashflow">
-              <div className="h-72 sm:h-80">
+              <div className="flex h-72 items-center justify-center sm:h-80">
                 {sankey ? (
                   <ResponsiveContainer width="100%" height="100%">
                     <Sankey
