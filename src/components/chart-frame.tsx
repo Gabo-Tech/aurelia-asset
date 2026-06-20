@@ -115,7 +115,10 @@ export function ChartFrame({ children, filename = "chart", title, className, ext
                 <ToolButton onClick={() => setFull(false)} icon={X} label="Close fullscreen" />
               </div>
             </div>
-            <div ref={fullRef} className="min-h-0 flex-1 bg-background p-3 sm:p-6">
+            <div
+              ref={fullRef}
+              className="min-h-0 flex-1 bg-background p-3 sm:p-6 [&>div]:!h-full [&>div]:!max-h-full"
+            >
               <div className="h-full w-full">{children}</div>
             </div>
           </div>,
