@@ -53,10 +53,11 @@ export function AppShell({ children }: { children: ReactNode }) {
             <div className="grid h-9 w-9 place-items-center rounded-xl bg-primary/15 text-primary">
               <Sparkles className="h-4 w-4" />
             </div>
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <div className="text-sm font-semibold tracking-tight">Elegant</div>
               <div className="text-xs text-muted-foreground">Portfolio Tracker</div>
             </div>
+            <PrivacyToggle />
           </div>
           <nav className="flex-1 px-3 space-y-1">
             {nav.map((item) => {
