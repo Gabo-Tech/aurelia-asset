@@ -300,6 +300,95 @@ function EmptyState() {
           </Link>
         </Button>
       </CardContent>
+      </CardContent>
     </Card>
+  );
+}
+
+// ===== Pie chart label sector with leader line =====
+
+type AllocShapeProps = {
+  cx: number;
+  cy: number;
+  midAngle: number;
+  innerRadius: number;
+  outerRadius: number;
+  startAngle: number;
+  endAngle: number;
+  fill: string;
+  payload: { name: string; fullName?: string; value: number };
+  percent: number;
+};
+
+function LabelledSector(
+  props: AllocShapeProps & { privacy: boolean; total: number },
+) {
+  const {
+    cx,
+    cy,
+    midAngle,
+    innerRadius,
+    outerRadius,
+    startAngle,
+    endAngle,
+    fill,
+    payload,
+    privacy,
+    total,
+  } = props;
+  const RAD = Math.PI / 180;
+  const sin = Math.sin(-RAD * midAngle);
+  const cos = Math.cos(-RAD * midAngle);
+  const sx = cx + (outerRadius + 2) * cos;
+  const sy = cy + (outerRadius + 2) * sin;
+  const mx = cx + (outerRadius + 14) * cos;
+  const my = cy + (outerRadius + 14) * sin;
+  const ex = mx + (cos >= 0 ? 1 : -1) * 18;
+  const ey = my;
+  const textAnchor = cos >= 0 ? "start" : "end";
+  const pct = total ? (payload.value / total) * 100 : 0;
+
+  return (
+    <g>
+      {/* Slight outer ring on the slice for emphasis */}
+      <Sector
+        cx={cx}
+        cy={cy}
+        innerRadius={innerRadius}
+        outerRadius={outerRadius + 4}
+        startAngle={startAngle}
+        endAngle={endAngle}
+        fill={fill}
+      />
+      {/* Leader line */}
+      <path
+        d={`M${sx},${sy}L${mx},${my}L${ex},${ey}`}
+        stroke={fill}
+        strokeWidth={1.25}
+        fill="none"
+        opacity={0.9}
+      />
+      <circle cx={ex} cy={ey} r={2} fill={fill} />
+      {/* Label */}
+      <text
+        x={ex + (cos >= 0 ? 5 : -5)}
+        y={ey - 2}
+        textAnchor={textAnchor}
+        fill="var(--foreground)"
+        fontSize={11}
+        fontWeight={600}
+      >
+        {payload.name}
+      </text>
+      <text
+        x={ex + (cos >= 0 ? 5 : -5)}
+        y={ey + 11}
+        textAnchor={textAnchor}
+        fill="var(--muted-foreground)"
+        fontSize={10}
+      >
+        {privacy ? "••••" : `${pct.toFixed(1)}%`}
+      </text>
+    </g>
   );
 }
