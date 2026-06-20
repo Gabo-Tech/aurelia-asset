@@ -118,7 +118,7 @@ function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-4xl sm:text-5xl font-semibold tracking-tight">
-              {mask(total)}
+              {mask(portfolioTotal)}
             </div>
             <div className="mt-2 text-sm text-muted-foreground">
               {holdings.length} {holdings.length === 1 ? "holding" : "holdings"}
@@ -126,7 +126,7 @@ function Dashboard() {
                 <>
                   {" · Top: "}
                   <span className="text-foreground font-medium">{topAlloc.name}</span>{" "}
-                  ({formatPct((topAlloc.value / total) * 100, 1).replace("+", "")})
+                  ({formatPct((topAlloc.value / portfolioTotal) * 100, 1).replace("+", "")})
                 </>
               ) : null}
             </div>
