@@ -131,14 +131,21 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  // Landing page is standalone (no app shell).
+  const isLanding = pathname === "/";
 
   return (
     <QueryClientProvider client={queryClient}>
       <StoreProvider>
         <FxProvider>
-          <AppShell>
+          {isLanding ? (
             <Outlet />
-          </AppShell>
+          ) : (
+            <AppShell>
+              <Outlet />
+            </AppShell>
+          )}
           <Toaster position="top-right" richColors />
         </FxProvider>
       </StoreProvider>
