@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Sankey, Tooltip, ResponsiveContainer, Layer, Rectangle } from "recharts";
+import { SankeyChart } from "@/components/sankey-chart";
 import { useStore, useMoney } from "@/lib/store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
