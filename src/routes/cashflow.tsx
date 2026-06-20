@@ -18,6 +18,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { PageHeader } from "@/components/app-shell";
 import { ChartFrame } from "@/components/chart-frame";
 import { CURRENCIES } from "@/lib/currency";
+import { formatMoney } from "@/lib/format";
 import {
   Dialog,
   DialogContent,
