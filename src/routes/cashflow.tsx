@@ -32,10 +32,8 @@ export const Route = createFileRoute("/cashflow")({
   component: CashflowPage,
 });
 
-// Defaults inspired by the Microsoft income-statement style:
-// income/sources → greens, the cash pool → neutral, expenses → warm reds.
-const DEFAULT_INCOME_COLORS = ["#22c55e", "#34d399", "#10b981", "#4ade80", "#86efac", "#65a30d"];
-const DEFAULT_EXPENSE_COLORS = ["#ef4444", "#f97316", "#fb7185", "#f59e0b", "#e11d48", "#dc2626"];
+import { GROUP_COLORS, type Category, type CategoryGroup } from "@/lib/types";
+
 const POOL_COLOR = "#64748b";
 const SAVED_COLOR = "#0ea5e9";
 
@@ -61,6 +59,7 @@ function loadPrefs(): Prefs {
     return { labelMode: "always", nodeColors: {} };
   }
 }
+
 
 function CashflowPage() {
   const { state, addCashflow, removeCashflow } = useStore();
