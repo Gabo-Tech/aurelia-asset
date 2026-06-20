@@ -413,30 +413,33 @@ export function HoldingDialog({ open, onOpenChange, editing }: Props) {
           </div>
         </div>
 
-        {mode !== "crypto" && (
-          <div>
-            <Label htmlFor="curr">
-              Price currency
-              {mode === "stock" && (
-                <span className="ml-2 text-xs font-normal text-muted-foreground">
-                  auto-detected on save; override if needed
-                </span>
-              )}
-            </Label>
-            <Select value={currency} onValueChange={setCurrency}>
-              <SelectTrigger id="curr" className="mt-1.5">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="max-h-72">
-                {CURRENCIES.map((c) => (
-                  <SelectItem key={c.code} value={c.code}>
-                    {c.code} · {c.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
+        <div>
+          <Label htmlFor="curr">
+            Price currency
+            {mode === "stock" && !manualPrice.trim() && (
+              <span className="ml-2 text-xs font-normal text-muted-foreground">
+                auto-detected on save; override if needed
+              </span>
+            )}
+            {manualPrice.trim() && (
+              <span className="ml-2 text-xs font-normal text-muted-foreground">
+                will be converted to {defaultCurrency}
+              </span>
+            )}
+          </Label>
+          <Select value={currency} onValueChange={setCurrency}>
+            <SelectTrigger id="curr" className="mt-1.5">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="max-h-72">
+              {CURRENCIES.map((c) => (
+                <SelectItem key={c.code} value={c.code}>
+                  {c.code} · {c.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
         <div>
           <Label>Color</Label>
