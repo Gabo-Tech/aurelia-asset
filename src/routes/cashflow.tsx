@@ -1148,10 +1148,38 @@ function AddForm({
               />
             </Field>
             {sharedFields()}
+            <div className="rounded-md border border-border/60 p-3 space-y-3">
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={recurring}
+                  onChange={(e) => setRecurring(e.target.checked)}
+                  className="h-4 w-4"
+                />
+                <span>Repeats automatically</span>
+              </label>
+              {recurring && (
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="Frequency">
+                    <Select value={frequency} onValueChange={(v) => setFrequency(v as RecurrenceFrequency)}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="weekly">Weekly</SelectItem>
+                        <SelectItem value="monthly">Monthly</SelectItem>
+                        <SelectItem value="yearly">Yearly</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </Field>
+                  <Field label="Until (optional)">
+                    <Input type="date" value={until} onChange={(e) => setUntil(e.target.value)} />
+                  </Field>
+                </div>
+              )}
+            </div>
           </TabsContent>
         </Tabs>
         <Button className="mt-4 w-full" onClick={submit}>
-          <Plus className="mr-2 h-4 w-4" /> Add {kind}
+          <Plus className="mr-2 h-4 w-4" /> Add {recurring ? "recurring " : ""}{kind}
         </Button>
       </CardContent>
     </Card>
