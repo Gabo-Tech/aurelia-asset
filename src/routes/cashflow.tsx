@@ -913,11 +913,13 @@ function EntriesPanel({
 function EditEntryDialog({
   entry,
   categories,
+  subscribeOptions,
   onClose,
   onSave,
 }: {
   entry: import("@/lib/types").CashflowEntry | null;
   categories: Category[];
+  subscribeOptions: { id: string; kind: "income" | "expense"; label: string }[];
   onClose: () => void;
   onSave: (patch: Partial<import("@/lib/types").CashflowEntry>) => void;
 }) {
@@ -930,6 +932,7 @@ function EditEntryDialog({
   const [frequency, setFrequency] = useState<RecurrenceFrequency>("monthly");
   const [until, setUntil] = useState("");
   const [isPercent, setIsPercent] = useState(false);
+  const [percentOf, setPercentOf] = useState<string>("all-income");
 
   useEffect(() => {
     if (!entry) return;
@@ -942,6 +945,7 @@ function EditEntryDialog({
     setFrequency(entry.recurrence?.frequency ?? "monthly");
     setUntil(entry.recurrence?.until ? format(new Date(entry.recurrence.until), "yyyy-MM-dd") : "");
     setIsPercent((entry.amountKind ?? "fixed") === "percent");
+    setPercentOf(entry.percentOf ?? "all-income");
   }, [entry]);
 
   const visibleCategories = useMemo(
