@@ -1267,36 +1267,57 @@ function AddForm({
 
   function sharedFields() {
     return (
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-        <Field label="Amount">
-          <Input
-            type="number"
-            step="any"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            placeholder="0.00"
+      <>
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={isPercent}
+            onChange={(e) => setIsPercent(e.target.checked)}
+            className="h-4 w-4"
           />
-        </Field>
-        <Field label="Currency">
-          <Select value={entryCurrency} onValueChange={setEntryCurrency}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className="max-h-72">
-              {CURRENCIES.map((c) => (
-                <SelectItem key={c.code} value={c.code}>
-                  {c.code} · {c.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </Field>
-        <div className="col-span-2 sm:col-span-1">
-          <Field label="Date">
-            <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+          <span>Use a percentage of total income (e.g. taxes)</span>
+        </label>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <Field label={isPercent ? "Percent" : "Amount"}>
+            <div className="relative">
+              <Input
+                type="number"
+                step="any"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                placeholder={isPercent ? "20" : "0.00"}
+                className={isPercent ? "pr-8" : ""}
+              />
+              {isPercent && (
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+                  %
+                </span>
+              )}
+            </div>
           </Field>
+          {!isPercent && (
+            <Field label="Currency">
+              <Select value={entryCurrency} onValueChange={setEntryCurrency}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="max-h-72">
+                  {CURRENCIES.map((c) => (
+                    <SelectItem key={c.code} value={c.code}>
+                      {c.code} · {c.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Field>
+          )}
+          <div className={isPercent ? "col-span-1" : "col-span-2 sm:col-span-1"}>
+            <Field label="Date">
+              <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+            </Field>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 }
