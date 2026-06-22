@@ -55,9 +55,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         {/* Sidebar (desktop) */}
         <aside className="hidden md:flex md:w-64 md:flex-col border-r border-border/60 bg-sidebar min-h-screen sticky top-0">
           <div className="flex items-center gap-2 px-6 py-7">
-            <div className="grid h-9 w-9 place-items-center rounded-xl bg-primary/15 text-primary">
-              <Sparkles className="h-4 w-4" />
-            </div>
+            <img src={logoAsset.url} alt="Logo" className="h-9 w-9 rounded-xl object-contain" />
             <div className="min-w-0 flex-1">
               <div className="text-sm font-semibold tracking-tight">Elegant</div>
               <div className="text-xs text-muted-foreground">Portfolio Tracker</div>
@@ -94,9 +92,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         {/* Mobile top bar */}
         <header className="md:hidden flex items-center justify-between px-4 py-3 border-b border-border/60 bg-sidebar/95 backdrop-blur sticky top-0 z-20">
           <Link to="/dashboard" className="flex items-center gap-2 min-w-0">
-            <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary/15 text-primary">
-              <Sparkles className="h-4 w-4" />
-            </div>
+            <img src={logoAsset.url} alt="Logo" className="h-8 w-8 shrink-0 rounded-lg object-contain" />
             <div className="truncate font-semibold text-sm">Elegant Portfolio</div>
           </Link>
           <PrivacyToggle />
