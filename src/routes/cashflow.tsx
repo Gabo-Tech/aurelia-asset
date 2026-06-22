@@ -898,9 +898,11 @@ function AddForm({
             </SelectContent>
           </Select>
         </Field>
-        <Field label="Date">
-          <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="col-span-2 sm:col-span-1" />
-        </Field>
+        <div className="col-span-2 sm:col-span-1">
+          <Field label="Date">
+            <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+          </Field>
+        </div>
       </div>
     );
   }
