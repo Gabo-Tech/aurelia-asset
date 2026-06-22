@@ -91,6 +91,26 @@ function expandCashflows(entries: CashflowEntry[], until: Date = new Date()): (C
   return out;
 }
 
+/** Resolve each entry to its display-currency value. Percent entries are
+ *  evaluated as `amount%` of total fixed income in `entries`. */
+function valuesByEntry(
+  entries: CashflowEntry[],
+  toDisplay: (amount: number, from?: string) => number,
+): Map<string, number> {
+  const baseIncome = entries
+    .filter((e) => e.kind === "income" && (e.amountKind ?? "fixed") === "fixed")
+    .reduce((s, e) => s + toDisplay(e.amount, e.currency), 0);
+  const out = new Map<string, number>();
+  for (const e of entries) {
+    if ((e.amountKind ?? "fixed") === "percent") {
+      out.set(e.id, (Number(e.amount) / 100) * baseIncome);
+    } else {
+      out.set(e.id, toDisplay(e.amount, e.currency));
+    }
+  }
+  return out;
+}
+
 const POOL_COLOR = "#64748b";
 const SAVED_COLOR = "#0ea5e9";
 
