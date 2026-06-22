@@ -545,13 +545,19 @@ function EntriesPanel({
     // Table
     const rows = [...filtered]
       .sort((a, b) => +new Date(a.date) - +new Date(b.date))
-      .map((c) => [
-        format(new Date(c.date), "yyyy-MM-dd"),
-        c.kind,
-        c.kind === "income" ? c.source : c.category,
-        formatMoney(c.amount, (c.currency || currency).toUpperCase()),
-        formatMoney(toDisplay(c.amount, c.currency), currency),
-      ]);
+      .map((c) => {
+        const isPct = (c.amountKind ?? "fixed") === "percent";
+        const amountText = isPct
+          ? `${c.amount}%`
+          : formatMoney(c.amount, (c.currency || currency).toUpperCase());
+        return [
+          format(new Date(c.date), "yyyy-MM-dd"),
+          c.kind,
+          c.kind === "income" ? c.source : c.category,
+          amountText,
+          formatMoney(values.get(c.id) ?? 0, currency),
+        ];
+      });
 
     autoTable(doc, {
       startY: chartBottom + 40,
