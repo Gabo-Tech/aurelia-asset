@@ -366,7 +366,7 @@ function EntriesPanel({
       }
       return true;
     });
-  }, [cashflows, kindFilter, categoryFilter, interval]);
+  }, [expanded, kindFilter, categoryFilter, interval]);
 
   // Available categories for current kind filter
   const availableCategories = useMemo(() => {
