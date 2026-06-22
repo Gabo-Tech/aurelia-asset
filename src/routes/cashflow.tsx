@@ -874,7 +874,7 @@ function AddForm({
 
   function sharedFields() {
     return (
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         <Field label="Amount">
           <Input
             type="number"
@@ -899,7 +899,7 @@ function AddForm({
           </Select>
         </Field>
         <Field label="Date">
-          <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+          <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="col-span-2 sm:col-span-1" />
         </Field>
       </div>
     );
