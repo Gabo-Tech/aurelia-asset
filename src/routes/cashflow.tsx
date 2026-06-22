@@ -275,6 +275,20 @@ function CashflowPage() {
     setPrefs((p) => ({ ...p, nodeColors: {} }));
   }
 
+  // Options users can subscribe a percent entry to: every fixed (non-percent)
+  // cashflow entry, labeled by its source/category.
+  const subscribeOptions = useMemo(
+    () =>
+      cashflows
+        .filter((c) => (c.amountKind ?? "fixed") === "fixed")
+        .map((c) => ({
+          id: c.id,
+          kind: c.kind,
+          label: (c.kind === "income" ? c.source : c.category) || "(unnamed)",
+        })),
+    [cashflows],
+  );
+
   return (
     <>
       <PageHeader title="Cashflow" description="Income and expenses, visualized." />
