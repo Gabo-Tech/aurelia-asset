@@ -169,7 +169,7 @@ function CashflowPage() {
     <>
       <PageHeader title="Cashflow" description="Income and expenses, visualized." />
 
-      <div className="grid gap-5 md:grid-cols-3">
+      <div className="grid grid-cols-3 gap-2 sm:gap-5">
         <StatCard label="Income" value={privacy ? MASK : formatMoney(totals.income, currency)} tone="success" />
         <StatCard label="Expenses" value={privacy ? MASK : formatMoney(totals.expense, currency)} tone="destructive" />
         <StatCard
