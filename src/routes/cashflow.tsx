@@ -307,6 +307,7 @@ function CashflowPage() {
         <AddForm
           defaultCurrency={currency}
           categories={categories}
+          subscribeOptions={subscribeOptions}
           onAddCategory={addCategory}
           onUpdateCategory={updateCategory}
           onRemoveCategory={removeCategory}
