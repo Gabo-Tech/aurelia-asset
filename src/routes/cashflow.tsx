@@ -1419,6 +1419,63 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
+/* ---------- Percent target picker (subscribe a % entry to a base) ---------- */
+
+function PercentTargetPicker({
+  value,
+  onChange,
+  options,
+  excludeId,
+  className,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  options: { id: string; kind: "income" | "expense"; label: string }[];
+  excludeId?: string;
+  className?: string;
+}) {
+  const incomes = options.filter((o) => o.kind === "income" && o.id !== excludeId);
+  const expenses = options.filter((o) => o.kind === "expense" && o.id !== excludeId);
+  // If current value points to a missing/excluded entry, keep it selectable so the
+  // user sees it; render it with a "(deleted)" hint at the bottom.
+  const known = new Set([
+    "all-income",
+    "all-expense",
+    ...incomes.map((o) => o.id),
+    ...expenses.map((o) => o.id),
+  ]);
+  return (
+    <Select value={value} onValueChange={onChange}>
+      <SelectTrigger className={className}><SelectValue /></SelectTrigger>
+      <SelectContent className="max-h-72">
+        <SelectItem value="all-income">All income (total)</SelectItem>
+        <SelectItem value="all-expense">All expenses (total)</SelectItem>
+        {incomes.length > 0 && (
+          <div className="px-2 pt-2 pb-1 text-[10px] uppercase tracking-wider text-muted-foreground">
+            Income entries
+          </div>
+        )}
+        {incomes.map((o) => (
+          <SelectItem key={o.id} value={o.id}>{o.label}</SelectItem>
+        ))}
+        {expenses.length > 0 && (
+          <div className="px-2 pt-2 pb-1 text-[10px] uppercase tracking-wider text-muted-foreground">
+            Expense entries
+          </div>
+        )}
+        {expenses.map((o) => (
+          <SelectItem key={o.id} value={o.id}>{o.label}</SelectItem>
+        ))}
+        {!known.has(value) && (
+          <SelectItem value={value}>(deleted entry)</SelectItem>
+        )}
+      </SelectContent>
+    </Select>
+  );
+}
+
+
+
 /* ---------- Category picker (select + inline "new") ---------- */
 
 const NEW_CATEGORY_VALUE = "__new__";
