@@ -82,7 +82,7 @@ function loadPrefs(): Prefs {
 
 
 function CashflowPage() {
-  const { state, addCashflow, removeCashflow, addCategory, updateCategory, removeCategory } = useStore();
+  const { state, addCashflow, updateCashflow, removeCashflow, addCategory, updateCategory, removeCategory } = useStore();
   const { mask, toDisplay, currency, privacy, MASK } = useMoney();
   const { cashflows, categories } = state;
 
