@@ -393,12 +393,13 @@ function StatCard({
 }) {
   return (
     <Card className="border-border/60">
-      <CardContent className="p-5">
-        <div className="text-xs text-muted-foreground">{label}</div>
+      <CardContent className="p-3 sm:p-5">
+        <div className="text-[10px] sm:text-xs uppercase tracking-wider sm:normal-case sm:tracking-normal text-muted-foreground">{label}</div>
         <div
-          className={`mt-2 text-2xl font-semibold tracking-tight ${
+          className={`mt-1 sm:mt-2 text-base sm:text-2xl font-semibold tracking-tight truncate ${
             tone === "success" ? "text-success" : "text-destructive"
           }`}
+          title={value}
         >
           {value}
         </div>
