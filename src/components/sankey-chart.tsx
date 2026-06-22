@@ -165,7 +165,7 @@ export function SankeyChart({
                         x={isLeftSide ? n.x1 + 6 : n.x0 - 6}
                         y={(n.y0 + n.y1) / 2 + 10}
                         textAnchor={isLeftSide ? "start" : "end"}
-                        fontSize={11}
+                        fontSize={isNarrow ? 9 : 11}
                         fill="var(--muted-foreground)"
                       >
                         {format(n.value)}
