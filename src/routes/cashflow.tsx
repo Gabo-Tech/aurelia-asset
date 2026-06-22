@@ -249,6 +249,7 @@ function CashflowPage() {
         mask={mask}
         toDisplay={toDisplay}
         onRemove={removeCashflow}
+        onUpdate={updateCashflow}
       />
     </>
   );
