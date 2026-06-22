@@ -821,6 +821,9 @@ function EditEntryDialog({
   const [amount, setAmount] = useState("");
   const [entryCurrency, setEntryCurrency] = useState("USD");
   const [date, setDate] = useState(format(new Date(), "yyyy-MM-dd"));
+  const [recurring, setRecurring] = useState(false);
+  const [frequency, setFrequency] = useState<RecurrenceFrequency>("monthly");
+  const [until, setUntil] = useState("");
 
   useEffect(() => {
     if (!entry) return;
@@ -829,6 +832,9 @@ function EditEntryDialog({
     setAmount(String(entry.amount));
     setEntryCurrency(entry.currency || "USD");
     setDate(format(new Date(entry.date), "yyyy-MM-dd"));
+    setRecurring(!!entry.recurrence);
+    setFrequency(entry.recurrence?.frequency ?? "monthly");
+    setUntil(entry.recurrence?.until ? format(new Date(entry.recurrence.until), "yyyy-MM-dd") : "");
   }, [entry]);
 
   const visibleCategories = useMemo(
@@ -847,12 +853,15 @@ function EditEntryDialog({
       amount: a,
       currency: entryCurrency,
       date: new Date(date).toISOString(),
+      recurrence: recurring
+        ? { frequency, ...(until ? { until: new Date(until).toISOString() } : {}) }
+        : undefined,
     });
   }
 
   return (
     <Dialog open={!!entry} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Edit entry</DialogTitle>
           <DialogDescription>Update the details for this cashflow entry.</DialogDescription>
@@ -896,8 +905,38 @@ function EditEntryDialog({
             </div>
           </div>
           <div>
-            <Label className="text-xs">Date</Label>
+            <Label className="text-xs">{recurring ? "Start date" : "Date"}</Label>
             <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="mt-1.5" />
+          </div>
+          <div className="rounded-md border border-border/60 p-3 space-y-3">
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={recurring}
+                onChange={(e) => setRecurring(e.target.checked)}
+                className="h-4 w-4"
+              />
+              <span>Repeats</span>
+            </label>
+            {recurring && (
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs">Frequency</Label>
+                  <Select value={frequency} onValueChange={(v) => setFrequency(v as RecurrenceFrequency)}>
+                    <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="weekly">Weekly</SelectItem>
+                      <SelectItem value="monthly">Monthly</SelectItem>
+                      <SelectItem value="yearly">Yearly</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-xs">Until (optional)</Label>
+                  <Input type="date" value={until} onChange={(e) => setUntil(e.target.value)} className="mt-1.5" />
+                </div>
+              </div>
+            )}
           </div>
         </div>
         <div className="flex justify-end gap-2 mt-2">
