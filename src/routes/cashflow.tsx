@@ -357,6 +357,7 @@ function CashflowPage() {
       <EntriesPanel
         cashflows={cashflows}
         categories={categories}
+        subscribeOptions={subscribeOptions}
         currency={currency}
         privacy={privacy}
         MASK={MASK}
@@ -376,6 +377,7 @@ type PeriodKey = "all" | "week" | "month" | "year" | "custom";
 function EntriesPanel({
   cashflows,
   categories,
+  subscribeOptions,
   currency,
   privacy,
   MASK,
@@ -386,6 +388,7 @@ function EntriesPanel({
 }: {
   cashflows: import("@/lib/types").CashflowEntry[];
   categories: Category[];
+  subscribeOptions: { id: string; kind: "income" | "expense"; label: string }[];
   currency: string;
   privacy: boolean;
   MASK: string;
