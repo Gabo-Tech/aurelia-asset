@@ -402,6 +402,9 @@ function EntriesPanel({
     }
   }, [availableCategories, categoryFilter]);
 
+  // Resolve display values for entries in scope (percent entries use scope income as base).
+  const values = useMemo(() => valuesByEntry(filtered, toDisplay), [filtered, toDisplay]);
+
   // Chart series: cumulative net balance, varying with income (+) and expenses (-).
   // Each point keeps the day's entries so the tooltip can show sources/categories.
   const chartData = useMemo(() => {
@@ -415,7 +418,7 @@ function EntriesPanel({
     for (const c of filtered) {
       const key = format(new Date(c.date), "yyyy-MM-dd");
       const bucket = byDay.get(key) ?? { income: 0, expense: 0, entries: [] };
-      const v = toDisplay(c.amount, c.currency);
+      const v = values.get(c.id) ?? 0;
       if (c.kind === "income") bucket.income += v;
       else bucket.expense += v;
       bucket.entries.push({
@@ -439,7 +442,7 @@ function EntriesPanel({
         entries: v.entries,
       };
     });
-  }, [filtered, interval, toDisplay]);
+  }, [filtered, interval, values]);
 
   const totals = useMemo(() => {
     let income = 0;
