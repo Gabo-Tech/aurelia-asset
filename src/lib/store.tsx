@@ -41,6 +41,7 @@ type Ctx = {
   updateHolding: (id: string, patch: Partial<Holding>) => void;
   removeHolding: (id: string) => void;
   addCashflow: (c: Omit<CashflowEntry, "id">) => void;
+  updateCashflow: (id: string, patch: Partial<CashflowEntry>) => void;
   removeCashflow: (id: string) => void;
   addCategory: (c: Omit<Category, "id">) => Category;
   updateCategory: (id: string, patch: Partial<Category>) => void;
