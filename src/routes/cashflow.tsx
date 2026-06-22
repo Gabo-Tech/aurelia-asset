@@ -644,6 +644,15 @@ function EntriesPanel({
         3: { halign: "right" },
         4: { halign: "right" },
       },
+      didParseCell: (data) => {
+        if (data.section !== "body") return;
+        const type = String(data.row.raw[1] ?? "");
+        if (type === "income") {
+          data.cell.styles.textColor = [22, 163, 74];
+        } else if (type === "expense") {
+          data.cell.styles.textColor = [220, 38, 38];
+        }
+      },
       margin: { left: margin, right: margin },
     });
 
