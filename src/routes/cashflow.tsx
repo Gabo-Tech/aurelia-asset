@@ -884,6 +884,7 @@ function EditEntryDialog({
     setRecurring(!!entry.recurrence);
     setFrequency(entry.recurrence?.frequency ?? "monthly");
     setUntil(entry.recurrence?.until ? format(new Date(entry.recurrence.until), "yyyy-MM-dd") : "");
+    setIsPercent((entry.amountKind ?? "fixed") === "percent");
   }, [entry]);
 
   const visibleCategories = useMemo(
