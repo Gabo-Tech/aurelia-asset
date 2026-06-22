@@ -1137,6 +1137,7 @@ type FormVals = {
   currency: string;
   date: string;
   recurrence?: { frequency: RecurrenceFrequency; until?: string };
+  amountKind?: "fixed" | "percent";
 };
 
 function AddForm({
