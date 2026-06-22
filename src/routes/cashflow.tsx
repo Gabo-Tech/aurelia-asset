@@ -770,17 +770,34 @@ function EntriesPanel({
                         </td>
                         <td className="py-2.5">{c.kind === "income" ? c.source : c.category}</td>
                         <td className="py-2.5 text-right tabular-nums font-medium">
-                          {privacy
-                            ? MASK
-                            : formatMoney(c.amount, (c.currency || currency).toUpperCase())}
-                          {c.currency && c.currency.toUpperCase() !== currency && (
-                            <span
-                              className="ml-1.5 text-[10px] uppercase text-muted-foreground"
-                              title={`≈ ${mask(c.amount, c.currency)} in ${currency}`}
-                            >
-                              ≈ {mask(c.amount, c.currency)}
-                            </span>
-                          )}
+                          {(() => {
+                            const isPct = (c.amountKind ?? "fixed") === "percent";
+                            const computed = values.get(c.id) ?? 0;
+                            if (privacy) return MASK;
+                            if (isPct) {
+                              return (
+                                <>
+                                  {c.amount}%
+                                  <span className="ml-1.5 text-[10px] uppercase text-muted-foreground">
+                                    ≈ {formatMoney(computed, currency)}
+                                  </span>
+                                </>
+                              );
+                            }
+                            return (
+                              <>
+                                {formatMoney(c.amount, (c.currency || currency).toUpperCase())}
+                                {c.currency && c.currency.toUpperCase() !== currency && (
+                                  <span
+                                    className="ml-1.5 text-[10px] uppercase text-muted-foreground"
+                                    title={`≈ ${mask(c.amount, c.currency)} in ${currency}`}
+                                  >
+                                    ≈ {mask(c.amount, c.currency)}
+                                  </span>
+                                )}
+                              </>
+                            );
+                          })()}
                         </td>
                         <td className="py-2.5 text-right">
                           <div className="flex justify-end gap-1">
