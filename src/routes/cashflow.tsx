@@ -1179,6 +1179,7 @@ function AddForm({
   function submit() {
     const a = parseFloat(amount);
     if (!isFinite(a) || a <= 0) return toast.error("Amount must be > 0");
+    if (isPercent && a > 1000) return toast.error("Percentage looks too high");
     if (!categoryName.trim()) return toast.error("Pick a category");
     onAdd({
       kind,
@@ -1190,6 +1191,7 @@ function AddForm({
       recurrence: recurring
         ? { frequency, ...(until ? { until: new Date(until).toISOString() } : {}) }
         : undefined,
+      amountKind: isPercent ? "percent" : "fixed",
     });
     setAmount("");
   }
