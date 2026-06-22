@@ -603,7 +603,7 @@ function EntriesPanel({
       .map((c) => {
         const isPct = (c.amountKind ?? "fixed") === "percent";
         const amountText = isPct
-          ? `${c.amount}%`
+          ? `${c.amount}% of ${describePercentOf(c, cashflows)}`
           : formatMoney(c.amount, (c.currency || currency).toUpperCase());
         return [
           format(new Date(c.date), "yyyy-MM-dd"),
