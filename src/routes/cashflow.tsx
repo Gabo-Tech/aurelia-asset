@@ -853,6 +853,9 @@ function EntriesPanel({
                               return (
                                 <>
                                   {c.amount}%
+                                  <span className="ml-1 text-[10px] text-muted-foreground normal-case">
+                                    of {describePercentOf(c, cashflows)}
+                                  </span>
                                   <span className="ml-1.5 text-[10px] uppercase text-muted-foreground">
                                     ≈ {formatMoney(computed, currency)}
                                   </span>
