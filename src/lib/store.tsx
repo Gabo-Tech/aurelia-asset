@@ -41,6 +41,7 @@ type Ctx = {
   updateHolding: (id: string, patch: Partial<Holding>) => void;
   removeHolding: (id: string) => void;
   addCashflow: (c: Omit<CashflowEntry, "id">) => void;
+  updateCashflow: (id: string, patch: Partial<CashflowEntry>) => void;
   removeCashflow: (id: string) => void;
   addCategory: (c: Omit<Category, "id">) => Category;
   updateCategory: (id: string, patch: Partial<Category>) => void;
@@ -90,6 +91,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         setState((s) => ({ ...s, holdings: s.holdings.filter((h) => h.id !== id) })),
       addCashflow: (c) =>
         setState((s) => ({ ...s, cashflows: [...s.cashflows, { ...c, id: uid() }] })),
+      updateCashflow: (id, patch) =>
+        setState((s) => ({
+          ...s,
+          cashflows: s.cashflows.map((c) => (c.id === id ? { ...c, ...patch } : c)),
+        })),
       removeCashflow: (id) =>
         setState((s) => ({ ...s, cashflows: s.cashflows.filter((c) => c.id !== id) })),
       addCategory: (c) => {

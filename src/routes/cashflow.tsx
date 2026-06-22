@@ -82,7 +82,7 @@ function loadPrefs(): Prefs {
 
 
 function CashflowPage() {
-  const { state, addCashflow, removeCashflow, addCategory, updateCategory, removeCategory } = useStore();
+  const { state, addCashflow, updateCashflow, removeCashflow, addCategory, updateCategory, removeCategory } = useStore();
   const { mask, toDisplay, currency, privacy, MASK } = useMoney();
   const { cashflows, categories } = state;
 
@@ -249,6 +249,7 @@ function CashflowPage() {
         mask={mask}
         toDisplay={toDisplay}
         onRemove={removeCashflow}
+        onUpdate={updateCashflow}
       />
     </>
   );
@@ -267,6 +268,7 @@ function EntriesPanel({
   mask,
   toDisplay,
   onRemove,
+  onUpdate,
 }: {
   cashflows: import("@/lib/types").CashflowEntry[];
   categories: Category[];
@@ -276,7 +278,9 @@ function EntriesPanel({
   mask: (amount: number, from?: string) => string;
   toDisplay: (amount: number, from?: string) => number;
   onRemove: (id: string) => void;
+  onUpdate: (id: string, patch: Partial<import("@/lib/types").CashflowEntry>) => void;
 }) {
+  const [editing, setEditing] = useState<import("@/lib/types").CashflowEntry | null>(null);
   const [kindFilter, setKindFilter] = useState<"all" | "income" | "expense">("all");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [period, setPeriod] = useState<PeriodKey>("month");
@@ -650,14 +654,26 @@ function EntriesPanel({
                         )}
                       </td>
                       <td className="py-2.5 text-right">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() => onRemove(c.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        <div className="flex justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => setEditing(c)}
+                            aria-label="Edit entry"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => onRemove(c.id)}
+                            aria-label="Delete entry"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -666,7 +682,121 @@ function EntriesPanel({
           </div>
         )}
       </CardContent>
+      <EditEntryDialog
+        entry={editing}
+        categories={categories}
+        onClose={() => setEditing(null)}
+        onSave={(patch) => {
+          if (editing) onUpdate(editing.id, patch);
+          setEditing(null);
+          toast.success("Entry updated");
+        }}
+      />
     </Card>
+  );
+}
+
+function EditEntryDialog({
+  entry,
+  categories,
+  onClose,
+  onSave,
+}: {
+  entry: import("@/lib/types").CashflowEntry | null;
+  categories: Category[];
+  onClose: () => void;
+  onSave: (patch: Partial<import("@/lib/types").CashflowEntry>) => void;
+}) {
+  const [kind, setKind] = useState<"income" | "expense">("income");
+  const [name, setName] = useState("");
+  const [amount, setAmount] = useState("");
+  const [entryCurrency, setEntryCurrency] = useState("USD");
+  const [date, setDate] = useState(format(new Date(), "yyyy-MM-dd"));
+
+  useEffect(() => {
+    if (!entry) return;
+    setKind(entry.kind);
+    setName(entry.kind === "income" ? entry.source : entry.category);
+    setAmount(String(entry.amount));
+    setEntryCurrency(entry.currency || "USD");
+    setDate(format(new Date(entry.date), "yyyy-MM-dd"));
+  }, [entry]);
+
+  const visibleCategories = useMemo(
+    () => categories.filter((c) => c.kind === kind),
+    [categories, kind],
+  );
+
+  function submit() {
+    const a = parseFloat(amount);
+    if (!isFinite(a) || a <= 0) return toast.error("Amount must be > 0");
+    if (!name.trim()) return toast.error("Pick a category");
+    onSave({
+      kind,
+      source: kind === "income" ? name : "",
+      category: kind === "expense" ? name : "",
+      amount: a,
+      currency: entryCurrency,
+      date: new Date(date).toISOString(),
+    });
+  }
+
+  return (
+    <Dialog open={!!entry} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Edit entry</DialogTitle>
+          <DialogDescription>Update the details for this cashflow entry.</DialogDescription>
+        </DialogHeader>
+        <Tabs value={kind} onValueChange={(v) => setKind(v as "income" | "expense")}>
+          <TabsList className="grid grid-cols-2">
+            <TabsTrigger value="income">Income</TabsTrigger>
+            <TabsTrigger value="expense">Expense</TabsTrigger>
+          </TabsList>
+        </Tabs>
+        <div className="space-y-3">
+          <div>
+            <Label className="text-xs">{kind === "income" ? "Source" : "Category"}</Label>
+            <Select value={name} onValueChange={setName}>
+              <SelectTrigger className="mt-1.5"><SelectValue placeholder="Select…" /></SelectTrigger>
+              <SelectContent>
+                {visibleCategories.map((c) => (
+                  <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
+                ))}
+                {name && !visibleCategories.find((c) => c.name === name) && (
+                  <SelectItem value={name}>{name}</SelectItem>
+                )}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="text-xs">Amount</Label>
+              <Input type="number" step="any" value={amount} onChange={(e) => setAmount(e.target.value)} className="mt-1.5" />
+            </div>
+            <div>
+              <Label className="text-xs">Currency</Label>
+              <Select value={entryCurrency} onValueChange={setEntryCurrency}>
+                <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
+                <SelectContent className="max-h-72">
+                  {CURRENCIES.map((c) => (
+                    <SelectItem key={c.code} value={c.code}>{c.code} · {c.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div>
+            <Label className="text-xs">Date</Label>
+            <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="mt-1.5" />
+          </div>
+        </div>
+        <div className="flex justify-end gap-2 mt-2">
+          <Button variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button onClick={submit}>Save changes</Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
