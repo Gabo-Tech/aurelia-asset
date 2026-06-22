@@ -917,6 +917,7 @@ function EntriesPanel({
       <EditEntryDialog
         entry={editing}
         categories={categories}
+        subscribeOptions={subscribeOptions}
         onClose={() => setEditing(null)}
         onSave={(patch) => {
           if (editing) onUpdate(editing.id, patch);
