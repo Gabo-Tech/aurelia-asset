@@ -1008,8 +1008,20 @@ function EditEntryDialog({
               onChange={(e) => setIsPercent(e.target.checked)}
               className="h-4 w-4"
             />
-            <span>Percentage of total income (e.g. taxes)</span>
+            <span>Use a percentage of another entry (e.g. taxes)</span>
           </label>
+          {isPercent && (
+            <div>
+              <Label className="text-xs">Percent of</Label>
+              <PercentTargetPicker
+                value={percentOf}
+                onChange={setPercentOf}
+                options={subscribeOptions}
+                excludeId={entry?.id}
+                className="mt-1.5"
+              />
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label className="text-xs">{isPercent ? "Percent" : "Amount"}</Label>
