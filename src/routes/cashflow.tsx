@@ -215,7 +215,7 @@ function CashflowPage() {
                     data={sankey}
                     height={420}
                     labelMode={prefs.labelMode}
-                    format={(v: number) => mask(v)}
+                    format={(v: number) => (privacy ? MASK : formatMoney(v, currency))}
                   />
                 ) : (
                   <div className="grid h-80 place-items-center text-sm text-muted-foreground">
