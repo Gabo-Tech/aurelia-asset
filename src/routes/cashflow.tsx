@@ -658,9 +658,9 @@ function EntriesPanel({
           <div className="h-56 w-full mb-4">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
-                <CartesianGrid stroke="hsl(var(--border))" strokeDasharray="3 3" opacity={0.4} />
-                <XAxis dataKey="label" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" minTickGap={20} />
-                <YAxis tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" tickFormatter={(v) => formatMoney(v, currency, { compact: true })} width={70} />
+                <CartesianGrid stroke="hsl(var(--foreground))" strokeDasharray="3 3" opacity={0.15} />
+                <XAxis dataKey="label" tick={{ fontSize: 11, fill: "hsl(var(--foreground))" }} stroke="hsl(var(--foreground))" strokeOpacity={0.5} minTickGap={20} />
+                <YAxis tick={{ fontSize: 11, fill: "hsl(var(--foreground))" }} stroke="hsl(var(--foreground))" strokeOpacity={0.5} tickFormatter={(v) => formatMoney(v, currency, { compact: true })} width={70} />
                 <RTooltip
                   content={({ active, payload }) => {
                     if (!active || !payload || !payload.length) return null;
