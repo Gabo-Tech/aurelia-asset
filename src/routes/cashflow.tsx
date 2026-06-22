@@ -1219,6 +1219,7 @@ function AddForm({
   onAdd,
   defaultCurrency,
   categories,
+  subscribeOptions,
   onAddCategory,
   onUpdateCategory,
   onRemoveCategory,
@@ -1226,6 +1227,7 @@ function AddForm({
   onAdd: (e: FormVals) => void;
   defaultCurrency: string;
   categories: Category[];
+  subscribeOptions: { id: string; kind: "income" | "expense"; label: string }[];
   onAddCategory: (c: Omit<Category, "id">) => Category;
   onUpdateCategory: (id: string, patch: Partial<Category>) => void;
   onRemoveCategory: (id: string) => void;
@@ -1239,6 +1241,7 @@ function AddForm({
   const [frequency, setFrequency] = useState<RecurrenceFrequency>("monthly");
   const [until, setUntil] = useState("");
   const [isPercent, setIsPercent] = useState(false);
+  const [percentOf, setPercentOf] = useState<string>("all-income");
 
   const visibleCategories = useMemo(
     () => categories.filter((c) => c.kind === kind),
