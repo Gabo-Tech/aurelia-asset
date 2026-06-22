@@ -687,7 +687,7 @@ function SankeyControls({
         value={prefs.labelMode}
         onValueChange={(v) => setPrefs((p) => ({ ...p, labelMode: v as LabelMode }))}
       >
-        <SelectTrigger className="h-8 w-[120px] text-xs">
+        <SelectTrigger className="h-8 w-[96px] sm:w-[120px] text-xs">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -834,7 +834,7 @@ function AddForm({
 
   return (
     <Card className="border-border/60">
-      <CardHeader className="flex-row items-center justify-between space-y-0">
+      <CardHeader className="flex-row items-center justify-between space-y-0 gap-2 flex-wrap">
         <CardTitle>Add entry</CardTitle>
         <CategoriesManager
           categories={categories}
