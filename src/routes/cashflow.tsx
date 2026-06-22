@@ -203,11 +203,11 @@ function CashflowPage() {
           }}
         />
 
-        <Card className="border-border/60">
-          <CardHeader>
+        <Card className="border-border/60 min-w-0">
+          <CardHeader className="px-3 sm:px-6">
             <CardTitle>Flow</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-2 sm:px-6">
             <ChartFrame
               filename="cashflow"
               title="Cashflow"
@@ -220,7 +220,7 @@ function CashflowPage() {
                 />
               }
             >
-              <div className="min-h-80 sm:min-h-96">
+              <div className="min-h-80 sm:min-h-96 w-full overflow-hidden">
                 {sankey ? (
                   <SankeyChart
                     data={sankey}
