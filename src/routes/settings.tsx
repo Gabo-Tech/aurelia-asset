@@ -122,7 +122,7 @@ function SettingsPage() {
                 <Label className="text-sm">Privacy mode</Label>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   Hide quantities and dollar values across the app (the eye icon in the
-                  sidebar does the same thing).
+                  header does the same thing).
                 </p>
               </div>
               <Switch
