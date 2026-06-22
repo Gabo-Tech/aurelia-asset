@@ -91,6 +91,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         setState((s) => ({ ...s, holdings: s.holdings.filter((h) => h.id !== id) })),
       addCashflow: (c) =>
         setState((s) => ({ ...s, cashflows: [...s.cashflows, { ...c, id: uid() }] })),
+      updateCashflow: (id, patch) =>
+        setState((s) => ({
+          ...s,
+          cashflows: s.cashflows.map((c) => (c.id === id ? { ...c, ...patch } : c)),
+        })),
       removeCashflow: (id) =>
         setState((s) => ({ ...s, cashflows: s.cashflows.filter((c) => c.id !== id) })),
       addCategory: (c) => {
