@@ -92,24 +92,60 @@ function expandCashflows(entries: CashflowEntry[], until: Date = new Date()): (C
   return out;
 }
 
-/** Resolve each entry to its display-currency value. Percent entries are
- *  evaluated as `amount%` of total fixed income in `entries`. */
+/** Resolve each entry to its display-currency value.
+ *  Percent entries are evaluated against `percentOf`:
+ *  - "all-income"  → % of total fixed income in `entries`
+ *  - "all-expense" → % of total fixed expense in `entries`
+ *  - entry id      → % of that fixed entry's resolved value (0 if missing) */
 function valuesByEntry(
   entries: CashflowEntry[],
   toDisplay: (amount: number, from?: string) => number,
 ): Map<string, number> {
-  const baseIncome = entries
-    .filter((e) => e.kind === "income" && (e.amountKind ?? "fixed") === "fixed")
-    .reduce((s, e) => s + toDisplay(e.amount, e.currency), 0);
+  const fixed = new Map<string, number>();
+  let baseIncome = 0;
+  let baseExpense = 0;
+  for (const e of entries) {
+    if ((e.amountKind ?? "fixed") !== "fixed") continue;
+    const v = toDisplay(e.amount, e.currency);
+    fixed.set(e.id, v);
+    if (e.kind === "income") baseIncome += v;
+    else baseExpense += v;
+  }
+  // Map fixed parent id back to its origin id (recurring occurrences carry parentId).
+  const fixedByParent = new Map<string, number>();
+  for (const e of entries) {
+    if ((e.amountKind ?? "fixed") !== "fixed") continue;
+    const parentId = (e as CashflowEntry & { parentId?: string }).parentId ?? e.id;
+    fixedByParent.set(parentId, (fixedByParent.get(parentId) ?? 0) + (fixed.get(e.id) ?? 0));
+  }
   const out = new Map<string, number>();
   for (const e of entries) {
     if ((e.amountKind ?? "fixed") === "percent") {
-      out.set(e.id, (Number(e.amount) / 100) * baseIncome);
+      const pct = Number(e.amount) / 100;
+      const target = e.percentOf ?? "all-income";
+      let base = 0;
+      if (target === "all-income") base = baseIncome;
+      else if (target === "all-expense") base = baseExpense;
+      else base = fixed.get(target) ?? fixedByParent.get(target) ?? 0;
+      out.set(e.id, pct * base);
     } else {
-      out.set(e.id, toDisplay(e.amount, e.currency));
+      out.set(e.id, fixed.get(e.id) ?? toDisplay(e.amount, e.currency));
     }
   }
   return out;
+}
+
+/** Build a human label for what a percent entry is subscribed to. */
+function describePercentOf(
+  entry: CashflowEntry,
+  cashflows: CashflowEntry[],
+): string {
+  const target = entry.percentOf ?? "all-income";
+  if (target === "all-income") return "all income";
+  if (target === "all-expense") return "all expenses";
+  const ref = cashflows.find((c) => c.id === target);
+  if (!ref) return "(deleted)";
+  return ref.kind === "income" ? ref.source || "income" : ref.category || "expense";
 }
 
 const POOL_COLOR = "#64748b";
