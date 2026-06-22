@@ -52,7 +52,44 @@ export const Route = createFileRoute("/cashflow")({
   component: CashflowPage,
 });
 
-import { GROUP_COLORS, type Category, type CategoryGroup } from "@/lib/types";
+import { GROUP_COLORS, type Category, type CategoryGroup, type CashflowEntry, type RecurrenceFrequency } from "@/lib/types";
+
+/** Expand recurring cashflow entries into individual occurrences up to `until`.
+ *  Each occurrence keeps the original id (with a date suffix) and a `parentId`
+ *  pointing to the source entry so the UI can edit/remove the rule. */
+function expandCashflows(entries: CashflowEntry[], until: Date = new Date()): (CashflowEntry & { parentId: string; isOccurrence: boolean })[] {
+  const out: (CashflowEntry & { parentId: string; isOccurrence: boolean })[] = [];
+  for (const e of entries) {
+    if (!e.recurrence) {
+      out.push({ ...e, parentId: e.id, isOccurrence: false });
+      continue;
+    }
+    const start = new Date(e.date);
+    const stop = e.recurrence.until ? new Date(e.recurrence.until) : until;
+    const last = stop < until ? stop : until;
+    const step =
+      e.recurrence.frequency === "weekly"
+        ? (d: Date, i: number) => addWeeks(d, i)
+        : e.recurrence.frequency === "monthly"
+          ? (d: Date, i: number) => addMonths(d, i)
+          : (d: Date, i: number) => addYears(d, i);
+    let i = 0;
+    // Safety cap (e.g. 600 weekly = ~11 years)
+    while (i < 600) {
+      const occ = step(start, i);
+      if (occ > last) break;
+      out.push({
+        ...e,
+        id: `${e.id}__${occ.toISOString().slice(0, 10)}`,
+        date: occ.toISOString(),
+        parentId: e.id,
+        isOccurrence: i > 0,
+      });
+      i++;
+    }
+  }
+  return out;
+}
 
 const POOL_COLOR = "#64748b";
 const SAVED_COLOR = "#0ea5e9";
