@@ -669,16 +669,16 @@ function EntriesPanel({
                   <LineChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
                     <defs>
                       <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0" stopColor="hsl(var(--success))" />
-                        <stop offset={zeroOffset} stopColor="hsl(var(--success))" />
-                        <stop offset={zeroOffset} stopColor="hsl(var(--destructive))" />
-                        <stop offset="1" stopColor="hsl(var(--destructive))" />
+                        <stop offset="0" stopColor="#22c55e" />
+                        <stop offset={zeroOffset} stopColor="#22c55e" />
+                        <stop offset={zeroOffset} stopColor="#ef4444" />
+                        <stop offset="1" stopColor="#ef4444" />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid stroke="hsl(var(--foreground))" strokeDasharray="3 3" opacity={0.15} />
-                    <XAxis dataKey="label" tick={{ fontSize: 11, fill: "hsl(var(--foreground))" }} stroke="hsl(var(--foreground))" strokeOpacity={0.5} minTickGap={20} />
-                    <YAxis tick={{ fontSize: 11, fill: "hsl(var(--foreground))" }} stroke="hsl(var(--foreground))" strokeOpacity={0.5} tickFormatter={(v) => formatMoney(v, currency, { compact: true })} width={70} />
-                    <ReferenceLine y={0} stroke="hsl(var(--foreground))" strokeOpacity={0.4} strokeDasharray="2 2" />
+                    <CartesianGrid stroke="#e5e7eb" strokeDasharray="3 3" opacity={0.15} />
+                    <XAxis dataKey="label" tick={{ fontSize: 11, fill: "#e5e7eb" }} stroke="#e5e7eb" strokeOpacity={0.5} minTickGap={20} />
+                    <YAxis tick={{ fontSize: 11, fill: "#e5e7eb" }} stroke="#e5e7eb" strokeOpacity={0.5} tickFormatter={(v) => formatMoney(v, currency, { compact: true })} width={70} />
+                    <ReferenceLine y={0} stroke="#e5e7eb" strokeOpacity={0.4} strokeDasharray="2 2" />
                     <RTooltip
                       content={({ active, payload }) => {
                         if (!active || !payload || !payload.length) return null;
