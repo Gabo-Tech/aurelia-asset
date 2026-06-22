@@ -48,6 +48,8 @@
   --color-sidebar-ring: var(--sidebar-ring);
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --shadow-elevated: 0 10px 40px -10px oklch(0 0 0 / 0.4);
+  --breakpoint-3xl: 1920px;
+  --breakpoint-4xl: 2560px;
 }
 
 :root {
