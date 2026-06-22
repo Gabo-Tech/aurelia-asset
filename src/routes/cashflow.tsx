@@ -268,6 +268,7 @@ function EntriesPanel({
   mask,
   toDisplay,
   onRemove,
+  onUpdate,
 }: {
   cashflows: import("@/lib/types").CashflowEntry[];
   categories: Category[];
@@ -277,7 +278,9 @@ function EntriesPanel({
   mask: (amount: number, from?: string) => string;
   toDisplay: (amount: number, from?: string) => number;
   onRemove: (id: string) => void;
+  onUpdate: (id: string, patch: Partial<import("@/lib/types").CashflowEntry>) => void;
 }) {
+  const [editing, setEditing] = useState<import("@/lib/types").CashflowEntry | null>(null);
   const [kindFilter, setKindFilter] = useState<"all" | "income" | "expense">("all");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [period, setPeriod] = useState<PeriodKey>("month");
