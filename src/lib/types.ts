@@ -41,8 +41,13 @@ export type CashflowEntry = {
   /** When set, this entry repeats on the given cadence starting from `date`. */
   recurrence?: Recurrence;
   /** "fixed" (default) treats `amount` as a money value; "percent" treats
-   *  `amount` as a percentage of total income within the active scope. */
+   *  `amount` as a percentage of the base selected via `percentOf`. */
   amountKind?: "fixed" | "percent";
+  /** For percent entries: what the percentage is taken from.
+   *  - "all-income" (default) — % of total fixed income in scope
+   *  - "all-expense" — % of total fixed expenses in scope
+   *  - any other string — id of another (fixed) entry to subscribe to */
+  percentOf?: "all-income" | "all-expense" | string;
 };
 
 /**
