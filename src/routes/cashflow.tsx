@@ -91,6 +91,26 @@ function expandCashflows(entries: CashflowEntry[], until: Date = new Date()): (C
   return out;
 }
 
+/** Resolve each entry to its display-currency value. Percent entries are
+ *  evaluated as `amount%` of total fixed income in `entries`. */
+function valuesByEntry(
+  entries: CashflowEntry[],
+  toDisplay: (amount: number, from?: string) => number,
+): Map<string, number> {
+  const baseIncome = entries
+    .filter((e) => e.kind === "income" && (e.amountKind ?? "fixed") === "fixed")
+    .reduce((s, e) => s + toDisplay(e.amount, e.currency), 0);
+  const out = new Map<string, number>();
+  for (const e of entries) {
+    if ((e.amountKind ?? "fixed") === "percent") {
+      out.set(e.id, (Number(e.amount) / 100) * baseIncome);
+    } else {
+      out.set(e.id, toDisplay(e.amount, e.currency));
+    }
+  }
+  return out;
+}
+
 const POOL_COLOR = "#64748b";
 const SAVED_COLOR = "#0ea5e9";
 
@@ -143,16 +163,18 @@ function CashflowPage() {
   // Expand recurring entries up to today for top-level totals and Sankey.
   const expandedToToday = useMemo(() => expandCashflows(cashflows, new Date()), [cashflows]);
 
+  const valuesTop = useMemo(() => valuesByEntry(expandedToToday, toDisplay), [expandedToToday, toDisplay]);
+
   const totals = useMemo(() => {
     let income = 0;
     let expense = 0;
     for (const c of expandedToToday) {
-      const v = toDisplay(c.amount, c.currency);
+      const v = valuesTop.get(c.id) ?? 0;
       if (c.kind === "income") income += v;
       else expense += v;
     }
     return { income, expense, net: income - expense };
-  }, [expandedToToday, toDisplay]);
+  }, [expandedToToday, valuesTop]);
 
   const sankey = useMemo(() => {
     if (!expandedToToday.length) return null;
@@ -164,8 +186,8 @@ function CashflowPage() {
     const POOL = "Cash Pool";
     const SAVED = "Saved";
 
-    const totalIn = incomes.reduce((s, c) => s + toDisplay(c.amount, c.currency), 0);
-    const totalOut = expenses.reduce((s, c) => s + toDisplay(c.amount, c.currency), 0);
+    const totalIn = incomes.reduce((s, c) => s + (valuesTop.get(c.id) ?? 0), 0);
+    const totalOut = expenses.reduce((s, c) => s + (valuesTop.get(c.id) ?? 0), 0);
     const saved = Math.max(0, totalIn - totalOut);
 
     type NodeMeta = { name: string; kind: "income" | "pool" | "expense" | "saved"; fill: string };
@@ -190,20 +212,20 @@ function CashflowPage() {
     for (const s of sources) {
       const sum = incomes
         .filter((i) => (i.source || "Other") === s)
-        .reduce((a, b) => a + toDisplay(b.amount, b.currency), 0);
+        .reduce((a, b) => a + (valuesTop.get(b.id) ?? 0), 0);
       if (sum > 0) links.push({ source: idx(s), target: idx(POOL), value: sum });
     }
     for (const c of cats) {
       const sum = expenses
         .filter((e) => (e.category || "Other") === c)
-        .reduce((a, b) => a + toDisplay(b.amount, b.currency), 0);
+        .reduce((a, b) => a + (valuesTop.get(b.id) ?? 0), 0);
       if (sum > 0) links.push({ source: idx(POOL), target: idx(c), value: sum });
     }
     if (saved > 0) links.push({ source: idx(POOL), target: idx(SAVED), value: saved });
 
     if (!links.length) return null;
     return { nodes, links };
-  }, [expandedToToday, toDisplay, prefs.nodeColors, catByName]);
+  }, [expandedToToday, valuesTop, prefs.nodeColors, catByName]);
 
 
   // Unique node names for the color customizer.
@@ -380,6 +402,9 @@ function EntriesPanel({
     }
   }, [availableCategories, categoryFilter]);
 
+  // Resolve display values for entries in scope (percent entries use scope income as base).
+  const values = useMemo(() => valuesByEntry(filtered, toDisplay), [filtered, toDisplay]);
+
   // Chart series: cumulative net balance, varying with income (+) and expenses (-).
   // Each point keeps the day's entries so the tooltip can show sources/categories.
   const chartData = useMemo(() => {
@@ -393,7 +418,7 @@ function EntriesPanel({
     for (const c of filtered) {
       const key = format(new Date(c.date), "yyyy-MM-dd");
       const bucket = byDay.get(key) ?? { income: 0, expense: 0, entries: [] };
-      const v = toDisplay(c.amount, c.currency);
+      const v = values.get(c.id) ?? 0;
       if (c.kind === "income") bucket.income += v;
       else bucket.expense += v;
       bucket.entries.push({
@@ -417,18 +442,18 @@ function EntriesPanel({
         entries: v.entries,
       };
     });
-  }, [filtered, interval, toDisplay]);
+  }, [filtered, interval, values]);
 
   const totals = useMemo(() => {
     let income = 0;
     let expense = 0;
     for (const c of filtered) {
-      const v = toDisplay(c.amount, c.currency);
+      const v = values.get(c.id) ?? 0;
       if (c.kind === "income") income += v;
       else expense += v;
     }
     return { income, expense, net: income - expense };
-  }, [filtered, toDisplay]);
+  }, [filtered, values]);
 
   function exportPdf() {
     if (!filtered.length) {
@@ -520,13 +545,19 @@ function EntriesPanel({
     // Table
     const rows = [...filtered]
       .sort((a, b) => +new Date(a.date) - +new Date(b.date))
-      .map((c) => [
-        format(new Date(c.date), "yyyy-MM-dd"),
-        c.kind,
-        c.kind === "income" ? c.source : c.category,
-        formatMoney(c.amount, (c.currency || currency).toUpperCase()),
-        formatMoney(toDisplay(c.amount, c.currency), currency),
-      ]);
+      .map((c) => {
+        const isPct = (c.amountKind ?? "fixed") === "percent";
+        const amountText = isPct
+          ? `${c.amount}%`
+          : formatMoney(c.amount, (c.currency || currency).toUpperCase());
+        return [
+          format(new Date(c.date), "yyyy-MM-dd"),
+          c.kind,
+          c.kind === "income" ? c.source : c.category,
+          amountText,
+          formatMoney(values.get(c.id) ?? 0, currency),
+        ];
+      });
 
     autoTable(doc, {
       startY: chartBottom + 40,
@@ -739,17 +770,34 @@ function EntriesPanel({
                         </td>
                         <td className="py-2.5">{c.kind === "income" ? c.source : c.category}</td>
                         <td className="py-2.5 text-right tabular-nums font-medium">
-                          {privacy
-                            ? MASK
-                            : formatMoney(c.amount, (c.currency || currency).toUpperCase())}
-                          {c.currency && c.currency.toUpperCase() !== currency && (
-                            <span
-                              className="ml-1.5 text-[10px] uppercase text-muted-foreground"
-                              title={`≈ ${mask(c.amount, c.currency)} in ${currency}`}
-                            >
-                              ≈ {mask(c.amount, c.currency)}
-                            </span>
-                          )}
+                          {(() => {
+                            const isPct = (c.amountKind ?? "fixed") === "percent";
+                            const computed = values.get(c.id) ?? 0;
+                            if (privacy) return MASK;
+                            if (isPct) {
+                              return (
+                                <>
+                                  {c.amount}%
+                                  <span className="ml-1.5 text-[10px] uppercase text-muted-foreground">
+                                    ≈ {formatMoney(computed, currency)}
+                                  </span>
+                                </>
+                              );
+                            }
+                            return (
+                              <>
+                                {formatMoney(c.amount, (c.currency || currency).toUpperCase())}
+                                {c.currency && c.currency.toUpperCase() !== currency && (
+                                  <span
+                                    className="ml-1.5 text-[10px] uppercase text-muted-foreground"
+                                    title={`≈ ${mask(c.amount, c.currency)} in ${currency}`}
+                                  >
+                                    ≈ {mask(c.amount, c.currency)}
+                                  </span>
+                                )}
+                              </>
+                            );
+                          })()}
                         </td>
                         <td className="py-2.5 text-right">
                           <div className="flex justify-end gap-1">
@@ -824,6 +872,7 @@ function EditEntryDialog({
   const [recurring, setRecurring] = useState(false);
   const [frequency, setFrequency] = useState<RecurrenceFrequency>("monthly");
   const [until, setUntil] = useState("");
+  const [isPercent, setIsPercent] = useState(false);
 
   useEffect(() => {
     if (!entry) return;
@@ -835,6 +884,7 @@ function EditEntryDialog({
     setRecurring(!!entry.recurrence);
     setFrequency(entry.recurrence?.frequency ?? "monthly");
     setUntil(entry.recurrence?.until ? format(new Date(entry.recurrence.until), "yyyy-MM-dd") : "");
+    setIsPercent((entry.amountKind ?? "fixed") === "percent");
   }, [entry]);
 
   const visibleCategories = useMemo(
@@ -845,6 +895,7 @@ function EditEntryDialog({
   function submit() {
     const a = parseFloat(amount);
     if (!isFinite(a) || a <= 0) return toast.error("Amount must be > 0");
+    if (isPercent && a > 1000) return toast.error("Percentage looks too high");
     if (!name.trim()) return toast.error("Pick a category");
     onSave({
       kind,
@@ -856,6 +907,7 @@ function EditEntryDialog({
       recurrence: recurring
         ? { frequency, ...(until ? { until: new Date(until).toISOString() } : {}) }
         : undefined,
+      amountKind: isPercent ? "percent" : "fixed",
     });
   }
 
@@ -887,22 +939,46 @@ function EditEntryDialog({
               </SelectContent>
             </Select>
           </div>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={isPercent}
+              onChange={(e) => setIsPercent(e.target.checked)}
+              className="h-4 w-4"
+            />
+            <span>Percentage of total income (e.g. taxes)</span>
+          </label>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label className="text-xs">Amount</Label>
-              <Input type="number" step="any" value={amount} onChange={(e) => setAmount(e.target.value)} className="mt-1.5" />
+              <Label className="text-xs">{isPercent ? "Percent" : "Amount"}</Label>
+              <div className="relative mt-1.5">
+                <Input
+                  type="number"
+                  step="any"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  className={isPercent ? "pr-8" : ""}
+                />
+                {isPercent && (
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+                    %
+                  </span>
+                )}
+              </div>
             </div>
-            <div>
-              <Label className="text-xs">Currency</Label>
-              <Select value={entryCurrency} onValueChange={setEntryCurrency}>
-                <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
-                <SelectContent className="max-h-72">
-                  {CURRENCIES.map((c) => (
-                    <SelectItem key={c.code} value={c.code}>{c.code} · {c.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {!isPercent && (
+              <div>
+                <Label className="text-xs">Currency</Label>
+                <Select value={entryCurrency} onValueChange={setEntryCurrency}>
+                  <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
+                  <SelectContent className="max-h-72">
+                    {CURRENCIES.map((c) => (
+                      <SelectItem key={c.code} value={c.code}>{c.code} · {c.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
           <div>
             <Label className="text-xs">{recurring ? "Start date" : "Date"}</Label>
@@ -1061,6 +1137,7 @@ type FormVals = {
   currency: string;
   date: string;
   recurrence?: { frequency: RecurrenceFrequency; until?: string };
+  amountKind?: "fixed" | "percent";
 };
 
 function AddForm({
@@ -1086,6 +1163,7 @@ function AddForm({
   const [recurring, setRecurring] = useState(false);
   const [frequency, setFrequency] = useState<RecurrenceFrequency>("monthly");
   const [until, setUntil] = useState("");
+  const [isPercent, setIsPercent] = useState(false);
 
   const visibleCategories = useMemo(
     () => categories.filter((c) => c.kind === kind),
@@ -1102,6 +1180,7 @@ function AddForm({
   function submit() {
     const a = parseFloat(amount);
     if (!isFinite(a) || a <= 0) return toast.error("Amount must be > 0");
+    if (isPercent && a > 1000) return toast.error("Percentage looks too high");
     if (!categoryName.trim()) return toast.error("Pick a category");
     onAdd({
       kind,
@@ -1113,6 +1192,7 @@ function AddForm({
       recurrence: recurring
         ? { frequency, ...(until ? { until: new Date(until).toISOString() } : {}) }
         : undefined,
+      amountKind: isPercent ? "percent" : "fixed",
     });
     setAmount("");
   }
@@ -1187,36 +1267,57 @@ function AddForm({
 
   function sharedFields() {
     return (
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-        <Field label="Amount">
-          <Input
-            type="number"
-            step="any"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            placeholder="0.00"
+      <>
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={isPercent}
+            onChange={(e) => setIsPercent(e.target.checked)}
+            className="h-4 w-4"
           />
-        </Field>
-        <Field label="Currency">
-          <Select value={entryCurrency} onValueChange={setEntryCurrency}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className="max-h-72">
-              {CURRENCIES.map((c) => (
-                <SelectItem key={c.code} value={c.code}>
-                  {c.code} · {c.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </Field>
-        <div className="col-span-2 sm:col-span-1">
-          <Field label="Date">
-            <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+          <span>Use a percentage of total income (e.g. taxes)</span>
+        </label>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <Field label={isPercent ? "Percent" : "Amount"}>
+            <div className="relative">
+              <Input
+                type="number"
+                step="any"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                placeholder={isPercent ? "20" : "0.00"}
+                className={isPercent ? "pr-8" : ""}
+              />
+              {isPercent && (
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+                  %
+                </span>
+              )}
+            </div>
           </Field>
+          {!isPercent && (
+            <Field label="Currency">
+              <Select value={entryCurrency} onValueChange={setEntryCurrency}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="max-h-72">
+                  {CURRENCIES.map((c) => (
+                    <SelectItem key={c.code} value={c.code}>
+                      {c.code} · {c.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Field>
+          )}
+          <div className={isPercent ? "col-span-1" : "col-span-2 sm:col-span-1"}>
+            <Field label="Date">
+              <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+            </Field>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 }

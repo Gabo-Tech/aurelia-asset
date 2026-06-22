@@ -40,6 +40,9 @@ export type CashflowEntry = {
   date: string; // ISO (first occurrence for recurring entries)
   /** When set, this entry repeats on the given cadence starting from `date`. */
   recurrence?: Recurrence;
+  /** "fixed" (default) treats `amount` as a money value; "percent" treats
+   *  `amount` as a percentage of total income within the active scope. */
+  amountKind?: "fixed" | "percent";
 };
 
 /**
