@@ -646,7 +646,7 @@ function EntriesPanel({
       },
       didParseCell: (data) => {
         if (data.section !== "body") return;
-        const type = String(data.row.raw[1] ?? "");
+        const type = String((data.row.raw as unknown as unknown[])?.[1] ?? "");
         if (type === "income") {
           data.cell.styles.textColor = [22, 163, 74];
         } else if (type === "expense") {
