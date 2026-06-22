@@ -448,12 +448,12 @@ function EntriesPanel({
     let income = 0;
     let expense = 0;
     for (const c of filtered) {
-      const v = toDisplay(c.amount, c.currency);
+      const v = values.get(c.id) ?? 0;
       if (c.kind === "income") income += v;
       else expense += v;
     }
     return { income, expense, net: income - expense };
-  }, [filtered, toDisplay]);
+  }, [filtered, values]);
 
   function exportPdf() {
     if (!filtered.length) {
