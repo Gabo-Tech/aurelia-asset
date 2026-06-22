@@ -1354,8 +1354,17 @@ function AddForm({
             onChange={(e) => setIsPercent(e.target.checked)}
             className="h-4 w-4"
           />
-          <span>Use a percentage of total income (e.g. taxes)</span>
+          <span>Use a percentage of another entry (e.g. taxes)</span>
         </label>
+        {isPercent && (
+          <Field label="Percent of">
+            <PercentTargetPicker
+              value={percentOf}
+              onChange={setPercentOf}
+              options={subscribeOptions}
+            />
+          </Field>
+        )}
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           <Field label={isPercent ? "Percent" : "Amount"}>
             <div className="relative">
