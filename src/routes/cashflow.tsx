@@ -38,6 +38,7 @@ import {
   Tooltip as RTooltip,
   ResponsiveContainer,
   CartesianGrid,
+  ReferenceLine,
 } from "recharts";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -657,65 +658,85 @@ function EntriesPanel({
         {chartData.length > 0 ? (
           <div className="h-56 w-full mb-4">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
-                <CartesianGrid stroke="hsl(var(--foreground))" strokeDasharray="3 3" opacity={0.15} />
-                <XAxis dataKey="label" tick={{ fontSize: 11, fill: "hsl(var(--foreground))" }} stroke="hsl(var(--foreground))" strokeOpacity={0.5} minTickGap={20} />
-                <YAxis tick={{ fontSize: 11, fill: "hsl(var(--foreground))" }} stroke="hsl(var(--foreground))" strokeOpacity={0.5} tickFormatter={(v) => formatMoney(v, currency, { compact: true })} width={70} />
-                <RTooltip
-                  content={({ active, payload }) => {
-                    if (!active || !payload || !payload.length) return null;
-                    const d = payload[0].payload as (typeof chartData)[number];
-                    return (
-                      <div className="rounded-lg border border-border bg-popover px-3 py-2 text-xs shadow-md">
-                        <div className="font-medium text-foreground">{d.label}</div>
-                        <div className="mt-1 text-muted-foreground">
-                          Balance:{" "}
-                          <span className="text-foreground font-medium tabular-nums">
-                            {privacy ? MASK : formatMoney(d.balance, currency)}
-                          </span>
-                        </div>
-                        {d.entries.length > 0 ? (
-                          <div className="mt-1.5 space-y-0.5">
-                            {d.entries.map((e, i) => (
-                              <div key={i} className="flex items-center justify-between gap-3">
-                                <span className="flex items-center gap-1.5">
-                                  <span
-                                    className={`inline-block h-1.5 w-1.5 rounded-full ${
-                                      e.kind === "income" ? "bg-success" : "bg-destructive"
-                                    }`}
-                                  />
-                                  <span className="text-foreground">{e.name}</span>
-                                </span>
-                                <span
-                                  className={`tabular-nums ${
-                                    e.kind === "income" ? "text-success" : "text-destructive"
-                                  }`}
-                                >
-                                  {e.kind === "income" ? "+" : "−"}
-                                  {privacy ? MASK : formatMoney(e.value, currency)}
-                                </span>
+              {(() => {
+                const values = chartData.map((d) => d.balance);
+                const min = Math.min(0, ...values);
+                const max = Math.max(0, ...values);
+                // Offset in 0..1 where y=0 crosses (top=0, bottom=1).
+                const zeroOffset = max <= 0 ? 0 : min >= 0 ? 1 : max / (max - min);
+                const gradId = "balanceGrad";
+                return (
+                  <LineChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0" stopColor="hsl(var(--success))" />
+                        <stop offset={zeroOffset} stopColor="hsl(var(--success))" />
+                        <stop offset={zeroOffset} stopColor="hsl(var(--destructive))" />
+                        <stop offset="1" stopColor="hsl(var(--destructive))" />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid stroke="hsl(var(--foreground))" strokeDasharray="3 3" opacity={0.15} />
+                    <XAxis dataKey="label" tick={{ fontSize: 11, fill: "hsl(var(--foreground))" }} stroke="hsl(var(--foreground))" strokeOpacity={0.5} minTickGap={20} />
+                    <YAxis tick={{ fontSize: 11, fill: "hsl(var(--foreground))" }} stroke="hsl(var(--foreground))" strokeOpacity={0.5} tickFormatter={(v) => formatMoney(v, currency, { compact: true })} width={70} />
+                    <ReferenceLine y={0} stroke="hsl(var(--foreground))" strokeOpacity={0.4} strokeDasharray="2 2" />
+                    <RTooltip
+                      content={({ active, payload }) => {
+                        if (!active || !payload || !payload.length) return null;
+                        const d = payload[0].payload as (typeof chartData)[number];
+                        return (
+                          <div className="rounded-lg border border-border bg-popover px-3 py-2 text-xs shadow-md">
+                            <div className="font-medium text-foreground">{d.label}</div>
+                            <div className="mt-1 text-muted-foreground">
+                              Balance:{" "}
+                              <span className={`font-medium tabular-nums ${d.balance >= 0 ? "text-success" : "text-destructive"}`}>
+                                {privacy ? MASK : formatMoney(d.balance, currency)}
+                              </span>
+                            </div>
+                            {d.entries.length > 0 ? (
+                              <div className="mt-1.5 space-y-0.5">
+                                {d.entries.map((e, i) => (
+                                  <div key={i} className="flex items-center justify-between gap-3">
+                                    <span className="flex items-center gap-1.5">
+                                      <span
+                                        className={`inline-block h-1.5 w-1.5 rounded-full ${
+                                          e.kind === "income" ? "bg-success" : "bg-destructive"
+                                        }`}
+                                      />
+                                      <span className="text-foreground">{e.name}</span>
+                                    </span>
+                                    <span
+                                      className={`tabular-nums ${
+                                        e.kind === "income" ? "text-success" : "text-destructive"
+                                      }`}
+                                    >
+                                      {e.kind === "income" ? "+" : "−"}
+                                      {privacy ? MASK : formatMoney(e.value, currency)}
+                                    </span>
+                                  </div>
+                                ))}
                               </div>
-                            ))}
+                            ) : (
+                              <div className="mt-1 text-muted-foreground italic">No activity</div>
+                            )}
                           </div>
-                        ) : (
-                          <div className="mt-1 text-muted-foreground italic">No activity</div>
-                        )}
-                      </div>
-                    );
-                  }}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="balance"
-                  stroke="#3b82f6"
-                  strokeWidth={2}
-                  dot={false}
-                  activeDot={{ r: 4 }}
-                  name="Balance"
-                />
-              </LineChart>
+                        );
+                      }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="balance"
+                      stroke={`url(#${gradId})`}
+                      strokeWidth={2}
+                      dot={false}
+                      activeDot={{ r: 4 }}
+                      name="Balance"
+                    />
+                  </LineChart>
+                );
+              })()}
             </ResponsiveContainer>
           </div>
+
         ) : (
           <div className="h-32 grid place-items-center text-sm text-muted-foreground border border-dashed border-border/50 rounded-md mb-4">
             No data for the selected filters.
