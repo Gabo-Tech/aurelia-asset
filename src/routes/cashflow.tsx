@@ -140,21 +140,24 @@ function CashflowPage() {
   const colorFor = (name: string, fallbackGroup: CategoryGroup) =>
     prefs.nodeColors[name] ?? catByName.get(name)?.color ?? GROUP_COLORS[fallbackGroup];
 
+  // Expand recurring entries up to today for top-level totals and Sankey.
+  const expandedToToday = useMemo(() => expandCashflows(cashflows, new Date()), [cashflows]);
+
   const totals = useMemo(() => {
     let income = 0;
     let expense = 0;
-    for (const c of cashflows) {
+    for (const c of expandedToToday) {
       const v = toDisplay(c.amount, c.currency);
       if (c.kind === "income") income += v;
       else expense += v;
     }
     return { income, expense, net: income - expense };
-  }, [cashflows, toDisplay]);
+  }, [expandedToToday, toDisplay]);
 
   const sankey = useMemo(() => {
-    if (!cashflows.length) return null;
-    const incomes = cashflows.filter((c) => c.kind === "income");
-    const expenses = cashflows.filter((c) => c.kind === "expense");
+    if (!expandedToToday.length) return null;
+    const incomes = expandedToToday.filter((c) => c.kind === "income");
+    const expenses = expandedToToday.filter((c) => c.kind === "expense");
 
     const sources = Array.from(new Set(incomes.map((i) => i.source || "Other")));
     const cats = Array.from(new Set(expenses.map((e) => e.category || "Other")));
@@ -200,7 +203,7 @@ function CashflowPage() {
 
     if (!links.length) return null;
     return { nodes, links };
-  }, [cashflows, toDisplay, prefs.nodeColors, catByName]);
+  }, [expandedToToday, toDisplay, prefs.nodeColors, catByName]);
 
 
   // Unique node names for the color customizer.
