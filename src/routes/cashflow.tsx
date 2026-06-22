@@ -334,29 +334,43 @@ function EntriesPanel({
     }
   }, [availableCategories, categoryFilter]);
 
-  // Chart series: per-day income & expense in display currency, over the selected interval.
+  // Chart series: cumulative net balance, varying with income (+) and expenses (-).
+  // Each point keeps the day's entries so the tooltip can show sources/categories.
   const chartData = useMemo(() => {
     if (!filtered.length) return [];
     const start = interval?.start ?? new Date(Math.min(...filtered.map((c) => +new Date(c.date))));
     const end = interval?.end ?? new Date(Math.max(...filtered.map((c) => +new Date(c.date))));
     const days = eachDayOfInterval({ start, end });
-    const byDay = new Map<string, { income: number; expense: number }>();
-    for (const d of days) byDay.set(format(d, "yyyy-MM-dd"), { income: 0, expense: 0 });
+    type Entry = { name: string; kind: "income" | "expense"; value: number };
+    const byDay = new Map<string, { income: number; expense: number; entries: Entry[] }>();
+    for (const d of days) byDay.set(format(d, "yyyy-MM-dd"), { income: 0, expense: 0, entries: [] });
     for (const c of filtered) {
       const key = format(new Date(c.date), "yyyy-MM-dd");
-      const bucket = byDay.get(key) ?? { income: 0, expense: 0 };
+      const bucket = byDay.get(key) ?? { income: 0, expense: 0, entries: [] };
       const v = toDisplay(c.amount, c.currency);
       if (c.kind === "income") bucket.income += v;
       else bucket.expense += v;
+      bucket.entries.push({
+        name: (c.kind === "income" ? c.source : c.category) || "Other",
+        kind: c.kind,
+        value: +v.toFixed(2),
+      });
       byDay.set(key, bucket);
     }
-    return Array.from(byDay.entries()).map(([date, v]) => ({
-      date,
-      label: format(parseISO(date), "MMM d"),
-      income: +v.income.toFixed(2),
-      expense: +v.expense.toFixed(2),
-      net: +(v.income - v.expense).toFixed(2),
-    }));
+    let cum = 0;
+    return Array.from(byDay.entries()).map(([date, v]) => {
+      const delta = v.income - v.expense;
+      cum += delta;
+      return {
+        date,
+        label: format(parseISO(date), "MMM d"),
+        balance: +cum.toFixed(2),
+        income: +v.income.toFixed(2),
+        expense: +v.expense.toFixed(2),
+        delta: +delta.toFixed(2),
+        entries: v.entries,
+      };
+    });
   }, [filtered, interval, toDisplay]);
 
   const totals = useMemo(() => {
