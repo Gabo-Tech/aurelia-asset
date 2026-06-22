@@ -27,9 +27,20 @@ import {
   DialogTrigger,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { Trash2, Plus, Palette, RotateCcw, Settings as SettingsIcon, Pencil } from "lucide-react";
+import { Trash2, Plus, Palette, RotateCcw, Settings as SettingsIcon, Pencil, Download } from "lucide-react";
 import { toast } from "sonner";
-import { format } from "date-fns";
+import { format, startOfWeek, startOfMonth, startOfYear, endOfWeek, endOfMonth, endOfYear, isWithinInterval, parseISO, eachDayOfInterval } from "date-fns";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip as RTooltip,
+  ResponsiveContainer,
+  CartesianGrid,
+} from "recharts";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 export const Route = createFileRoute("/cashflow")({
   head: () => ({
@@ -229,77 +240,433 @@ function CashflowPage() {
         </Card>
       </div>
 
-      <Card className="border-border/60 mt-5">
-        <CardHeader>
-          <CardTitle>Entries</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {cashflows.length === 0 ? (
-            <div className="py-10 text-center text-sm text-muted-foreground">No entries yet.</div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-left text-xs uppercase tracking-wider text-muted-foreground">
-                    <th className="py-2">Date</th>
-                    <th className="py-2">Type</th>
-                    <th className="py-2">Source / Category</th>
-                    <th className="py-2 text-right">Amount</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border/40">
-                  {[...cashflows]
-                    .sort((a, b) => +new Date(b.date) - +new Date(a.date))
-                    .map((c) => (
-                      <tr key={c.id}>
-                        <td className="py-2.5 text-muted-foreground">
-                          {format(new Date(c.date), "MMM d, yyyy")}
-                        </td>
-                        <td className="py-2.5">
-                          <span
-                            className={`text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded ${
-                              c.kind === "income"
-                                ? "bg-success/15 text-success"
-                                : "bg-destructive/15 text-destructive"
-                            }`}
-                          >
-                            {c.kind}
-                          </span>
-                        </td>
-                        <td className="py-2.5">{c.kind === "income" ? c.source : c.category}</td>
-                        <td className="py-2.5 text-right tabular-nums font-medium">
-                          {privacy
-                            ? MASK
-                            : formatMoney(c.amount, (c.currency || currency).toUpperCase())}
-                          {c.currency && c.currency.toUpperCase() !== currency && (
-                            <span
-                              className="ml-1.5 text-[10px] uppercase text-muted-foreground"
-                              title={`≈ ${mask(c.amount, c.currency)} in ${currency}`}
-                            >
-                              ≈ {mask(c.amount, c.currency)}
-                            </span>
-                          )}
-                        </td>
-                        <td className="py-2.5 text-right">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() => removeCashflow(c.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
-                </tbody>
-              </table>
+      <EntriesPanel
+        cashflows={cashflows}
+        categories={categories}
+        currency={currency}
+        privacy={privacy}
+        MASK={MASK}
+        mask={mask}
+        toDisplay={toDisplay}
+        onRemove={removeCashflow}
+      />
+    </>
+  );
+}
+
+/* ---------- Entries panel: filters, chart, table, PDF export ---------- */
+
+type PeriodKey = "all" | "week" | "month" | "year" | "custom";
+
+function EntriesPanel({
+  cashflows,
+  categories,
+  currency,
+  privacy,
+  MASK,
+  mask,
+  toDisplay,
+  onRemove,
+}: {
+  cashflows: import("@/lib/types").CashflowEntry[];
+  categories: Category[];
+  currency: string;
+  privacy: boolean;
+  MASK: string;
+  mask: (amount: number, from?: string) => string;
+  toDisplay: (amount: number, from?: string) => number;
+  onRemove: (id: string) => void;
+}) {
+  const [kindFilter, setKindFilter] = useState<"all" | "income" | "expense">("all");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [period, setPeriod] = useState<PeriodKey>("month");
+  const [customFrom, setCustomFrom] = useState(format(startOfMonth(new Date()), "yyyy-MM-dd"));
+  const [customTo, setCustomTo] = useState(format(new Date(), "yyyy-MM-dd"));
+
+  const interval = useMemo(() => {
+    const now = new Date();
+    switch (period) {
+      case "week":
+        return { start: startOfWeek(now, { weekStartsOn: 1 }), end: endOfWeek(now, { weekStartsOn: 1 }) };
+      case "month":
+        return { start: startOfMonth(now), end: endOfMonth(now) };
+      case "year":
+        return { start: startOfYear(now), end: endOfYear(now) };
+      case "custom":
+        return { start: parseISO(customFrom), end: parseISO(customTo) };
+      case "all":
+      default:
+        return null;
+    }
+  }, [period, customFrom, customTo]);
+
+  const periodLabel = useMemo(() => {
+    if (!interval) return "All time";
+    return `${format(interval.start, "MMM d, yyyy")} – ${format(interval.end, "MMM d, yyyy")}`;
+  }, [interval]);
+
+  const filtered = useMemo(() => {
+    return cashflows.filter((c) => {
+      if (kindFilter !== "all" && c.kind !== kindFilter) return false;
+      const name = c.kind === "income" ? c.source : c.category;
+      if (categoryFilter !== "all" && name !== categoryFilter) return false;
+      if (interval) {
+        const d = new Date(c.date);
+        if (!isWithinInterval(d, interval)) return false;
+      }
+      return true;
+    });
+  }, [cashflows, kindFilter, categoryFilter, interval]);
+
+  // Available categories for current kind filter
+  const availableCategories = useMemo(() => {
+    const list = kindFilter === "all" ? categories : categories.filter((c) => c.kind === kindFilter);
+    return list;
+  }, [categories, kindFilter]);
+
+  useEffect(() => {
+    if (categoryFilter !== "all" && !availableCategories.find((c) => c.name === categoryFilter)) {
+      setCategoryFilter("all");
+    }
+  }, [availableCategories, categoryFilter]);
+
+  // Chart series: per-day income & expense in display currency, over the selected interval.
+  const chartData = useMemo(() => {
+    if (!filtered.length) return [];
+    const start = interval?.start ?? new Date(Math.min(...filtered.map((c) => +new Date(c.date))));
+    const end = interval?.end ?? new Date(Math.max(...filtered.map((c) => +new Date(c.date))));
+    const days = eachDayOfInterval({ start, end });
+    const byDay = new Map<string, { income: number; expense: number }>();
+    for (const d of days) byDay.set(format(d, "yyyy-MM-dd"), { income: 0, expense: 0 });
+    for (const c of filtered) {
+      const key = format(new Date(c.date), "yyyy-MM-dd");
+      const bucket = byDay.get(key) ?? { income: 0, expense: 0 };
+      const v = toDisplay(c.amount, c.currency);
+      if (c.kind === "income") bucket.income += v;
+      else bucket.expense += v;
+      byDay.set(key, bucket);
+    }
+    return Array.from(byDay.entries()).map(([date, v]) => ({
+      date,
+      label: format(parseISO(date), "MMM d"),
+      income: +v.income.toFixed(2),
+      expense: +v.expense.toFixed(2),
+      net: +(v.income - v.expense).toFixed(2),
+    }));
+  }, [filtered, interval, toDisplay]);
+
+  const totals = useMemo(() => {
+    let income = 0;
+    let expense = 0;
+    for (const c of filtered) {
+      const v = toDisplay(c.amount, c.currency);
+      if (c.kind === "income") income += v;
+      else expense += v;
+    }
+    return { income, expense, net: income - expense };
+  }, [filtered, toDisplay]);
+
+  function exportPdf() {
+    if (!filtered.length) {
+      toast.error("No entries in selected range");
+      return;
+    }
+    const doc = new jsPDF({ unit: "pt", format: "a4" });
+    const pageW = doc.internal.pageSize.getWidth();
+    const margin = 40;
+
+    // Header
+    doc.setFontSize(18);
+    doc.text("Cashflow Report", margin, 50);
+    doc.setFontSize(10);
+    doc.setTextColor(110);
+    doc.text(`Period: ${periodLabel}`, margin, 68);
+    const filterDesc = `Type: ${kindFilter} · Category: ${categoryFilter} · Currency: ${currency}`;
+    doc.text(filterDesc, margin, 82);
+
+    // Summary
+    doc.setTextColor(0);
+    doc.setFontSize(11);
+    const sumY = 110;
+    doc.text(`Income: ${formatMoney(totals.income, currency)}`, margin, sumY);
+    doc.text(`Expenses: ${formatMoney(totals.expense, currency)}`, margin + 180, sumY);
+    doc.text(
+      `Net: ${totals.net >= 0 ? "+" : "-"}${formatMoney(Math.abs(totals.net), currency)}`,
+      margin + 360,
+      sumY,
+    );
+
+    // Line chart (manual draw)
+    const chartTop = 135;
+    const chartH = 200;
+    const chartW = pageW - margin * 2;
+    const chartLeft = margin;
+    const chartBottom = chartTop + chartH;
+
+    // axes
+    doc.setDrawColor(200);
+    doc.setLineWidth(0.5);
+    doc.line(chartLeft, chartBottom, chartLeft + chartW, chartBottom);
+    doc.line(chartLeft, chartTop, chartLeft, chartBottom);
+
+    if (chartData.length > 0) {
+      const maxVal = Math.max(
+        1,
+        ...chartData.map((d) => Math.max(d.income, d.expense, Math.abs(d.net))),
+      );
+      const xStep = chartData.length > 1 ? chartW / (chartData.length - 1) : 0;
+      const yFor = (v: number) => chartBottom - (v / maxVal) * (chartH - 10);
+
+      // Y-axis ticks
+      doc.setFontSize(8);
+      doc.setTextColor(140);
+      for (let i = 0; i <= 4; i++) {
+        const v = (maxVal / 4) * i;
+        const y = yFor(v);
+        doc.setDrawColor(235);
+        doc.line(chartLeft, y, chartLeft + chartW, y);
+        doc.text(formatMoney(v, currency, { compact: true }), chartLeft - 4, y + 3, { align: "right" });
+      }
+
+      const drawSeries = (key: "income" | "expense" | "net", color: [number, number, number]) => {
+        doc.setDrawColor(color[0], color[1], color[2]);
+        doc.setLineWidth(1.2);
+        for (let i = 0; i < chartData.length - 1; i++) {
+          const x1 = chartLeft + i * xStep;
+          const x2 = chartLeft + (i + 1) * xStep;
+          const y1 = yFor(Math.max(0, chartData[i][key]));
+          const y2 = yFor(Math.max(0, chartData[i + 1][key]));
+          doc.line(x1, y1, x2, y2);
+        }
+      };
+
+      if (kindFilter !== "expense") drawSeries("income", [34, 197, 94]);
+      if (kindFilter !== "income") drawSeries("expense", [239, 68, 68]);
+      if (kindFilter === "all") drawSeries("net", [59, 130, 246]);
+
+      // X-axis labels (sparse)
+      const step = Math.max(1, Math.ceil(chartData.length / 6));
+      doc.setTextColor(140);
+      for (let i = 0; i < chartData.length; i += step) {
+        const x = chartLeft + i * xStep;
+        doc.text(chartData[i].label, x, chartBottom + 12, { align: "center" });
+      }
+
+      // Legend
+      let legendX = chartLeft;
+      const legendY = chartTop - 8;
+      const legendItem = (label: string, color: [number, number, number]) => {
+        doc.setFillColor(color[0], color[1], color[2]);
+        doc.rect(legendX, legendY - 6, 8, 8, "F");
+        doc.setTextColor(80);
+        doc.text(label, legendX + 12, legendY);
+        legendX += doc.getTextWidth(label) + 30;
+      };
+      if (kindFilter !== "expense") legendItem("Income", [34, 197, 94]);
+      if (kindFilter !== "income") legendItem("Expenses", [239, 68, 68]);
+      if (kindFilter === "all") legendItem("Net", [59, 130, 246]);
+    }
+
+    // Table
+    const rows = [...filtered]
+      .sort((a, b) => +new Date(a.date) - +new Date(b.date))
+      .map((c) => [
+        format(new Date(c.date), "yyyy-MM-dd"),
+        c.kind,
+        c.kind === "income" ? c.source : c.category,
+        formatMoney(c.amount, (c.currency || currency).toUpperCase()),
+        formatMoney(toDisplay(c.amount, c.currency), currency),
+      ]);
+
+    autoTable(doc, {
+      startY: chartBottom + 40,
+      head: [["Date", "Type", "Source / Category", "Amount", `In ${currency}`]],
+      body: rows,
+      styles: { fontSize: 9, cellPadding: 4 },
+      headStyles: { fillColor: [30, 41, 59], textColor: 255 },
+      columnStyles: {
+        3: { halign: "right" },
+        4: { halign: "right" },
+      },
+      margin: { left: margin, right: margin },
+    });
+
+    const fname = `cashflow_${period}_${format(new Date(), "yyyyMMdd_HHmm")}.pdf`;
+    doc.save(fname);
+    toast.success("PDF exported");
+  }
+
+  return (
+    <Card className="border-border/60 mt-5">
+      <CardHeader className="flex-row items-center justify-between space-y-0 gap-2 flex-wrap">
+        <CardTitle>Entries</CardTitle>
+        <Button size="sm" variant="outline" onClick={exportPdf} className="gap-1.5">
+          <Download className="h-3.5 w-3.5" /> Export PDF
+        </Button>
+      </CardHeader>
+      <CardContent>
+        {/* Filters */}
+        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4 mb-4">
+          <div>
+            <Label className="text-xs">Type</Label>
+            <Select value={kindFilter} onValueChange={(v) => setKindFilter(v as typeof kindFilter)}>
+              <SelectTrigger className="h-9 mt-1.5"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All</SelectItem>
+                <SelectItem value="income">Income</SelectItem>
+                <SelectItem value="expense">Expense</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-xs">Category</Label>
+            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <SelectTrigger className="h-9 mt-1.5"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All categories</SelectItem>
+                {availableCategories.map((c) => (
+                  <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-xs">Period</Label>
+            <Select value={period} onValueChange={(v) => setPeriod(v as PeriodKey)}>
+              <SelectTrigger className="h-9 mt-1.5"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="week">This week</SelectItem>
+                <SelectItem value="month">This month</SelectItem>
+                <SelectItem value="year">This year</SelectItem>
+                <SelectItem value="all">All time</SelectItem>
+                <SelectItem value="custom">Custom range</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          {period === "custom" && (
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label className="text-xs">From</Label>
+                <Input type="date" className="h-9 mt-1.5" value={customFrom} onChange={(e) => setCustomFrom(e.target.value)} />
+              </div>
+              <div>
+                <Label className="text-xs">To</Label>
+                <Input type="date" className="h-9 mt-1.5" value={customTo} onChange={(e) => setCustomTo(e.target.value)} />
+              </div>
             </div>
           )}
-        </CardContent>
-      </Card>
-    </>
+        </div>
+
+        {/* Summary chips */}
+        <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground mb-3">
+          <span className="rounded-md bg-muted/50 px-2 py-1">{periodLabel}</span>
+          <span className="rounded-md bg-success/15 text-success px-2 py-1">
+            Income: {privacy ? MASK : formatMoney(totals.income, currency)}
+          </span>
+          <span className="rounded-md bg-destructive/15 text-destructive px-2 py-1">
+            Expenses: {privacy ? MASK : formatMoney(totals.expense, currency)}
+          </span>
+          <span className={`rounded-md px-2 py-1 ${totals.net >= 0 ? "bg-success/15 text-success" : "bg-destructive/15 text-destructive"}`}>
+            Net: {privacy ? MASK : `${totals.net >= 0 ? "+" : "-"}${formatMoney(Math.abs(totals.net), currency)}`}
+          </span>
+          <span className="ml-auto">{filtered.length} entries</span>
+        </div>
+
+        {/* Evolution chart */}
+        {chartData.length > 0 ? (
+          <div className="h-56 w-full mb-4">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
+                <CartesianGrid stroke="hsl(var(--border))" strokeDasharray="3 3" opacity={0.4} />
+                <XAxis dataKey="label" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" minTickGap={20} />
+                <YAxis tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" tickFormatter={(v) => formatMoney(v, currency, { compact: true })} width={70} />
+                <RTooltip
+                  contentStyle={{ background: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }}
+                  formatter={(v: number) => (privacy ? MASK : formatMoney(v, currency))}
+                />
+                {kindFilter !== "expense" && (
+                  <Line type="monotone" dataKey="income" stroke="#22c55e" strokeWidth={2} dot={false} name="Income" />
+                )}
+                {kindFilter !== "income" && (
+                  <Line type="monotone" dataKey="expense" stroke="#ef4444" strokeWidth={2} dot={false} name="Expenses" />
+                )}
+                {kindFilter === "all" && (
+                  <Line type="monotone" dataKey="net" stroke="#3b82f6" strokeWidth={2} dot={false} name="Net" />
+                )}
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        ) : (
+          <div className="h-32 grid place-items-center text-sm text-muted-foreground border border-dashed border-border/50 rounded-md mb-4">
+            No data for the selected filters.
+          </div>
+        )}
+
+        {filtered.length === 0 ? (
+          <div className="py-10 text-center text-sm text-muted-foreground">No entries match the filters.</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-xs uppercase tracking-wider text-muted-foreground">
+                  <th className="py-2">Date</th>
+                  <th className="py-2">Type</th>
+                  <th className="py-2">Source / Category</th>
+                  <th className="py-2 text-right">Amount</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border/40">
+                {[...filtered]
+                  .sort((a, b) => +new Date(b.date) - +new Date(a.date))
+                  .map((c) => (
+                    <tr key={c.id}>
+                      <td className="py-2.5 text-muted-foreground">
+                        {format(new Date(c.date), "MMM d, yyyy")}
+                      </td>
+                      <td className="py-2.5">
+                        <span
+                          className={`text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded ${
+                            c.kind === "income"
+                              ? "bg-success/15 text-success"
+                              : "bg-destructive/15 text-destructive"
+                          }`}
+                        >
+                          {c.kind}
+                        </span>
+                      </td>
+                      <td className="py-2.5">{c.kind === "income" ? c.source : c.category}</td>
+                      <td className="py-2.5 text-right tabular-nums font-medium">
+                        {privacy
+                          ? MASK
+                          : formatMoney(c.amount, (c.currency || currency).toUpperCase())}
+                        {c.currency && c.currency.toUpperCase() !== currency && (
+                          <span
+                            className="ml-1.5 text-[10px] uppercase text-muted-foreground"
+                            title={`≈ ${mask(c.amount, c.currency)} in ${currency}`}
+                          >
+                            ≈ {mask(c.amount, c.currency)}
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-2.5 text-right">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => onRemove(c.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
