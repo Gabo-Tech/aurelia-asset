@@ -939,22 +939,46 @@ function EditEntryDialog({
               </SelectContent>
             </Select>
           </div>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={isPercent}
+              onChange={(e) => setIsPercent(e.target.checked)}
+              className="h-4 w-4"
+            />
+            <span>Percentage of total income (e.g. taxes)</span>
+          </label>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label className="text-xs">Amount</Label>
-              <Input type="number" step="any" value={amount} onChange={(e) => setAmount(e.target.value)} className="mt-1.5" />
+              <Label className="text-xs">{isPercent ? "Percent" : "Amount"}</Label>
+              <div className="relative mt-1.5">
+                <Input
+                  type="number"
+                  step="any"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  className={isPercent ? "pr-8" : ""}
+                />
+                {isPercent && (
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+                    %
+                  </span>
+                )}
+              </div>
             </div>
-            <div>
-              <Label className="text-xs">Currency</Label>
-              <Select value={entryCurrency} onValueChange={setEntryCurrency}>
-                <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
-                <SelectContent className="max-h-72">
-                  {CURRENCIES.map((c) => (
-                    <SelectItem key={c.code} value={c.code}>{c.code} · {c.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {!isPercent && (
+              <div>
+                <Label className="text-xs">Currency</Label>
+                <Select value={entryCurrency} onValueChange={setEntryCurrency}>
+                  <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
+                  <SelectContent className="max-h-72">
+                    {CURRENCIES.map((c) => (
+                      <SelectItem key={c.code} value={c.code}>{c.code} · {c.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
           <div>
             <Label className="text-xs">{recurring ? "Start date" : "Date"}</Label>
