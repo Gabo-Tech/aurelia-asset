@@ -21,6 +21,14 @@ export type Holding = {
   notes?: string;
 };
 
+export type RecurrenceFrequency = "weekly" | "monthly" | "yearly";
+
+export type Recurrence = {
+  frequency: RecurrenceFrequency;
+  /** Optional inclusive end date (ISO). When omitted, recurs until "today". */
+  until?: string;
+};
+
 export type CashflowEntry = {
   id: string;
   kind: "income" | "expense";
@@ -29,7 +37,9 @@ export type CashflowEntry = {
   amount: number;
   /** Currency of `amount`. Defaults to "USD" for legacy entries. */
   currency?: string;
-  date: string; // ISO
+  date: string; // ISO (first occurrence for recurring entries)
+  /** When set, this entry repeats on the given cadence starting from `date`. */
+  recurrence?: Recurrence;
 };
 
 /**

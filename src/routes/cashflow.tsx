@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/dialog";
 import { Trash2, Plus, Palette, RotateCcw, Settings as SettingsIcon, Pencil, Download } from "lucide-react";
 import { toast } from "sonner";
-import { format, startOfWeek, startOfMonth, startOfYear, endOfWeek, endOfMonth, endOfYear, isWithinInterval, parseISO, eachDayOfInterval } from "date-fns";
+import { format, startOfWeek, startOfMonth, startOfYear, endOfWeek, endOfMonth, endOfYear, isWithinInterval, parseISO, eachDayOfInterval, addWeeks, addMonths, addYears } from "date-fns";
 import {
   LineChart,
   Line,
@@ -52,7 +52,44 @@ export const Route = createFileRoute("/cashflow")({
   component: CashflowPage,
 });
 
-import { GROUP_COLORS, type Category, type CategoryGroup } from "@/lib/types";
+import { GROUP_COLORS, type Category, type CategoryGroup, type CashflowEntry, type RecurrenceFrequency } from "@/lib/types";
+
+/** Expand recurring cashflow entries into individual occurrences up to `until`.
+ *  Each occurrence keeps the original id (with a date suffix) and a `parentId`
+ *  pointing to the source entry so the UI can edit/remove the rule. */
+function expandCashflows(entries: CashflowEntry[], until: Date = new Date()): (CashflowEntry & { parentId: string; isOccurrence: boolean })[] {
+  const out: (CashflowEntry & { parentId: string; isOccurrence: boolean })[] = [];
+  for (const e of entries) {
+    if (!e.recurrence) {
+      out.push({ ...e, parentId: e.id, isOccurrence: false });
+      continue;
+    }
+    const start = new Date(e.date);
+    const stop = e.recurrence.until ? new Date(e.recurrence.until) : until;
+    const last = stop < until ? stop : until;
+    const step =
+      e.recurrence.frequency === "weekly"
+        ? (d: Date, i: number) => addWeeks(d, i)
+        : e.recurrence.frequency === "monthly"
+          ? (d: Date, i: number) => addMonths(d, i)
+          : (d: Date, i: number) => addYears(d, i);
+    let i = 0;
+    // Safety cap (e.g. 600 weekly = ~11 years)
+    while (i < 600) {
+      const occ = step(start, i);
+      if (occ > last) break;
+      out.push({
+        ...e,
+        id: `${e.id}__${occ.toISOString().slice(0, 10)}`,
+        date: occ.toISOString(),
+        parentId: e.id,
+        isOccurrence: i > 0,
+      });
+      i++;
+    }
+  }
+  return out;
+}
 
 const POOL_COLOR = "#64748b";
 const SAVED_COLOR = "#0ea5e9";
@@ -103,21 +140,24 @@ function CashflowPage() {
   const colorFor = (name: string, fallbackGroup: CategoryGroup) =>
     prefs.nodeColors[name] ?? catByName.get(name)?.color ?? GROUP_COLORS[fallbackGroup];
 
+  // Expand recurring entries up to today for top-level totals and Sankey.
+  const expandedToToday = useMemo(() => expandCashflows(cashflows, new Date()), [cashflows]);
+
   const totals = useMemo(() => {
     let income = 0;
     let expense = 0;
-    for (const c of cashflows) {
+    for (const c of expandedToToday) {
       const v = toDisplay(c.amount, c.currency);
       if (c.kind === "income") income += v;
       else expense += v;
     }
     return { income, expense, net: income - expense };
-  }, [cashflows, toDisplay]);
+  }, [expandedToToday, toDisplay]);
 
   const sankey = useMemo(() => {
-    if (!cashflows.length) return null;
-    const incomes = cashflows.filter((c) => c.kind === "income");
-    const expenses = cashflows.filter((c) => c.kind === "expense");
+    if (!expandedToToday.length) return null;
+    const incomes = expandedToToday.filter((c) => c.kind === "income");
+    const expenses = expandedToToday.filter((c) => c.kind === "expense");
 
     const sources = Array.from(new Set(incomes.map((i) => i.source || "Other")));
     const cats = Array.from(new Set(expenses.map((e) => e.category || "Other")));
@@ -163,7 +203,7 @@ function CashflowPage() {
 
     if (!links.length) return null;
     return { nodes, links };
-  }, [cashflows, toDisplay, prefs.nodeColors, catByName]);
+  }, [expandedToToday, toDisplay, prefs.nodeColors, catByName]);
 
 
   // Unique node names for the color customizer.
@@ -309,8 +349,14 @@ function EntriesPanel({
     return `${format(interval.start, "MMM d, yyyy")} – ${format(interval.end, "MMM d, yyyy")}`;
   }, [interval]);
 
+  // Expand recurring entries up to the end of the active interval (or today).
+  const expanded = useMemo(() => {
+    const horizon = interval ? (interval.end > new Date() ? interval.end : new Date()) : new Date();
+    return expandCashflows(cashflows, horizon);
+  }, [cashflows, interval]);
+
   const filtered = useMemo(() => {
-    return cashflows.filter((c) => {
+    return expanded.filter((c) => {
       if (kindFilter !== "all" && c.kind !== kindFilter) return false;
       const name = c.kind === "income" ? c.source : c.category;
       if (categoryFilter !== "all" && name !== categoryFilter) return false;
@@ -320,7 +366,7 @@ function EntriesPanel({
       }
       return true;
     });
-  }, [cashflows, kindFilter, categoryFilter, interval]);
+  }, [expanded, kindFilter, categoryFilter, interval]);
 
   // Available categories for current kind filter
   const availableCategories = useMemo(() => {
@@ -662,60 +708,84 @@ function EntriesPanel({
               <tbody className="divide-y divide-border/40">
                 {[...filtered]
                   .sort((a, b) => +new Date(b.date) - +new Date(a.date))
-                  .map((c) => (
-                    <tr key={c.id}>
-                      <td className="py-2.5 text-muted-foreground">
-                        {format(new Date(c.date), "MMM d, yyyy")}
-                      </td>
-                      <td className="py-2.5">
-                        <span
-                          className={`text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded ${
-                            c.kind === "income"
-                              ? "bg-success/15 text-success"
-                              : "bg-destructive/15 text-destructive"
-                          }`}
-                        >
-                          {c.kind}
-                        </span>
-                      </td>
-                      <td className="py-2.5">{c.kind === "income" ? c.source : c.category}</td>
-                      <td className="py-2.5 text-right tabular-nums font-medium">
-                        {privacy
-                          ? MASK
-                          : formatMoney(c.amount, (c.currency || currency).toUpperCase())}
-                        {c.currency && c.currency.toUpperCase() !== currency && (
-                          <span
-                            className="ml-1.5 text-[10px] uppercase text-muted-foreground"
-                            title={`≈ ${mask(c.amount, c.currency)} in ${currency}`}
-                          >
-                            ≈ {mask(c.amount, c.currency)}
-                          </span>
-                        )}
-                      </td>
-                      <td className="py-2.5 text-right">
-                        <div className="flex justify-end gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() => setEditing(c)}
-                            aria-label="Edit entry"
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() => onRemove(c.id)}
-                            aria-label="Delete entry"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                  .map((c) => {
+                    const parent = cashflows.find((p) => p.id === c.parentId) ?? null;
+                    const recurring = !!parent?.recurrence;
+                    return (
+                      <tr key={c.id}>
+                        <td className="py-2.5 text-muted-foreground">
+                          {format(new Date(c.date), "MMM d, yyyy")}
+                        </td>
+                        <td className="py-2.5">
+                          <div className="flex items-center gap-1.5">
+                            <span
+                              className={`text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded ${
+                                c.kind === "income"
+                                  ? "bg-success/15 text-success"
+                                  : "bg-destructive/15 text-destructive"
+                              }`}
+                            >
+                              {c.kind}
+                            </span>
+                            {recurring && (
+                              <span
+                                className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-muted text-muted-foreground"
+                                title={`Recurs ${parent?.recurrence?.frequency}`}
+                              >
+                                ↻ {parent?.recurrence?.frequency}
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="py-2.5">{c.kind === "income" ? c.source : c.category}</td>
+                        <td className="py-2.5 text-right tabular-nums font-medium">
+                          {privacy
+                            ? MASK
+                            : formatMoney(c.amount, (c.currency || currency).toUpperCase())}
+                          {c.currency && c.currency.toUpperCase() !== currency && (
+                            <span
+                              className="ml-1.5 text-[10px] uppercase text-muted-foreground"
+                              title={`≈ ${mask(c.amount, c.currency)} in ${currency}`}
+                            >
+                              ≈ {mask(c.amount, c.currency)}
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-2.5 text-right">
+                          <div className="flex justify-end gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => parent && setEditing(parent)}
+                              aria-label="Edit entry"
+                              disabled={!parent}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => {
+                                if (!parent) return;
+                                if (
+                                  parent.recurrence &&
+                                  !confirm("Delete the entire recurring entry and all its occurrences?")
+                                )
+                                  return;
+                                onRemove(parent.id);
+                              }}
+                              aria-label="Delete entry"
+                              disabled={!parent}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
               </tbody>
             </table>
           </div>
@@ -751,6 +821,9 @@ function EditEntryDialog({
   const [amount, setAmount] = useState("");
   const [entryCurrency, setEntryCurrency] = useState("USD");
   const [date, setDate] = useState(format(new Date(), "yyyy-MM-dd"));
+  const [recurring, setRecurring] = useState(false);
+  const [frequency, setFrequency] = useState<RecurrenceFrequency>("monthly");
+  const [until, setUntil] = useState("");
 
   useEffect(() => {
     if (!entry) return;
@@ -759,6 +832,9 @@ function EditEntryDialog({
     setAmount(String(entry.amount));
     setEntryCurrency(entry.currency || "USD");
     setDate(format(new Date(entry.date), "yyyy-MM-dd"));
+    setRecurring(!!entry.recurrence);
+    setFrequency(entry.recurrence?.frequency ?? "monthly");
+    setUntil(entry.recurrence?.until ? format(new Date(entry.recurrence.until), "yyyy-MM-dd") : "");
   }, [entry]);
 
   const visibleCategories = useMemo(
@@ -777,12 +853,15 @@ function EditEntryDialog({
       amount: a,
       currency: entryCurrency,
       date: new Date(date).toISOString(),
+      recurrence: recurring
+        ? { frequency, ...(until ? { until: new Date(until).toISOString() } : {}) }
+        : undefined,
     });
   }
 
   return (
     <Dialog open={!!entry} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Edit entry</DialogTitle>
           <DialogDescription>Update the details for this cashflow entry.</DialogDescription>
@@ -826,8 +905,38 @@ function EditEntryDialog({
             </div>
           </div>
           <div>
-            <Label className="text-xs">Date</Label>
+            <Label className="text-xs">{recurring ? "Start date" : "Date"}</Label>
             <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="mt-1.5" />
+          </div>
+          <div className="rounded-md border border-border/60 p-3 space-y-3">
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={recurring}
+                onChange={(e) => setRecurring(e.target.checked)}
+                className="h-4 w-4"
+              />
+              <span>Repeats</span>
+            </label>
+            {recurring && (
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs">Frequency</Label>
+                  <Select value={frequency} onValueChange={(v) => setFrequency(v as RecurrenceFrequency)}>
+                    <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="weekly">Weekly</SelectItem>
+                      <SelectItem value="monthly">Monthly</SelectItem>
+                      <SelectItem value="yearly">Yearly</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-xs">Until (optional)</Label>
+                  <Input type="date" value={until} onChange={(e) => setUntil(e.target.value)} className="mt-1.5" />
+                </div>
+              </div>
+            )}
           </div>
         </div>
         <div className="flex justify-end gap-2 mt-2">
@@ -951,6 +1060,7 @@ type FormVals = {
   amount: number;
   currency: string;
   date: string;
+  recurrence?: { frequency: RecurrenceFrequency; until?: string };
 };
 
 function AddForm({
@@ -973,6 +1083,9 @@ function AddForm({
   const [amount, setAmount] = useState("");
   const [entryCurrency, setEntryCurrency] = useState(defaultCurrency);
   const [date, setDate] = useState(format(new Date(), "yyyy-MM-dd"));
+  const [recurring, setRecurring] = useState(false);
+  const [frequency, setFrequency] = useState<RecurrenceFrequency>("monthly");
+  const [until, setUntil] = useState("");
 
   const visibleCategories = useMemo(
     () => categories.filter((c) => c.kind === kind),
@@ -997,6 +1110,9 @@ function AddForm({
       amount: a,
       currency: entryCurrency,
       date: new Date(date).toISOString(),
+      recurrence: recurring
+        ? { frequency, ...(until ? { until: new Date(until).toISOString() } : {}) }
+        : undefined,
     });
     setAmount("");
   }
@@ -1032,10 +1148,38 @@ function AddForm({
               />
             </Field>
             {sharedFields()}
+            <div className="rounded-md border border-border/60 p-3 space-y-3">
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={recurring}
+                  onChange={(e) => setRecurring(e.target.checked)}
+                  className="h-4 w-4"
+                />
+                <span>Repeats automatically</span>
+              </label>
+              {recurring && (
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="Frequency">
+                    <Select value={frequency} onValueChange={(v) => setFrequency(v as RecurrenceFrequency)}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="weekly">Weekly</SelectItem>
+                        <SelectItem value="monthly">Monthly</SelectItem>
+                        <SelectItem value="yearly">Yearly</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </Field>
+                  <Field label="Until (optional)">
+                    <Input type="date" value={until} onChange={(e) => setUntil(e.target.value)} />
+                  </Field>
+                </div>
+              )}
+            </div>
           </TabsContent>
         </Tabs>
         <Button className="mt-4 w-full" onClick={submit}>
-          <Plus className="mr-2 h-4 w-4" /> Add {kind}
+          <Plus className="mr-2 h-4 w-4" /> Add {recurring ? "recurring " : ""}{kind}
         </Button>
       </CardContent>
     </Card>
