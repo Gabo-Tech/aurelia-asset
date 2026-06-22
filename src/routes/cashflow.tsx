@@ -349,8 +349,14 @@ function EntriesPanel({
     return `${format(interval.start, "MMM d, yyyy")} – ${format(interval.end, "MMM d, yyyy")}`;
   }, [interval]);
 
+  // Expand recurring entries up to the end of the active interval (or today).
+  const expanded = useMemo(() => {
+    const horizon = interval ? (interval.end > new Date() ? interval.end : new Date()) : new Date();
+    return expandCashflows(cashflows, horizon);
+  }, [cashflows, interval]);
+
   const filtered = useMemo(() => {
-    return cashflows.filter((c) => {
+    return expanded.filter((c) => {
       if (kindFilter !== "all" && c.kind !== kindFilter) return false;
       const name = c.kind === "income" ? c.source : c.category;
       if (categoryFilter !== "all" && name !== categoryFilter) return false;
