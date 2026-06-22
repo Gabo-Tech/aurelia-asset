@@ -571,15 +571,32 @@ function EntriesPanel({
         doc.text(formatMoney(v, currency, { compact: true }), chartLeft - 4, y + 3, { align: "right" });
       }
 
-      // Balance line
-      doc.setDrawColor(59, 130, 246);
+      // Balance line — green when >= 0, red when < 0 (split at zero crossings)
+      const GREEN: [number, number, number] = [34, 197, 94];
+      const RED: [number, number, number] = [239, 68, 68];
       doc.setLineWidth(1.4);
       for (let i = 0; i < chartData.length - 1; i++) {
         const x1 = chartLeft + i * xStep;
         const x2 = chartLeft + (i + 1) * xStep;
-        const y1 = yFor(chartData[i].balance);
-        const y2 = yFor(chartData[i + 1].balance);
-        doc.line(x1, y1, x2, y2);
+        const v1 = chartData[i].balance;
+        const v2 = chartData[i + 1].balance;
+        const y1 = yFor(v1);
+        const y2 = yFor(v2);
+        if ((v1 >= 0 && v2 >= 0) || (v1 < 0 && v2 < 0)) {
+          const c = v1 >= 0 ? GREEN : RED;
+          doc.setDrawColor(c[0], c[1], c[2]);
+          doc.line(x1, y1, x2, y2);
+        } else {
+          const t = Math.abs(v1) / (Math.abs(v1) + Math.abs(v2));
+          const xm = x1 + (x2 - x1) * t;
+          const ym = yFor(0);
+          const c1 = v1 >= 0 ? GREEN : RED;
+          const c2 = v2 >= 0 ? GREEN : RED;
+          doc.setDrawColor(c1[0], c1[1], c1[2]);
+          doc.line(x1, y1, xm, ym);
+          doc.setDrawColor(c2[0], c2[1], c2[2]);
+          doc.line(xm, ym, x2, y2);
+        }
       }
 
       // X-axis labels (sparse)
@@ -591,10 +608,13 @@ function EntriesPanel({
       }
 
       // Legend
-      doc.setFillColor(59, 130, 246);
+      doc.setFillColor(GREEN[0], GREEN[1], GREEN[2]);
       doc.rect(chartLeft, chartTop - 14, 8, 8, "F");
       doc.setTextColor(80);
-      doc.text("Balance", chartLeft + 12, chartTop - 8);
+      doc.text("Balance \u2265 0", chartLeft + 12, chartTop - 8);
+      doc.setFillColor(RED[0], RED[1], RED[2]);
+      doc.rect(chartLeft + 90, chartTop - 14, 8, 8, "F");
+      doc.text("Balance < 0", chartLeft + 102, chartTop - 8);
     }
 
     // Table
@@ -623,6 +643,15 @@ function EntriesPanel({
       columnStyles: {
         3: { halign: "right" },
         4: { halign: "right" },
+      },
+      didParseCell: (data) => {
+        if (data.section !== "body") return;
+        const type = String((data.row.raw as unknown as unknown[])?.[1] ?? "");
+        if (type === "income") {
+          data.cell.styles.textColor = [22, 163, 74];
+        } else if (type === "expense") {
+          data.cell.styles.textColor = [220, 38, 38];
+        }
       },
       margin: { left: margin, right: margin },
     });
