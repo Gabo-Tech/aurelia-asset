@@ -708,60 +708,84 @@ function EntriesPanel({
               <tbody className="divide-y divide-border/40">
                 {[...filtered]
                   .sort((a, b) => +new Date(b.date) - +new Date(a.date))
-                  .map((c) => (
-                    <tr key={c.id}>
-                      <td className="py-2.5 text-muted-foreground">
-                        {format(new Date(c.date), "MMM d, yyyy")}
-                      </td>
-                      <td className="py-2.5">
-                        <span
-                          className={`text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded ${
-                            c.kind === "income"
-                              ? "bg-success/15 text-success"
-                              : "bg-destructive/15 text-destructive"
-                          }`}
-                        >
-                          {c.kind}
-                        </span>
-                      </td>
-                      <td className="py-2.5">{c.kind === "income" ? c.source : c.category}</td>
-                      <td className="py-2.5 text-right tabular-nums font-medium">
-                        {privacy
-                          ? MASK
-                          : formatMoney(c.amount, (c.currency || currency).toUpperCase())}
-                        {c.currency && c.currency.toUpperCase() !== currency && (
-                          <span
-                            className="ml-1.5 text-[10px] uppercase text-muted-foreground"
-                            title={`≈ ${mask(c.amount, c.currency)} in ${currency}`}
-                          >
-                            ≈ {mask(c.amount, c.currency)}
-                          </span>
-                        )}
-                      </td>
-                      <td className="py-2.5 text-right">
-                        <div className="flex justify-end gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() => setEditing(c)}
-                            aria-label="Edit entry"
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() => onRemove(c.id)}
-                            aria-label="Delete entry"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                  .map((c) => {
+                    const parent = cashflows.find((p) => p.id === c.parentId) ?? null;
+                    const recurring = !!parent?.recurrence;
+                    return (
+                      <tr key={c.id}>
+                        <td className="py-2.5 text-muted-foreground">
+                          {format(new Date(c.date), "MMM d, yyyy")}
+                        </td>
+                        <td className="py-2.5">
+                          <div className="flex items-center gap-1.5">
+                            <span
+                              className={`text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded ${
+                                c.kind === "income"
+                                  ? "bg-success/15 text-success"
+                                  : "bg-destructive/15 text-destructive"
+                              }`}
+                            >
+                              {c.kind}
+                            </span>
+                            {recurring && (
+                              <span
+                                className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-muted text-muted-foreground"
+                                title={`Recurs ${parent?.recurrence?.frequency}`}
+                              >
+                                ↻ {parent?.recurrence?.frequency}
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="py-2.5">{c.kind === "income" ? c.source : c.category}</td>
+                        <td className="py-2.5 text-right tabular-nums font-medium">
+                          {privacy
+                            ? MASK
+                            : formatMoney(c.amount, (c.currency || currency).toUpperCase())}
+                          {c.currency && c.currency.toUpperCase() !== currency && (
+                            <span
+                              className="ml-1.5 text-[10px] uppercase text-muted-foreground"
+                              title={`≈ ${mask(c.amount, c.currency)} in ${currency}`}
+                            >
+                              ≈ {mask(c.amount, c.currency)}
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-2.5 text-right">
+                          <div className="flex justify-end gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => parent && setEditing(parent)}
+                              aria-label="Edit entry"
+                              disabled={!parent}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => {
+                                if (!parent) return;
+                                if (
+                                  parent.recurrence &&
+                                  !confirm("Delete the entire recurring entry and all its occurrences?")
+                                )
+                                  return;
+                                onRemove(parent.id);
+                              }}
+                              aria-label="Delete entry"
+                              disabled={!parent}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
               </tbody>
             </table>
           </div>
