@@ -334,29 +334,43 @@ function EntriesPanel({
     }
   }, [availableCategories, categoryFilter]);
 
-  // Chart series: per-day income & expense in display currency, over the selected interval.
+  // Chart series: cumulative net balance, varying with income (+) and expenses (-).
+  // Each point keeps the day's entries so the tooltip can show sources/categories.
   const chartData = useMemo(() => {
     if (!filtered.length) return [];
     const start = interval?.start ?? new Date(Math.min(...filtered.map((c) => +new Date(c.date))));
     const end = interval?.end ?? new Date(Math.max(...filtered.map((c) => +new Date(c.date))));
     const days = eachDayOfInterval({ start, end });
-    const byDay = new Map<string, { income: number; expense: number }>();
-    for (const d of days) byDay.set(format(d, "yyyy-MM-dd"), { income: 0, expense: 0 });
+    type Entry = { name: string; kind: "income" | "expense"; value: number };
+    const byDay = new Map<string, { income: number; expense: number; entries: Entry[] }>();
+    for (const d of days) byDay.set(format(d, "yyyy-MM-dd"), { income: 0, expense: 0, entries: [] });
     for (const c of filtered) {
       const key = format(new Date(c.date), "yyyy-MM-dd");
-      const bucket = byDay.get(key) ?? { income: 0, expense: 0 };
+      const bucket = byDay.get(key) ?? { income: 0, expense: 0, entries: [] };
       const v = toDisplay(c.amount, c.currency);
       if (c.kind === "income") bucket.income += v;
       else bucket.expense += v;
+      bucket.entries.push({
+        name: (c.kind === "income" ? c.source : c.category) || "Other",
+        kind: c.kind,
+        value: +v.toFixed(2),
+      });
       byDay.set(key, bucket);
     }
-    return Array.from(byDay.entries()).map(([date, v]) => ({
-      date,
-      label: format(parseISO(date), "MMM d"),
-      income: +v.income.toFixed(2),
-      expense: +v.expense.toFixed(2),
-      net: +(v.income - v.expense).toFixed(2),
-    }));
+    let cum = 0;
+    return Array.from(byDay.entries()).map(([date, v]) => {
+      const delta = v.income - v.expense;
+      cum += delta;
+      return {
+        date,
+        label: format(parseISO(date), "MMM d"),
+        balance: +cum.toFixed(2),
+        income: +v.income.toFixed(2),
+        expense: +v.expense.toFixed(2),
+        delta: +delta.toFixed(2),
+        entries: v.entries,
+      };
+    });
   }, [filtered, interval, toDisplay]);
 
   const totals = useMemo(() => {
@@ -414,39 +428,33 @@ function EntriesPanel({
     doc.line(chartLeft, chartTop, chartLeft, chartBottom);
 
     if (chartData.length > 0) {
-      const maxVal = Math.max(
-        1,
-        ...chartData.map((d) => Math.max(d.income, d.expense, Math.abs(d.net))),
-      );
+      const minBal = Math.min(0, ...chartData.map((d) => d.balance));
+      const maxBal = Math.max(0, ...chartData.map((d) => d.balance));
+      const range = Math.max(1, maxBal - minBal);
       const xStep = chartData.length > 1 ? chartW / (chartData.length - 1) : 0;
-      const yFor = (v: number) => chartBottom - (v / maxVal) * (chartH - 10);
+      const yFor = (v: number) => chartBottom - ((v - minBal) / range) * (chartH - 10);
 
       // Y-axis ticks
       doc.setFontSize(8);
       doc.setTextColor(140);
       for (let i = 0; i <= 4; i++) {
-        const v = (maxVal / 4) * i;
+        const v = minBal + (range / 4) * i;
         const y = yFor(v);
         doc.setDrawColor(235);
         doc.line(chartLeft, y, chartLeft + chartW, y);
         doc.text(formatMoney(v, currency, { compact: true }), chartLeft - 4, y + 3, { align: "right" });
       }
 
-      const drawSeries = (key: "income" | "expense" | "net", color: [number, number, number]) => {
-        doc.setDrawColor(color[0], color[1], color[2]);
-        doc.setLineWidth(1.2);
-        for (let i = 0; i < chartData.length - 1; i++) {
-          const x1 = chartLeft + i * xStep;
-          const x2 = chartLeft + (i + 1) * xStep;
-          const y1 = yFor(Math.max(0, chartData[i][key]));
-          const y2 = yFor(Math.max(0, chartData[i + 1][key]));
-          doc.line(x1, y1, x2, y2);
-        }
-      };
-
-      if (kindFilter !== "expense") drawSeries("income", [34, 197, 94]);
-      if (kindFilter !== "income") drawSeries("expense", [239, 68, 68]);
-      if (kindFilter === "all") drawSeries("net", [59, 130, 246]);
+      // Balance line
+      doc.setDrawColor(59, 130, 246);
+      doc.setLineWidth(1.4);
+      for (let i = 0; i < chartData.length - 1; i++) {
+        const x1 = chartLeft + i * xStep;
+        const x2 = chartLeft + (i + 1) * xStep;
+        const y1 = yFor(chartData[i].balance);
+        const y2 = yFor(chartData[i + 1].balance);
+        doc.line(x1, y1, x2, y2);
+      }
 
       // X-axis labels (sparse)
       const step = Math.max(1, Math.ceil(chartData.length / 6));
@@ -457,18 +465,10 @@ function EntriesPanel({
       }
 
       // Legend
-      let legendX = chartLeft;
-      const legendY = chartTop - 8;
-      const legendItem = (label: string, color: [number, number, number]) => {
-        doc.setFillColor(color[0], color[1], color[2]);
-        doc.rect(legendX, legendY - 6, 8, 8, "F");
-        doc.setTextColor(80);
-        doc.text(label, legendX + 12, legendY);
-        legendX += doc.getTextWidth(label) + 30;
-      };
-      if (kindFilter !== "expense") legendItem("Income", [34, 197, 94]);
-      if (kindFilter !== "income") legendItem("Expenses", [239, 68, 68]);
-      if (kindFilter === "all") legendItem("Net", [59, 130, 246]);
+      doc.setFillColor(59, 130, 246);
+      doc.rect(chartLeft, chartTop - 14, 8, 8, "F");
+      doc.setTextColor(80);
+      doc.text("Balance", chartLeft + 12, chartTop - 8);
     }
 
     // Table
@@ -585,18 +585,57 @@ function EntriesPanel({
                 <XAxis dataKey="label" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" minTickGap={20} />
                 <YAxis tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" tickFormatter={(v) => formatMoney(v, currency, { compact: true })} width={70} />
                 <RTooltip
-                  contentStyle={{ background: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }}
-                  formatter={(v: number) => (privacy ? MASK : formatMoney(v, currency))}
+                  content={({ active, payload }) => {
+                    if (!active || !payload || !payload.length) return null;
+                    const d = payload[0].payload as (typeof chartData)[number];
+                    return (
+                      <div className="rounded-lg border border-border bg-popover px-3 py-2 text-xs shadow-md">
+                        <div className="font-medium text-foreground">{d.label}</div>
+                        <div className="mt-1 text-muted-foreground">
+                          Balance:{" "}
+                          <span className="text-foreground font-medium tabular-nums">
+                            {privacy ? MASK : formatMoney(d.balance, currency)}
+                          </span>
+                        </div>
+                        {d.entries.length > 0 ? (
+                          <div className="mt-1.5 space-y-0.5">
+                            {d.entries.map((e, i) => (
+                              <div key={i} className="flex items-center justify-between gap-3">
+                                <span className="flex items-center gap-1.5">
+                                  <span
+                                    className={`inline-block h-1.5 w-1.5 rounded-full ${
+                                      e.kind === "income" ? "bg-success" : "bg-destructive"
+                                    }`}
+                                  />
+                                  <span className="text-foreground">{e.name}</span>
+                                </span>
+                                <span
+                                  className={`tabular-nums ${
+                                    e.kind === "income" ? "text-success" : "text-destructive"
+                                  }`}
+                                >
+                                  {e.kind === "income" ? "+" : "−"}
+                                  {privacy ? MASK : formatMoney(e.value, currency)}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="mt-1 text-muted-foreground italic">No activity</div>
+                        )}
+                      </div>
+                    );
+                  }}
                 />
-                {kindFilter !== "expense" && (
-                  <Line type="monotone" dataKey="income" stroke="#22c55e" strokeWidth={2} dot={false} name="Income" />
-                )}
-                {kindFilter !== "income" && (
-                  <Line type="monotone" dataKey="expense" stroke="#ef4444" strokeWidth={2} dot={false} name="Expenses" />
-                )}
-                {kindFilter === "all" && (
-                  <Line type="monotone" dataKey="net" stroke="#3b82f6" strokeWidth={2} dot={false} name="Net" />
-                )}
+                <Line
+                  type="monotone"
+                  dataKey="balance"
+                  stroke="#3b82f6"
+                  strokeWidth={2}
+                  dot={false}
+                  activeDot={{ r: 4 }}
+                  name="Balance"
+                />
               </LineChart>
             </ResponsiveContainer>
           </div>
