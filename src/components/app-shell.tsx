@@ -101,7 +101,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
         {/* Main */}
         <main className="flex-1 min-w-0 pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-12 flex flex-col">
-          <div className="flex-1 px-4 sm:px-8 py-6 sm:py-10">{ready ? children : <PageLoader />}</div>
+          <div className="flex-1 px-4 sm:px-8 2xl:px-12 3xl:px-16 py-6 sm:py-10">{ready ? children : <PageLoader />}</div>
           <footer className="hidden md:flex mt-8 border-t border-border/60 px-4 sm:px-8 py-4 flex-wrap items-center justify-between gap-3 text-[11px] text-muted-foreground/80">
             <span>Local-only · data stays in your browser</span>
             <SponsorBanner variant="inline" />
