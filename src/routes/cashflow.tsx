@@ -92,24 +92,60 @@ function expandCashflows(entries: CashflowEntry[], until: Date = new Date()): (C
   return out;
 }
 
-/** Resolve each entry to its display-currency value. Percent entries are
- *  evaluated as `amount%` of total fixed income in `entries`. */
+/** Resolve each entry to its display-currency value.
+ *  Percent entries are evaluated against `percentOf`:
+ *  - "all-income"  → % of total fixed income in `entries`
+ *  - "all-expense" → % of total fixed expense in `entries`
+ *  - entry id      → % of that fixed entry's resolved value (0 if missing) */
 function valuesByEntry(
   entries: CashflowEntry[],
   toDisplay: (amount: number, from?: string) => number,
 ): Map<string, number> {
-  const baseIncome = entries
-    .filter((e) => e.kind === "income" && (e.amountKind ?? "fixed") === "fixed")
-    .reduce((s, e) => s + toDisplay(e.amount, e.currency), 0);
+  const fixed = new Map<string, number>();
+  let baseIncome = 0;
+  let baseExpense = 0;
+  for (const e of entries) {
+    if ((e.amountKind ?? "fixed") !== "fixed") continue;
+    const v = toDisplay(e.amount, e.currency);
+    fixed.set(e.id, v);
+    if (e.kind === "income") baseIncome += v;
+    else baseExpense += v;
+  }
+  // Map fixed parent id back to its origin id (recurring occurrences carry parentId).
+  const fixedByParent = new Map<string, number>();
+  for (const e of entries) {
+    if ((e.amountKind ?? "fixed") !== "fixed") continue;
+    const parentId = (e as CashflowEntry & { parentId?: string }).parentId ?? e.id;
+    fixedByParent.set(parentId, (fixedByParent.get(parentId) ?? 0) + (fixed.get(e.id) ?? 0));
+  }
   const out = new Map<string, number>();
   for (const e of entries) {
     if ((e.amountKind ?? "fixed") === "percent") {
-      out.set(e.id, (Number(e.amount) / 100) * baseIncome);
+      const pct = Number(e.amount) / 100;
+      const target = e.percentOf ?? "all-income";
+      let base = 0;
+      if (target === "all-income") base = baseIncome;
+      else if (target === "all-expense") base = baseExpense;
+      else base = fixed.get(target) ?? fixedByParent.get(target) ?? 0;
+      out.set(e.id, pct * base);
     } else {
-      out.set(e.id, toDisplay(e.amount, e.currency));
+      out.set(e.id, fixed.get(e.id) ?? toDisplay(e.amount, e.currency));
     }
   }
   return out;
+}
+
+/** Build a human label for what a percent entry is subscribed to. */
+function describePercentOf(
+  entry: CashflowEntry,
+  cashflows: CashflowEntry[],
+): string {
+  const target = entry.percentOf ?? "all-income";
+  if (target === "all-income") return "all income";
+  if (target === "all-expense") return "all expenses";
+  const ref = cashflows.find((c) => c.id === target);
+  if (!ref) return "(deleted)";
+  return ref.kind === "income" ? ref.source || "income" : ref.category || "expense";
 }
 
 const POOL_COLOR = "#64748b";
@@ -239,6 +275,20 @@ function CashflowPage() {
     setPrefs((p) => ({ ...p, nodeColors: {} }));
   }
 
+  // Options users can subscribe a percent entry to: every fixed (non-percent)
+  // cashflow entry, labeled by its source/category.
+  const subscribeOptions = useMemo(
+    () =>
+      cashflows
+        .filter((c) => (c.amountKind ?? "fixed") === "fixed")
+        .map((c) => ({
+          id: c.id,
+          kind: c.kind,
+          label: (c.kind === "income" ? c.source : c.category) || "(unnamed)",
+        })),
+    [cashflows],
+  );
+
   return (
     <>
       <PageHeader title="Cashflow" description="Income and expenses, visualized." />
@@ -257,6 +307,7 @@ function CashflowPage() {
         <AddForm
           defaultCurrency={currency}
           categories={categories}
+          subscribeOptions={subscribeOptions}
           onAddCategory={addCategory}
           onUpdateCategory={updateCategory}
           onRemoveCategory={removeCategory}
@@ -306,6 +357,7 @@ function CashflowPage() {
       <EntriesPanel
         cashflows={cashflows}
         categories={categories}
+        subscribeOptions={subscribeOptions}
         currency={currency}
         privacy={privacy}
         MASK={MASK}
@@ -325,6 +377,7 @@ type PeriodKey = "all" | "week" | "month" | "year" | "custom";
 function EntriesPanel({
   cashflows,
   categories,
+  subscribeOptions,
   currency,
   privacy,
   MASK,
@@ -335,6 +388,7 @@ function EntriesPanel({
 }: {
   cashflows: import("@/lib/types").CashflowEntry[];
   categories: Category[];
+  subscribeOptions: { id: string; kind: "income" | "expense"; label: string }[];
   currency: string;
   privacy: boolean;
   MASK: string;
@@ -549,7 +603,7 @@ function EntriesPanel({
       .map((c) => {
         const isPct = (c.amountKind ?? "fixed") === "percent";
         const amountText = isPct
-          ? `${c.amount}%`
+          ? `${c.amount}% of ${describePercentOf(c, cashflows)}`
           : formatMoney(c.amount, (c.currency || currency).toUpperCase());
         return [
           format(new Date(c.date), "yyyy-MM-dd"),
@@ -799,6 +853,9 @@ function EntriesPanel({
                               return (
                                 <>
                                   {c.amount}%
+                                  <span className="ml-1 text-[10px] text-muted-foreground normal-case">
+                                    of {describePercentOf(c, cashflows)}
+                                  </span>
                                   <span className="ml-1.5 text-[10px] uppercase text-muted-foreground">
                                     ≈ {formatMoney(computed, currency)}
                                   </span>
@@ -863,6 +920,7 @@ function EntriesPanel({
       <EditEntryDialog
         entry={editing}
         categories={categories}
+        subscribeOptions={subscribeOptions}
         onClose={() => setEditing(null)}
         onSave={(patch) => {
           if (editing) onUpdate(editing.id, patch);
@@ -877,11 +935,13 @@ function EntriesPanel({
 function EditEntryDialog({
   entry,
   categories,
+  subscribeOptions,
   onClose,
   onSave,
 }: {
   entry: import("@/lib/types").CashflowEntry | null;
   categories: Category[];
+  subscribeOptions: { id: string; kind: "income" | "expense"; label: string }[];
   onClose: () => void;
   onSave: (patch: Partial<import("@/lib/types").CashflowEntry>) => void;
 }) {
@@ -894,6 +954,7 @@ function EditEntryDialog({
   const [frequency, setFrequency] = useState<RecurrenceFrequency>("monthly");
   const [until, setUntil] = useState("");
   const [isPercent, setIsPercent] = useState(false);
+  const [percentOf, setPercentOf] = useState<string>("all-income");
 
   useEffect(() => {
     if (!entry) return;
@@ -906,6 +967,7 @@ function EditEntryDialog({
     setFrequency(entry.recurrence?.frequency ?? "monthly");
     setUntil(entry.recurrence?.until ? format(new Date(entry.recurrence.until), "yyyy-MM-dd") : "");
     setIsPercent((entry.amountKind ?? "fixed") === "percent");
+    setPercentOf(entry.percentOf ?? "all-income");
   }, [entry]);
 
   const visibleCategories = useMemo(
@@ -929,6 +991,7 @@ function EditEntryDialog({
         ? { frequency, ...(until ? { until: new Date(until).toISOString() } : {}) }
         : undefined,
       amountKind: isPercent ? "percent" : "fixed",
+      percentOf: isPercent ? percentOf : undefined,
     });
   }
 
@@ -967,8 +1030,20 @@ function EditEntryDialog({
               onChange={(e) => setIsPercent(e.target.checked)}
               className="h-4 w-4"
             />
-            <span>Percentage of total income (e.g. taxes)</span>
+            <span>Use a percentage of another entry (e.g. taxes)</span>
           </label>
+          {isPercent && (
+            <div>
+              <Label className="text-xs">Percent of</Label>
+              <PercentTargetPicker
+                value={percentOf}
+                onChange={setPercentOf}
+                options={subscribeOptions}
+                excludeId={entry?.id}
+                className="mt-1.5"
+              />
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label className="text-xs">{isPercent ? "Percent" : "Amount"}</Label>
@@ -1159,12 +1234,14 @@ type FormVals = {
   date: string;
   recurrence?: { frequency: RecurrenceFrequency; until?: string };
   amountKind?: "fixed" | "percent";
+  percentOf?: "all-income" | "all-expense" | string;
 };
 
 function AddForm({
   onAdd,
   defaultCurrency,
   categories,
+  subscribeOptions,
   onAddCategory,
   onUpdateCategory,
   onRemoveCategory,
@@ -1172,6 +1249,7 @@ function AddForm({
   onAdd: (e: FormVals) => void;
   defaultCurrency: string;
   categories: Category[];
+  subscribeOptions: { id: string; kind: "income" | "expense"; label: string }[];
   onAddCategory: (c: Omit<Category, "id">) => Category;
   onUpdateCategory: (id: string, patch: Partial<Category>) => void;
   onRemoveCategory: (id: string) => void;
@@ -1185,6 +1263,7 @@ function AddForm({
   const [frequency, setFrequency] = useState<RecurrenceFrequency>("monthly");
   const [until, setUntil] = useState("");
   const [isPercent, setIsPercent] = useState(false);
+  const [percentOf, setPercentOf] = useState<string>("all-income");
 
   const visibleCategories = useMemo(
     () => categories.filter((c) => c.kind === kind),
@@ -1214,6 +1293,7 @@ function AddForm({
         ? { frequency, ...(until ? { until: new Date(until).toISOString() } : {}) }
         : undefined,
       amountKind: isPercent ? "percent" : "fixed",
+      percentOf: isPercent ? percentOf : undefined,
     });
     setAmount("");
   }
@@ -1296,8 +1376,17 @@ function AddForm({
             onChange={(e) => setIsPercent(e.target.checked)}
             className="h-4 w-4"
           />
-          <span>Use a percentage of total income (e.g. taxes)</span>
+          <span>Use a percentage of another entry (e.g. taxes)</span>
         </label>
+        {isPercent && (
+          <Field label="Percent of">
+            <PercentTargetPicker
+              value={percentOf}
+              onChange={setPercentOf}
+              options={subscribeOptions}
+            />
+          </Field>
+        )}
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           <Field label={isPercent ? "Percent" : "Amount"}>
             <div className="relative">
@@ -1351,6 +1440,63 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
     </div>
   );
 }
+
+/* ---------- Percent target picker (subscribe a % entry to a base) ---------- */
+
+function PercentTargetPicker({
+  value,
+  onChange,
+  options,
+  excludeId,
+  className,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  options: { id: string; kind: "income" | "expense"; label: string }[];
+  excludeId?: string;
+  className?: string;
+}) {
+  const incomes = options.filter((o) => o.kind === "income" && o.id !== excludeId);
+  const expenses = options.filter((o) => o.kind === "expense" && o.id !== excludeId);
+  // If current value points to a missing/excluded entry, keep it selectable so the
+  // user sees it; render it with a "(deleted)" hint at the bottom.
+  const known = new Set([
+    "all-income",
+    "all-expense",
+    ...incomes.map((o) => o.id),
+    ...expenses.map((o) => o.id),
+  ]);
+  return (
+    <Select value={value} onValueChange={onChange}>
+      <SelectTrigger className={className}><SelectValue /></SelectTrigger>
+      <SelectContent className="max-h-72">
+        <SelectItem value="all-income">All income (total)</SelectItem>
+        <SelectItem value="all-expense">All expenses (total)</SelectItem>
+        {incomes.length > 0 && (
+          <div className="px-2 pt-2 pb-1 text-[10px] uppercase tracking-wider text-muted-foreground">
+            Income entries
+          </div>
+        )}
+        {incomes.map((o) => (
+          <SelectItem key={o.id} value={o.id}>{o.label}</SelectItem>
+        ))}
+        {expenses.length > 0 && (
+          <div className="px-2 pt-2 pb-1 text-[10px] uppercase tracking-wider text-muted-foreground">
+            Expense entries
+          </div>
+        )}
+        {expenses.map((o) => (
+          <SelectItem key={o.id} value={o.id}>{o.label}</SelectItem>
+        ))}
+        {!known.has(value) && (
+          <SelectItem value={value}>(deleted entry)</SelectItem>
+        )}
+      </SelectContent>
+    </Select>
+  );
+}
+
+
 
 /* ---------- Category picker (select + inline "new") ---------- */
 
