@@ -203,11 +203,11 @@ function CashflowPage() {
           }}
         />
 
-        <Card className="border-border/60">
-          <CardHeader>
+        <Card className="border-border/60 min-w-0">
+          <CardHeader className="px-3 sm:px-6">
             <CardTitle>Flow</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-2 sm:px-6">
             <ChartFrame
               filename="cashflow"
               title="Cashflow"
@@ -220,7 +220,7 @@ function CashflowPage() {
                 />
               }
             >
-              <div className="min-h-80 sm:min-h-96">
+              <div className="min-h-80 sm:min-h-96 w-full overflow-hidden">
                 {sankey ? (
                   <SankeyChart
                     data={sankey}
@@ -687,7 +687,7 @@ function SankeyControls({
         value={prefs.labelMode}
         onValueChange={(v) => setPrefs((p) => ({ ...p, labelMode: v as LabelMode }))}
       >
-        <SelectTrigger className="h-8 w-[120px] text-xs">
+        <SelectTrigger className="h-8 w-[96px] sm:w-[120px] text-xs">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -834,7 +834,7 @@ function AddForm({
 
   return (
     <Card className="border-border/60">
-      <CardHeader className="flex-row items-center justify-between space-y-0">
+      <CardHeader className="flex-row items-center justify-between space-y-0 gap-2 flex-wrap">
         <CardTitle>Add entry</CardTitle>
         <CategoriesManager
           categories={categories}
@@ -874,7 +874,7 @@ function AddForm({
 
   function sharedFields() {
     return (
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         <Field label="Amount">
           <Input
             type="number"
@@ -898,9 +898,11 @@ function AddForm({
             </SelectContent>
           </Select>
         </Field>
-        <Field label="Date">
-          <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
-        </Field>
+        <div className="col-span-2 sm:col-span-1">
+          <Field label="Date">
+            <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+          </Field>
+        </div>
       </div>
     );
   }

@@ -38,8 +38,8 @@ export function SankeyChart({
   labelMode = "always",
   format = (v) => v.toLocaleString(),
   align = "justify",
-  nodeWidth = 18,
-  nodePadding = 18,
+  nodeWidth,
+  nodePadding,
 }: Props) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(800);
@@ -47,13 +47,19 @@ export function SankeyChart({
   useEffect(() => {
     if (!wrapRef.current) return;
     const ro = new ResizeObserver((entries) => {
-      for (const e of entries) setWidth(Math.max(320, e.contentRect.width));
+      for (const e of entries) setWidth(Math.max(280, e.contentRect.width));
     });
     ro.observe(wrapRef.current);
     return () => ro.disconnect();
   }, []);
 
-  const margin = { top: 12, right: 110, bottom: 12, left: 12 };
+  // Adapt margins / node sizing to viewport width so labels fit on mobile.
+  const isNarrow = width < 480;
+  const rightMargin = isNarrow ? Math.min(70, Math.max(48, width * 0.22)) : 110;
+  const leftMargin = isNarrow ? 8 : 12;
+  const resolvedNodeWidth = nodeWidth ?? (isNarrow ? 12 : 18);
+  const resolvedNodePadding = nodePadding ?? (isNarrow ? 12 : 18);
+  const margin = { top: 12, right: rightMargin, bottom: 12, left: leftMargin };
 
   const graph = useMemo(() => {
     const innerW = Math.max(100, width - margin.left - margin.right);
@@ -61,8 +67,8 @@ export function SankeyChart({
     const gen = d3sankey<any, any>()
       .nodeId((d: any) => d.index)
       .nodeAlign(alignFns[align])
-      .nodeWidth(nodeWidth)
-      .nodePadding(nodePadding)
+      .nodeWidth(resolvedNodeWidth)
+      .nodePadding(resolvedNodePadding)
       .extent([
         [0, 0],
         [innerW, innerH],
@@ -74,7 +80,7 @@ export function SankeyChart({
     } catch {
       return null;
     }
-  }, [data, width, height, align, nodeWidth, nodePadding]);
+  }, [data, width, height, align, resolvedNodeWidth, resolvedNodePadding, margin.left, margin.right]);
 
   if (!graph) return null;
 
@@ -87,8 +93,8 @@ export function SankeyChart({
       <svg
         width={width}
         height={height}
-        className="block"
-        style={{ overflow: "visible" }}
+        className="block max-w-full"
+        style={{ overflow: "hidden" }}
       >
         <g transform={`translate(${margin.left},${margin.top})`}>
           <defs>
@@ -149,7 +155,7 @@ export function SankeyChart({
                         x={isLeftSide ? n.x1 + 6 : n.x0 - 6}
                         y={(n.y0 + n.y1) / 2 - 4}
                         textAnchor={isLeftSide ? "start" : "end"}
-                        fontSize={12}
+                        fontSize={isNarrow ? 10 : 12}
                         fontWeight={600}
                         fill="var(--foreground)"
                       >
@@ -159,7 +165,7 @@ export function SankeyChart({
                         x={isLeftSide ? n.x1 + 6 : n.x0 - 6}
                         y={(n.y0 + n.y1) / 2 + 10}
                         textAnchor={isLeftSide ? "start" : "end"}
-                        fontSize={11}
+                        fontSize={isNarrow ? 9 : 11}
                         fill="var(--muted-foreground)"
                       >
                         {format(n.value)}
