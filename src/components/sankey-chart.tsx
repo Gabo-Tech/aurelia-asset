@@ -93,8 +93,8 @@ export function SankeyChart({
       <svg
         width={width}
         height={height}
-        className="block"
-        style={{ overflow: "visible" }}
+        className="block max-w-full"
+        style={{ overflow: "hidden" }}
       >
         <g transform={`translate(${margin.left},${margin.top})`}>
           <defs>
@@ -155,7 +155,7 @@ export function SankeyChart({
                         x={isLeftSide ? n.x1 + 6 : n.x0 - 6}
                         y={(n.y0 + n.y1) / 2 - 4}
                         textAnchor={isLeftSide ? "start" : "end"}
-                        fontSize={12}
+                        fontSize={isNarrow ? 10 : 12}
                         fontWeight={600}
                         fill="var(--foreground)"
                       >
