@@ -163,16 +163,18 @@ function CashflowPage() {
   // Expand recurring entries up to today for top-level totals and Sankey.
   const expandedToToday = useMemo(() => expandCashflows(cashflows, new Date()), [cashflows]);
 
+  const valuesTop = useMemo(() => valuesByEntry(expandedToToday, toDisplay), [expandedToToday, toDisplay]);
+
   const totals = useMemo(() => {
     let income = 0;
     let expense = 0;
     for (const c of expandedToToday) {
-      const v = toDisplay(c.amount, c.currency);
+      const v = valuesTop.get(c.id) ?? 0;
       if (c.kind === "income") income += v;
       else expense += v;
     }
     return { income, expense, net: income - expense };
-  }, [expandedToToday, toDisplay]);
+  }, [expandedToToday, valuesTop]);
 
   const sankey = useMemo(() => {
     if (!expandedToToday.length) return null;
@@ -184,8 +186,8 @@ function CashflowPage() {
     const POOL = "Cash Pool";
     const SAVED = "Saved";
 
-    const totalIn = incomes.reduce((s, c) => s + toDisplay(c.amount, c.currency), 0);
-    const totalOut = expenses.reduce((s, c) => s + toDisplay(c.amount, c.currency), 0);
+    const totalIn = incomes.reduce((s, c) => s + (valuesTop.get(c.id) ?? 0), 0);
+    const totalOut = expenses.reduce((s, c) => s + (valuesTop.get(c.id) ?? 0), 0);
     const saved = Math.max(0, totalIn - totalOut);
 
     type NodeMeta = { name: string; kind: "income" | "pool" | "expense" | "saved"; fill: string };
@@ -210,20 +212,20 @@ function CashflowPage() {
     for (const s of sources) {
       const sum = incomes
         .filter((i) => (i.source || "Other") === s)
-        .reduce((a, b) => a + toDisplay(b.amount, b.currency), 0);
+        .reduce((a, b) => a + (valuesTop.get(b.id) ?? 0), 0);
       if (sum > 0) links.push({ source: idx(s), target: idx(POOL), value: sum });
     }
     for (const c of cats) {
       const sum = expenses
         .filter((e) => (e.category || "Other") === c)
-        .reduce((a, b) => a + toDisplay(b.amount, b.currency), 0);
+        .reduce((a, b) => a + (valuesTop.get(b.id) ?? 0), 0);
       if (sum > 0) links.push({ source: idx(POOL), target: idx(c), value: sum });
     }
     if (saved > 0) links.push({ source: idx(POOL), target: idx(SAVED), value: saved });
 
     if (!links.length) return null;
     return { nodes, links };
-  }, [expandedToToday, toDisplay, prefs.nodeColors, catByName]);
+  }, [expandedToToday, valuesTop, prefs.nodeColors, catByName]);
 
 
   // Unique node names for the color customizer.
