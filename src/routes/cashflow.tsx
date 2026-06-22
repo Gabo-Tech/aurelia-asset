@@ -969,6 +969,7 @@ function EditEntryDialog({
         ? { frequency, ...(until ? { until: new Date(until).toISOString() } : {}) }
         : undefined,
       amountKind: isPercent ? "percent" : "fixed",
+      percentOf: isPercent ? percentOf : undefined,
     });
   }
 
