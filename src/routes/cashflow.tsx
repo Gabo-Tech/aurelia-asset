@@ -1162,6 +1162,7 @@ function AddForm({
   const [recurring, setRecurring] = useState(false);
   const [frequency, setFrequency] = useState<RecurrenceFrequency>("monthly");
   const [until, setUntil] = useState("");
+  const [isPercent, setIsPercent] = useState(false);
 
   const visibleCategories = useMemo(
     () => categories.filter((c) => c.kind === kind),
