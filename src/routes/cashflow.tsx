@@ -585,18 +585,57 @@ function EntriesPanel({
                 <XAxis dataKey="label" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" minTickGap={20} />
                 <YAxis tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" tickFormatter={(v) => formatMoney(v, currency, { compact: true })} width={70} />
                 <RTooltip
-                  contentStyle={{ background: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }}
-                  formatter={(v: number) => (privacy ? MASK : formatMoney(v, currency))}
+                  content={({ active, payload }) => {
+                    if (!active || !payload || !payload.length) return null;
+                    const d = payload[0].payload as (typeof chartData)[number];
+                    return (
+                      <div className="rounded-lg border border-border bg-popover px-3 py-2 text-xs shadow-md">
+                        <div className="font-medium text-foreground">{d.label}</div>
+                        <div className="mt-1 text-muted-foreground">
+                          Balance:{" "}
+                          <span className="text-foreground font-medium tabular-nums">
+                            {privacy ? MASK : formatMoney(d.balance, currency)}
+                          </span>
+                        </div>
+                        {d.entries.length > 0 ? (
+                          <div className="mt-1.5 space-y-0.5">
+                            {d.entries.map((e, i) => (
+                              <div key={i} className="flex items-center justify-between gap-3">
+                                <span className="flex items-center gap-1.5">
+                                  <span
+                                    className={`inline-block h-1.5 w-1.5 rounded-full ${
+                                      e.kind === "income" ? "bg-success" : "bg-destructive"
+                                    }`}
+                                  />
+                                  <span className="text-foreground">{e.name}</span>
+                                </span>
+                                <span
+                                  className={`tabular-nums ${
+                                    e.kind === "income" ? "text-success" : "text-destructive"
+                                  }`}
+                                >
+                                  {e.kind === "income" ? "+" : "−"}
+                                  {privacy ? MASK : formatMoney(e.value, currency)}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="mt-1 text-muted-foreground italic">No activity</div>
+                        )}
+                      </div>
+                    );
+                  }}
                 />
-                {kindFilter !== "expense" && (
-                  <Line type="monotone" dataKey="income" stroke="#22c55e" strokeWidth={2} dot={false} name="Income" />
-                )}
-                {kindFilter !== "income" && (
-                  <Line type="monotone" dataKey="expense" stroke="#ef4444" strokeWidth={2} dot={false} name="Expenses" />
-                )}
-                {kindFilter === "all" && (
-                  <Line type="monotone" dataKey="net" stroke="#3b82f6" strokeWidth={2} dot={false} name="Net" />
-                )}
+                <Line
+                  type="monotone"
+                  dataKey="balance"
+                  stroke="#3b82f6"
+                  strokeWidth={2}
+                  dot={false}
+                  activeDot={{ r: 4 }}
+                  name="Balance"
+                />
               </LineChart>
             </ResponsiveContainer>
           </div>
