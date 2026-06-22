@@ -428,39 +428,33 @@ function EntriesPanel({
     doc.line(chartLeft, chartTop, chartLeft, chartBottom);
 
     if (chartData.length > 0) {
-      const maxVal = Math.max(
-        1,
-        ...chartData.map((d) => Math.max(d.income, d.expense, Math.abs(d.net))),
-      );
+      const minBal = Math.min(0, ...chartData.map((d) => d.balance));
+      const maxBal = Math.max(0, ...chartData.map((d) => d.balance));
+      const range = Math.max(1, maxBal - minBal);
       const xStep = chartData.length > 1 ? chartW / (chartData.length - 1) : 0;
-      const yFor = (v: number) => chartBottom - (v / maxVal) * (chartH - 10);
+      const yFor = (v: number) => chartBottom - ((v - minBal) / range) * (chartH - 10);
 
       // Y-axis ticks
       doc.setFontSize(8);
       doc.setTextColor(140);
       for (let i = 0; i <= 4; i++) {
-        const v = (maxVal / 4) * i;
+        const v = minBal + (range / 4) * i;
         const y = yFor(v);
         doc.setDrawColor(235);
         doc.line(chartLeft, y, chartLeft + chartW, y);
         doc.text(formatMoney(v, currency, { compact: true }), chartLeft - 4, y + 3, { align: "right" });
       }
 
-      const drawSeries = (key: "income" | "expense" | "net", color: [number, number, number]) => {
-        doc.setDrawColor(color[0], color[1], color[2]);
-        doc.setLineWidth(1.2);
-        for (let i = 0; i < chartData.length - 1; i++) {
-          const x1 = chartLeft + i * xStep;
-          const x2 = chartLeft + (i + 1) * xStep;
-          const y1 = yFor(Math.max(0, chartData[i][key]));
-          const y2 = yFor(Math.max(0, chartData[i + 1][key]));
-          doc.line(x1, y1, x2, y2);
-        }
-      };
-
-      if (kindFilter !== "expense") drawSeries("income", [34, 197, 94]);
-      if (kindFilter !== "income") drawSeries("expense", [239, 68, 68]);
-      if (kindFilter === "all") drawSeries("net", [59, 130, 246]);
+      // Balance line
+      doc.setDrawColor(59, 130, 246);
+      doc.setLineWidth(1.4);
+      for (let i = 0; i < chartData.length - 1; i++) {
+        const x1 = chartLeft + i * xStep;
+        const x2 = chartLeft + (i + 1) * xStep;
+        const y1 = yFor(chartData[i].balance);
+        const y2 = yFor(chartData[i + 1].balance);
+        doc.line(x1, y1, x2, y2);
+      }
 
       // X-axis labels (sparse)
       const step = Math.max(1, Math.ceil(chartData.length / 6));
@@ -471,18 +465,10 @@ function EntriesPanel({
       }
 
       // Legend
-      let legendX = chartLeft;
-      const legendY = chartTop - 8;
-      const legendItem = (label: string, color: [number, number, number]) => {
-        doc.setFillColor(color[0], color[1], color[2]);
-        doc.rect(legendX, legendY - 6, 8, 8, "F");
-        doc.setTextColor(80);
-        doc.text(label, legendX + 12, legendY);
-        legendX += doc.getTextWidth(label) + 30;
-      };
-      if (kindFilter !== "expense") legendItem("Income", [34, 197, 94]);
-      if (kindFilter !== "income") legendItem("Expenses", [239, 68, 68]);
-      if (kindFilter === "all") legendItem("Net", [59, 130, 246]);
+      doc.setFillColor(59, 130, 246);
+      doc.rect(chartLeft, chartTop - 14, 8, 8, "F");
+      doc.setTextColor(80);
+      doc.text("Balance", chartLeft + 12, chartTop - 8);
     }
 
     // Table
