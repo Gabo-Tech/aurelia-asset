@@ -92,20 +92,20 @@ export function AppShell({ children }: { children: ReactNode }) {
         </aside>
 
         {/* Mobile top bar */}
-        <header className="md:hidden flex items-center justify-between px-4 py-3 border-b border-border/60 bg-sidebar sticky top-0 z-20">
-          <div className="flex items-center gap-2">
-            <div className="grid h-8 w-8 place-items-center rounded-lg bg-primary/15 text-primary">
+        <header className="md:hidden flex items-center justify-between px-4 py-3 border-b border-border/60 bg-sidebar/95 backdrop-blur sticky top-0 z-20">
+          <Link to="/dashboard" className="flex items-center gap-2 min-w-0">
+            <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary/15 text-primary">
               <Sparkles className="h-4 w-4" />
             </div>
-            <div className="font-semibold text-sm">Elegant Portfolio</div>
-          </div>
+            <div className="truncate font-semibold text-sm">Elegant Portfolio</div>
+          </Link>
           <PrivacyToggle />
         </header>
 
         {/* Main */}
-        <main className="flex-1 min-w-0 pb-24 md:pb-12 flex flex-col">
+        <main className="flex-1 min-w-0 pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-12 flex flex-col">
           <div className="flex-1 px-4 sm:px-8 py-6 sm:py-10">{ready ? children : <PageLoader />}</div>
-          <footer className="mt-8 border-t border-border/60 px-4 sm:px-8 py-4 flex flex-wrap items-center justify-between gap-3 text-[11px] text-muted-foreground/80">
+          <footer className="hidden md:flex mt-8 border-t border-border/60 px-4 sm:px-8 py-4 flex-wrap items-center justify-between gap-3 text-[11px] text-muted-foreground/80">
             <span>Local-only · data stays in your browser</span>
             <SponsorBanner variant="inline" />
           </footer>
@@ -113,7 +113,10 @@ export function AppShell({ children }: { children: ReactNode }) {
       </div>
 
       {/* Mobile bottom nav */}
-      <nav className="md:hidden fixed bottom-0 inset-x-0 z-30 border-t border-border/60 bg-sidebar/95 backdrop-blur">
+      <nav
+        className="md:hidden fixed bottom-0 inset-x-0 z-30 border-t border-border/60 bg-sidebar/95 backdrop-blur pb-[env(safe-area-inset-bottom)]"
+        aria-label="Primary"
+      >
         <div className="grid grid-cols-5">
           {nav.map((item) => {
             const active =
@@ -123,12 +126,16 @@ export function AppShell({ children }: { children: ReactNode }) {
               <Link
                 key={item.to}
                 to={item.to}
+                aria-current={active ? "page" : undefined}
                 className={cn(
-                  "flex flex-col items-center gap-1 py-2.5 text-[10px]",
-                  active ? "text-primary" : "text-muted-foreground"
+                  "relative flex flex-col items-center justify-center gap-1 py-2.5 min-h-[56px] text-[10px] font-medium transition-colors",
+                  active ? "text-primary" : "text-muted-foreground hover:text-foreground"
                 )}
               >
-                <Icon className="h-4 w-4" />
+                {active && (
+                  <span className="absolute top-0 left-1/2 -translate-x-1/2 h-0.5 w-8 rounded-b-full bg-primary" />
+                )}
+                <Icon className={cn("h-5 w-5", active && "scale-110 transition-transform")} />
                 <span>{item.label}</span>
               </Link>
             );
@@ -149,16 +156,19 @@ export function PageHeader({
   actions?: ReactNode;
 }) {
   return (
-    <div className="mb-8 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 sm:flex sm:flex-wrap sm:justify-between">
+    <div className="mb-6 sm:mb-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
       <div className="min-w-0">
-        <h1 className="truncate text-2xl sm:text-3xl font-semibold tracking-tight">
+        <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">
           {title}
         </h1>
         {description ? (
           <p className="mt-1 text-sm text-muted-foreground">{description}</p>
         ) : null}
       </div>
-      {actions ? <div className="shrink-0 flex items-center gap-2">{actions}</div> : null}
+      {actions ? (
+        <div className="flex flex-wrap items-center gap-2 sm:shrink-0">{actions}</div>
+      ) : null}
     </div>
   );
 }
+
