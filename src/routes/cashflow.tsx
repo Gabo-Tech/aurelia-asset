@@ -872,6 +872,7 @@ function EditEntryDialog({
   const [recurring, setRecurring] = useState(false);
   const [frequency, setFrequency] = useState<RecurrenceFrequency>("monthly");
   const [until, setUntil] = useState("");
+  const [isPercent, setIsPercent] = useState(false);
 
   useEffect(() => {
     if (!entry) return;
