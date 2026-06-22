@@ -1083,6 +1083,9 @@ function AddForm({
   const [amount, setAmount] = useState("");
   const [entryCurrency, setEntryCurrency] = useState(defaultCurrency);
   const [date, setDate] = useState(format(new Date(), "yyyy-MM-dd"));
+  const [recurring, setRecurring] = useState(false);
+  const [frequency, setFrequency] = useState<RecurrenceFrequency>("monthly");
+  const [until, setUntil] = useState("");
 
   const visibleCategories = useMemo(
     () => categories.filter((c) => c.kind === kind),
@@ -1107,6 +1110,9 @@ function AddForm({
       amount: a,
       currency: entryCurrency,
       date: new Date(date).toISOString(),
+      recurrence: recurring
+        ? { frequency, ...(until ? { until: new Date(until).toISOString() } : {}) }
+        : undefined,
     });
     setAmount("");
   }
