@@ -67,11 +67,14 @@ export function HoldingsCharts() {
     });
   }, [data, state.holdings, fxByHolding, period]);
 
-  // Invested vs value: walk transactions cumulatively over dates
+  // Invested vs value: walk transactions cumulatively over dates,
+  // restricted to the currently visible holdings.
   const investedSeries = useMemo(() => {
     if (!data || !data.length) return [];
-    // Sort transactions by date ascending
-    const txs = [...state.transactions].sort((a, b) => +new Date(a.date) - +new Date(b.date));
+    const visibleIds = new Set(visibleHoldings.map((h) => h.id));
+    const txs = [...state.transactions]
+      .filter((t) => visibleIds.has(t.holdingId))
+      .sort((a, b) => +new Date(a.date) - +new Date(b.date));
     let cum = 0;
     let ti = 0;
     return data.map((d) => {
@@ -80,11 +83,11 @@ export function HoldingsCharts() {
         const fx = convert(1, t.currency || "USD", currency, rates);
         const sign = t.kind === "buy" ? 1 : -1;
         cum += sign * t.quantity * t.pricePerUnit * fx;
-        if (t.fees) cum += t.fees * fx; // fees always add to cost
+        if (t.fees) cum += t.fees * fx;
         ti++;
       }
       let value = 0;
-      for (const h of state.holdings) {
+      for (const h of visibleHoldings) {
         value += (d.perAsset[h.id] ?? 0) * (fxByHolding[h.id] ?? 1);
       }
       return {
@@ -94,7 +97,8 @@ export function HoldingsCharts() {
         Value: Math.round(value * 100) / 100,
       };
     });
-  }, [data, state.transactions, state.holdings, fxByHolding, currency, rates, period]);
+  }, [data, state.transactions, visibleHoldings, fxByHolding, currency, rates, period]);
+
 
   if (!state.holdings.length) return null;
 
