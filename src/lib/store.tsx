@@ -114,7 +114,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           holdings: s.holdings.map((h) => (h.id === id ? { ...h, ...patch } : h)),
         })),
       removeHolding: (id) =>
-        setState((s) => ({ ...s, holdings: s.holdings.filter((h) => h.id !== id) })),
+        setState((s) => ({
+          ...s,
+          holdings: s.holdings.filter((h) => h.id !== id),
+          transactions: s.transactions.filter((t) => t.holdingId !== id),
+        })),
       addCashflow: (c) =>
         setState((s) => ({ ...s, cashflows: [...s.cashflows, { ...c, id: uid() }] })),
       updateCashflow: (id, patch) =>
