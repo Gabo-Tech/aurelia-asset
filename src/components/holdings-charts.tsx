@@ -333,49 +333,30 @@ export function HoldingsCharts() {
                         contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 10, fontSize: 12 }}
                         formatter={(value, name, item) => {
                           const key = String((item as { dataKey?: unknown })?.dataKey ?? "");
-                          const m = key.match(/^(?:inv|val)_(.+)$/);
+                          const m = key.match(/^val_(.+)$/);
                           const payload = (item as { payload?: Record<string, number> })?.payload;
                           if (m && payload) {
                             const q = payload[`qty_${m[1]}`];
-                            if (typeof q === "number") {
-                              const holding = visibleHoldings.find((h) => h.id === m[1]);
-                              return [`${mask(Number(value))}  ·  ${formatQuantity(q)} ${holding?.symbol ?? ""}`, String(name)];
-                            }
+                            const holding = visibleHoldings.find((h) => h.id === m[1]);
+                            const qtyStr = typeof q === "number" ? `  ·  ${formatQuantity(q)} ${holding?.symbol ?? ""}` : "";
+                            return [`${mask(Number(value))}${qtyStr}`, holding?.symbol ?? String(name)];
                           }
                           return [mask(Number(value)), String(name)];
                         }}
                       />
                       <Legend wrapperStyle={{ fontSize: 11 }} />
-                      {visibleHoldings.length > 1 && (
-                        <>
-                          <Line type="monotone" dataKey="Invested" name="Total invested" stroke="#94a3b8" strokeWidth={2} strokeDasharray="4 3" dot={false} />
-                          <Line type="monotone" dataKey="Value" name="Total value" stroke="var(--primary)" strokeWidth={2.5} dot={false} />
-                        </>
-                      )}
-                      {visibleHoldings.map((h) => (
-                        <Line
-                          key={`inv-${h.id}`}
-                          type="monotone"
-                          dataKey={`inv_${h.id}`}
-                          name={`${h.symbol} invested`}
-                          stroke={h.color}
-                          strokeOpacity={0.55}
-                          strokeWidth={1.5}
-                          strokeDasharray="4 3"
-                          dot={false}
-                        />
-                      ))}
                       {visibleHoldings.map((h) => (
                         <Line
                           key={`val-${h.id}`}
                           type="monotone"
                           dataKey={`val_${h.id}`}
-                          name={`${h.symbol} value`}
+                          name={h.symbol}
                           stroke={h.color}
                           strokeWidth={2}
                           dot={false}
                         />
                       ))}
+
                     </LineChart>
                   </ResponsiveContainer>
                 )}
