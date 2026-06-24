@@ -59,13 +59,13 @@ export function HoldingsCharts() {
         date: d.date,
         label: format(new Date(d.date), period === "1D" ? "HH:mm" : "MMM d"),
       };
-      for (const h of state.holdings) {
+      for (const h of visibleHoldings) {
         const v = (d.perAsset[h.id] ?? 0) * (fxByHolding[h.id] ?? 1);
         row[h.symbol] = Math.round(v * 100) / 100;
       }
       return row;
     });
-  }, [data, state.holdings, fxByHolding, period]);
+  }, [data, visibleHoldings, fxByHolding, period]);
 
   // Invested vs value: walk transactions cumulatively over dates,
   // restricted to the currently visible holdings.
