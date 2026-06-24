@@ -164,11 +164,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       updateSettings: (patch) =>
         setState((s) => ({ ...s, settings: { ...s.settings, ...patch } })),
       importState: (data) =>
-        setState(() => ({
-          ...DEFAULT_STATE,
-          ...data,
-          settings: { ...DEFAULT_STATE.settings, ...(data.settings ?? {}) },
-        })),
+        setState(() =>
+          syncQuantities({
+            ...DEFAULT_STATE,
+            ...data,
+            transactions: Array.isArray((data as AppState).transactions) ? (data as AppState).transactions : [],
+            settings: { ...DEFAULT_STATE.settings, ...(data.settings ?? {}) },
+          }),
+        ),
       reset: () => setState(() => DEFAULT_STATE),
     };
   }, [state, hydrated]);
