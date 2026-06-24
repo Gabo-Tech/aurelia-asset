@@ -270,7 +270,17 @@ export function HoldingsCharts() {
                       />
                       <Tooltip
                         contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 10, fontSize: 12 }}
-                        formatter={(value: number) => mask(value)}
+                        formatter={(value: number, name: string, item: { dataKey?: string; payload?: Record<string, number> }) => {
+                          const key = String(item?.dataKey ?? "");
+                          const m = key.match(/^(?:inv|val)_(.+)$/);
+                          if (m && item.payload) {
+                            const q = item.payload[`qty_${m[1]}`];
+                            if (typeof q === "number") {
+                              return [`${mask(value)}  ·  ${formatQty(q)} ${m[1]}`, name];
+                            }
+                          }
+                          return [mask(value), name];
+                        }}
                       />
                       <Legend wrapperStyle={{ fontSize: 11 }} />
                       {visibleHoldings.length > 1 && (
