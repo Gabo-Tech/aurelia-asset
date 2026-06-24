@@ -127,6 +127,56 @@ export function HoldingsCharts() {
             <TabsTrigger value="invested">Invested vs Value</TabsTrigger>
           </TabsList>
 
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+              Assets
+            </span>
+            {state.holdings.map((h) => {
+              const off = hidden.has(h.id);
+              return (
+                <button
+                  key={h.id}
+                  onClick={() =>
+                    setHidden((prev) => {
+                      const next = new Set(prev);
+                      if (next.has(h.id)) next.delete(h.id);
+                      else next.add(h.id);
+                      return next;
+                    })
+                  }
+                  className={cn(
+                    "inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs font-medium transition-colors",
+                    off
+                      ? "border-border/60 bg-muted text-muted-foreground opacity-60"
+                      : "border-border bg-card text-foreground hover:bg-accent"
+                  )}
+                >
+                  <span
+                    className="h-1.5 w-1.5 rounded-full ring-1 ring-black/10"
+                    style={{ backgroundColor: h.color }}
+                  />
+                  {h.symbol}
+                </button>
+              );
+            })}
+            {state.holdings.length > 1 && (
+              <div className="ml-auto flex items-center gap-1.5">
+                <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => setHidden(new Set())}>
+                  Show all
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 px-2 text-xs"
+                  onClick={() => setHidden(new Set(state.holdings.map((h) => h.id)))}
+                >
+                  Hide all
+                </Button>
+              </div>
+            )}
+          </div>
+
+
           <TabsContent value="stacked" className="mt-4">
             <ChartFrame filename="holdings-stacked" title={`Value per asset · ${period}`}>
               <div className="flex h-72 items-center justify-center sm:h-80">
