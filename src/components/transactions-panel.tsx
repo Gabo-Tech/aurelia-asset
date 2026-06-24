@@ -138,17 +138,17 @@ export function TransactionsPanel() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground mb-3">
-          <span className="rounded-md bg-destructive/15 text-destructive px-2 py-1">
+          <span className="rounded-md bg-success/15 text-success px-2 py-1">
             Invested: {privacy ? MASK : formatMoney(totals.invested, currency)}
           </span>
-          <span className="rounded-md bg-success/15 text-success px-2 py-1">
+          <span className="rounded-md bg-destructive/15 text-destructive px-2 py-1">
             Proceeds: {privacy ? MASK : formatMoney(totals.proceeds, currency)}
           </span>
           <span className="rounded-md bg-muted/50 px-2 py-1">
             Fees: {privacy ? MASK : formatMoney(totals.fees, currency)}
           </span>
-          <span className={cn("rounded-md px-2 py-1", totals.net >= 0 ? "bg-destructive/15 text-destructive" : "bg-success/15 text-success")}>
-            Net invested: {privacy ? MASK : `${totals.net >= 0 ? "" : "+"}${formatMoney(Math.abs(totals.net), currency)}`}
+          <span className={cn("rounded-md px-2 py-1", totals.net >= 0 ? "bg-success/15 text-success" : "bg-destructive/15 text-destructive")}>
+            Net invested: {privacy ? MASK : `${totals.net >= 0 ? "+" : "−"}${formatMoney(Math.abs(totals.net), currency)}`}
           </span>
           <span className="ml-auto">{filtered.length} transactions</span>
         </div>
@@ -187,7 +187,7 @@ export function TransactionsPanel() {
                         <td className="py-2.5">
                           <span className={cn(
                             "text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded",
-                            t.kind === "buy" ? "bg-destructive/15 text-destructive" : "bg-success/15 text-success",
+                            t.kind === "buy" ? "bg-success/15 text-success" : "bg-destructive/15 text-destructive",
                           )}>
                             {t.kind}
                           </span>
@@ -211,9 +211,9 @@ export function TransactionsPanel() {
                         </td>
                         <td className={cn(
                           "py-2.5 text-right tabular-nums font-medium",
-                          t.kind === "buy" ? "text-destructive" : "text-success",
+                          t.kind === "buy" ? "text-success" : "text-destructive",
                         )}>
-                          {privacy ? MASK : (t.kind === "buy" ? "−" : "+") + mask(total, t.currency)}
+                          {privacy ? MASK : (t.kind === "buy" ? "+" : "−") + mask(total, t.currency)}
                         </td>
                         <td>
                           <DropdownMenu>

@@ -258,7 +258,7 @@ function HoldingsPage() {
                                 setTxOpen(true);
                               }}
                             >
-                              <ArrowDownRight className="mr-2 h-4 w-4 text-destructive" /> Add buy
+                              <ArrowUpRight className="mr-2 h-4 w-4 text-success" /> Add buy
                             </DropdownMenuItem>
                             <DropdownMenuItem
                               onClick={() => {
@@ -266,7 +266,7 @@ function HoldingsPage() {
                                 setTxOpen(true);
                               }}
                             >
-                              <ArrowUpRight className="mr-2 h-4 w-4 text-success" /> Add sell
+                              <ArrowDownRight className="mr-2 h-4 w-4 text-destructive" /> Add sell
                             </DropdownMenuItem>
                             <DropdownMenuItem
                               onClick={() => {

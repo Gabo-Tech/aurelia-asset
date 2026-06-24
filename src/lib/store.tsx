@@ -69,7 +69,8 @@ function syncQuantities(state: AppState): AppState {
   const holdings = state.holdings.map((h) => {
     const agg = byHolding.get(h.id);
     if (!agg?.hasTx) return h;
-    const qty = Math.max(0, agg.qty);
+    const opening = h.openingQuantity ?? 0;
+    const qty = Math.max(0, opening + agg.qty);
     if (qty === h.quantity) return h;
     changed = true;
     return { ...h, quantity: qty };
@@ -129,12 +130,20 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       removeCashflow: (id) =>
         setState((s) => ({ ...s, cashflows: s.cashflows.filter((c) => c.id !== id) })),
       addTransaction: (t) =>
-        setState((s) =>
-          syncQuantities({
+        setState((s) => {
+          const holdings = s.holdings.map((h) => {
+            if (h.id !== t.holdingId) return h;
+            if (h.openingQuantity != null) return h;
+            const hasExisting = s.transactions.some((x) => x.holdingId === h.id);
+            // First tx for this holding — capture its current quantity as the baseline
+            return { ...h, openingQuantity: hasExisting ? 0 : (Number(h.quantity) || 0) };
+          });
+          return syncQuantities({
             ...s,
+            holdings,
             transactions: [...s.transactions, { ...t, id: uid() }],
-          }),
-        ),
+          });
+        }),
       updateTransaction: (id, patch) =>
         setState((s) =>
           syncQuantities({
