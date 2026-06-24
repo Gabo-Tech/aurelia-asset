@@ -156,7 +156,7 @@ export function HoldingsCharts() {
                         formatter={(value: number) => mask(value)}
                       />
                       <Legend wrapperStyle={{ fontSize: 11 }} />
-                      {state.holdings.map((h) => (
+                      {visibleHoldings.map((h) => (
                         <Area
                           key={h.id}
                           type="monotone"
