@@ -78,8 +78,25 @@ export type Settings = {
 export type AppState = {
   holdings: Holding[];
   cashflows: CashflowEntry[];
+  transactions: HoldingTransaction[];
   categories: Category[];
   settings: Settings;
+};
+
+/** Buy/sell transaction attached to a Holding. When at least one transaction
+ *  exists for a holding, the holding's `quantity` is derived as
+ *  `sum(buys.quantity) - sum(sells.quantity)`. */
+export type HoldingTransaction = {
+  id: string;
+  holdingId: string;
+  kind: "buy" | "sell";
+  date: string; // ISO
+  quantity: number;
+  pricePerUnit: number;
+  /** Currency of pricePerUnit and fees. Defaults to the holding's price currency. */
+  currency?: string;
+  fees?: number;
+  notes?: string;
 };
 
 /** Default palette per category group. */
@@ -109,6 +126,7 @@ export const DEFAULT_CATEGORIES: Category[] = [
 export const DEFAULT_STATE: AppState = {
   holdings: [],
   cashflows: [],
+  transactions: [],
   categories: DEFAULT_CATEGORIES,
   settings: {
     useCorsProxy: true,

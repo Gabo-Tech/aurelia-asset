@@ -7,7 +7,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { AppState, DEFAULT_STATE, DEFAULT_CATEGORIES, Holding, CashflowEntry, Category, Settings } from "./types";
+import { AppState, DEFAULT_STATE, DEFAULT_CATEGORIES, Holding, CashflowEntry, Category, Settings, HoldingTransaction } from "./types";
 import { getFxRates, convert, type FxRates } from "./finance/fx";
 import { formatMoney, maskMoney, MASK } from "./format";
 
@@ -22,6 +22,7 @@ function loadState(): AppState {
     return {
       ...DEFAULT_STATE,
       ...parsed,
+      transactions: Array.isArray(parsed.transactions) ? parsed.transactions : [],
       categories:
         Array.isArray(parsed.categories) && parsed.categories.length > 0
           ? parsed.categories
@@ -43,6 +44,9 @@ type Ctx = {
   addCashflow: (c: Omit<CashflowEntry, "id">) => void;
   updateCashflow: (id: string, patch: Partial<CashflowEntry>) => void;
   removeCashflow: (id: string) => void;
+  addTransaction: (t: Omit<HoldingTransaction, "id">) => void;
+  updateTransaction: (id: string, patch: Partial<HoldingTransaction>) => void;
+  removeTransaction: (id: string) => void;
   addCategory: (c: Omit<Category, "id">) => Category;
   updateCategory: (id: string, patch: Partial<Category>) => void;
   removeCategory: (id: string) => void;
@@ -50,6 +54,28 @@ type Ctx = {
   importState: (data: AppState) => void;
   reset: () => void;
 };
+
+/** Recompute holdings.quantity from transactions for any holding that has at
+ *  least one transaction. Holdings without transactions keep their manual quantity. */
+function syncQuantities(state: AppState): AppState {
+  const byHolding = new Map<string, { qty: number; hasTx: boolean }>();
+  for (const t of state.transactions) {
+    const cur = byHolding.get(t.holdingId) ?? { qty: 0, hasTx: true };
+    cur.hasTx = true;
+    cur.qty += (t.kind === "buy" ? 1 : -1) * (Number(t.quantity) || 0);
+    byHolding.set(t.holdingId, cur);
+  }
+  let changed = false;
+  const holdings = state.holdings.map((h) => {
+    const agg = byHolding.get(h.id);
+    if (!agg?.hasTx) return h;
+    const qty = Math.max(0, agg.qty);
+    if (qty === h.quantity) return h;
+    changed = true;
+    return { ...h, quantity: qty };
+  });
+  return changed ? { ...state, holdings } : state;
+}
 
 const StoreContext = createContext<Ctx | null>(null);
 
@@ -88,7 +114,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           holdings: s.holdings.map((h) => (h.id === id ? { ...h, ...patch } : h)),
         })),
       removeHolding: (id) =>
-        setState((s) => ({ ...s, holdings: s.holdings.filter((h) => h.id !== id) })),
+        setState((s) => ({
+          ...s,
+          holdings: s.holdings.filter((h) => h.id !== id),
+          transactions: s.transactions.filter((t) => t.holdingId !== id),
+        })),
       addCashflow: (c) =>
         setState((s) => ({ ...s, cashflows: [...s.cashflows, { ...c, id: uid() }] })),
       updateCashflow: (id, patch) =>
@@ -98,6 +128,27 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         })),
       removeCashflow: (id) =>
         setState((s) => ({ ...s, cashflows: s.cashflows.filter((c) => c.id !== id) })),
+      addTransaction: (t) =>
+        setState((s) =>
+          syncQuantities({
+            ...s,
+            transactions: [...s.transactions, { ...t, id: uid() }],
+          }),
+        ),
+      updateTransaction: (id, patch) =>
+        setState((s) =>
+          syncQuantities({
+            ...s,
+            transactions: s.transactions.map((t) => (t.id === id ? { ...t, ...patch } : t)),
+          }),
+        ),
+      removeTransaction: (id) =>
+        setState((s) =>
+          syncQuantities({
+            ...s,
+            transactions: s.transactions.filter((t) => t.id !== id),
+          }),
+        ),
       addCategory: (c) => {
         const created: Category = { ...c, id: uid() };
         setState((s) => ({ ...s, categories: [...s.categories, created] }));
@@ -113,11 +164,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       updateSettings: (patch) =>
         setState((s) => ({ ...s, settings: { ...s.settings, ...patch } })),
       importState: (data) =>
-        setState(() => ({
-          ...DEFAULT_STATE,
-          ...data,
-          settings: { ...DEFAULT_STATE.settings, ...(data.settings ?? {}) },
-        })),
+        setState(() =>
+          syncQuantities({
+            ...DEFAULT_STATE,
+            ...data,
+            transactions: Array.isArray((data as AppState).transactions) ? (data as AppState).transactions : [],
+            settings: { ...DEFAULT_STATE.settings, ...(data.settings ?? {}) },
+          }),
+        ),
       reset: () => setState(() => DEFAULT_STATE),
     };
   }, [state, hydrated]);

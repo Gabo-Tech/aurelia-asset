@@ -25,9 +25,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Card, CardContent } from "@/components/ui/card";
-import { Plus, MoreVertical, RefreshCw, ArrowUpDown, Trash2, Pencil, Loader2 } from "lucide-react";
+import { Plus, MoreVertical, RefreshCw, ArrowUpDown, Trash2, Pencil, Loader2, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { PageHeader } from "@/components/app-shell";
 import { HoldingDialog } from "@/components/holding-dialog";
+import { TransactionDialog } from "@/components/transaction-dialog";
+import { TransactionsPanel } from "@/components/transactions-panel";
+import { HoldingsCharts } from "@/components/holdings-charts";
 import { formatNumber, formatPct, formatMoney, maskNumber, maskMoney } from "@/lib/format";
 import { fetchCurrentQuote } from "@/lib/finance";
 import { toast } from "sonner";
@@ -51,6 +54,8 @@ function HoldingsPage() {
   const { mask, toDisplay, privacy, currency } = useMoney();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Holding | null>(null);
+  const [txOpen, setTxOpen] = useState(false);
+  const [txHoldingId, setTxHoldingId] = useState<string | undefined>(undefined);
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [sort, setSort] = useState<{ key: SortKey; dir: "asc" | "desc" }>({
@@ -249,6 +254,22 @@ function HoldingsPage() {
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem
                               onClick={() => {
+                                setTxHoldingId(h.id);
+                                setTxOpen(true);
+                              }}
+                            >
+                              <ArrowDownRight className="mr-2 h-4 w-4 text-destructive" /> Add buy
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => {
+                                setTxHoldingId(h.id);
+                                setTxOpen(true);
+                              }}
+                            >
+                              <ArrowUpRight className="mr-2 h-4 w-4 text-success" /> Add sell
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => {
                                 setEditing(h);
                                 setOpen(true);
                               }}
@@ -297,7 +318,15 @@ function HoldingsPage() {
         </CardContent>
       </Card>
 
+      <HoldingsCharts />
+      <TransactionsPanel />
+
       <HoldingDialog open={open} onOpenChange={setOpen} editing={editing} />
+      <TransactionDialog
+        open={txOpen}
+        onOpenChange={(b) => { setTxOpen(b); if (!b) setTxHoldingId(undefined); }}
+        defaultHoldingId={txHoldingId}
+      />
     </>
   );
 }
