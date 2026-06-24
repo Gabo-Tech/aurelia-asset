@@ -67,37 +67,53 @@ export function HoldingsCharts() {
     });
   }, [data, visibleHoldings, fxByHolding, period]);
 
-  // Invested vs value: walk transactions cumulatively over dates,
-  // restricted to the currently visible holdings.
+  // Per-asset Invested (cumulative cost basis) and Value over time.
   const investedSeries = useMemo(() => {
     if (!data || !data.length) return [];
-    const visibleIds = new Set(visibleHoldings.map((h) => h.id));
-    const txs = [...state.transactions]
-      .filter((t) => visibleIds.has(t.holdingId))
-      .sort((a, b) => +new Date(a.date) - +new Date(b.date));
-    let cum = 0;
-    let ti = 0;
+    const txsByHolding: Record<string, typeof state.transactions> = {};
+    for (const h of visibleHoldings) txsByHolding[h.id] = [];
+    for (const t of state.transactions) {
+      if (txsByHolding[t.holdingId]) txsByHolding[t.holdingId].push(t);
+    }
+    for (const id of Object.keys(txsByHolding)) {
+      txsByHolding[id].sort((a, b) => +new Date(a.date) - +new Date(b.date));
+    }
+    const cum: Record<string, number> = {};
+    const idx: Record<string, number> = {};
+    for (const h of visibleHoldings) {
+      cum[h.id] = 0;
+      idx[h.id] = 0;
+    }
     return data.map((d) => {
-      while (ti < txs.length && +new Date(txs[ti].date) <= d.date) {
-        const t = txs[ti];
-        const fx = convert(1, t.currency || "USD", currency, rates);
-        const sign = t.kind === "buy" ? 1 : -1;
-        cum += sign * t.quantity * t.pricePerUnit * fx;
-        if (t.fees) cum += t.fees * fx;
-        ti++;
-      }
-      let value = 0;
-      for (const h of visibleHoldings) {
-        value += (d.perAsset[h.id] ?? 0) * (fxByHolding[h.id] ?? 1);
-      }
-      return {
+      const row: Record<string, number | string> = {
         date: d.date,
         label: format(new Date(d.date), period === "1D" ? "HH:mm" : "MMM d"),
-        Invested: Math.round(cum * 100) / 100,
-        Value: Math.round(value * 100) / 100,
       };
+      let totalInv = 0;
+      let totalVal = 0;
+      for (const h of visibleHoldings) {
+        const list = txsByHolding[h.id];
+        while (idx[h.id] < list.length && +new Date(list[idx[h.id]].date) <= d.date) {
+          const t = list[idx[h.id]];
+          const fx = convert(1, t.currency || "USD", currency, rates);
+          const sign = t.kind === "buy" ? 1 : -1;
+          cum[h.id] += sign * t.quantity * t.pricePerUnit * fx;
+          if (t.fees) cum[h.id] += t.fees * fx;
+          idx[h.id]++;
+        }
+        const inv = Math.round(cum[h.id] * 100) / 100;
+        const val = Math.round((d.perAsset[h.id] ?? 0) * (fxByHolding[h.id] ?? 1) * 100) / 100;
+        row[`inv_${h.symbol}`] = inv;
+        row[`val_${h.symbol}`] = val;
+        totalInv += inv;
+        totalVal += val;
+      }
+      row.Invested = Math.round(totalInv * 100) / 100;
+      row.Value = Math.round(totalVal * 100) / 100;
+      return row;
     });
   }, [data, state.transactions, visibleHoldings, fxByHolding, currency, rates, period]);
+
 
 
   if (!state.holdings.length) return null;
