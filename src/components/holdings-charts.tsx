@@ -269,8 +269,36 @@ export function HoldingsCharts() {
                         formatter={(value: number) => mask(value)}
                       />
                       <Legend wrapperStyle={{ fontSize: 11 }} />
-                      <Line type="monotone" dataKey="Invested" stroke="#94a3b8" strokeWidth={2} dot={false} />
-                      <Line type="monotone" dataKey="Value" stroke="var(--primary)" strokeWidth={2.5} dot={false} />
+                      {visibleHoldings.length > 1 && (
+                        <>
+                          <Line type="monotone" dataKey="Invested" name="Total invested" stroke="#94a3b8" strokeWidth={2} strokeDasharray="4 3" dot={false} />
+                          <Line type="monotone" dataKey="Value" name="Total value" stroke="var(--primary)" strokeWidth={2.5} dot={false} />
+                        </>
+                      )}
+                      {visibleHoldings.map((h) => (
+                        <Line
+                          key={`inv-${h.id}`}
+                          type="monotone"
+                          dataKey={`inv_${h.symbol}`}
+                          name={`${h.symbol} invested`}
+                          stroke={h.color}
+                          strokeOpacity={0.55}
+                          strokeWidth={1.5}
+                          strokeDasharray="4 3"
+                          dot={false}
+                        />
+                      ))}
+                      {visibleHoldings.map((h) => (
+                        <Line
+                          key={`val-${h.id}`}
+                          type="monotone"
+                          dataKey={`val_${h.symbol}`}
+                          name={`${h.symbol} value`}
+                          stroke={h.color}
+                          strokeWidth={2}
+                          dot={false}
+                        />
+                      ))}
                     </LineChart>
                   </ResponsiveContainer>
                 )}
@@ -279,8 +307,8 @@ export function HoldingsCharts() {
 
             {state.transactions.length > 0 && investedSeries.length > 0 && (
               <InvestedSummary
-                invested={investedSeries[investedSeries.length - 1].Invested}
-                value={investedSeries[investedSeries.length - 1].Value}
+                invested={Number(investedSeries[investedSeries.length - 1].Invested) || 0}
+                value={Number(investedSeries[investedSeries.length - 1].Value) || 0}
               />
             )}
           </TabsContent>
