@@ -36,6 +36,44 @@ function formatQuantity(value: number) {
   });
 }
 
+function buildQuantityByDate(
+  data: Array<{ date: number }>,
+  holdings: Array<{ id: string; quantity: number; openingQuantity?: number }>,
+  transactions: Array<{ holdingId: string; kind: "buy" | "sell"; date: string; quantity: number }>,
+) {
+  const txsByHolding: Record<string, Array<{ day: number; kind: "buy" | "sell"; quantity: number }>> = {};
+  for (const h of holdings) txsByHolding[h.id] = [];
+  for (const t of transactions) {
+    if (txsByHolding[t.holdingId]) {
+      txsByHolding[t.holdingId].push({ day: toUtcDayMs(t.date), kind: t.kind, quantity: t.quantity });
+    }
+  }
+  for (const id of Object.keys(txsByHolding)) txsByHolding[id].sort((a, b) => a.day - b.day);
+
+  const qty: Record<string, number> = {};
+  const idx: Record<string, number> = {};
+  for (const h of holdings) {
+    qty[h.id] = txsByHolding[h.id].length > 0 ? h.openingQuantity ?? 0 : h.quantity;
+    idx[h.id] = 0;
+  }
+
+  const byDate = new Map<number, Record<string, number>>();
+  for (const d of data) {
+    const row: Record<string, number> = {};
+    for (const h of holdings) {
+      const list = txsByHolding[h.id];
+      while (idx[h.id] < list.length && list[idx[h.id]].day <= d.date) {
+        const t = list[idx[h.id]];
+        qty[h.id] = Math.max(0, qty[h.id] + (t.kind === "buy" ? 1 : -1) * t.quantity);
+        idx[h.id]++;
+      }
+      row[h.id] = qty[h.id];
+    }
+    byDate.set(d.date, row);
+  }
+  return byDate;
+}
+
 export function HoldingsCharts() {
   const { state } = useStore();
   const { currency, rates, mask, privacy } = useMoney();
