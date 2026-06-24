@@ -22,6 +22,7 @@ function loadState(): AppState {
     return {
       ...DEFAULT_STATE,
       ...parsed,
+      transactions: Array.isArray(parsed.transactions) ? parsed.transactions : [],
       categories:
         Array.isArray(parsed.categories) && parsed.categories.length > 0
           ? parsed.categories
