@@ -25,9 +25,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Card, CardContent } from "@/components/ui/card";
-import { Plus, MoreVertical, RefreshCw, ArrowUpDown, Trash2, Pencil, Loader2 } from "lucide-react";
+import { Plus, MoreVertical, RefreshCw, ArrowUpDown, Trash2, Pencil, Loader2, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { PageHeader } from "@/components/app-shell";
 import { HoldingDialog } from "@/components/holding-dialog";
+import { TransactionDialog } from "@/components/transaction-dialog";
+import { TransactionsPanel } from "@/components/transactions-panel";
+import { HoldingsCharts } from "@/components/holdings-charts";
 import { formatNumber, formatPct, formatMoney, maskNumber, maskMoney } from "@/lib/format";
 import { fetchCurrentQuote } from "@/lib/finance";
 import { toast } from "sonner";
