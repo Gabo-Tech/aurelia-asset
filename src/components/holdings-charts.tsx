@@ -78,11 +78,13 @@ export function HoldingsCharts() {
   const { state } = useStore();
   const { currency, rates, mask, privacy } = useMoney();
   const [period, setPeriod] = useState<PeriodId>("3M");
+  const [tab, setTab] = useState<"stacked" | "invested">("stacked");
   const [hidden, setHidden] = useState<Set<string>>(new Set());
   const visibleHoldings = useMemo(
     () => state.holdings.filter((h) => !hidden.has(h.id)),
     [state.holdings, hidden]
   );
+
 
   const fxByHolding = useMemo(() => {
     const m: Record<string, number> = {};
@@ -202,7 +204,19 @@ export function HoldingsCharts() {
         </div>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue="stacked">
+        <Tabs
+          value={tab}
+          onValueChange={(v) => {
+            const next = v as "stacked" | "invested";
+            setTab(next);
+            if (next === "invested") {
+              const firstVisible = state.holdings.find((h) => !hidden.has(h.id)) ?? state.holdings[0];
+              if (firstVisible) {
+                setHidden(new Set(state.holdings.filter((h) => h.id !== firstVisible.id).map((h) => h.id)));
+              }
+            }
+          }}
+        >
           <TabsList className="grid w-full sm:w-auto grid-cols-2">
             <TabsTrigger value="stacked">Value per asset</TabsTrigger>
             <TabsTrigger value="invested">Invested vs Value</TabsTrigger>
@@ -217,14 +231,18 @@ export function HoldingsCharts() {
               return (
                 <button
                   key={h.id}
-                  onClick={() =>
-                    setHidden((prev) => {
-                      const next = new Set(prev);
-                      if (next.has(h.id)) next.delete(h.id);
-                      else next.add(h.id);
-                      return next;
-                    })
-                  }
+                  onClick={() => {
+                    if (tab === "invested") {
+                      setHidden(new Set(state.holdings.filter((x) => x.id !== h.id).map((x) => x.id)));
+                    } else {
+                      setHidden((prev) => {
+                        const next = new Set(prev);
+                        if (next.has(h.id)) next.delete(h.id);
+                        else next.add(h.id);
+                        return next;
+                      });
+                    }
+                  }}
                   className={cn(
                     "inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs font-medium transition-colors",
                     off
@@ -240,7 +258,7 @@ export function HoldingsCharts() {
                 </button>
               );
             })}
-            {state.holdings.length > 1 && (
+            {state.holdings.length > 1 && tab === "stacked" && (
               <div className="ml-auto flex items-center gap-1.5">
                 <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => setHidden(new Set())}>
                   Show all
@@ -256,6 +274,7 @@ export function HoldingsCharts() {
               </div>
             )}
           </div>
+
 
 
           <TabsContent value="stacked" className="mt-4">
