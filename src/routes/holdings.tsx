@@ -318,7 +318,15 @@ function HoldingsPage() {
         </CardContent>
       </Card>
 
+      <HoldingsCharts />
+      <TransactionsPanel />
+
       <HoldingDialog open={open} onOpenChange={setOpen} editing={editing} />
+      <TransactionDialog
+        open={txOpen}
+        onOpenChange={(b) => { setTxOpen(b); if (!b) setTxHoldingId(undefined); }}
+        defaultHoldingId={txHoldingId}
+      />
     </>
   );
 }
