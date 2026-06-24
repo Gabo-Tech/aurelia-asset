@@ -28,6 +28,11 @@ export function HoldingsCharts() {
   const { state } = useStore();
   const { currency, rates, mask, privacy } = useMoney();
   const [period, setPeriod] = useState<PeriodId>("3M");
+  const [hidden, setHidden] = useState<Set<string>>(new Set());
+  const visibleHoldings = useMemo(
+    () => state.holdings.filter((h) => !hidden.has(h.id)),
+    [state.holdings, hidden]
+  );
 
   const fxByHolding = useMemo(() => {
     const m: Record<string, number> = {};
