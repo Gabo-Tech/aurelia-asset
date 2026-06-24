@@ -126,6 +126,7 @@ export const DEFAULT_CATEGORIES: Category[] = [
 export const DEFAULT_STATE: AppState = {
   holdings: [],
   cashflows: [],
+  transactions: [],
   categories: DEFAULT_CATEGORIES,
   settings: {
     useCorsProxy: true,
