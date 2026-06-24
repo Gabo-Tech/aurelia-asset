@@ -28,6 +28,11 @@ export function HoldingsCharts() {
   const { state } = useStore();
   const { currency, rates, mask, privacy } = useMoney();
   const [period, setPeriod] = useState<PeriodId>("3M");
+  const [hidden, setHidden] = useState<Set<string>>(new Set());
+  const visibleHoldings = useMemo(
+    () => state.holdings.filter((h) => !hidden.has(h.id)),
+    [state.holdings, hidden]
+  );
 
   const fxByHolding = useMemo(() => {
     const m: Record<string, number> = {};
@@ -54,19 +59,22 @@ export function HoldingsCharts() {
         date: d.date,
         label: format(new Date(d.date), period === "1D" ? "HH:mm" : "MMM d"),
       };
-      for (const h of state.holdings) {
+      for (const h of visibleHoldings) {
         const v = (d.perAsset[h.id] ?? 0) * (fxByHolding[h.id] ?? 1);
         row[h.symbol] = Math.round(v * 100) / 100;
       }
       return row;
     });
-  }, [data, state.holdings, fxByHolding, period]);
+  }, [data, visibleHoldings, fxByHolding, period]);
 
-  // Invested vs value: walk transactions cumulatively over dates
+  // Invested vs value: walk transactions cumulatively over dates,
+  // restricted to the currently visible holdings.
   const investedSeries = useMemo(() => {
     if (!data || !data.length) return [];
-    // Sort transactions by date ascending
-    const txs = [...state.transactions].sort((a, b) => +new Date(a.date) - +new Date(b.date));
+    const visibleIds = new Set(visibleHoldings.map((h) => h.id));
+    const txs = [...state.transactions]
+      .filter((t) => visibleIds.has(t.holdingId))
+      .sort((a, b) => +new Date(a.date) - +new Date(b.date));
     let cum = 0;
     let ti = 0;
     return data.map((d) => {
@@ -75,11 +83,11 @@ export function HoldingsCharts() {
         const fx = convert(1, t.currency || "USD", currency, rates);
         const sign = t.kind === "buy" ? 1 : -1;
         cum += sign * t.quantity * t.pricePerUnit * fx;
-        if (t.fees) cum += t.fees * fx; // fees always add to cost
+        if (t.fees) cum += t.fees * fx;
         ti++;
       }
       let value = 0;
-      for (const h of state.holdings) {
+      for (const h of visibleHoldings) {
         value += (d.perAsset[h.id] ?? 0) * (fxByHolding[h.id] ?? 1);
       }
       return {
@@ -89,7 +97,8 @@ export function HoldingsCharts() {
         Value: Math.round(value * 100) / 100,
       };
     });
-  }, [data, state.transactions, state.holdings, fxByHolding, currency, rates, period]);
+  }, [data, state.transactions, visibleHoldings, fxByHolding, currency, rates, period]);
+
 
   if (!state.holdings.length) return null;
 
@@ -117,6 +126,56 @@ export function HoldingsCharts() {
             <TabsTrigger value="stacked">Value per asset</TabsTrigger>
             <TabsTrigger value="invested">Invested vs Value</TabsTrigger>
           </TabsList>
+
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+              Assets
+            </span>
+            {state.holdings.map((h) => {
+              const off = hidden.has(h.id);
+              return (
+                <button
+                  key={h.id}
+                  onClick={() =>
+                    setHidden((prev) => {
+                      const next = new Set(prev);
+                      if (next.has(h.id)) next.delete(h.id);
+                      else next.add(h.id);
+                      return next;
+                    })
+                  }
+                  className={cn(
+                    "inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs font-medium transition-colors",
+                    off
+                      ? "border-border/60 bg-muted text-muted-foreground opacity-60"
+                      : "border-border bg-card text-foreground hover:bg-accent"
+                  )}
+                >
+                  <span
+                    className="h-1.5 w-1.5 rounded-full ring-1 ring-black/10"
+                    style={{ backgroundColor: h.color }}
+                  />
+                  {h.symbol}
+                </button>
+              );
+            })}
+            {state.holdings.length > 1 && (
+              <div className="ml-auto flex items-center gap-1.5">
+                <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => setHidden(new Set())}>
+                  Show all
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 px-2 text-xs"
+                  onClick={() => setHidden(new Set(state.holdings.map((h) => h.id)))}
+                >
+                  Hide all
+                </Button>
+              </div>
+            )}
+          </div>
+
 
           <TabsContent value="stacked" className="mt-4">
             <ChartFrame filename="holdings-stacked" title={`Value per asset · ${period}`}>
@@ -147,7 +206,7 @@ export function HoldingsCharts() {
                         formatter={(value: number) => mask(value)}
                       />
                       <Legend wrapperStyle={{ fontSize: 11 }} />
-                      {state.holdings.map((h) => (
+                      {visibleHoldings.map((h) => (
                         <Area
                           key={h.id}
                           type="monotone"
