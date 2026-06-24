@@ -124,6 +124,27 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         })),
       removeCashflow: (id) =>
         setState((s) => ({ ...s, cashflows: s.cashflows.filter((c) => c.id !== id) })),
+      addTransaction: (t) =>
+        setState((s) =>
+          syncQuantities({
+            ...s,
+            transactions: [...s.transactions, { ...t, id: uid() }],
+          }),
+        ),
+      updateTransaction: (id, patch) =>
+        setState((s) =>
+          syncQuantities({
+            ...s,
+            transactions: s.transactions.map((t) => (t.id === id ? { ...t, ...patch } : t)),
+          }),
+        ),
+      removeTransaction: (id) =>
+        setState((s) =>
+          syncQuantities({
+            ...s,
+            transactions: s.transactions.filter((t) => t.id !== id),
+          }),
+        ),
       addCategory: (c) => {
         const created: Category = { ...c, id: uid() };
         setState((s) => ({ ...s, categories: [...s.categories, created] }));
