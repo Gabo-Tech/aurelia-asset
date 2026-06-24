@@ -19,6 +19,9 @@ export type Holding = {
   customHistory?: CustomPricePoint[];
   /** Free-form notes for custom holdings */
   notes?: string;
+  /** Baseline quantity captured the first time a transaction is added.
+   *  Derived quantity = openingQuantity + sum(buys) - sum(sells). */
+  openingQuantity?: number;
 };
 
 export type RecurrenceFrequency = "weekly" | "monthly" | "yearly";
