@@ -318,6 +318,14 @@ export function HoldingsCharts() {
                   <div className="grid h-full place-items-center text-sm text-muted-foreground text-center px-4">
                     Add buy/sell transactions to see invested capital vs current value.
                   </div>
+                ) : !visibleHoldings.length ? (
+                  <div className="grid h-full place-items-center text-sm text-muted-foreground text-center px-4">
+                    Select an asset above to view its quantity over time.
+                  </div>
+                ) : visibleHoldings.length > 1 ? (
+                  <div className="grid h-full place-items-center text-sm text-muted-foreground text-center px-4">
+                    Select a single asset above to view its quantity over time.
+                  </div>
                 ) : (
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={investedSeries} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
@@ -326,50 +334,42 @@ export function HoldingsCharts() {
                       <YAxis
                         stroke="var(--muted-foreground)"
                         tick={{ fontSize: 11 }}
-                        tickFormatter={(v) => (privacy ? MASK : formatMoney(v as number, currency, { compact: true }))}
-                        width={60}
+                        tickFormatter={(v) => (privacy ? MASK : formatQuantity(v as number))}
+                        width={70}
                       />
                       <Tooltip
                         contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 10, fontSize: 12 }}
-                        formatter={(value, name, item) => {
-                          const key = String((item as { dataKey?: unknown })?.dataKey ?? "");
-                          const m = key.match(/^val_(.+)$/);
+                        formatter={(value, _name, item) => {
+                          const h = visibleHoldings[0];
                           const payload = (item as { payload?: Record<string, number> })?.payload;
-                          if (m && payload) {
-                            const q = payload[`qty_${m[1]}`];
-                            const holding = visibleHoldings.find((h) => h.id === m[1]);
-                            const qtyStr = typeof q === "number" ? `  ·  ${formatQuantity(q)} ${holding?.symbol ?? ""}` : "";
-                            return [`${mask(Number(value))}${qtyStr}`, holding?.symbol ?? String(name)];
-                          }
-                          return [mask(Number(value)), String(name)];
+                          const val = payload?.[`val_${h.id}`];
+                          const valStr = typeof val === "number" ? `  ·  ${mask(val)}` : "";
+                          return [`${formatQuantity(Number(value))} ${h.symbol}${valStr}`, h.symbol];
                         }}
                       />
                       <Legend wrapperStyle={{ fontSize: 11 }} />
-                      {visibleHoldings.map((h) => (
-                        <Line
-                          key={`val-${h.id}`}
-                          type="monotone"
-                          dataKey={`val_${h.id}`}
-                          name={h.symbol}
-                          stroke={h.color}
-                          strokeWidth={2}
-                          dot={false}
-                        />
-                      ))}
-
+                      <Line
+                        type="monotone"
+                        dataKey={`qty_${visibleHoldings[0].id}`}
+                        name={`${visibleHoldings[0].symbol} quantity`}
+                        stroke={visibleHoldings[0].color}
+                        strokeWidth={2}
+                        dot={false}
+                      />
                     </LineChart>
                   </ResponsiveContainer>
                 )}
               </div>
             </ChartFrame>
 
-            {state.transactions.length > 0 && investedSeries.length > 0 && (
+            {state.transactions.length > 0 && investedSeries.length > 0 && visibleHoldings.length === 1 && (
               <InvestedSummary
-                invested={Number(investedSeries[investedSeries.length - 1].Invested) || 0}
-                value={Number(investedSeries[investedSeries.length - 1].Value) || 0}
+                invested={Number(investedSeries[investedSeries.length - 1][`inv_${visibleHoldings[0].id}`]) || 0}
+                value={Number(investedSeries[investedSeries.length - 1][`val_${visibleHoldings[0].id}`]) || 0}
               />
             )}
           </TabsContent>
+
         </Tabs>
       </CardContent>
     </Card>
