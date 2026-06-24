@@ -54,6 +54,8 @@ function HoldingsPage() {
   const { mask, toDisplay, privacy, currency } = useMoney();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Holding | null>(null);
+  const [txOpen, setTxOpen] = useState(false);
+  const [txHoldingId, setTxHoldingId] = useState<string | undefined>(undefined);
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [sort, setSort] = useState<{ key: SortKey; dir: "asc" | "desc" }>({
