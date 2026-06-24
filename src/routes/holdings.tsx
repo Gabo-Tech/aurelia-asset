@@ -254,6 +254,22 @@ function HoldingsPage() {
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem
                               onClick={() => {
+                                setTxHoldingId(h.id);
+                                setTxOpen(true);
+                              }}
+                            >
+                              <ArrowDownRight className="mr-2 h-4 w-4 text-destructive" /> Add buy
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => {
+                                setTxHoldingId(h.id);
+                                setTxOpen(true);
+                              }}
+                            >
+                              <ArrowUpRight className="mr-2 h-4 w-4 text-success" /> Add sell
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => {
                                 setEditing(h);
                                 setOpen(true);
                               }}
