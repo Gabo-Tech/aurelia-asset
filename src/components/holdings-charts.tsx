@@ -79,9 +79,11 @@ export function HoldingsCharts() {
       txsByHolding[id].sort((a, b) => +new Date(a.date) - +new Date(b.date));
     }
     const cum: Record<string, number> = {};
+    const qty: Record<string, number> = {};
     const idx: Record<string, number> = {};
     for (const h of visibleHoldings) {
       cum[h.id] = 0;
+      qty[h.id] = h.openingQuantity ?? 0;
       idx[h.id] = 0;
     }
     return data.map((d) => {
@@ -99,12 +101,14 @@ export function HoldingsCharts() {
           const sign = t.kind === "buy" ? 1 : -1;
           cum[h.id] += sign * t.quantity * t.pricePerUnit * fx;
           if (t.fees) cum[h.id] += t.fees * fx;
+          qty[h.id] += sign * t.quantity;
           idx[h.id]++;
         }
         const inv = Math.round(cum[h.id] * 100) / 100;
         const val = Math.round((d.perAsset[h.id] ?? 0) * (fxByHolding[h.id] ?? 1) * 100) / 100;
         row[`inv_${h.symbol}`] = inv;
         row[`val_${h.symbol}`] = val;
+        row[`qty_${h.symbol}`] = qty[h.id];
         totalInv += inv;
         totalVal += val;
       }
@@ -266,7 +270,19 @@ export function HoldingsCharts() {
                       />
                       <Tooltip
                         contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 10, fontSize: 12 }}
-                        formatter={(value: number) => mask(value)}
+                        formatter={(value, name, item) => {
+                          const key = String((item as { dataKey?: unknown })?.dataKey ?? "");
+                          const m = key.match(/^(?:inv|val)_(.+)$/);
+                          const payload = (item as { payload?: Record<string, number> })?.payload;
+                          if (m && payload) {
+                            const q = payload[`qty_${m[1]}`];
+                            if (typeof q === "number") {
+                              const qStr = q.toLocaleString(undefined, { maximumFractionDigits: 8 });
+                              return [`${mask(Number(value))}  ·  ${qStr} ${m[1]}`, String(name)];
+                            }
+                          }
+                          return [mask(Number(value)), String(name)];
+                        }}
                       />
                       <Legend wrapperStyle={{ fontSize: 11 }} />
                       {visibleHoldings.length > 1 && (
