@@ -44,6 +44,9 @@ type Ctx = {
   addCashflow: (c: Omit<CashflowEntry, "id">) => void;
   updateCashflow: (id: string, patch: Partial<CashflowEntry>) => void;
   removeCashflow: (id: string) => void;
+  addTransaction: (t: Omit<HoldingTransaction, "id">) => void;
+  updateTransaction: (id: string, patch: Partial<HoldingTransaction>) => void;
+  removeTransaction: (id: string) => void;
   addCategory: (c: Omit<Category, "id">) => Category;
   updateCategory: (id: string, patch: Partial<Category>) => void;
   removeCategory: (id: string) => void;
@@ -51,6 +54,28 @@ type Ctx = {
   importState: (data: AppState) => void;
   reset: () => void;
 };
+
+/** Recompute holdings.quantity from transactions for any holding that has at
+ *  least one transaction. Holdings without transactions keep their manual quantity. */
+function syncQuantities(state: AppState): AppState {
+  const byHolding = new Map<string, { qty: number; hasTx: boolean }>();
+  for (const t of state.transactions) {
+    const cur = byHolding.get(t.holdingId) ?? { qty: 0, hasTx: true };
+    cur.hasTx = true;
+    cur.qty += (t.kind === "buy" ? 1 : -1) * (Number(t.quantity) || 0);
+    byHolding.set(t.holdingId, cur);
+  }
+  let changed = false;
+  const holdings = state.holdings.map((h) => {
+    const agg = byHolding.get(h.id);
+    if (!agg?.hasTx) return h;
+    const qty = Math.max(0, agg.qty);
+    if (qty === h.quantity) return h;
+    changed = true;
+    return { ...h, quantity: qty };
+  });
+  return changed ? { ...state, holdings } : state;
+}
 
 const StoreContext = createContext<Ctx | null>(null);
 
