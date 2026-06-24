@@ -89,6 +89,7 @@ export type PortfolioHistoryPoint = {
   date: number;
   total: number;
   perAsset: Record<string, number>;
+  perAssetPrice: Record<string, number>;
 };
 
 export async function fetchPortfolioHistory(
@@ -129,12 +130,15 @@ export async function fetchPortfolioHistory(
 
   return days.map((day) => {
     const perAsset: Record<string, number> = {};
+    const perAssetPrice: Record<string, number> = {};
     let total = 0;
     for (const { h, map } of filled) {
-      const v = (map.get(day) ?? 0) * h.quantity;
+      const price = map.get(day) ?? 0;
+      const v = price * h.quantity;
+      perAssetPrice[h.id] = price;
       perAsset[h.id] = v;
       total += v;
     }
-    return { date: day, total, perAsset };
+    return { date: day, total, perAsset, perAssetPrice };
   });
 }

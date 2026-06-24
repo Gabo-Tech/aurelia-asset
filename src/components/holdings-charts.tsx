@@ -24,6 +24,18 @@ import { formatMoney, formatPct, MASK } from "@/lib/format";
 import { convert } from "@/lib/finance/fx";
 import { cn } from "@/lib/utils";
 
+function toUtcDayMs(value: string | number | Date) {
+  const d = new Date(value);
+  d.setUTCHours(0, 0, 0, 0);
+  return d.getTime();
+}
+
+function formatQuantity(value: number) {
+  return value.toLocaleString(undefined, {
+    maximumFractionDigits: Math.abs(value) < 1 ? 8 : 6,
+  });
+}
+
 export function HoldingsCharts() {
   const { state } = useStore();
   const { currency, rates, mask, privacy } = useMoney();
@@ -54,36 +66,40 @@ export function HoldingsCharts() {
   // Stacked area: value per asset over time
   const stackedData = useMemo(() => {
     if (!data) return [];
+    const quantities = buildQuantityByDate(data, visibleHoldings, state.transactions);
     return data.map((d) => {
       const row: Record<string, number | string> = {
         date: d.date,
         label: format(new Date(d.date), period === "1D" ? "HH:mm" : "MMM d"),
       };
       for (const h of visibleHoldings) {
-        const v = (d.perAsset[h.id] ?? 0) * (fxByHolding[h.id] ?? 1);
+        const quantity = quantities.get(d.date)?.[h.id] ?? h.quantity;
+        const nativePrice = d.perAssetPrice?.[h.id] ?? (h.quantity ? (d.perAsset[h.id] ?? 0) / h.quantity : h.currentPrice);
+        const v = nativePrice * quantity * (fxByHolding[h.id] ?? 1);
         row[h.symbol] = Math.round(v * 100) / 100;
       }
       return row;
     });
-  }, [data, visibleHoldings, fxByHolding, period]);
+  }, [data, visibleHoldings, state.transactions, fxByHolding, period]);
 
   // Per-asset Invested (cumulative cost basis) and Value over time.
   const investedSeries = useMemo(() => {
     if (!data || !data.length) return [];
-    const txsByHolding: Record<string, typeof state.transactions> = {};
+    const txsByHolding: Record<string, Array<(typeof state.transactions)[number] & { day: number }>> = {};
     for (const h of visibleHoldings) txsByHolding[h.id] = [];
     for (const t of state.transactions) {
-      if (txsByHolding[t.holdingId]) txsByHolding[t.holdingId].push(t);
+      if (txsByHolding[t.holdingId]) txsByHolding[t.holdingId].push({ ...t, day: toUtcDayMs(t.date) });
     }
     for (const id of Object.keys(txsByHolding)) {
-      txsByHolding[id].sort((a, b) => +new Date(a.date) - +new Date(b.date));
+      txsByHolding[id].sort((a, b) => a.day - b.day);
     }
     const cum: Record<string, number> = {};
     const qty: Record<string, number> = {};
     const idx: Record<string, number> = {};
     for (const h of visibleHoldings) {
-      cum[h.id] = 0;
-      qty[h.id] = h.openingQuantity ?? 0;
+      const hasTransactions = txsByHolding[h.id].length > 0;
+      qty[h.id] = hasTransactions ? h.openingQuantity ?? 0 : h.quantity;
+      cum[h.id] = qty[h.id] > 0 && !hasTransactions ? qty[h.id] * h.currentPrice * (fxByHolding[h.id] ?? 1) : 0;
       idx[h.id] = 0;
     }
     return data.map((d) => {
@@ -95,20 +111,27 @@ export function HoldingsCharts() {
       let totalVal = 0;
       for (const h of visibleHoldings) {
         const list = txsByHolding[h.id];
-        while (idx[h.id] < list.length && +new Date(list[idx[h.id]].date) <= d.date) {
+        while (idx[h.id] < list.length && list[idx[h.id]].day <= d.date) {
           const t = list[idx[h.id]];
           const fx = convert(1, t.currency || "USD", currency, rates);
-          const sign = t.kind === "buy" ? 1 : -1;
-          cum[h.id] += sign * t.quantity * t.pricePerUnit * fx;
-          if (t.fees) cum[h.id] += t.fees * fx;
-          qty[h.id] += sign * t.quantity;
+          if (t.kind === "buy") {
+            cum[h.id] += t.quantity * t.pricePerUnit * fx;
+            if (t.fees) cum[h.id] += t.fees * fx;
+            qty[h.id] += t.quantity;
+          } else {
+            const sold = Math.min(qty[h.id], t.quantity);
+            const avgCost = qty[h.id] > 0 ? cum[h.id] / qty[h.id] : 0;
+            cum[h.id] = Math.max(0, cum[h.id] - sold * avgCost);
+            qty[h.id] = Math.max(0, qty[h.id] - t.quantity);
+          }
           idx[h.id]++;
         }
         const inv = Math.round(cum[h.id] * 100) / 100;
-        const val = Math.round((d.perAsset[h.id] ?? 0) * (fxByHolding[h.id] ?? 1) * 100) / 100;
-        row[`inv_${h.symbol}`] = inv;
-        row[`val_${h.symbol}`] = val;
-        row[`qty_${h.symbol}`] = qty[h.id];
+        const nativePrice = d.perAssetPrice?.[h.id] ?? (h.quantity ? (d.perAsset[h.id] ?? 0) / h.quantity : h.currentPrice);
+        const val = Math.round(nativePrice * qty[h.id] * (fxByHolding[h.id] ?? 1) * 100) / 100;
+        row[`inv_${h.id}`] = inv;
+        row[`val_${h.id}`] = val;
+        row[`qty_${h.id}`] = qty[h.id];
         totalInv += inv;
         totalVal += val;
       }
@@ -277,8 +300,8 @@ export function HoldingsCharts() {
                           if (m && payload) {
                             const q = payload[`qty_${m[1]}`];
                             if (typeof q === "number") {
-                              const qStr = q.toLocaleString(undefined, { maximumFractionDigits: 8 });
-                              return [`${mask(Number(value))}  ·  ${qStr} ${m[1]}`, String(name)];
+                              const holding = visibleHoldings.find((h) => h.id === m[1]);
+                              return [`${mask(Number(value))}  ·  ${formatQuantity(q)} ${holding?.symbol ?? ""}`, String(name)];
                             }
                           }
                           return [mask(Number(value)), String(name)];
@@ -295,7 +318,7 @@ export function HoldingsCharts() {
                         <Line
                           key={`inv-${h.id}`}
                           type="monotone"
-                          dataKey={`inv_${h.symbol}`}
+                          dataKey={`inv_${h.id}`}
                           name={`${h.symbol} invested`}
                           stroke={h.color}
                           strokeOpacity={0.55}
@@ -308,7 +331,7 @@ export function HoldingsCharts() {
                         <Line
                           key={`val-${h.id}`}
                           type="monotone"
-                          dataKey={`val_${h.symbol}`}
+                          dataKey={`val_${h.id}`}
                           name={`${h.symbol} value`}
                           stroke={h.color}
                           strokeWidth={2}
