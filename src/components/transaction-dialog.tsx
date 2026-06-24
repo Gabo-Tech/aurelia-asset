@@ -163,9 +163,36 @@ export function TransactionDialog({ open, onOpenChange, editing, defaultHoldingI
             </div>
           </div>
 
-          <div>
-            <Label className="text-xs">Fees (optional)</Label>
-            <Input type="number" step="any" value={fees} onChange={(e) => setFees(e.target.value)} placeholder="0.00" className="mt-1.5" />
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="text-xs">Total value</Label>
+              <Input
+                type="number"
+                step="any"
+                value={(() => {
+                  const q = parseFloat(quantity);
+                  const p = parseFloat(price);
+                  if (isFinite(q) && isFinite(p)) {
+                    const t = q * p;
+                    return t ? String(Number(t.toFixed(8))) : "";
+                  }
+                  return "";
+                })()}
+                onChange={(e) => {
+                  const total = parseFloat(e.target.value);
+                  const q = parseFloat(quantity);
+                  if (isFinite(total) && isFinite(q) && q > 0) {
+                    setPrice(String(total / q));
+                  }
+                }}
+                placeholder="auto from qty × price"
+                className="mt-1.5"
+              />
+            </div>
+            <div>
+              <Label className="text-xs">Fees (optional)</Label>
+              <Input type="number" step="any" value={fees} onChange={(e) => setFees(e.target.value)} placeholder="0.00" className="mt-1.5" />
+            </div>
           </div>
 
           <div>
