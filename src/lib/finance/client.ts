@@ -1,6 +1,4 @@
-import { DEFAULT_STATE } from "../types";
-
-const STORAGE_KEY = "ept_state_v1";
+import { DEFAULT_STATE, type Settings } from "../types";
 
 const FALLBACK_PROXIES = [
   "https://corsproxy.io/?",
@@ -8,16 +6,19 @@ const FALLBACK_PROXIES = [
   "https://cors.eu.org/",
 ];
 
-function getSettings() {
-  if (typeof window === "undefined") return DEFAULT_STATE.settings;
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return DEFAULT_STATE.settings;
-    return { ...DEFAULT_STATE.settings, ...(JSON.parse(raw).settings ?? {}) };
-  } catch {
-    return DEFAULT_STATE.settings;
-  }
+// In-memory snapshot pushed by the store after decrypting state from disk.
+// We can't read encrypted localStorage synchronously, so the store keeps
+// this projection in sync.
+let settingsSnapshot: Settings = DEFAULT_STATE.settings;
+
+export function setSettingsSnapshot(s: Settings) {
+  settingsSnapshot = { ...DEFAULT_STATE.settings, ...s };
 }
+
+function getSettings(): Settings {
+  return settingsSnapshot;
+}
+
 
 export function proxied(url: string) {
   const s = getSettings();

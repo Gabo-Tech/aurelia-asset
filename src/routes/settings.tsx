@@ -29,6 +29,7 @@ import { Download, Upload, RotateCcw, FileJson, FileSpreadsheet } from "lucide-r
 import { toast } from "sonner";
 import { z } from "zod";
 import type { AppState } from "@/lib/types";
+import { secureGet, secureSet } from "@/lib/secure-storage";
 import { CURRENCIES } from "@/lib/currency";
 
 const ALLOWED_CORS_PROXIES = [
@@ -128,24 +129,28 @@ const exportEnvelopeSchema = z.object({
   preferences: z.record(z.string().max(128), z.string().max(200_000)).optional(),
 });
 
-function collectPreferences(): Record<string, string> {
+function collectPreferences(): Promise<Record<string, string>> {
   const out: Record<string, string> = {};
-  if (typeof window === "undefined") return out;
+  if (typeof window === "undefined") return Promise.resolve(out);
+  const keys: string[] = [];
   try {
     for (let i = 0; i < window.localStorage.length; i++) {
       const k = window.localStorage.key(i);
       if (!k || !k.startsWith(PREF_KEY_PREFIX) || PREF_KEY_DENY.has(k)) continue;
-      const v = window.localStorage.getItem(k);
-      if (v != null) out[k] = v;
+      keys.push(k);
     }
   } catch {}
-  return out;
+  return Promise.all(
+    keys.map(async (k) => [k, await secureGet(k)] as const),
+  ).then((entries) => {
+    for (const [k, v] of entries) if (v != null) out[k] = v;
+    return out;
+  });
 }
 
-function applyPreferences(prefs: Record<string, string>) {
+async function applyPreferences(prefs: Record<string, string>) {
   if (typeof window === "undefined") return;
   try {
-    // Clear existing prefs first so import is a faithful replacement
     const toDelete: string[] = [];
     for (let i = 0; i < window.localStorage.length; i++) {
       const k = window.localStorage.key(i);
@@ -154,10 +159,11 @@ function applyPreferences(prefs: Record<string, string>) {
     for (const k of toDelete) window.localStorage.removeItem(k);
     for (const [k, v] of Object.entries(prefs)) {
       if (!k.startsWith(PREF_KEY_PREFIX) || PREF_KEY_DENY.has(k)) continue;
-      window.localStorage.setItem(k, v);
+      await secureSet(k, v);
     }
   } catch {}
 }
+
 
 export const Route = createFileRoute("/settings")({
   head: () => ({
@@ -174,16 +180,17 @@ function SettingsPage() {
   const [finnhub, setFinnhub] = useState(state.settings.finnhubKey ?? "");
   const fileRef = useRef<HTMLInputElement>(null);
 
-  function exportJson() {
+  async function exportJson() {
     const envelope = {
       version: 1 as const,
       exportedAt: new Date().toISOString(),
       state,
-      preferences: collectPreferences(),
+      preferences: await collectPreferences(),
     };
     const blob = new Blob([JSON.stringify(envelope, null, 2)], { type: "application/json" });
     download(blob, `portfolio-${new Date().toISOString().slice(0, 10)}.json`);
   }
+
 
   function exportCsv() {
     const rows = [
@@ -203,7 +210,7 @@ function SettingsPage() {
   }
 
   function handleImport(file: File) {
-    file.text().then((txt) => {
+    file.text().then(async (txt) => {
       try {
         const raw = JSON.parse(txt);
         // Accept both the new envelope format and legacy bare-AppState exports.
@@ -224,7 +231,8 @@ function SettingsPage() {
           parsedState = legacy.data as AppState;
         }
         importState(parsedState);
-        if (prefs) applyPreferences(prefs);
+        if (prefs) await applyPreferences(prefs);
+
         toast.success("Data imported");
       } catch (e) {
         toast.error("Couldn't import: " + (e as Error).message);

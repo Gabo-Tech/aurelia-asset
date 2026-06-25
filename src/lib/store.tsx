@@ -10,13 +10,16 @@ import {
 import { AppState, DEFAULT_STATE, DEFAULT_CATEGORIES, Holding, CashflowEntry, Category, Settings, HoldingTransaction } from "./types";
 import { getFxRates, convert, type FxRates } from "./finance/fx";
 import { formatMoney, maskMoney, MASK } from "./format";
+import { secureGet, secureSet } from "./secure-storage";
+import { setSettingsSnapshot } from "./finance/client";
+
 
 const STORAGE_KEY = "ept_state_v1";
 
-function loadState(): AppState {
+async function loadState(): Promise<AppState> {
   if (typeof window === "undefined") return DEFAULT_STATE;
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
+    const raw = await secureGet(STORAGE_KEY);
     if (!raw) return DEFAULT_STATE;
     const parsed = JSON.parse(raw);
     return {
@@ -33,6 +36,7 @@ function loadState(): AppState {
     return DEFAULT_STATE;
   }
 }
+
 
 type Ctx = {
   state: AppState;
@@ -85,16 +89,24 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    setStateRaw(loadState());
-    setHydrated(true);
+    let alive = true;
+    loadState().then((s) => {
+      if (!alive) return;
+      setStateRaw(s);
+      setHydrated(true);
+    });
+    return () => {
+      alive = false;
+    };
   }, []);
 
   useEffect(() => {
+    setSettingsSnapshot(state.settings);
     if (!hydrated) return;
-    try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    } catch {}
+    void secureSet(STORAGE_KEY, JSON.stringify(state));
   }, [state, hydrated]);
+
+
 
   const value = useMemo<Ctx>(() => {
     const setState = (updater: (s: AppState) => AppState) =>
