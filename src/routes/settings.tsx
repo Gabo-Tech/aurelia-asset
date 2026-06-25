@@ -128,24 +128,28 @@ const exportEnvelopeSchema = z.object({
   preferences: z.record(z.string().max(128), z.string().max(200_000)).optional(),
 });
 
-function collectPreferences(): Record<string, string> {
+function collectPreferences(): Promise<Record<string, string>> {
   const out: Record<string, string> = {};
-  if (typeof window === "undefined") return out;
+  if (typeof window === "undefined") return Promise.resolve(out);
+  const keys: string[] = [];
   try {
     for (let i = 0; i < window.localStorage.length; i++) {
       const k = window.localStorage.key(i);
       if (!k || !k.startsWith(PREF_KEY_PREFIX) || PREF_KEY_DENY.has(k)) continue;
-      const v = window.localStorage.getItem(k);
-      if (v != null) out[k] = v;
+      keys.push(k);
     }
   } catch {}
-  return out;
+  return Promise.all(
+    keys.map(async (k) => [k, await secureGet(k)] as const),
+  ).then((entries) => {
+    for (const [k, v] of entries) if (v != null) out[k] = v;
+    return out;
+  });
 }
 
-function applyPreferences(prefs: Record<string, string>) {
+async function applyPreferences(prefs: Record<string, string>) {
   if (typeof window === "undefined") return;
   try {
-    // Clear existing prefs first so import is a faithful replacement
     const toDelete: string[] = [];
     for (let i = 0; i < window.localStorage.length; i++) {
       const k = window.localStorage.key(i);
@@ -154,10 +158,11 @@ function applyPreferences(prefs: Record<string, string>) {
     for (const k of toDelete) window.localStorage.removeItem(k);
     for (const [k, v] of Object.entries(prefs)) {
       if (!k.startsWith(PREF_KEY_PREFIX) || PREF_KEY_DENY.has(k)) continue;
-      window.localStorage.setItem(k, v);
+      await secureSet(k, v);
     }
   } catch {}
 }
+
 
 export const Route = createFileRoute("/settings")({
   head: () => ({
