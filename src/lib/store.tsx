@@ -11,6 +11,8 @@ import { AppState, DEFAULT_STATE, DEFAULT_CATEGORIES, Holding, CashflowEntry, Ca
 import { getFxRates, convert, type FxRates } from "./finance/fx";
 import { formatMoney, maskMoney, MASK } from "./format";
 import { secureGet, secureSet } from "./secure-storage";
+import { setSettingsSnapshot } from "./finance/client";
+
 
 const STORAGE_KEY = "ept_state_v1";
 
