@@ -159,10 +159,10 @@ type Prefs = {
   nodeColors: Record<string, string>;
 };
 
-function loadPrefs(): Prefs {
+async function loadPrefs(): Promise<Prefs> {
   if (typeof window === "undefined") return { labelMode: "always", nodeColors: {} };
   try {
-    const raw = window.localStorage.getItem(PREF_KEY);
+    const raw = await secureGet(PREF_KEY);
     if (!raw) return { labelMode: "always", nodeColors: {} };
     const p = JSON.parse(raw);
     return {
@@ -180,12 +180,19 @@ function CashflowPage() {
   const { mask, toDisplay, currency, privacy, MASK } = useMoney();
   const { cashflows, categories } = state;
 
-  const [prefs, setPrefs] = useState<Prefs>(() => loadPrefs());
+  const [prefs, setPrefs] = useState<Prefs>({ labelMode: "always", nodeColors: {} });
+  const [prefsLoaded, setPrefsLoaded] = useState(false);
   useEffect(() => {
-    try {
-      window.localStorage.setItem(PREF_KEY, JSON.stringify(prefs));
-    } catch {}
-  }, [prefs]);
+    loadPrefs().then((p) => {
+      setPrefs(p);
+      setPrefsLoaded(true);
+    });
+  }, []);
+  useEffect(() => {
+    if (!prefsLoaded) return;
+    void secureSet(PREF_KEY, JSON.stringify(prefs));
+  }, [prefs, prefsLoaded]);
+
 
   // Resolve the color/group for a given category name.
   const catByName = useMemo(() => {
