@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { SankeyChart } from "@/components/sankey-chart";
 import { useStore, useMoney } from "@/lib/store";
+import { secureGet, secureSet } from "@/lib/secure-storage";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
