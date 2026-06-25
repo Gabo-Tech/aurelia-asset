@@ -29,6 +29,7 @@ import { Download, Upload, RotateCcw, FileJson, FileSpreadsheet } from "lucide-r
 import { toast } from "sonner";
 import { z } from "zod";
 import type { AppState } from "@/lib/types";
+import { secureGet, secureSet } from "@/lib/secure-storage";
 import { CURRENCIES } from "@/lib/currency";
 
 const ALLOWED_CORS_PROXIES = [
