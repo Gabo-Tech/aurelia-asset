@@ -87,16 +87,22 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    setStateRaw(loadState());
-    setHydrated(true);
+    let alive = true;
+    loadState().then((s) => {
+      if (!alive) return;
+      setStateRaw(s);
+      setHydrated(true);
+    });
+    return () => {
+      alive = false;
+    };
   }, []);
 
   useEffect(() => {
     if (!hydrated) return;
-    try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    } catch {}
+    void secureSet(STORAGE_KEY, JSON.stringify(state));
   }, [state, hydrated]);
+
 
   const value = useMemo<Ctx>(() => {
     const setState = (updater: (s: AppState) => AppState) =>
