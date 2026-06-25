@@ -101,9 +101,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
+    setSettingsSnapshot(state.settings);
     if (!hydrated) return;
     void secureSet(STORAGE_KEY, JSON.stringify(state));
   }, [state, hydrated]);
+
 
 
   const value = useMemo<Ctx>(() => {
