@@ -10,13 +10,14 @@ import {
 import { AppState, DEFAULT_STATE, DEFAULT_CATEGORIES, Holding, CashflowEntry, Category, Settings, HoldingTransaction } from "./types";
 import { getFxRates, convert, type FxRates } from "./finance/fx";
 import { formatMoney, maskMoney, MASK } from "./format";
+import { secureGet, secureSet } from "./secure-storage";
 
 const STORAGE_KEY = "ept_state_v1";
 
-function loadState(): AppState {
+async function loadState(): Promise<AppState> {
   if (typeof window === "undefined") return DEFAULT_STATE;
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
+    const raw = await secureGet(STORAGE_KEY);
     if (!raw) return DEFAULT_STATE;
     const parsed = JSON.parse(raw);
     return {
@@ -33,6 +34,7 @@ function loadState(): AppState {
     return DEFAULT_STATE;
   }
 }
+
 
 type Ctx = {
   state: AppState;
