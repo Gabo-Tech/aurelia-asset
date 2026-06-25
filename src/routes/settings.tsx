@@ -175,7 +175,13 @@ function SettingsPage() {
   const fileRef = useRef<HTMLInputElement>(null);
 
   function exportJson() {
-    const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
+    const envelope = {
+      version: 1 as const,
+      exportedAt: new Date().toISOString(),
+      state,
+      preferences: collectPreferences(),
+    };
+    const blob = new Blob([JSON.stringify(envelope, null, 2)], { type: "application/json" });
     download(blob, `portfolio-${new Date().toISOString().slice(0, 10)}.json`);
   }
 
@@ -200,14 +206,25 @@ function SettingsPage() {
     file.text().then((txt) => {
       try {
         const raw = JSON.parse(txt);
-        const result = appStateSchema.safeParse(raw);
-        if (!result.success) {
-          const first = result.error.issues[0];
-          throw new Error(
-            first ? `${first.path.join(".") || "root"}: ${first.message}` : "Invalid file format"
-          );
+        // Accept both the new envelope format and legacy bare-AppState exports.
+        const envelope = exportEnvelopeSchema.safeParse(raw);
+        let parsedState: AppState;
+        let prefs: Record<string, string> | undefined;
+        if (envelope.success) {
+          parsedState = envelope.data.state as AppState;
+          prefs = envelope.data.preferences;
+        } else {
+          const legacy = appStateSchema.safeParse(raw);
+          if (!legacy.success) {
+            const first = (envelope.error.issues[0] ?? legacy.error.issues[0]);
+            throw new Error(
+              first ? `${first.path.join(".") || "root"}: ${first.message}` : "Invalid file format"
+            );
+          }
+          parsedState = legacy.data as AppState;
         }
-        importState(result.data as AppState);
+        importState(parsedState);
+        if (prefs) applyPreferences(prefs);
         toast.success("Data imported");
       } catch (e) {
         toast.error("Couldn't import: " + (e as Error).message);
