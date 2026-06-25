@@ -27,8 +27,95 @@ import {
 import { PageHeader } from "@/components/app-shell";
 import { Download, Upload, RotateCcw, FileJson, FileSpreadsheet } from "lucide-react";
 import { toast } from "sonner";
+import { z } from "zod";
 import type { AppState } from "@/lib/types";
 import { CURRENCIES } from "@/lib/currency";
+
+const ALLOWED_CORS_PROXIES = [
+  "https://corsproxy.io/?",
+  "https://api.allorigins.win/raw?url=",
+] as const;
+
+const hexColor = z
+  .string()
+  .regex(/^#(?:[0-9a-fA-F]{3}){1,2}$/, "Invalid color");
+const isoDate = z.string().max(64);
+const finiteNumber = z.number().finite();
+const nonNegNumber = finiteNumber.min(0);
+
+const holdingSchema = z.object({
+  id: z.string().min(1).max(128),
+  symbol: z.string().max(32),
+  name: z.string().max(200),
+  type: z.enum(["crypto", "stock", "etf", "metal", "other"]),
+  quantity: finiteNumber,
+  manualPrice: nonNegNumber.optional(),
+  currentPrice: nonNegNumber,
+  priceCurrency: z.string().max(16).optional(),
+  color: hexColor,
+  coinGeckoId: z.string().max(128).optional(),
+  lastPriceAt: finiteNumber.optional(),
+  customHistory: z
+    .array(z.object({ t: finiteNumber, p: finiteNumber }))
+    .max(10000)
+    .optional(),
+  notes: z.string().max(2000).optional(),
+  openingQuantity: finiteNumber.optional(),
+});
+
+const recurrenceSchema = z.object({
+  frequency: z.enum(["weekly", "monthly", "yearly"]),
+  until: isoDate.optional(),
+});
+
+const cashflowSchema = z.object({
+  id: z.string().min(1).max(128),
+  kind: z.enum(["income", "expense"]),
+  source: z.string().max(200),
+  category: z.string().max(128),
+  amount: finiteNumber,
+  currency: z.string().max(16).optional(),
+  date: isoDate,
+  recurrence: recurrenceSchema.optional(),
+  amountKind: z.enum(["fixed", "percent"]).optional(),
+  percentOf: z.string().max(128).optional(),
+});
+
+const transactionSchema = z.object({
+  id: z.string().min(1).max(128),
+  holdingId: z.string().min(1).max(128),
+  kind: z.enum(["buy", "sell"]),
+  date: isoDate,
+  quantity: nonNegNumber,
+  pricePerUnit: nonNegNumber,
+  currency: z.string().max(16).optional(),
+  fees: nonNegNumber.optional(),
+  notes: z.string().max(2000).optional(),
+});
+
+const categorySchema = z.object({
+  id: z.string().min(1).max(128),
+  name: z.string().max(128),
+  kind: z.enum(["income", "expense"]),
+  group: z.enum(["income", "expense", "savings", "investment"]),
+  color: hexColor,
+});
+
+const settingsSchema = z.object({
+  useCorsProxy: z.boolean(),
+  corsProxy: z.enum(ALLOWED_CORS_PROXIES),
+  finnhubKey: z.string().max(256).optional(),
+  privacyMode: z.boolean().optional(),
+  displayCurrency: z.string().max(16).optional(),
+});
+
+const appStateSchema = z.object({
+  holdings: z.array(holdingSchema).max(5000),
+  cashflows: z.array(cashflowSchema).max(20000),
+  transactions: z.array(transactionSchema).max(20000),
+  categories: z.array(categorySchema).max(1000),
+  settings: settingsSchema,
+});
 
 export const Route = createFileRoute("/settings")({
   head: () => ({
@@ -70,10 +157,15 @@ function SettingsPage() {
   function handleImport(file: File) {
     file.text().then((txt) => {
       try {
-        const parsed = JSON.parse(txt) as AppState;
-        if (!parsed || !Array.isArray(parsed.holdings))
-          throw new Error("Invalid file format");
-        importState(parsed);
+        const raw = JSON.parse(txt);
+        const result = appStateSchema.safeParse(raw);
+        if (!result.success) {
+          const first = result.error.issues[0];
+          throw new Error(
+            first ? `${first.path.join(".") || "root"}: ${first.message}` : "Invalid file format"
+          );
+        }
+        importState(result.data as AppState);
         toast.success("Data imported");
       } catch (e) {
         toast.error("Couldn't import: " + (e as Error).message);
