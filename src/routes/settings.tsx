@@ -117,6 +117,48 @@ const appStateSchema = z.object({
   settings: settingsSchema,
 });
 
+/** Wrapper format for portfolio exports. Includes the validated app state plus
+ *  any UI preferences kept in separate localStorage keys (e.g. Sankey colors). */
+const PREF_KEY_PREFIX = "ept_";
+const PREF_KEY_DENY = new Set(["ept_state_v1"]); // app state is exported separately
+const exportEnvelopeSchema = z.object({
+  version: z.literal(1).optional(),
+  exportedAt: z.string().max(64).optional(),
+  state: appStateSchema,
+  preferences: z.record(z.string().max(128), z.string().max(200_000)).optional(),
+});
+
+function collectPreferences(): Record<string, string> {
+  const out: Record<string, string> = {};
+  if (typeof window === "undefined") return out;
+  try {
+    for (let i = 0; i < window.localStorage.length; i++) {
+      const k = window.localStorage.key(i);
+      if (!k || !k.startsWith(PREF_KEY_PREFIX) || PREF_KEY_DENY.has(k)) continue;
+      const v = window.localStorage.getItem(k);
+      if (v != null) out[k] = v;
+    }
+  } catch {}
+  return out;
+}
+
+function applyPreferences(prefs: Record<string, string>) {
+  if (typeof window === "undefined") return;
+  try {
+    // Clear existing prefs first so import is a faithful replacement
+    const toDelete: string[] = [];
+    for (let i = 0; i < window.localStorage.length; i++) {
+      const k = window.localStorage.key(i);
+      if (k && k.startsWith(PREF_KEY_PREFIX) && !PREF_KEY_DENY.has(k)) toDelete.push(k);
+    }
+    for (const k of toDelete) window.localStorage.removeItem(k);
+    for (const [k, v] of Object.entries(prefs)) {
+      if (!k.startsWith(PREF_KEY_PREFIX) || PREF_KEY_DENY.has(k)) continue;
+      window.localStorage.setItem(k, v);
+    }
+  } catch {}
+}
+
 export const Route = createFileRoute("/settings")({
   head: () => ({
     meta: [
@@ -133,7 +175,13 @@ function SettingsPage() {
   const fileRef = useRef<HTMLInputElement>(null);
 
   function exportJson() {
-    const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
+    const envelope = {
+      version: 1 as const,
+      exportedAt: new Date().toISOString(),
+      state,
+      preferences: collectPreferences(),
+    };
+    const blob = new Blob([JSON.stringify(envelope, null, 2)], { type: "application/json" });
     download(blob, `portfolio-${new Date().toISOString().slice(0, 10)}.json`);
   }
 
@@ -158,14 +206,25 @@ function SettingsPage() {
     file.text().then((txt) => {
       try {
         const raw = JSON.parse(txt);
-        const result = appStateSchema.safeParse(raw);
-        if (!result.success) {
-          const first = result.error.issues[0];
-          throw new Error(
-            first ? `${first.path.join(".") || "root"}: ${first.message}` : "Invalid file format"
-          );
+        // Accept both the new envelope format and legacy bare-AppState exports.
+        const envelope = exportEnvelopeSchema.safeParse(raw);
+        let parsedState: AppState;
+        let prefs: Record<string, string> | undefined;
+        if (envelope.success) {
+          parsedState = envelope.data.state as AppState;
+          prefs = envelope.data.preferences;
+        } else {
+          const legacy = appStateSchema.safeParse(raw);
+          if (!legacy.success) {
+            const first = (envelope.error.issues[0] ?? legacy.error.issues[0]);
+            throw new Error(
+              first ? `${first.path.join(".") || "root"}: ${first.message}` : "Invalid file format"
+            );
+          }
+          parsedState = legacy.data as AppState;
         }
-        importState(result.data as AppState);
+        importState(parsedState);
+        if (prefs) applyPreferences(prefs);
         toast.success("Data imported");
       } catch (e) {
         toast.error("Couldn't import: " + (e as Error).message);
