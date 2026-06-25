@@ -157,10 +157,15 @@ function SettingsPage() {
   function handleImport(file: File) {
     file.text().then((txt) => {
       try {
-        const parsed = JSON.parse(txt) as AppState;
-        if (!parsed || !Array.isArray(parsed.holdings))
-          throw new Error("Invalid file format");
-        importState(parsed);
+        const raw = JSON.parse(txt);
+        const result = appStateSchema.safeParse(raw);
+        if (!result.success) {
+          const first = result.error.issues[0];
+          throw new Error(
+            first ? `${first.path.join(".") || "root"}: ${first.message}` : "Invalid file format"
+          );
+        }
+        importState(result.data as AppState);
         toast.success("Data imported");
       } catch (e) {
         toast.error("Couldn't import: " + (e as Error).message);
