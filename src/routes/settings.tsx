@@ -210,7 +210,7 @@ function SettingsPage() {
   }
 
   function handleImport(file: File) {
-    file.text().then((txt) => {
+    file.text().then(async (txt) => {
       try {
         const raw = JSON.parse(txt);
         // Accept both the new envelope format and legacy bare-AppState exports.
