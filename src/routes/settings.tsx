@@ -180,16 +180,17 @@ function SettingsPage() {
   const [finnhub, setFinnhub] = useState(state.settings.finnhubKey ?? "");
   const fileRef = useRef<HTMLInputElement>(null);
 
-  function exportJson() {
+  async function exportJson() {
     const envelope = {
       version: 1 as const,
       exportedAt: new Date().toISOString(),
       state,
-      preferences: collectPreferences(),
+      preferences: await collectPreferences(),
     };
     const blob = new Blob([JSON.stringify(envelope, null, 2)], { type: "application/json" });
     download(blob, `portfolio-${new Date().toISOString().slice(0, 10)}.json`);
   }
+
 
   function exportCsv() {
     const rows = [
