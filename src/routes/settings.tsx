@@ -231,7 +231,8 @@ function SettingsPage() {
           parsedState = legacy.data as AppState;
         }
         importState(parsedState);
-        if (prefs) applyPreferences(prefs);
+        if (prefs) await applyPreferences(prefs);
+
         toast.success("Data imported");
       } catch (e) {
         toast.error("Couldn't import: " + (e as Error).message);
