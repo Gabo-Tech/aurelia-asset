@@ -158,20 +158,31 @@ const PREF_KEY = "ept_cashflow_sankey_prefs_v1";
 type Prefs = {
   labelMode: LabelMode;
   nodeColors: Record<string, string>;
+  incomeOrder: string[];
+  expenseOrder: string[];
+};
+
+const DEFAULT_PREFS: Prefs = {
+  labelMode: "always",
+  nodeColors: {},
+  incomeOrder: [],
+  expenseOrder: [],
 };
 
 async function loadPrefs(): Promise<Prefs> {
-  if (typeof window === "undefined") return { labelMode: "always", nodeColors: {} };
+  if (typeof window === "undefined") return { ...DEFAULT_PREFS };
   try {
     const raw = await secureGet(PREF_KEY);
-    if (!raw) return { labelMode: "always", nodeColors: {} };
+    if (!raw) return { ...DEFAULT_PREFS };
     const p = JSON.parse(raw);
     return {
       labelMode: p.labelMode ?? "always",
       nodeColors: p.nodeColors ?? {},
+      incomeOrder: Array.isArray(p.incomeOrder) ? p.incomeOrder : [],
+      expenseOrder: Array.isArray(p.expenseOrder) ? p.expenseOrder : [],
     };
   } catch {
-    return { labelMode: "always", nodeColors: {} };
+    return { ...DEFAULT_PREFS };
   }
 }
 
@@ -181,7 +192,7 @@ function CashflowPage() {
   const { mask, toDisplay, currency, privacy, MASK } = useMoney();
   const { cashflows, categories } = state;
 
-  const [prefs, setPrefs] = useState<Prefs>({ labelMode: "always", nodeColors: {} });
+  const [prefs, setPrefs] = useState<Prefs>(DEFAULT_PREFS);
   const [prefsLoaded, setPrefsLoaded] = useState(false);
   useEffect(() => {
     loadPrefs().then((p) => {
@@ -226,8 +237,20 @@ function CashflowPage() {
     const incomes = expandedToToday.filter((c) => c.kind === "income");
     const expenses = expandedToToday.filter((c) => c.kind === "expense");
 
-    const sources = Array.from(new Set(incomes.map((i) => i.source || "Other")));
-    const cats = Array.from(new Set(expenses.map((e) => e.category || "Other")));
+    const applyOrder = (items: string[], saved: string[]) => {
+      const set = new Set(items);
+      const ordered = saved.filter((n) => set.has(n));
+      const remaining = items.filter((n) => !ordered.includes(n));
+      return [...ordered, ...remaining];
+    };
+    const sources = applyOrder(
+      Array.from(new Set(incomes.map((i) => i.source || "Other"))),
+      prefs.incomeOrder,
+    );
+    const cats = applyOrder(
+      Array.from(new Set(expenses.map((e) => e.category || "Other"))),
+      prefs.expenseOrder,
+    );
     const POOL = "Cash Pool";
     const SAVED = "Saved";
 
@@ -270,7 +293,7 @@ function CashflowPage() {
 
     if (!links.length) return null;
     return { nodes, links };
-  }, [expandedToToday, valuesTop, prefs.nodeColors, catByName]);
+  }, [expandedToToday, valuesTop, prefs.nodeColors, prefs.incomeOrder, prefs.expenseOrder, catByName]);
 
 
   // Unique node names for the color customizer.
@@ -349,6 +372,14 @@ function CashflowPage() {
                     height={420}
                     labelMode={prefs.labelMode}
                     format={(v: number) => (privacy ? MASK : formatMoney(v, currency))}
+                    onReorder={(kind, names) =>
+                      setPrefs((p) => ({
+                        ...p,
+                        ...(kind === "income"
+                          ? { incomeOrder: names }
+                          : { expenseOrder: names }),
+                      }))
+                    }
                   />
                 ) : (
                   <div className="grid h-80 place-items-center text-sm text-muted-foreground">

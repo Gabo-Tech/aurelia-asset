@@ -23,6 +23,12 @@ type Props = {
   align?: "left" | "right" | "center" | "justify";
   nodeWidth?: number;
   nodePadding?: number;
+  /**
+   * Called when the user drags a node to a new position within its column.
+   * Receives the node kind ("income" | "expense") and the new ordered list
+   * of node names for that kind.
+   */
+  onReorder?: (kind: "income" | "expense", orderedNames: string[]) => void;
 };
 
 const alignFns = {
@@ -32,6 +38,8 @@ const alignFns = {
   justify: sankeyJustify,
 };
 
+const REORDERABLE = new Set(["income", "expense"]);
+
 export function SankeyChart({
   data,
   height = 380,
@@ -40,8 +48,10 @@ export function SankeyChart({
   align = "justify",
   nodeWidth,
   nodePadding,
+  onReorder,
 }: Props) {
   const wrapRef = useRef<HTMLDivElement>(null);
+  const svgRef = useRef<SVGSVGElement>(null);
   const [width, setWidth] = useState(800);
 
   useEffect(() => {
@@ -82,15 +92,54 @@ export function SankeyChart({
     }
   }, [data, width, height, align, resolvedNodeWidth, resolvedNodePadding, margin.left, margin.right]);
 
+  const [drag, setDrag] = useState<{ idx: number; dy: number; startY: number } | null>(null);
+
   if (!graph) return null;
 
   const showAlways = labelMode === "always";
   const showHover = labelMode === "hover";
   const linkPath = sankeyLinkHorizontal();
 
+  // Map CSS pixel delta to SVG-unit delta (svg may be CSS-scaled).
+  const yScale = () => {
+    const el = svgRef.current;
+    if (!el) return 1;
+    const rect = el.getBoundingClientRect();
+    return rect.height === 0 ? 1 : height / rect.height;
+  };
+
+  const handlePointerDown = (e: React.PointerEvent<SVGGElement>, idx: number, kind?: string) => {
+    if (!onReorder || !kind || !REORDERABLE.has(kind)) return;
+    (e.currentTarget as Element).setPointerCapture(e.pointerId);
+    setDrag({ idx, dy: 0, startY: e.clientY });
+  };
+  const handlePointerMove = (e: React.PointerEvent<SVGGElement>) => {
+    if (!drag) return;
+    setDrag({ ...drag, dy: (e.clientY - drag.startY) * yScale() });
+  };
+  const handlePointerUp = () => {
+    if (!drag || !onReorder) {
+      setDrag(null);
+      return;
+    }
+    const dragged: any = graph.nodes[drag.idx];
+    const kind = dragged?.kind;
+    if (!kind || !REORDERABLE.has(kind)) {
+      setDrag(null);
+      return;
+    }
+    const siblings = (graph.nodes as any[]).filter((n) => n.kind === kind);
+    const centerOf = (n: any) =>
+      n === dragged ? (n.y0 + n.y1) / 2 + drag.dy : (n.y0 + n.y1) / 2;
+    const ordered = [...siblings].sort((a, b) => centerOf(a) - centerOf(b));
+    onReorder(kind as "income" | "expense", ordered.map((n) => n.name));
+    setDrag(null);
+  };
+
   return (
     <div ref={wrapRef} className="w-full" style={{ height }}>
       <svg
+        ref={svgRef}
         width={width}
         height={height}
         className="block max-w-full"
@@ -130,8 +179,23 @@ export function SankeyChart({
           <g>
             {graph.nodes.map((n: any, i: number) => {
               const isLeftSide = n.x0 < (width - margin.left - margin.right) / 2;
+              const reorderable = !!onReorder && REORDERABLE.has(n.kind);
+              const isDragging = drag?.idx === i;
+              const dy = isDragging ? drag!.dy : 0;
               return (
-                <g key={i} className="group">
+                <g
+                  key={i}
+                  className="group"
+                  transform={dy ? `translate(0, ${dy})` : undefined}
+                  style={{
+                    cursor: reorderable ? (isDragging ? "grabbing" : "grab") : "default",
+                    touchAction: reorderable ? "none" : "auto",
+                  }}
+                  onPointerDown={(e) => handlePointerDown(e, i, n.kind)}
+                  onPointerMove={handlePointerMove}
+                  onPointerUp={handlePointerUp}
+                  onPointerCancel={handlePointerUp}
+                >
                   <rect
                     x={n.x0}
                     y={n.y0}
@@ -139,8 +203,9 @@ export function SankeyChart({
                     height={Math.max(1, n.y1 - n.y0)}
                     fill={n.fill}
                     rx={2}
+                    opacity={isDragging ? 0.85 : 1}
                   >
-                    <title>{`${n.name}\n${format(n.value)}`}</title>
+                    <title>{`${n.name}\n${format(n.value)}${reorderable ? "\n(drag to reorder)" : ""}`}</title>
                   </rect>
                   {(showAlways || showHover) && (
                     <g
