@@ -30,7 +30,7 @@ export const Route = createFileRoute("/dashboard")({
 
 function Dashboard() {
   const { state } = useStore();
-  const { mask, toDisplay, privacy } = useMoney();
+  const { mask, toDisplay, privacy, currency } = useMoney();
   const { holdings, cashflows } = state;
   const [showAllLabels, setShowAllLabels] = useState(false);
   const [activeIdx, setActiveIdx] = useState<number | null>(null);
@@ -138,7 +138,7 @@ function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-4xl sm:text-5xl font-semibold tracking-tight">
-              {mask(portfolioTotal)}
+              {mask(portfolioTotal, currency)}
             </div>
             <div className="mt-2 text-sm text-muted-foreground">
               {holdings.length} {holdings.length === 1 ? "holding" : "holdings"}
@@ -161,7 +161,7 @@ function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-semibold tracking-tight">
-              {mask(netWorth)}
+              {mask(netWorth, currency)}
             </div>
             <p className="mt-2 text-xs text-muted-foreground">
               Holdings{" "}
@@ -171,7 +171,7 @@ function Dashboard() {
                 }
               >
                 {cashflowBalance >= 0 ? "+" : "−"}
-                {mask(Math.abs(cashflowBalance))}
+                {mask(Math.abs(cashflowBalance), currency)}
               </span>{" "}
               cashflow
             </p>
@@ -191,7 +191,7 @@ function Dashboard() {
               }`}
             >
               {net30 >= 0 ? "+" : "-"}
-              {mask(Math.abs(net30))}
+              {mask(Math.abs(net30), currency)}
             </div>
             <p className="mt-2 text-xs text-muted-foreground">Net income − expenses</p>
           </CardContent>
@@ -338,7 +338,7 @@ function Dashboard() {
                       </div>
                     </div>
                     <div className="text-xs text-muted-foreground tabular-nums">
-                      {mask(a.value)}
+                      {mask(a.value, currency)}
                     </div>
                   </div>
                 </div>
@@ -358,7 +358,7 @@ function Dashboard() {
           icon={<TrendingUp className="h-4 w-4 text-success" />}
           label="Top asset"
           value={topAlloc ? topAlloc.name : "—"}
-          sub={topAlloc ? mask(topAlloc.value) : undefined}
+          sub={topAlloc ? mask(topAlloc.value, currency) : undefined}
         />
         <StatCard
           icon={
@@ -369,7 +369,7 @@ function Dashboard() {
             )
           }
           label="Net 30d"
-          value={`${net30 >= 0 ? "+" : "-"}${mask(Math.abs(net30))}`}
+          value={`${net30 >= 0 ? "+" : "-"}${mask(Math.abs(net30), currency)}`}
         />
       </div>
     </>
