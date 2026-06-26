@@ -98,7 +98,7 @@ export function expandCashflows(entries: CashflowEntry[], until: Date = new Date
  *  - "all-income"  → % of total fixed income in `entries`
  *  - "all-expense" → % of total fixed expense in `entries`
  *  - entry id      → % of that fixed entry's resolved value (0 if missing) */
-function valuesByEntry(
+export function valuesByEntry(
   entries: CashflowEntry[],
   toDisplay: (amount: number, from?: string) => number,
 ): Map<string, number> {
