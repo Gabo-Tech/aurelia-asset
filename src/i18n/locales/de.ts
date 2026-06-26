@@ -156,8 +156,8 @@ const de: Translation = {
     metaTitle: "Performance — Elegant Portfolio Tracker",
     metaDesc: "Verfolge die Rendite deiner Vermögenswerte über die Zeit.",
     title: "Performance",
-    description: "Historischer Portfoliowert,
-    emptyState: "Füge zuerst Positionen hinzu, um die historische Wertentwicklung zu sehen.", Periode für Periode.",
+    description: "Historischer Portfoliowert Periode für Periode.",
+    emptyState: "Füge zuerst Positionen hinzu, um die historische Wertentwicklung zu sehen.",
   },
   cashflow: {
     metaTitle: "Cashflow — Elegant Portfolio Tracker",
