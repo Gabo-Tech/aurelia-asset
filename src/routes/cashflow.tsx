@@ -874,11 +874,11 @@ function EntriesPanel({
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-left text-xs uppercase tracking-wider text-muted-foreground">
-                  <th className="py-2">Date</th>
-                  <th className="py-2">Type</th>
-                  <th className="py-2">Source / Category</th>
-                  <th className="py-2 text-right">Amount</th>
+                <tr className="text-left text-xs uppercase tracking-wider text-muted-foreground [&>th]:px-3 [&>th]:py-2">
+                  <th>Date</th>
+                  <th>Type</th>
+                  <th>Source / Category</th>
+                  <th className="text-right">Amount</th>
                   <th></th>
                 </tr>
               </thead>
