@@ -59,7 +59,7 @@ import { GROUP_COLORS, type Category, type CategoryGroup, type CashflowEntry, ty
 /** Expand recurring cashflow entries into individual occurrences up to `until`.
  *  Each occurrence keeps the original id (with a date suffix) and a `parentId`
  *  pointing to the source entry so the UI can edit/remove the rule. */
-function expandCashflows(entries: CashflowEntry[], until: Date = new Date()): (CashflowEntry & { parentId: string; isOccurrence: boolean })[] {
+export function expandCashflows(entries: CashflowEntry[], until: Date = new Date()): (CashflowEntry & { parentId: string; isOccurrence: boolean })[] {
   const out: (CashflowEntry & { parentId: string; isOccurrence: boolean })[] = [];
   for (const e of entries) {
     if (!e.recurrence) {
