@@ -163,18 +163,18 @@ export function TransactionsPanel() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-left text-xs uppercase tracking-wider text-muted-foreground">
-                  <th className="py-2">Date</th>
-                  <th className="py-2">Type</th>
-                  <th className="py-2">Holding</th>
-                  <th className="py-2 text-right">Quantity</th>
-                  <th className="py-2 text-right">Price</th>
-                  <th className="py-2 text-right">Fees</th>
-                  <th className="py-2 text-right">Total</th>
+                <tr className="text-left text-xs uppercase tracking-wider text-muted-foreground [&>th]:px-3 [&>th]:py-2">
+                  <th>Date</th>
+                  <th>Type</th>
+                  <th>Holding</th>
+                  <th className="text-right">Quantity</th>
+                  <th className="text-right">Price</th>
+                  <th className="text-right">Fees</th>
+                  <th className="text-right">Total</th>
                   <th></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border/40">
+              <tbody className="divide-y divide-border/40 [&>tr>td]:px-3">
                 {[...filtered]
                   .sort((a, b) => +new Date(b.date) - +new Date(a.date))
                   .map((t) => {
