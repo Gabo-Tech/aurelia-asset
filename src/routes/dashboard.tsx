@@ -16,6 +16,7 @@ import { formatPct } from "@/lib/format";
 import { ArrowUpRight, Wallet, TrendingUp, TrendingDown, PiggyBank } from "lucide-react";
 import { PageHeader } from "@/components/app-shell";
 import { ChartFrame } from "@/components/chart-frame";
+import { expandCashflows, valuesByEntry } from "@/routes/cashflow";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
@@ -79,6 +80,19 @@ function Dashboard() {
       ? [activeIdx]
       : [];
 
+  const cashflowBalance = useMemo(() => {
+    const expanded = expandCashflows(cashflows, new Date());
+    const values = valuesByEntry(expanded, toDisplay);
+    let bal = 0;
+    for (const e of expanded) {
+      const v = values.get(e.id) ?? 0;
+      bal += (e.kind === "income" ? 1 : -1) * v;
+    }
+    return bal;
+  }, [cashflows, toDisplay]);
+
+  const netWorth = useMemo(() => portfolioTotal + cashflowBalance, [portfolioTotal, cashflowBalance]);
+
   const net30 = useMemo(() => {
     const cutoff = Date.now() - 30 * 86400000;
     return cashflows
@@ -113,7 +127,7 @@ function Dashboard() {
         }
       />
 
-      <div className="grid gap-5 lg:grid-cols-3">
+      <div className="grid gap-5 lg:grid-cols-4">
         {/* Total value hero */}
         <Card className="lg:col-span-2 relative overflow-hidden border-border/60">
           <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent pointer-events-none" />
@@ -136,6 +150,31 @@ function Dashboard() {
                 </>
               ) : null}
             </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-border/60">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Net worth
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-semibold tracking-tight">
+              {mask(netWorth)}
+            </div>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Holdings{" "}
+              <span
+                className={
+                  cashflowBalance >= 0 ? "text-success" : "text-destructive"
+                }
+              >
+                {cashflowBalance >= 0 ? "+" : "−"}
+                {mask(Math.abs(cashflowBalance))}
+              </span>{" "}
+              cashflow
+            </p>
           </CardContent>
         </Card>
 

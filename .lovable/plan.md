@@ -1,67 +1,21 @@
+# Add Net Worth stat to Dashboard
+
 ## Goal
+Keep **Total portfolio value** as holdings-only, and add a new **Net worth** stat that = portfolio value + cumulative cashflow balance (all income − all expenses, including recurrences, in the display currency).
 
-Let a percentage entry be tied to a specific base instead of always using total income. Examples:
+## Changes
 
-- "10% of Salary (monthly)" — base is the Salary entry's resolved amount
-- "20% of all income" (current behavior)
-- "5% of all expenses" (new)
+### `src/routes/dashboard.tsx`
+1. Import `expandCashflows` from `src/routes/cashflow.tsx` (or extract to `src/lib/cashflow.ts` if not already exported — quick check; if extraction is needed, move the helper to a shared lib file and re-import in both places).
+2. Compute `cashflowBalance`:
+   - Expand recurring entries up to today.
+   - Sum `+income / −expense` converted via `toDisplay(amount, currency)`.
+   - Respect `amountKind: "percent"` using the same resolution logic already used in cashflow (reuse helper if exported; otherwise compute fixed-only balance and note percent entries are excluded — confirm with user if needed).
+3. Compute `netWorth = portfolioTotal + cashflowBalance`.
+4. Update the stats grid: add a new card **"Net worth"** next to **"Total portfolio value"**, using `mask(netWorth)`. Subtitle shows the cashflow delta (e.g. `+€1,240 from cashflow` in success/destructive color).
+5. Leave existing **Net (30d)** card as-is.
 
-## Data model
-
-Extend `CashflowEntry` in `src/lib/types.ts`:
-
-```ts
-amountKind?: "fixed" | "percent";
-/** Only used when amountKind === "percent". Defaults to "all-income". */
-percentOf?: "all-income" | "all-expense" | string; // string = another entry's id
-```
-
-Backwards compatible: existing percent entries with no `percentOf` continue to behave as "all-income".
-
-## Value resolution
-
-Rewrite `valuesByEntry()` in `src/routes/cashflow.tsx`:
-
-1. First pass: resolve every **fixed** entry to its display-currency value.
-2. Compute `baseIncome` and `baseExpense` from those fixed values.
-3. Second pass: resolve each **percent** entry:
-   - `percentOf === "all-income"` → `amount% × baseIncome` (default)
-   - `percentOf === "all-expense"` → `amount% × baseExpense`
-   - `percentOf === <entryId>` → `amount% ×` that entry's value (only fixed entries are pickable, so no recursion)
-   - If the referenced entry is missing or is itself a percent → fall back to 0 and continue.
-
-Sankey, totals, and chart all already use `valuesByEntry`, so they get the new behavior automatically.
-
-## UI
-
-In `AddForm` and `EditEntryDialog`:
-
-- When the percentage toggle is on, replace the static "of total income" helper with a **"Percent of"** select:
-  - `All income`
-  - `All expenses`
-  - Disabled separator: "— Subscribe to entry —"
-  - Each **fixed** entry, labeled like `Salary · €4,000 /mo` (income) or `Rent · €1,200 /mo` (expense)
-- Default value: `all-income`.
-- Persist as `percentOf` on the entry.
-
-State: `const [percentOf, setPercentOf] = useState<string>("all-income")` in both forms; pre-fill from the entry in the edit dialog.
-
-## Display
-
-In the entries table (line ~795 area) and the PDF export, change the percent label from `20% ≈ CHF 480` to:
-
-- `20% of Salary ≈ CHF 480`
-- `20% of all income ≈ CHF 480`
-- `5% of all expenses ≈ CHF 200`
-
-Tooltip on the chart already shows resolved values; no change needed there.
-
-## Edge cases
-
-- If a user deletes the referenced entry, percent entries pointing at it resolve to 0 and the table shows `20% of (deleted) ≈ CHF 0` with a muted style.
-- The "Percent of" picker only lists fixed entries, so cycles are impossible.
-
-## Files to edit
-
-- `src/lib/types.ts` — add `percentOf` field.
-- `src/routes/cashflow.tsx` — `valuesByEntry`, `AddForm`, `EditEntryDialog`, entries table render, PDF row formatter.
+## Notes
+- Sign convention: expenses reduce net worth.
+- Privacy mode already handled via `mask()`.
+- No changes to data model or storage.

@@ -59,7 +59,7 @@ import { GROUP_COLORS, type Category, type CategoryGroup, type CashflowEntry, ty
 /** Expand recurring cashflow entries into individual occurrences up to `until`.
  *  Each occurrence keeps the original id (with a date suffix) and a `parentId`
  *  pointing to the source entry so the UI can edit/remove the rule. */
-function expandCashflows(entries: CashflowEntry[], until: Date = new Date()): (CashflowEntry & { parentId: string; isOccurrence: boolean })[] {
+export function expandCashflows(entries: CashflowEntry[], until: Date = new Date()): (CashflowEntry & { parentId: string; isOccurrence: boolean })[] {
   const out: (CashflowEntry & { parentId: string; isOccurrence: boolean })[] = [];
   for (const e of entries) {
     if (!e.recurrence) {
@@ -98,7 +98,7 @@ function expandCashflows(entries: CashflowEntry[], until: Date = new Date()): (C
  *  - "all-income"  → % of total fixed income in `entries`
  *  - "all-expense" → % of total fixed expense in `entries`
  *  - entry id      → % of that fixed entry's resolved value (0 if missing) */
-function valuesByEntry(
+export function valuesByEntry(
   entries: CashflowEntry[],
   toDisplay: (amount: number, from?: string) => number,
 ): Map<string, number> {
