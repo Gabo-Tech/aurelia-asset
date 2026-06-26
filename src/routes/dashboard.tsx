@@ -80,6 +80,19 @@ function Dashboard() {
       ? [activeIdx]
       : [];
 
+  const cashflowBalance = useMemo(() => {
+    const expanded = expandCashflows(cashflows, new Date());
+    const values = valuesByEntry(expanded, toDisplay);
+    let bal = 0;
+    for (const e of expanded) {
+      const v = values.get(e.id) ?? 0;
+      bal += (e.kind === "income" ? 1 : -1) * v;
+    }
+    return bal;
+  }, [cashflows, toDisplay]);
+
+  const netWorth = useMemo(() => portfolioTotal + cashflowBalance, [portfolioTotal, cashflowBalance]);
+
   const net30 = useMemo(() => {
     const cutoff = Date.now() - 30 * 86400000;
     return cashflows
