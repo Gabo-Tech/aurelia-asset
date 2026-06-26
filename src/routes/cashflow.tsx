@@ -1062,6 +1062,7 @@ function EditEntryDialog({
         : undefined,
       amountKind: isPercent ? "percent" : "fixed",
       percentOf: isPercent ? percentOf : undefined,
+      description: description.trim().slice(0, 200) || undefined,
     });
   }
 
