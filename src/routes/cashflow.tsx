@@ -1303,6 +1303,7 @@ type FormVals = {
   recurrence?: { frequency: RecurrenceFrequency; until?: string };
   amountKind?: "fixed" | "percent";
   percentOf?: "all-income" | "all-expense" | string;
+  description?: string;
 };
 
 function AddForm({
