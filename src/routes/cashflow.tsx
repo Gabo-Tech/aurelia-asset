@@ -882,7 +882,7 @@ function EntriesPanel({
                   <th></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border/40">
+              <tbody className="divide-y divide-border/40 [&>tr>td]:px-3">
                 {[...filtered]
                   .sort((a, b) => +new Date(b.date) - +new Date(a.date))
                   .map((c) => {
