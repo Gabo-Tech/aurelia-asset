@@ -1402,6 +1402,15 @@ function AddForm({
               />
             </Field>
             {sharedFields()}
+            <Field label="Description (optional)">
+              <Input
+                type="text"
+                maxLength={200}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="e.g. groceries at Migros"
+              />
+            </Field>
             <div className="rounded-md border border-border/60 p-3 space-y-3">
               <label className="flex items-center gap-2 text-sm">
                 <input
