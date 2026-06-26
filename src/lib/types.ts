@@ -51,6 +51,8 @@ export type CashflowEntry = {
    *  - "all-expense" — % of total fixed expenses in scope
    *  - any other string — id of another (fixed) entry to subscribe to */
   percentOf?: "all-income" | "all-expense" | string;
+  /** Optional short description / note (max 200 chars). */
+  description?: string;
 };
 
 /**

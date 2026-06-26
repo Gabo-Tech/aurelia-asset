@@ -911,7 +911,14 @@ function EntriesPanel({
                             )}
                           </div>
                         </td>
-                        <td className="py-2.5">{c.kind === "income" ? c.source : c.category}</td>
+                        <td className="py-2.5">
+                          <div>{c.kind === "income" ? c.source : c.category}</div>
+                          {c.description && (
+                            <div className="text-[11px] text-muted-foreground truncate max-w-[28ch]" title={c.description}>
+                              {c.description}
+                            </div>
+                          )}
+                        </td>
                         <td className="py-2.5 text-right tabular-nums font-medium">
                           {(() => {
                             const isPct = (c.amountKind ?? "fixed") === "percent";
@@ -1023,6 +1030,7 @@ function EditEntryDialog({
   const [until, setUntil] = useState("");
   const [isPercent, setIsPercent] = useState(false);
   const [percentOf, setPercentOf] = useState<string>("all-income");
+  const [description, setDescription] = useState("");
 
   useEffect(() => {
     if (!entry) return;
@@ -1036,6 +1044,7 @@ function EditEntryDialog({
     setUntil(entry.recurrence?.until ? format(new Date(entry.recurrence.until), "yyyy-MM-dd") : "");
     setIsPercent((entry.amountKind ?? "fixed") === "percent");
     setPercentOf(entry.percentOf ?? "all-income");
+    setDescription(entry.description ?? "");
   }, [entry]);
 
   const visibleCategories = useMemo(
@@ -1060,6 +1069,7 @@ function EditEntryDialog({
         : undefined,
       amountKind: isPercent ? "percent" : "fixed",
       percentOf: isPercent ? percentOf : undefined,
+      description: description.trim().slice(0, 200) || undefined,
     });
   }
 
@@ -1147,6 +1157,17 @@ function EditEntryDialog({
           <div>
             <Label className="text-xs">{recurring ? "Start date" : "Date"}</Label>
             <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="mt-1.5" />
+          </div>
+          <div>
+            <Label className="text-xs">Description (optional)</Label>
+            <Input
+              type="text"
+              maxLength={200}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Short note"
+              className="mt-1.5"
+            />
           </div>
           <div className="rounded-md border border-border/60 p-3 space-y-3">
             <label className="flex items-center gap-2 text-sm">
@@ -1303,6 +1324,7 @@ type FormVals = {
   recurrence?: { frequency: RecurrenceFrequency; until?: string };
   amountKind?: "fixed" | "percent";
   percentOf?: "all-income" | "all-expense" | string;
+  description?: string;
 };
 
 function AddForm({
@@ -1332,6 +1354,7 @@ function AddForm({
   const [until, setUntil] = useState("");
   const [isPercent, setIsPercent] = useState(false);
   const [percentOf, setPercentOf] = useState<string>("all-income");
+  const [description, setDescription] = useState("");
 
   const visibleCategories = useMemo(
     () => categories.filter((c) => c.kind === kind),
@@ -1350,6 +1373,7 @@ function AddForm({
     if (!isFinite(a) || a <= 0) return toast.error("Amount must be > 0");
     if (isPercent && a > 1000) return toast.error("Percentage looks too high");
     if (!categoryName.trim()) return toast.error("Pick a category");
+    const desc = description.trim().slice(0, 200);
     onAdd({
       kind,
       source: kind === "income" ? categoryName : "",
@@ -1362,8 +1386,10 @@ function AddForm({
         : undefined,
       amountKind: isPercent ? "percent" : "fixed",
       percentOf: isPercent ? percentOf : undefined,
+      description: desc || undefined,
     });
     setAmount("");
+    setDescription("");
   }
 
   return (
@@ -1397,6 +1423,15 @@ function AddForm({
               />
             </Field>
             {sharedFields()}
+            <Field label="Description (optional)">
+              <Input
+                type="text"
+                maxLength={200}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="e.g. groceries at Migros"
+              />
+            </Field>
             <div className="rounded-md border border-border/60 p-3 space-y-3">
               <label className="flex items-center gap-2 text-sm">
                 <input
