@@ -16,6 +16,7 @@ import { formatPct } from "@/lib/format";
 import { ArrowUpRight, Wallet, TrendingUp, TrendingDown, PiggyBank } from "lucide-react";
 import { PageHeader } from "@/components/app-shell";
 import { ChartFrame } from "@/components/chart-frame";
+import { expandCashflows, valuesByEntry } from "@/routes/cashflow";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
