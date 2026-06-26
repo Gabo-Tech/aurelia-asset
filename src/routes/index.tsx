@@ -114,7 +114,9 @@ function LandingPage() {
     } catch {}
   }, [navigate]);
 
+  return (
     <div className="min-h-screen bg-background text-foreground">
+
       <SiteHeader />
       <Hero />
       <SocialProof />
