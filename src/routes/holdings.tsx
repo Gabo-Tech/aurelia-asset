@@ -68,10 +68,10 @@ function HoldingsPage() {
 
   const total = useMemo(
     () =>
-      state.holdings.reduce(
-        (s, h) => s + toDisplay(h.quantity * h.currentPrice, h.priceCurrency),
-        0,
-      ),
+      state.holdings.reduce((s, h) => {
+        const mv = toDisplay(h.quantity * h.currentPrice, h.priceCurrency);
+        return mv > 0 ? s + mv : s;
+      }, 0),
     [state.holdings, toDisplay],
   );
 
