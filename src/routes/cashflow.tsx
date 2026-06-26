@@ -1352,6 +1352,7 @@ function AddForm({
     if (!isFinite(a) || a <= 0) return toast.error("Amount must be > 0");
     if (isPercent && a > 1000) return toast.error("Percentage looks too high");
     if (!categoryName.trim()) return toast.error("Pick a category");
+    const desc = description.trim().slice(0, 200);
     onAdd({
       kind,
       source: kind === "income" ? categoryName : "",
@@ -1364,8 +1365,10 @@ function AddForm({
         : undefined,
       amountKind: isPercent ? "percent" : "fixed",
       percentOf: isPercent ? percentOf : undefined,
+      description: desc || undefined,
     });
     setAmount("");
+    setDescription("");
   }
 
   return (
