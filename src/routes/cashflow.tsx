@@ -1023,6 +1023,7 @@ function EditEntryDialog({
   const [until, setUntil] = useState("");
   const [isPercent, setIsPercent] = useState(false);
   const [percentOf, setPercentOf] = useState<string>("all-income");
+  const [description, setDescription] = useState("");
 
   useEffect(() => {
     if (!entry) return;
