@@ -158,20 +158,31 @@ const PREF_KEY = "ept_cashflow_sankey_prefs_v1";
 type Prefs = {
   labelMode: LabelMode;
   nodeColors: Record<string, string>;
+  incomeOrder: string[];
+  expenseOrder: string[];
+};
+
+const DEFAULT_PREFS: Prefs = {
+  labelMode: "always",
+  nodeColors: {},
+  incomeOrder: [],
+  expenseOrder: [],
 };
 
 async function loadPrefs(): Promise<Prefs> {
-  if (typeof window === "undefined") return { labelMode: "always", nodeColors: {} };
+  if (typeof window === "undefined") return { ...DEFAULT_PREFS };
   try {
     const raw = await secureGet(PREF_KEY);
-    if (!raw) return { labelMode: "always", nodeColors: {} };
+    if (!raw) return { ...DEFAULT_PREFS };
     const p = JSON.parse(raw);
     return {
       labelMode: p.labelMode ?? "always",
       nodeColors: p.nodeColors ?? {},
+      incomeOrder: Array.isArray(p.incomeOrder) ? p.incomeOrder : [],
+      expenseOrder: Array.isArray(p.expenseOrder) ? p.expenseOrder : [],
     };
   } catch {
-    return { labelMode: "always", nodeColors: {} };
+    return { ...DEFAULT_PREFS };
   }
 }
 
