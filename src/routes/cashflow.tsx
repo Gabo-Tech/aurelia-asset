@@ -1333,6 +1333,7 @@ function AddForm({
   const [until, setUntil] = useState("");
   const [isPercent, setIsPercent] = useState(false);
   const [percentOf, setPercentOf] = useState<string>("all-income");
+  const [description, setDescription] = useState("");
 
   const visibleCategories = useMemo(
     () => categories.filter((c) => c.kind === kind),
