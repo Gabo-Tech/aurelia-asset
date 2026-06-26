@@ -1,4 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
   ArrowRight,
   ShieldCheck,
@@ -104,8 +105,18 @@ export const Route = createFileRoute("/")({
 });
 
 function LandingPage() {
+  const navigate = useNavigate();
+  useEffect(() => {
+    try {
+      if (typeof window !== "undefined" && window.localStorage.getItem("ept_state_v1")) {
+        navigate({ to: "/dashboard", replace: true });
+      }
+    } catch {}
+  }, [navigate]);
+
   return (
     <div className="min-h-screen bg-background text-foreground">
+
       <SiteHeader />
       <Hero />
       <SocialProof />
