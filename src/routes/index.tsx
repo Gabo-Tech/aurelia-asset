@@ -105,7 +105,15 @@ export const Route = createFileRoute("/")({
 });
 
 function LandingPage() {
-  return (
+  const navigate = useNavigate();
+  useEffect(() => {
+    try {
+      if (typeof window !== "undefined" && window.localStorage.getItem("ept_state_v1")) {
+        navigate({ to: "/dashboard", replace: true });
+      }
+    } catch {}
+  }, [navigate]);
+
     <div className="min-h-screen bg-background text-foreground">
       <SiteHeader />
       <Hero />
