@@ -911,7 +911,14 @@ function EntriesPanel({
                             )}
                           </div>
                         </td>
-                        <td className="py-2.5">{c.kind === "income" ? c.source : c.category}</td>
+                        <td className="py-2.5">
+                          <div>{c.kind === "income" ? c.source : c.category}</div>
+                          {c.description && (
+                            <div className="text-[11px] text-muted-foreground truncate max-w-[28ch]" title={c.description}>
+                              {c.description}
+                            </div>
+                          )}
+                        </td>
                         <td className="py-2.5 text-right tabular-nums font-medium">
                           {(() => {
                             const isPct = (c.amountKind ?? "fixed") === "percent";
