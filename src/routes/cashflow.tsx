@@ -192,7 +192,7 @@ function CashflowPage() {
   const { mask, toDisplay, currency, privacy, MASK } = useMoney();
   const { cashflows, categories } = state;
 
-  const [prefs, setPrefs] = useState<Prefs>({ labelMode: "always", nodeColors: {} });
+  const [prefs, setPrefs] = useState<Prefs>(DEFAULT_PREFS);
   const [prefsLoaded, setPrefsLoaded] = useState(false);
   useEffect(() => {
     loadPrefs().then((p) => {
