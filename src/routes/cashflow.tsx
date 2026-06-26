@@ -237,8 +237,20 @@ function CashflowPage() {
     const incomes = expandedToToday.filter((c) => c.kind === "income");
     const expenses = expandedToToday.filter((c) => c.kind === "expense");
 
-    const sources = Array.from(new Set(incomes.map((i) => i.source || "Other")));
-    const cats = Array.from(new Set(expenses.map((e) => e.category || "Other")));
+    const applyOrder = (items: string[], saved: string[]) => {
+      const set = new Set(items);
+      const ordered = saved.filter((n) => set.has(n));
+      const remaining = items.filter((n) => !ordered.includes(n));
+      return [...ordered, ...remaining];
+    };
+    const sources = applyOrder(
+      Array.from(new Set(incomes.map((i) => i.source || "Other"))),
+      prefs.incomeOrder,
+    );
+    const cats = applyOrder(
+      Array.from(new Set(expenses.map((e) => e.category || "Other"))),
+      prefs.expenseOrder,
+    );
     const POOL = "Cash Pool";
     const SAVED = "Saved";
 
