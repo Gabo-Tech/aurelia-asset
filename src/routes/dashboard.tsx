@@ -94,14 +94,17 @@ function Dashboard() {
   const netWorth = useMemo(() => portfolioTotal + cashflowBalance, [portfolioTotal, cashflowBalance]);
 
   const net30 = useMemo(() => {
-    const cutoff = Date.now() - 30 * 86400000;
-    return cashflows
-      .filter((c) => new Date(c.date).getTime() >= cutoff)
-      .reduce(
-        (s, c) =>
-          s + (c.kind === "income" ? 1 : -1) * toDisplay(c.amount, c.currency),
-        0,
-      );
+    const now = new Date();
+    const cutoff = now.getTime() - 30 * 86400000;
+    const expanded = expandCashflows(cashflows, now);
+    const values = valuesByEntry(expanded, toDisplay);
+    let bal = 0;
+    for (const e of expanded) {
+      if (new Date(e.date).getTime() < cutoff) continue;
+      const v = values.get(e.id) ?? 0;
+      bal += (e.kind === "income" ? 1 : -1) * v;
+    }
+    return bal;
   }, [cashflows, toDisplay]);
 
   const topAlloc = allocation[0];
