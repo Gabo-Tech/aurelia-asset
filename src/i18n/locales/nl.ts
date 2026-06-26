@@ -156,7 +156,8 @@ const nl: Translation = {
     metaTitle: "Rendement — Elegant Portfolio Tracker",
     metaDesc: "Volg het rendement van je activa over tijd.",
     title: "Rendement",
-    description: "Historische portefeuillewaarde, periode na periode.",
+    description: "Historische portefeuillewaarde,
+    emptyState: "Voeg eerst posities toe om je historische prestaties te zien.", periode na periode.",
   },
   cashflow: {
     metaTitle: "Kasstroom — Elegant Portfolio Tracker",

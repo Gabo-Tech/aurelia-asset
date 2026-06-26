@@ -162,7 +162,8 @@ const es: Translation = {
     metaTitle: "Rendimiento — Elegant Portfolio Tracker",
     metaDesc: "Sigue la rentabilidad en el tiempo de tus activos.",
     title: "Rendimiento",
-    description: "Valor histórico de la cartera, periodo a periodo.",
+    description: "Valor histórico de la cartera,
+    emptyState: "Añade activos primero para ver tu rendimiento histórico.", periodo a periodo.",
   },
   cashflow: {
     metaTitle: "Flujo de caja — Elegant Portfolio Tracker",

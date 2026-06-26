@@ -157,7 +157,8 @@ const ca: Translation = {
     metaTitle: "Rendiment — Elegant Portfolio Tracker",
     metaDesc: "Segueix la rendibilitat en el temps dels teus actius.",
     title: "Rendiment",
-    description: "Valor històric de la cartera, període a període.",
+    description: "Valor històric de la cartera,
+    emptyState: "Afig actius primer per veure el teu rendiment històric.", període a període.",
   },
   cashflow: {
     metaTitle: "Flux de caixa — Elegant Portfolio Tracker",

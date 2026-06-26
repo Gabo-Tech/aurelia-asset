@@ -199,6 +199,7 @@ const en = {
     metaDesc: "Track returns over time across your assets.",
     title: "Performance",
     description: "Historical portfolio value, period over period.",
+    emptyState: "Add holdings first to see your historical performance.",
   },
   cashflow: {
     metaTitle: "Cashflow — Elegant Portfolio Tracker",
