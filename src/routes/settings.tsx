@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useStore } from "@/lib/store";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -25,12 +26,15 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { PageHeader } from "@/components/app-shell";
-import { Download, Upload, RotateCcw, FileJson, FileSpreadsheet } from "lucide-react";
+import { Download, Upload, RotateCcw, FileJson, FileSpreadsheet, Languages } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
 import type { AppState } from "@/lib/types";
 import { secureGet, secureSet } from "@/lib/secure-storage";
 import { CURRENCIES } from "@/lib/currency";
+import { useLanguage } from "@/i18n/use-language";
+import { SUPPORTED_LANGUAGES, LANG_STORAGE_KEY, type LanguageCode } from "@/i18n";
+import i18n from "@/i18n";
 
 const ALLOWED_CORS_PROXIES = [
   "https://corsproxy.io/?",
@@ -80,6 +84,7 @@ const cashflowSchema = z.object({
   recurrence: recurrenceSchema.optional(),
   amountKind: z.enum(["fixed", "percent"]).optional(),
   percentOf: z.string().max(128).optional(),
+  description: z.string().max(500).optional(),
 });
 
 const transactionSchema = z.object({
@@ -118,15 +123,21 @@ const appStateSchema = z.object({
   settings: settingsSchema,
 });
 
-/** Wrapper format for portfolio exports. Includes the validated app state plus
- *  any UI preferences kept in separate localStorage keys (e.g. Sankey colors). */
+const SUPPORTED_LANG_CODES = SUPPORTED_LANGUAGES.map((l) => l.code) as readonly string[];
+const userPrefsSchema = z
+  .object({
+    language: z.string().max(32).optional(),
+  })
+  .partial();
+
 const PREF_KEY_PREFIX = "ept_";
-const PREF_KEY_DENY = new Set(["ept_state_v1"]); // app state is exported separately
+const PREF_KEY_DENY = new Set(["ept_state_v1"]);
 const exportEnvelopeSchema = z.object({
   version: z.literal(1).optional(),
   exportedAt: z.string().max(64).optional(),
   state: appStateSchema,
   preferences: z.record(z.string().max(128), z.string().max(200_000)).optional(),
+  userPreferences: userPrefsSchema.optional(),
 });
 
 function collectPreferences(): Promise<Record<string, string>> {
@@ -164,12 +175,11 @@ async function applyPreferences(prefs: Record<string, string>) {
   } catch {}
 }
 
-
 export const Route = createFileRoute("/settings")({
   head: () => ({
     meta: [
-      { title: "Settings — Elegant Portfolio Tracker" },
-      { name: "description", content: "API options, import/export, and data management." },
+      { title: i18n.t("settings.metaTitle") },
+      { name: "description", content: i18n.t("settings.metaDesc") },
     ],
   }),
   component: SettingsPage,
@@ -177,6 +187,8 @@ export const Route = createFileRoute("/settings")({
 
 function SettingsPage() {
   const { state, updateSettings, importState, reset } = useStore();
+  const { t } = useTranslation();
+  const { language, setLanguage, languages } = useLanguage();
   const [finnhub, setFinnhub] = useState(state.settings.finnhubKey ?? "");
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -186,11 +198,11 @@ function SettingsPage() {
       exportedAt: new Date().toISOString(),
       state,
       preferences: await collectPreferences(),
+      userPreferences: { language },
     };
     const blob = new Blob([JSON.stringify(envelope, null, 2)], { type: "application/json" });
     download(blob, `portfolio-${new Date().toISOString().slice(0, 10)}.json`);
   }
-
 
   function exportCsv() {
     const rows = [
@@ -213,13 +225,14 @@ function SettingsPage() {
     file.text().then(async (txt) => {
       try {
         const raw = JSON.parse(txt);
-        // Accept both the new envelope format and legacy bare-AppState exports.
         const envelope = exportEnvelopeSchema.safeParse(raw);
         let parsedState: AppState;
         let prefs: Record<string, string> | undefined;
+        let userPrefs: { language?: string } | undefined;
         if (envelope.success) {
           parsedState = envelope.data.state as AppState;
           prefs = envelope.data.preferences;
+          userPrefs = envelope.data.userPreferences;
         } else {
           const legacy = appStateSchema.safeParse(raw);
           if (!legacy.success) {
@@ -232,32 +245,37 @@ function SettingsPage() {
         }
         importState(parsedState);
         if (prefs) await applyPreferences(prefs);
-
-        toast.success("Data imported");
+        if (userPrefs?.language && SUPPORTED_LANG_CODES.includes(userPrefs.language)) {
+          setLanguage(userPrefs.language as LanguageCode);
+        } else {
+          // Backwards compat: also check the persisted language key inside `prefs`
+          const fromPrefs = prefs?.[LANG_STORAGE_KEY];
+          if (fromPrefs && SUPPORTED_LANG_CODES.includes(fromPrefs)) {
+            setLanguage(fromPrefs as LanguageCode);
+          }
+        }
+        toast.success(t("settings.data.imported"));
       } catch (e) {
-        toast.error("Couldn't import: " + (e as Error).message);
+        toast.error(`${t("settings.data.importFailed")}: ${(e as Error).message}`);
       }
     });
   }
 
   return (
     <>
-      <PageHeader title="Settings" description="API options and data management." />
+      <PageHeader title={t("settings.title")} description={t("settings.description")} />
 
       <div className="grid gap-5 lg:grid-cols-2">
         <Card className="border-border/60">
           <CardHeader>
-            <CardTitle>API & reliability</CardTitle>
-            <CardDescription>
-              CoinGecko and Yahoo Finance work without keys. Finnhub is optional fallback.
-            </CardDescription>
+            <CardTitle>{t("settings.api.title")}</CardTitle>
+            <CardDescription>{t("settings.api.description")}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-5">
             <div>
-              <Label className="text-sm">Display currency</Label>
+              <Label className="text-sm">{t("settings.api.displayCurrency")}</Label>
               <p className="text-xs text-muted-foreground mt-0.5 mb-2">
-                All values across the app are converted to this currency using live FX
-                rates (cached for 6 hours).
+                {t("settings.api.displayCurrencyHelp")}
               </p>
               <Select
                 value={state.settings.displayCurrency || "USD"}
@@ -278,10 +296,9 @@ function SettingsPage() {
 
             <div className="flex items-start justify-between gap-4">
               <div>
-                <Label className="text-sm">Privacy mode</Label>
+                <Label className="text-sm">{t("settings.api.privacyMode")}</Label>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Hide quantities and dollar values across the app (the eye icon in the
-                  header does the same thing).
+                  {t("settings.api.privacyModeHelp")}
                 </p>
               </div>
               <Switch
@@ -292,9 +309,9 @@ function SettingsPage() {
 
             <div className="flex items-start justify-between gap-4">
               <div>
-                <Label className="text-sm">Use CORS proxy</Label>
+                <Label className="text-sm">{t("settings.api.useCorsProxy")}</Label>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Enable if Yahoo Finance requests are blocked in your browser.
+                  {t("settings.api.useCorsProxyHelp")}
                 </p>
               </div>
               <Switch
@@ -304,7 +321,7 @@ function SettingsPage() {
             </div>
 
             <div>
-              <Label className="text-sm">CORS proxy URL</Label>
+              <Label className="text-sm">{t("settings.api.corsProxyUrl")}</Label>
               <Select
                 value={state.settings.corsProxy}
                 onValueChange={(v) => updateSettings({ corsProxy: v })}
@@ -320,113 +337,121 @@ function SettingsPage() {
             </div>
 
             <div>
-              <Label className="text-sm">Finnhub API key (optional)</Label>
+              <Label className="text-sm">{t("settings.api.finnhubKey")}</Label>
               <div className="mt-1.5 flex gap-2">
                 <Input
                   type="password"
                   value={finnhub}
                   onChange={(e) => setFinnhub(e.target.value)}
-                  placeholder="paste key from finnhub.io"
+                  placeholder={t("settings.api.finnhubPlaceholder")}
                 />
                 <Button
                   onClick={() => {
                     updateSettings({ finnhubKey: finnhub.trim() || undefined });
-                    toast.success("Saved");
+                    toast.success(t("settings.api.saved"));
                   }}
                 >
-                  Save
+                  {t("common.save")}
                 </Button>
               </div>
-              <p className="text-xs text-muted-foreground mt-2">
-                Free at{" "}
-                <a className="underline" href="https://finnhub.io" target="_blank" rel="noreferrer">
-                  finnhub.io
-                </a>
-                . Used as fallback for stocks when Yahoo fails.
-              </p>
+              <p className="text-xs text-muted-foreground mt-2">{t("settings.api.finnhubFootnote")}</p>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-border/60">
-          <CardHeader>
-            <CardTitle>Data</CardTitle>
-            <CardDescription>
-              All state lives in your browser localStorage. Back up or move it anytime.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <Button variant="outline" className="w-full justify-start" onClick={exportJson}>
-              <FileJson className="mr-2 h-4 w-4" /> Export full state (JSON)
-            </Button>
-            <Button variant="outline" className="w-full justify-start" onClick={exportCsv}>
-              <FileSpreadsheet className="mr-2 h-4 w-4" /> Export holdings (CSV)
-            </Button>
-            <Button
-              variant="outline"
-              className="w-full justify-start"
-              onClick={() => fileRef.current?.click()}
-            >
-              <Upload className="mr-2 h-4 w-4" /> Import JSON
-            </Button>
-            <input
-              ref={fileRef}
-              type="file"
-              accept="application/json"
-              hidden
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (f) handleImport(f);
-                e.target.value = "";
-              }}
-            />
+        <div className="space-y-5">
+          <Card className="border-border/60">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Languages className="h-4 w-4" />
+                {t("settings.language.title")}
+              </CardTitle>
+              <CardDescription>{t("settings.language.description")}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Label className="text-sm">{t("settings.language.label")}</Label>
+              <Select value={language} onValueChange={(v) => setLanguage(v as LanguageCode)}>
+                <SelectTrigger className="mt-1.5">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {languages.map((l) => (
+                    <SelectItem key={l.code} value={l.code}>
+                      {l.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </CardContent>
+          </Card>
 
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="destructive" className="w-full justify-start">
-                  <RotateCcw className="mr-2 h-4 w-4" /> Reset all data
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Delete everything?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This removes all holdings, cashflow entries, and settings from this browser.
-                    Export a backup first if you want to keep it.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={() => {
-                      reset();
-                      toast.success("All data cleared");
-                    }}
-                  >
-                    Yes, delete
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </CardContent>
-        </Card>
+          <Card className="border-border/60">
+            <CardHeader>
+              <CardTitle>{t("settings.data.title")}</CardTitle>
+              <CardDescription>{t("settings.data.description")}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Button variant="outline" className="w-full justify-start" onClick={exportJson}>
+                <FileJson className="mr-2 h-4 w-4" /> {t("settings.data.exportJson")}
+              </Button>
+              <Button variant="outline" className="w-full justify-start" onClick={exportCsv}>
+                <FileSpreadsheet className="mr-2 h-4 w-4" /> {t("settings.data.exportCsv")}
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                onClick={() => fileRef.current?.click()}
+              >
+                <Upload className="mr-2 h-4 w-4" /> {t("settings.data.importJson")}
+              </Button>
+              <input
+                ref={fileRef}
+                type="file"
+                accept="application/json"
+                hidden
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) handleImport(f);
+                  e.target.value = "";
+                }}
+              />
+
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" className="w-full justify-start">
+                    <RotateCcw className="mr-2 h-4 w-4" /> {t("settings.data.reset")}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>{t("settings.data.resetTitle")}</AlertDialogTitle>
+                    <AlertDialogDescription>{t("settings.data.resetDesc")}</AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => {
+                        reset();
+                        toast.success(t("settings.data.cleared"));
+                      }}
+                    >
+                      {t("settings.data.resetConfirm")}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       <Card className="border-border/60 mt-5">
         <CardHeader>
-          <CardTitle>About</CardTitle>
+          <CardTitle>{t("settings.about.title")}</CardTitle>
         </CardHeader>
         <CardContent className="text-sm text-muted-foreground space-y-2">
-          <p>
-            <span className="text-foreground font-medium">Elegant Portfolio Tracker</span> is a
-            fully client-side app. Prices come from CoinGecko (crypto) and Yahoo Finance
-            (stocks/ETFs/metals). No account, no backend.
-          </p>
-          <p>
-            For metals use Yahoo symbols like{" "}
-            <span className="font-mono text-foreground">GC=F</span> (gold) or{" "}
-            <span className="font-mono text-foreground">SI=F</span> (silver).
-          </p>
+          <p>{t("settings.about.body")}</p>
+          <p>{t("settings.about.metalsHint")}</p>
         </CardContent>
       </Card>
 

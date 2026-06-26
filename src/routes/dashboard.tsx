@@ -17,12 +17,14 @@ import { ArrowUpRight, Wallet, TrendingUp, TrendingDown, PiggyBank } from "lucid
 import { PageHeader } from "@/components/app-shell";
 import { ChartFrame } from "@/components/chart-frame";
 import { expandCashflows, valuesByEntry } from "@/routes/cashflow";
+import { useTranslation } from "react-i18next";
+import i18n from "@/i18n";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
     meta: [
-      { title: "Dashboard — Portfolio Tracker" },
-      { name: "description", content: "Your portfolio at a glance — allocation, value, and recent activity." },
+      { title: i18n.t("dashboard.metaTitle") },
+      { name: "description", content: i18n.t("dashboard.metaDesc") },
     ],
   }),
   component: Dashboard,
@@ -32,6 +34,7 @@ function Dashboard() {
   const { state } = useStore();
   const { mask, toDisplay, privacy, currency } = useMoney();
   const { holdings, cashflows } = state;
+  const { t } = useTranslation();
   const [showAllLabels, setShowAllLabels] = useState(false);
   const [activeIdx, setActiveIdx] = useState<number | null>(null);
   const [hidden, setHidden] = useState<Set<string>>(new Set());
@@ -112,7 +115,7 @@ function Dashboard() {
   if (!holdings.length) {
     return (
       <>
-        <PageHeader title="Dashboard" description="Welcome to your portfolio." />
+        <PageHeader title={t("dashboard.title")} description={t("dashboard.description")} />
         <EmptyState />
       </>
     );
@@ -121,22 +124,21 @@ function Dashboard() {
   return (
     <>
       <PageHeader
-        title="Dashboard"
-        description="A high-level view of your portfolio."
+        title={t("dashboard.title")}
+        description={t("dashboard.description")}
         actions={
           <Button asChild>
-            <Link to="/holdings">Manage holdings</Link>
+            <Link to="/holdings">{t("nav.holdings")}</Link>
           </Button>
         }
       />
 
       <div className="grid gap-5 lg:grid-cols-4">
-        {/* Total value hero */}
         <Card className="lg:col-span-2 relative overflow-hidden border-border/60">
           <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent pointer-events-none" />
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total portfolio value
+              {t("dashboard.portfolioValue")}
             </CardTitle>
           </CardHeader>
           <CardContent>

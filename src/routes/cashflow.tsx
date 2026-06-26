@@ -17,6 +17,8 @@ import {
 } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { PageHeader } from "@/components/app-shell";
+import { useTranslation } from "react-i18next";
+import i18n from "@/i18n";
 import { ChartFrame } from "@/components/chart-frame";
 import { CURRENCIES } from "@/lib/currency";
 import { formatMoney } from "@/lib/format";
@@ -47,8 +49,8 @@ import autoTable from "jspdf-autotable";
 export const Route = createFileRoute("/cashflow")({
   head: () => ({
     meta: [
-      { title: "Cashflow — Elegant Portfolio Tracker" },
-      { name: "description", content: "Track income and expenses with a beautiful Sankey diagram." },
+      { title: i18n.t("cashflow.metaTitle") },
+      { name: "description", content: i18n.t("cashflow.metaDesc") },
     ],
   }),
   component: CashflowPage,
@@ -191,6 +193,7 @@ function CashflowPage() {
   const { state, addCashflow, updateCashflow, removeCashflow, addCategory, updateCategory, removeCategory } = useStore();
   const { mask, toDisplay, currency, privacy, MASK } = useMoney();
   const { cashflows, categories } = state;
+  const { t } = useTranslation();
 
   const [prefs, setPrefs] = useState<Prefs>(DEFAULT_PREFS);
   const [prefsLoaded, setPrefsLoaded] = useState(false);
@@ -322,7 +325,7 @@ function CashflowPage() {
 
   return (
     <>
-      <PageHeader title="Cashflow" description="Income and expenses, visualized." />
+      <PageHeader title={t("cashflow.title")} description={t("cashflow.description")} />
 
       <div className="grid grid-cols-3 gap-2 sm:gap-5">
         <StatCard label="Income" value={privacy ? MASK : formatMoney(totals.income, currency)} tone="success" />
