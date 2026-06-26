@@ -17,6 +17,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PageHeader } from "@/components/app-shell";
+import { useTranslation } from "react-i18next";
+import i18n from "@/i18n";
 import { ChartFrame } from "@/components/chart-frame";
 import { fetchPortfolioHistory, PERIODS, type PeriodId } from "@/lib/finance";
 import { formatPct, formatMoney, MASK } from "@/lib/format";
@@ -26,8 +28,8 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/performance")({
   head: () => ({
     meta: [
-      { title: "Performance — Elegant Portfolio Tracker" },
-      { name: "description", content: "Historical portfolio performance with per-asset breakdown." },
+      { title: i18n.t("performance.metaTitle") },
+      { name: "description", content: i18n.t("performance.metaDesc") },
     ],
   }),
   component: PerformancePage,
@@ -35,6 +37,7 @@ export const Route = createFileRoute("/performance")({
 
 function PerformancePage() {
   const { state } = useStore();
+  const { t } = useTranslation();
   const { currency, rates, mask, privacy } = useMoney();
   const [period, setPeriod] = useState<PeriodId>("1M");
   const [hidden, setHidden] = useState<Set<string>>(new Set());
@@ -132,10 +135,10 @@ function PerformancePage() {
   if (!state.holdings.length) {
     return (
       <>
-        <PageHeader title="Performance" />
+        <PageHeader title={t("performance.title")} />
         <Card className="border-dashed border-border/70">
           <CardContent className="p-10 text-center text-sm text-muted-foreground">
-            Add holdings first to see your historical performance.
+            {t("performance.emptyState")}
           </CardContent>
         </Card>
       </>
@@ -145,8 +148,8 @@ function PerformancePage() {
   return (
     <>
       <PageHeader
-        title="Performance"
-        description="Historical portfolio value, period over period."
+        title={t("performance.title")}
+        description={t("performance.description")}
       />
 
       <div className="mb-4 flex flex-wrap gap-1.5">

@@ -1,5 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import {
   LayoutDashboard,
   Wallet,
@@ -16,22 +17,24 @@ import { SponsorBanner } from "./sponsor-banner";
 import { PageLoader } from "./page-loader";
 import logoAsset from "@/assets/logo.png.asset.json";
 
-const nav = [
-  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/holdings", label: "Holdings", icon: Wallet },
-  { to: "/performance", label: "Performance", icon: TrendingUp },
-  { to: "/cashflow", label: "Cashflow", icon: ArrowLeftRight },
-  { to: "/settings", label: "Settings", icon: SettingsIcon },
+const navItems = [
+  { to: "/dashboard", key: "dashboard", icon: LayoutDashboard },
+  { to: "/holdings", key: "holdings", icon: Wallet },
+  { to: "/performance", key: "performance", icon: TrendingUp },
+  { to: "/cashflow", key: "cashflow", icon: ArrowLeftRight },
+  { to: "/settings", key: "settings", icon: SettingsIcon },
 ] as const;
 
 function PrivacyToggle({ className }: { className?: string }) {
   const { privacy, toggle } = usePrivacy();
+  const { t } = useTranslation();
+  const label = privacy ? t("shell.showValues") : t("shell.hideValues");
   return (
     <button
       type="button"
       onClick={toggle}
-      title={privacy ? "Show values" : "Hide values"}
-      aria-label={privacy ? "Show values" : "Hide values"}
+      title={label}
+      aria-label={label}
       aria-pressed={privacy}
       className={cn(
         "grid h-8 w-8 place-items-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-sidebar-accent/60 transition-colors",
@@ -49,6 +52,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { hydrated } = useStore();
   const fxReady = useFxReady();
   const ready = hydrated && fxReady;
+  const { t } = useTranslation();
+  const nav = navItems.map((n) => ({ ...n, label: t(`nav.${n.key}`) }));
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -58,8 +63,8 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="flex items-center gap-2 px-6 py-7">
             <img src={logoAsset.url} alt="Logo" className="h-9 w-9 rounded-xl object-contain" />
             <div className="min-w-0 flex-1">
-              <div className="text-sm font-semibold tracking-tight">Elegant</div>
-              <div className="text-xs text-muted-foreground">Portfolio Tracker</div>
+              <div className="text-sm font-semibold tracking-tight">{t("shell.brand")}</div>
+              <div className="text-xs text-muted-foreground">{t("shell.brandTagline")}</div>
             </div>
             <PrivacyToggle />
           </div>
@@ -94,7 +99,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <header className="md:hidden flex items-center justify-between px-4 py-3 border-b border-border/60 bg-sidebar/95 backdrop-blur sticky top-0 z-20">
           <Link to="/dashboard" className="flex items-center gap-2 min-w-0">
             <img src={logoAsset.url} alt="Logo" className="h-8 w-8 shrink-0 rounded-lg object-contain" />
-            <div className="truncate font-semibold text-sm">Elegant Portfolio</div>
+            <div className="truncate font-semibold text-sm">{t("shell.brand")} {t("shell.brandTagline")}</div>
           </Link>
           <PrivacyToggle />
         </header>
@@ -103,7 +108,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <main className="flex-1 min-w-0 pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-12 flex flex-col">
           <div className="flex-1 px-4 sm:px-8 2xl:px-12 3xl:px-16 py-6 sm:py-10">{ready ? children : <PageLoader />}</div>
           <footer className="hidden md:flex mt-8 border-t border-border/60 px-4 sm:px-8 py-4 flex-wrap items-center justify-between gap-3 text-[11px] text-muted-foreground/80">
-            <span>Local-only · data stays in your browser</span>
+            <span>{t("shell.footerNote")}</span>
             <SponsorBanner variant="inline" />
           </footer>
         </main>

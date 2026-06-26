@@ -27,6 +27,8 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { Plus, MoreVertical, RefreshCw, ArrowUpDown, Trash2, Pencil, Loader2, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { PageHeader } from "@/components/app-shell";
+import { useTranslation } from "react-i18next";
+import i18n from "@/i18n";
 import { HoldingDialog } from "@/components/holding-dialog";
 import { TransactionDialog } from "@/components/transaction-dialog";
 import { TransactionsPanel } from "@/components/transactions-panel";
@@ -40,8 +42,8 @@ import type { Holding } from "@/lib/types";
 export const Route = createFileRoute("/holdings")({
   head: () => ({
     meta: [
-      { title: "Holdings — Elegant Portfolio Tracker" },
-      { name: "description", content: "Manage your stocks, crypto, ETFs and metals." },
+      { title: i18n.t("holdings.metaTitle") },
+      { name: "description", content: i18n.t("holdings.metaDesc") },
     ],
   }),
   component: HoldingsPage,
@@ -51,6 +53,7 @@ type SortKey = "symbol" | "type" | "quantity" | "currentPrice" | "marketValue" |
 
 function HoldingsPage() {
   const { state, removeHolding, updateHolding } = useStore();
+  const { t } = useTranslation();
   const { mask, toDisplay, privacy, currency } = useMoney();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Holding | null>(null);
@@ -140,8 +143,8 @@ function HoldingsPage() {
   return (
     <>
       <PageHeader
-        title="Holdings"
-        description={`${state.holdings.length} positions · ${maskMoney(total, currency, privacy)}`}
+        title={t("holdings.title")}
+        description={`${state.holdings.length} ${t("holdings.positionsCount")} · ${maskMoney(total, currency, privacy)}`}
         actions={
           <>
             <Button variant="outline" onClick={refreshPrices} disabled={refreshing}>
@@ -150,7 +153,7 @@ function HoldingsPage() {
               ) : (
                 <RefreshCw className="mr-2 h-4 w-4" />
               )}
-              Refresh
+              {t("holdings.refresh")}
             </Button>
             <Button
               onClick={() => {
@@ -158,7 +161,7 @@ function HoldingsPage() {
                 setOpen(true);
               }}
             >
-              <Plus className="mr-2 h-4 w-4" /> Add holding
+              <Plus className="mr-2 h-4 w-4" /> {t("holdings.addHolding")}
             </Button>
           </>
         }
