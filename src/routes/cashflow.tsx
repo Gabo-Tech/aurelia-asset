@@ -1037,6 +1037,7 @@ function EditEntryDialog({
     setUntil(entry.recurrence?.until ? format(new Date(entry.recurrence.until), "yyyy-MM-dd") : "");
     setIsPercent((entry.amountKind ?? "fixed") === "percent");
     setPercentOf(entry.percentOf ?? "all-income");
+    setDescription(entry.description ?? "");
   }, [entry]);
 
   const visibleCategories = useMemo(
