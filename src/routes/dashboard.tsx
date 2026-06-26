@@ -127,7 +127,7 @@ function Dashboard() {
         }
       />
 
-      <div className="grid gap-5 lg:grid-cols-3">
+      <div className="grid gap-5 lg:grid-cols-4">
         {/* Total value hero */}
         <Card className="lg:col-span-2 relative overflow-hidden border-border/60">
           <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent pointer-events-none" />
@@ -150,6 +150,31 @@ function Dashboard() {
                 </>
               ) : null}
             </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-border/60">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Net worth
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-semibold tracking-tight">
+              {mask(netWorth)}
+            </div>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Holdings{" "}
+              <span
+                className={
+                  cashflowBalance >= 0 ? "text-success" : "text-destructive"
+                }
+              >
+                {cashflowBalance >= 0 ? "+" : "−"}
+                {mask(Math.abs(cashflowBalance))}
+              </span>{" "}
+              cashflow
+            </p>
           </CardContent>
         </Card>
 
