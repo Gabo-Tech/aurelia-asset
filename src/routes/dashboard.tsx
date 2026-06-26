@@ -176,7 +176,7 @@ function Dashboard() {
                 {cashflowBalance >= 0 ? "+" : "−"}
                 {mask(Math.abs(cashflowBalance), currency)}
               </span>{" "}
-              cashflow
+              liquidity
             </p>
           </CardContent>
         </Card>
