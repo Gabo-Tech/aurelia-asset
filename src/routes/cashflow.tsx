@@ -293,7 +293,7 @@ function CashflowPage() {
 
     if (!links.length) return null;
     return { nodes, links };
-  }, [expandedToToday, valuesTop, prefs.nodeColors, catByName]);
+  }, [expandedToToday, valuesTop, prefs.nodeColors, prefs.incomeOrder, prefs.expenseOrder, catByName]);
 
 
   // Unique node names for the color customizer.
