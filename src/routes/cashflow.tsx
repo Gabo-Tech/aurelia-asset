@@ -372,6 +372,14 @@ function CashflowPage() {
                     height={420}
                     labelMode={prefs.labelMode}
                     format={(v: number) => (privacy ? MASK : formatMoney(v, currency))}
+                    onReorder={(kind, names) =>
+                      setPrefs((p) => ({
+                        ...p,
+                        ...(kind === "income"
+                          ? { incomeOrder: names }
+                          : { expenseOrder: names }),
+                      }))
+                    }
                   />
                 ) : (
                   <div className="grid h-80 place-items-center text-sm text-muted-foreground">
