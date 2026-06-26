@@ -1151,6 +1151,17 @@ function EditEntryDialog({
             <Label className="text-xs">{recurring ? "Start date" : "Date"}</Label>
             <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="mt-1.5" />
           </div>
+          <div>
+            <Label className="text-xs">Description (optional)</Label>
+            <Input
+              type="text"
+              maxLength={200}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Short note"
+              className="mt-1.5"
+            />
+          </div>
           <div className="rounded-md border border-border/60 p-3 space-y-3">
             <label className="flex items-center gap-2 text-sm">
               <input
