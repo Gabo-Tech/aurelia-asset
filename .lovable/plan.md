@@ -1,21 +1,36 @@
-# Add Net Worth stat to Dashboard
+## Why the numbers disagree
 
-## Goal
-Keep **Total portfolio value** as holdings-only, and add a new **Net worth** stat that = portfolio value + cumulative cashflow balance (all income − all expenses, including recurrences, in the display currency).
+- **Net worth's "+€988.57 cashflow"** is the all-time cumulative balance. It uses `expandCashflows` (projects every recurring entry up to today) and `valuesByEntry` (resolves `%` entries against their `percentOf` target).
+- **"Cashflow · last 30 days = −€1,060.04"** filters raw `cashflows` by stored `date` and sums `amount` directly. It therefore:
+  1. Skips recurring incomes/expenses whose original `date` is older than 30 days (a salary entered months ago contributes nothing this month).
+  2. Treats `%` entries as literal currency amounts.
+  3. Doesn't apply percent-of-target math, so deductions look right but the income they depend on is missing.
 
-## Changes
+Net result: recurring income gets dropped from the 30‑day window while recurring/percent expenses still appear (or vice versa), producing the +€988 vs −€1,060 mismatch.
 
-### `src/routes/dashboard.tsx`
-1. Import `expandCashflows` from `src/routes/cashflow.tsx` (or extract to `src/lib/cashflow.ts` if not already exported — quick check; if extraction is needed, move the helper to a shared lib file and re-import in both places).
-2. Compute `cashflowBalance`:
-   - Expand recurring entries up to today.
-   - Sum `+income / −expense` converted via `toDisplay(amount, currency)`.
-   - Respect `amountKind: "percent"` using the same resolution logic already used in cashflow (reuse helper if exported; otherwise compute fixed-only balance and note percent entries are excluded — confirm with user if needed).
-3. Compute `netWorth = portfolioTotal + cashflowBalance`.
-4. Update the stats grid: add a new card **"Net worth"** next to **"Total portfolio value"**, using `mask(netWorth)`. Subtitle shows the cashflow delta (e.g. `+€1,240 from cashflow` in success/destructive color).
-5. Leave existing **Net (30d)** card as-is.
+## Fix
 
-## Notes
-- Sign convention: expenses reduce net worth.
-- Privacy mode already handled via `mask()`.
-- No changes to data model or storage.
+Single change in `src/routes/dashboard.tsx`: replace the `net30` calculation so it uses the same pipeline as `cashflowBalance`, just windowed.
+
+```ts
+const net30 = useMemo(() => {
+  const now = new Date();
+  const cutoff = now.getTime() - 30 * 86400000;
+  const expanded = expandCashflows(cashflows, now);
+  const values = valuesByEntry(expanded, toDisplay);
+  let bal = 0;
+  for (const e of expanded) {
+    if (new Date(e.date).getTime() < cutoff) continue;
+    const v = values.get(e.id) ?? 0;
+    bal += (e.kind === "income" ? 1 : -1) * v;
+  }
+  return bal;
+}, [cashflows, toDisplay]);
+```
+
+After this:
+- Recurring entries contribute their occurrences that fall inside the last 30 days.
+- `%` entries resolve against their target, just like the net-worth card.
+- The "Cashflow · last 30 days" value becomes a true subset of the cumulative cashflow shown under Net worth, so the signs and magnitudes stay coherent.
+
+No other files or behaviours change.
