@@ -89,8 +89,10 @@ function LandingPage() {
       <Features />
       <HowItWorks />
       <Comparison />
+      <Downloads />
       <FAQ />
       <FinalCTA />
+
       <SiteFooter />
     </div>
   );
