@@ -133,7 +133,7 @@ export function SponsorBanner({
           {s.name}
         </span>
         {s.tagline ? (
-          <span className="hidden truncate sm:inline">— {s.tagline}</span>
+          <span className="hidden truncate sm:inline">- {s.tagline}</span>
         ) : null}
       </a>
     );

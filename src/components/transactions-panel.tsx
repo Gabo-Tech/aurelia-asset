@@ -195,7 +195,7 @@ export function TransactionsPanel() {
                         <td className="py-2.5">
                           <div className="flex items-center gap-1.5">
                             {h && <span className="h-2 w-2 rounded-full" style={{ backgroundColor: h.color }} />}
-                            <span className="font-medium">{h?.symbol ?? "—"}</span>
+                            <span className="font-medium">{h?.symbol ?? "-"}</span>
                             {h && <span className="text-muted-foreground text-xs truncate max-w-[140px]">{h.name}</span>}
                           </div>
                           {t.notes && (
@@ -207,7 +207,7 @@ export function TransactionsPanel() {
                         <td className="py-2.5 text-right tabular-nums">{t.quantity}</td>
                         <td className="py-2.5 text-right tabular-nums">{formatMoney(t.pricePerUnit, cur)}</td>
                         <td className="py-2.5 text-right tabular-nums text-muted-foreground">
-                          {t.fees ? formatMoney(t.fees, cur) : "—"}
+                          {t.fees ? formatMoney(t.fees, cur) : "-"}
                         </td>
                         <td className={cn(
                           "py-2.5 text-right tabular-nums font-medium",

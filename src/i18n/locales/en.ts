@@ -52,7 +52,7 @@ const en = {
       titleStart: "Your whole portfolio,",
       titleHighlight: "in one private dashboard",
       subtitle:
-        "Track stocks, ETFs, crypto and metals. Visualize allocation, performance and cashflow with elegant charts — without handing your data to anyone.",
+        "Track stocks, ETFs, crypto and metals. Visualize allocation, performance and cashflow with elegant charts - without handing your data to anyone.",
       ctaPrimary: "Launch the tracker",
       ctaSecondary: "See what's inside",
       screenshotAlt: "Portfolio Tracker dashboard showing allocation pie chart and cashflow",
@@ -69,7 +69,7 @@ const en = {
       items: {
         assets: {
           title: "All your assets, one view",
-          body: "Stocks, ETFs, crypto, metals and custom holdings — managed side by side, in your display currency.",
+          body: "Stocks, ETFs, crypto, metals and custom holdings - managed side by side, in your display currency.",
         },
         performance: {
           title: "Performance you can read at a glance",
@@ -81,7 +81,7 @@ const en = {
         },
         categories: {
           title: "Custom categories",
-          body: "Create your own income sources and expense categories — including savings and investments — with personal colors.",
+          body: "Create your own income sources and expense categories - including savings and investments - with personal colors.",
         },
         private: {
           title: "Private by design",
@@ -95,11 +95,11 @@ const en = {
     },
     how: {
       heading: "From zero to insight in 60 seconds",
-      cta: "Try it now — free",
+      cta: "Try it now - free",
       steps: {
         one: { title: "Open the app", body: "No signup. The tracker loads instantly and runs entirely in your browser." },
         two: { title: "Add your holdings & cashflow", body: "Search a ticker or enter a custom asset. Log income and expenses with your own categories." },
-        three: { title: "Watch your portfolio come to life", body: "Allocation, performance, net worth and Sankey cashflow — auto-updating with live market prices." },
+        three: { title: "Watch your portfolio come to life", body: "Allocation, performance, net worth and Sankey cashflow - auto-updating with live market prices." },
       },
     },
     comparison: {
@@ -122,7 +122,7 @@ const en = {
       items: {
         free: {
           q: "Is the portfolio tracker really free?",
-          a: "Yes — every feature is free, with no signup and no premium tier. The app runs entirely in your browser.",
+          a: "Yes - every feature is free, with no signup and no premium tier. The app runs entirely in your browser.",
         },
         storage: {
           q: "Where is my data stored?",
@@ -134,7 +134,7 @@ const en = {
         },
         account: {
           q: "Do I need an account?",
-          a: "No — open the app and start tracking immediately. There is no login, no email collection, no analytics on your holdings.",
+          a: "No - open the app and start tracking immediately. There is no login, no email collection, no analytics on your holdings.",
         },
       },
     },
@@ -165,14 +165,14 @@ const en = {
       madeBy: "Made by",
     },
     meta: {
-      title: "Free Portfolio Tracker for Stocks, Crypto & ETFs — Private & Local",
+      title: "Free Portfolio Tracker for Stocks, Crypto & ETFs - Private & Local",
       description:
         "Track stocks, ETFs, crypto and precious metals in one elegant dashboard. 100% client-side, no signup, no tracking. See allocation, performance and cashflow in seconds.",
     },
   },
   dashboard: {
-    metaTitle: "Dashboard — Portfolio Tracker",
-    metaDesc: "Your portfolio at a glance — allocation, value, and recent activity.",
+    metaTitle: "Dashboard - Portfolio Tracker",
+    metaDesc: "Your portfolio at a glance - allocation, value, and recent activity.",
     title: "Dashboard",
     description: "Welcome to your portfolio.",
     portfolioValue: "Total portfolio value",
@@ -186,7 +186,7 @@ const en = {
     hideAll: "Hide all",
   },
   holdings: {
-    metaTitle: "Holdings — Elegant Portfolio Tracker",
+    metaTitle: "Holdings - Elegant Portfolio Tracker",
     metaDesc: "Manage your stocks, crypto, ETFs and metals.",
     title: "Holdings",
     description: "Manage your stocks, crypto, ETFs and metals.",
@@ -211,17 +211,17 @@ const en = {
     fees: "Fees",
   },
   performance: {
-    metaTitle: "Performance — Elegant Portfolio Tracker",
+    metaTitle: "Performance - Elegant Portfolio Tracker",
     metaDesc: "Track returns over time across your assets.",
     title: "Performance",
     description: "Historical portfolio value, period over period.",
     emptyState: "Add holdings first to see your historical performance.",
   },
   cashflow: {
-    metaTitle: "Cashflow — Elegant Portfolio Tracker",
+    metaTitle: "Cashflow - Elegant Portfolio Tracker",
     metaDesc: "Track income, expenses, savings and investments.",
     title: "Cashflow",
-    description: "Track every euro in and out — and visualize where it goes.",
+    description: "Track every euro in and out - and visualize where it goes.",
     income: "Income",
     expense: "Expense",
     expenses: "Expenses",
@@ -260,7 +260,7 @@ const en = {
     newCategory: "New category",
   },
   admin: {
-    title: "Admin — Sponsors",
+    title: "Admin - Sponsors",
     addSponsor: "Add sponsor",
     sponsorsSaved: "Sponsors saved to GitHub",
     wrongPassword: "Wrong password",
@@ -274,7 +274,7 @@ const en = {
     needName: "Each sponsor needs a name",
   },
   settings: {
-    metaTitle: "Settings — Elegant Portfolio Tracker",
+    metaTitle: "Settings - Elegant Portfolio Tracker",
     metaDesc: "API options, import/export, and data management.",
     title: "Settings",
     description: "API options and data management.",

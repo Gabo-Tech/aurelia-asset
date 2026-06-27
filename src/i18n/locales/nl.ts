@@ -49,7 +49,7 @@ const nl: Translation = {
       badge: "Geen registratie · Geen tracking · 100% in je browser",
       titleStart: "Je hele portefeuille,",
       titleHighlight: "in één privédashboard",
-      subtitle: "Volg aandelen, ETF's, crypto en metalen. Visualiseer allocatie, rendement en kasstroom met elegante grafieken — zonder je gegevens af te staan.",
+      subtitle: "Volg aandelen, ETF's, crypto en metalen. Visualiseer allocatie, rendement en kasstroom met elegante grafieken - zonder je gegevens af te staan.",
       ctaPrimary: "Start de tracker",
       ctaSecondary: "Bekijk wat er in zit",
       screenshotAlt: "Portfolio Tracker dashboard met allocatie-cirkeldiagram en kasstroom",
@@ -59,21 +59,21 @@ const nl: Translation = {
       heading: "Alles wat je nodig hebt om je geld echt te begrijpen",
       subheading: "Geen nóg een opgeblazen dashboard. Alleen de weergaven die helpen beslissen.",
       items: {
-        assets: { title: "Al je activa in één weergave", body: "Aandelen, ETF's, crypto, metalen en eigen posities — naast elkaar, in je weergavevaluta." },
+        assets: { title: "Al je activa in één weergave", body: "Aandelen, ETF's, crypto, metalen en eigen posities - naast elkaar, in je weergavevaluta." },
         performance: { title: "Rendement dat je in één oogopslag leest", body: "Tijdgewogen rendementen en historische grafieken op basis van gratis publieke marktdata." },
         sankey: { title: "Kasstroom-Sankey", body: "Inkomsten, uitgaven, spaargeld en beleggingen stromen door een mooi Sankey-diagram met eigen categorieën." },
-        categories: { title: "Eigen categorieën", body: "Maak je eigen inkomstenbronnen en uitgavencategorieën — inclusief sparen en beleggen — met eigen kleuren." },
+        categories: { title: "Eigen categorieën", body: "Maak je eigen inkomstenbronnen en uitgavencategorieën - inclusief sparen en beleggen - met eigen kleuren." },
         private: { title: "Privé door ontwerp", body: "Alles staat in je browser. Geen accounts, geen servers, geen analytics op je posities." },
         elegant: { title: "Elegant op elk scherm", body: "Ontworpen voor desktop en mobiel met een rustige, donkere, afleidingsvrije interface." },
       },
     },
     how: {
       heading: "Van nul naar inzicht in 60 seconden",
-      cta: "Probeer het nu — gratis",
+      cta: "Probeer het nu - gratis",
       steps: {
         one: { title: "Open de app", body: "Geen registratie. De tracker laadt direct en draait volledig in je browser." },
         two: { title: "Voeg posities en kasstroom toe", body: "Zoek een ticker of voer een eigen activum in. Registreer inkomsten en uitgaven met je eigen categorieën." },
-        three: { title: "Zie je portefeuille tot leven komen", body: "Allocatie, rendement, vermogen en Sankey-kasstroom — automatisch bijgewerkt met live marktprijzen." },
+        three: { title: "Zie je portefeuille tot leven komen", body: "Allocatie, rendement, vermogen en Sankey-kasstroom - automatisch bijgewerkt met live marktprijzen." },
       },
     },
     comparison: {
@@ -94,10 +94,10 @@ const nl: Translation = {
     faq: {
       heading: "Veelgestelde vragen",
       items: {
-        free: { q: "Is de tracker echt gratis?", a: "Ja — elke functie is gratis, zonder registratie of premium-laag. De app draait volledig in je browser." },
+        free: { q: "Is de tracker echt gratis?", a: "Ja - elke functie is gratis, zonder registratie of premium-laag. De app draait volledig in je browser." },
         storage: { q: "Waar staan mijn gegevens?", a: "Alles staat in je browser via localStorage. Niets wordt geüpload, gesynchroniseerd of gedeeld. Browseropslag wissen wist je portefeuille." },
         assets: { q: "Welke activa kan ik volgen?", a: "Aandelen, ETF's, cryptocurrencies, edelmetalen en elk eigen activum met handmatige prijs." },
-        account: { q: "Heb ik een account nodig?", a: "Nee — open de app en begin direct. Geen login, geen e-mail, geen analytics op je posities." },
+        account: { q: "Heb ik een account nodig?", a: "Nee - open de app en begin direct. Geen login, geen e-mail, geen analytics op je posities." },
       },
     },
     cta: {
@@ -123,13 +123,13 @@ const nl: Translation = {
     },
     footer: { brand: "Portfolio Tracker", madeBy: "Gemaakt door" },
     meta: {
-      title: "Gratis Portfolio Tracker voor aandelen, crypto & ETF's — Privé & lokaal",
+      title: "Gratis Portfolio Tracker voor aandelen, crypto & ETF's - Privé & lokaal",
       description: "Volg aandelen, ETF's, crypto en edelmetalen in één elegant dashboard. 100% client-side, geen registratie, geen tracking. Zie allocatie, rendement en kasstroom binnen seconden.",
     },
   },
   dashboard: {
-    metaTitle: "Dashboard — Portfolio Tracker",
-    metaDesc: "Je portefeuille in één oogopslag — allocatie, waarde en recente activiteit.",
+    metaTitle: "Dashboard - Portfolio Tracker",
+    metaDesc: "Je portefeuille in één oogopslag - allocatie, waarde en recente activiteit.",
     title: "Dashboard",
     description: "Welkom bij je portefeuille.",
     portfolioValue: "Totale portefeuillewaarde",
@@ -143,7 +143,7 @@ const nl: Translation = {
     hideAll: "Alles verbergen",
   },
   holdings: {
-    metaTitle: "Beleggingen — Elegant Portfolio Tracker",
+    metaTitle: "Beleggingen - Elegant Portfolio Tracker",
     metaDesc: "Beheer je aandelen, crypto, ETF's en metalen.",
     title: "Beleggingen",
     description: "Beheer je aandelen, crypto, ETF's en metalen.",
@@ -168,17 +168,17 @@ const nl: Translation = {
     fees: "Kosten",
   },
   performance: {
-    metaTitle: "Rendement — Elegant Portfolio Tracker",
+    metaTitle: "Rendement - Elegant Portfolio Tracker",
     metaDesc: "Volg het rendement van je activa over tijd.",
     title: "Rendement",
     description: "Historische portefeuillewaarde periode na periode.",
     emptyState: "Voeg eerst posities toe om je historische prestaties te zien.",
   },
   cashflow: {
-    metaTitle: "Kasstroom — Elegant Portfolio Tracker",
+    metaTitle: "Kasstroom - Elegant Portfolio Tracker",
     metaDesc: "Registreer inkomsten, uitgaven, sparen en beleggen.",
     title: "Kasstroom",
-    description: "Registreer elke euro in en uit — en zie waar het heen gaat.",
+    description: "Registreer elke euro in en uit - en zie waar het heen gaat.",
     income: "Inkomen",
     expense: "Uitgave",
     expenses: "Uitgaven",
@@ -213,7 +213,7 @@ const nl: Translation = {
     newCategory: "Nieuwe categorie",
   },
   admin: {
-    title: "Admin — Sponsors",
+    title: "Admin - Sponsors",
     addSponsor: "Sponsor toevoegen",
     sponsorsSaved: "Sponsors opgeslagen op GitHub",
     wrongPassword: "Verkeerd wachtwoord",
@@ -227,7 +227,7 @@ const nl: Translation = {
     needName: "Elke sponsor heeft een naam nodig",
   },
   settings: {
-    metaTitle: "Instellingen — Elegant Portfolio Tracker",
+    metaTitle: "Instellingen - Elegant Portfolio Tracker",
     metaDesc: "API-opties, importeren/exporteren en gegevensbeheer.",
     title: "Instellingen",
     description: "API-opties en gegevensbeheer.",

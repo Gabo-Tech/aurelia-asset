@@ -87,7 +87,7 @@ async function diagnoseGithubAccess(cfg: {
     return `GitHub rejected the token (401). Update GITHUB_TOKEN with a token that has "Contents: read & write" on ${cfg.repo}.`;
   }
   if (repoRes.status === 403) {
-    return `GitHub denied access (403). The token cannot reach ${cfg.repo} — check SSO authorization and "Contents" permission.`;
+    return `GitHub denied access (403). The token cannot reach ${cfg.repo} - check SSO authorization and "Contents" permission.`;
   }
   if (repoRes.status === 404) {
     return `Repository "${cfg.repo}" was not found, or the token has no access to it.`;

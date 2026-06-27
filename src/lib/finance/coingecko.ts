@@ -41,7 +41,7 @@ export async function getCryptoHistory(
   const key = `cg:hist:${coinId}:${days}`;
   const cached = getCache<{ t: number; p: number }[]>(key);
   if (cached) return cached.map((x) => ({ date: new Date(x.t), price: x.p }));
-  // Note: do NOT pass `interval=daily` — it's an Enterprise-only param on
+  // Note: do NOT pass `interval=daily` - it's an Enterprise-only param on
   // CoinGecko and makes the free tier return no data for short ranges.
   // Without it, the server auto-picks granularity (5m for days=1,
   // hourly for 2-90, daily >90).
