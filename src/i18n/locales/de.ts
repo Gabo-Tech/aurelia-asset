@@ -106,6 +106,21 @@ const de: Translation = {
       button: "Tracker öffnen",
       footnote: "Funktioniert in jedem modernen Browser · Mobilfreundlich",
     },
+    downloads: {
+      heading: "Hol dir die native App",
+      subheading: "Derselbe private Tracker, als native App für jede Plattform verpackt.",
+      web: "Oder einfach im Browser öffnen",
+      soon: "Demnächst",
+      platforms: {
+        windows: "Windows",
+        mac: "macOS",
+        linuxDeb: "Linux .deb",
+        linuxRpm: "Linux .rpm",
+        linuxAppImage: "Linux AppImage",
+        android: "Android",
+        ios: "iOS",
+      },
+    },
     footer: { brand: "Portfolio Tracker", madeBy: "Gemacht von" },
     meta: {
       title: "Kostenloser Portfolio-Tracker für Aktien, Krypto & ETFs — Privat & lokal",

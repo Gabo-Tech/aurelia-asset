@@ -106,6 +106,21 @@ const nl: Translation = {
       button: "Open de tracker",
       footnote: "Werkt in elke moderne browser · Mobielvriendelijk",
     },
+    downloads: {
+      heading: "Download de native app",
+      subheading: "Dezelfde privé-tracker, verpakt als native app voor elk platform.",
+      web: "Of open hem direct in de browser",
+      soon: "Binnenkort",
+      platforms: {
+        windows: "Windows",
+        mac: "macOS",
+        linuxDeb: "Linux .deb",
+        linuxRpm: "Linux .rpm",
+        linuxAppImage: "Linux AppImage",
+        android: "Android",
+        ios: "iOS",
+      },
+    },
     footer: { brand: "Portfolio Tracker", madeBy: "Gemaakt door" },
     meta: {
       title: "Gratis Portfolio Tracker voor aandelen, crypto & ETF's — Privé & lokaal",

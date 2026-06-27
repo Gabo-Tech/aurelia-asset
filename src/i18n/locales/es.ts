@@ -112,6 +112,21 @@ const es: Translation = {
       button: "Abrir el gestor",
       footnote: "Funciona en cualquier navegador moderno · Compatible con móvil",
     },
+    downloads: {
+      heading: "Descarga la app nativa",
+      subheading: "El mismo gestor privado, empaquetado como app nativa para cada plataforma.",
+      web: "O ábrela directamente en el navegador",
+      soon: "Próximamente",
+      platforms: {
+        windows: "Windows",
+        mac: "macOS",
+        linuxDeb: "Linux .deb",
+        linuxRpm: "Linux .rpm",
+        linuxAppImage: "Linux AppImage",
+        android: "Android",
+        ios: "iOS",
+      },
+    },
     footer: { brand: "Gestor de cartera", madeBy: "Hecho por" },
     meta: {
       title: "Gestor de cartera gratuito para acciones, cripto y ETFs — Privado y local",

@@ -107,6 +107,21 @@ const ca: Translation = {
       button: "Obrir el gestor",
       footnote: "Funciona en qualsevol navegador modern · Compatible amb mòbil",
     },
+    downloads: {
+      heading: "Aconsegueix l'app nativa",
+      subheading: "El mateix gestor privat, empaquetat com a app nativa per a cada plataforma que uses.",
+      web: "O obre-la directament al navegador",
+      soon: "Properament",
+      platforms: {
+        windows: "Windows",
+        mac: "macOS",
+        linuxDeb: "Linux .deb",
+        linuxRpm: "Linux .rpm",
+        linuxAppImage: "Linux AppImage",
+        android: "Android",
+        ios: "iOS",
+      },
+    },
     footer: { brand: "Gestor de cartera", madeBy: "Fet per" },
     meta: {
       title: "Gestor de cartera gratuït per a accions, cripto i ETFs — Privat i local",

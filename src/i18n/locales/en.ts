@@ -144,6 +144,22 @@ const en = {
       button: "Open the tracker",
       footnote: "Works in any modern browser · Mobile-friendly",
     },
+    downloads: {
+      heading: "Get the native app",
+      subheading: "Same private tracker, packaged as a native app for every platform you use.",
+      web: "Or just open it in your browser",
+      soon: "Coming soon",
+      platforms: {
+        windows: "Windows",
+        mac: "macOS",
+        linuxDeb: "Linux .deb",
+        linuxRpm: "Linux .rpm",
+        linuxAppImage: "Linux AppImage",
+        android: "Android",
+        ios: "iOS",
+      },
+    },
+
     footer: {
       brand: "Portfolio Tracker",
       madeBy: "Made by",

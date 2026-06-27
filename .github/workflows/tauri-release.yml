@@ -1,0 +1,78 @@
+name: Tauri Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+jobs:
+  desktop:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            args: "--target universal-apple-darwin --bundles app,dmg"
+          - os: ubuntu-22.04
+            args: "--bundles deb,rpm,appimage"
+          - os: windows-latest
+            args: "--bundles msi,nsis"
+
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Linux dependencies
+        if: matrix.os == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libssl-dev \
+            libayatana-appindicator3-dev librsvg2-dev patchelf rpm
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.os == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: "Portfolio Tracker ${{ github.ref_name }}"
+          releaseDraft: true
+          prerelease: false
+          args: ${{ matrix.args }}
+
+  # Mobile builds are commented out by default — they need signing secrets.
+  # Uncomment and configure the secrets below to enable them.
+  #
+  # android:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: actions/setup-java@v4
+  #       with: { distribution: temurin, java-version: "17" }
+  #     - uses: android-actions/setup-android@v3
+  #     - uses: dtolnay/rust-toolchain@stable
+  #       with: { targets: "aarch64-linux-android,armv7-linux-androideabi,i686-linux-android,x86_64-linux-android" }
+  #     - run: cargo install tauri-cli --version "^2.0" --locked
+  #     - run: cargo tauri android init
+  #       working-directory: src-tauri
+  #     - run: cargo tauri android build
+  #       working-directory: src-tauri
+  #
+  # ios:
+  #   runs-on: macos-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: dtolnay/rust-toolchain@stable
+  #       with: { targets: "aarch64-apple-ios,x86_64-apple-ios,aarch64-apple-ios-sim" }
+  #     - run: cargo install tauri-cli --version "^2.0" --locked
+  #     - run: cargo tauri ios init
+  #       working-directory: src-tauri
+  #     - run: cargo tauri ios build
+  #       working-directory: src-tauri
