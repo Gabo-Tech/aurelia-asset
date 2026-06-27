@@ -399,6 +399,7 @@ function Downloads() {
                 key={d.key}
                 href={d.href!}
                 rel="noopener"
+                download
                 className={`${cls} hover:border-primary/60 hover:bg-card`}
               >
                 {inner}
