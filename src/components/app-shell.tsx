@@ -106,7 +106,10 @@ export function AppShell({ children }: { children: ReactNode }) {
             <img src={logoAsset.url} alt="Logo" className="h-8 w-8 shrink-0 rounded-lg object-contain" />
             <div className="truncate font-semibold text-sm">{t("shell.brand")} {t("shell.brandTagline")}</div>
           </Link>
-          <PrivacyToggle />
+          <div className="flex items-center gap-1">
+            <ThemeToggle />
+            <PrivacyToggle />
+          </div>
         </header>
 
         {/* Main */}
