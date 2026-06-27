@@ -70,6 +70,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               <div className="text-sm font-semibold tracking-tight">{t("shell.brand")}</div>
               <div className="text-xs text-muted-foreground">{t("shell.brandTagline")}</div>
             </div>
+            <ThemeToggle />
             <PrivacyToggle />
           </div>
           <nav className="flex-1 px-3 space-y-1">
