@@ -49,7 +49,7 @@ const de: Translation = {
       badge: "Keine Anmeldung · Kein Tracking · 100% im Browser",
       titleStart: "Dein ganzes Portfolio,",
       titleHighlight: "in einem privaten Dashboard",
-      subtitle: "Aktien, ETFs, Krypto und Metalle verfolgen. Allokation, Performance und Cashflow mit eleganten Diagrammen visualisieren — ohne deine Daten an irgendjemanden zu geben.",
+      subtitle: "Aktien, ETFs, Krypto und Metalle verfolgen. Allokation, Performance und Cashflow mit eleganten Diagrammen visualisieren - ohne deine Daten an irgendjemanden zu geben.",
       ctaPrimary: "Tracker starten",
       ctaSecondary: "Sieh, was drin ist",
       screenshotAlt: "Portfolio-Tracker-Dashboard mit Allokations-Tortendiagramm und Cashflow",
@@ -59,21 +59,21 @@ const de: Translation = {
       heading: "Alles, was du brauchst, um dein Geld wirklich zu verstehen",
       subheading: "Kein weiteres überladenes Dashboard. Nur die Ansichten, die dir bei Entscheidungen helfen.",
       items: {
-        assets: { title: "Alle Vermögenswerte in einer Ansicht", body: "Aktien, ETFs, Krypto, Metalle und eigene Positionen — nebeneinander, in deiner Anzeigewährung." },
+        assets: { title: "Alle Vermögenswerte in einer Ansicht", body: "Aktien, ETFs, Krypto, Metalle und eigene Positionen - nebeneinander, in deiner Anzeigewährung." },
         performance: { title: "Performance auf einen Blick", body: "Zeitgewichtete Renditen und historische Charts mit kostenlosen öffentlichen Marktdaten." },
         sankey: { title: "Cashflow-Sankey", body: "Einnahmen, Ausgaben, Sparen und Investitionen fließen durch ein schönes Sankey-Diagramm mit eigenen Kategorien." },
-        categories: { title: "Eigene Kategorien", body: "Erstelle eigene Einkommensquellen und Ausgabenkategorien — inkl. Sparen und Investitionen — mit eigenen Farben." },
+        categories: { title: "Eigene Kategorien", body: "Erstelle eigene Einkommensquellen und Ausgabenkategorien - inkl. Sparen und Investitionen - mit eigenen Farben." },
         private: { title: "Privat by Design", body: "Alles wird in deinem Browser gespeichert. Keine Konten, keine Server, keine Analytics auf deinen Positionen." },
         elegant: { title: "Elegant auf jedem Bildschirm", body: "Für Desktop und Mobil entworfen, mit einem ruhigen, dunklen, ablenkungsfreien Interface." },
       },
     },
     how: {
       heading: "Von Null auf Einsicht in 60 Sekunden",
-      cta: "Jetzt ausprobieren — kostenlos",
+      cta: "Jetzt ausprobieren - kostenlos",
       steps: {
         one: { title: "Öffne die App", body: "Keine Anmeldung. Der Tracker lädt sofort und läuft komplett im Browser." },
         two: { title: "Positionen und Cashflow hinzufügen", body: "Suche ein Ticker oder gib eine eigene Position ein. Erfasse Einnahmen und Ausgaben mit deinen Kategorien." },
-        three: { title: "Sieh dein Portfolio lebendig werden", body: "Allokation, Performance, Vermögen und Sankey-Cashflow — automatisch mit Live-Marktpreisen aktualisiert." },
+        three: { title: "Sieh dein Portfolio lebendig werden", body: "Allokation, Performance, Vermögen und Sankey-Cashflow - automatisch mit Live-Marktpreisen aktualisiert." },
       },
     },
     comparison: {
@@ -94,10 +94,10 @@ const de: Translation = {
     faq: {
       heading: "Häufige Fragen",
       items: {
-        free: { q: "Ist der Tracker wirklich kostenlos?", a: "Ja — jede Funktion ist kostenlos, ohne Anmeldung und ohne Premium-Stufe. Die App läuft komplett im Browser." },
+        free: { q: "Ist der Tracker wirklich kostenlos?", a: "Ja - jede Funktion ist kostenlos, ohne Anmeldung und ohne Premium-Stufe. Die App läuft komplett im Browser." },
         storage: { q: "Wo werden meine Daten gespeichert?", a: "Alles lebt im Browser via localStorage. Nichts wird hochgeladen, synchronisiert oder geteilt. Browser-Speicher leeren löscht dein Portfolio." },
         assets: { q: "Welche Vermögenswerte kann ich verfolgen?", a: "Aktien, ETFs, Kryptowährungen, Edelmetalle und jede eigene Position mit manuellem Preis." },
-        account: { q: "Brauche ich ein Konto?", a: "Nein — öffne die App und starte sofort. Kein Login, keine E-Mail-Erfassung, keine Analytics auf deinen Positionen." },
+        account: { q: "Brauche ich ein Konto?", a: "Nein - öffne die App und starte sofort. Kein Login, keine E-Mail-Erfassung, keine Analytics auf deinen Positionen." },
       },
     },
     cta: {
@@ -123,13 +123,13 @@ const de: Translation = {
     },
     footer: { brand: "Portfolio Tracker", madeBy: "Gemacht von" },
     meta: {
-      title: "Kostenloser Portfolio-Tracker für Aktien, Krypto & ETFs — Privat & lokal",
+      title: "Kostenloser Portfolio-Tracker für Aktien, Krypto & ETFs - Privat & lokal",
       description: "Verfolge Aktien, ETFs, Krypto und Edelmetalle in einem eleganten Dashboard. 100% client-seitig, keine Anmeldung, kein Tracking. Allokation, Performance und Cashflow in Sekunden.",
     },
   },
   dashboard: {
-    metaTitle: "Übersicht — Portfolio Tracker",
-    metaDesc: "Dein Portfolio auf einen Blick — Allokation, Wert und letzte Aktivität.",
+    metaTitle: "Übersicht - Portfolio Tracker",
+    metaDesc: "Dein Portfolio auf einen Blick - Allokation, Wert und letzte Aktivität.",
     title: "Übersicht",
     description: "Willkommen in deinem Portfolio.",
     portfolioValue: "Gesamter Portfoliowert",
@@ -143,7 +143,7 @@ const de: Translation = {
     hideAll: "Alle ausblenden",
   },
   holdings: {
-    metaTitle: "Positionen — Elegant Portfolio Tracker",
+    metaTitle: "Positionen - Elegant Portfolio Tracker",
     metaDesc: "Verwalte deine Aktien, Krypto, ETFs und Metalle.",
     title: "Positionen",
     description: "Verwalte deine Aktien, Krypto, ETFs und Metalle.",
@@ -168,17 +168,17 @@ const de: Translation = {
     fees: "Gebühren",
   },
   performance: {
-    metaTitle: "Performance — Elegant Portfolio Tracker",
+    metaTitle: "Performance - Elegant Portfolio Tracker",
     metaDesc: "Verfolge die Rendite deiner Vermögenswerte über die Zeit.",
     title: "Performance",
     description: "Historischer Portfoliowert Periode für Periode.",
     emptyState: "Füge zuerst Positionen hinzu, um die historische Wertentwicklung zu sehen.",
   },
   cashflow: {
-    metaTitle: "Cashflow — Elegant Portfolio Tracker",
+    metaTitle: "Cashflow - Elegant Portfolio Tracker",
     metaDesc: "Verfolge Einnahmen, Ausgaben, Sparen und Investitionen.",
     title: "Cashflow",
-    description: "Verfolge jeden Euro rein und raus — und sieh, wohin er geht.",
+    description: "Verfolge jeden Euro rein und raus - und sieh, wohin er geht.",
     income: "Einnahme",
     expense: "Ausgabe",
     expenses: "Ausgaben",
@@ -213,7 +213,7 @@ const de: Translation = {
     newCategory: "Neue Kategorie",
   },
   admin: {
-    title: "Admin — Sponsoren",
+    title: "Admin - Sponsoren",
     addSponsor: "Sponsor hinzufügen",
     sponsorsSaved: "Sponsoren auf GitHub gespeichert",
     wrongPassword: "Falsches Passwort",
@@ -227,7 +227,7 @@ const de: Translation = {
     needName: "Jeder Sponsor braucht einen Namen",
   },
   settings: {
-    metaTitle: "Einstellungen — Elegant Portfolio Tracker",
+    metaTitle: "Einstellungen - Elegant Portfolio Tracker",
     metaDesc: "API-Optionen, Import/Export und Datenverwaltung.",
     title: "Einstellungen",
     description: "API-Optionen und Datenverwaltung.",

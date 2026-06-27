@@ -147,7 +147,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             if (h.id !== t.holdingId) return h;
             if (h.openingQuantity != null) return h;
             const hasExisting = s.transactions.some((x) => x.holdingId === h.id);
-            // First tx for this holding — capture its current quantity as the baseline
+            // First tx for this holding - capture its current quantity as the baseline
             return { ...h, openingQuantity: hasExisting ? 0 : (Number(h.quantity) || 0) };
           });
           return syncQuantities({

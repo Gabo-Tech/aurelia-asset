@@ -613,7 +613,7 @@ function EntriesPanel({
         doc.text(formatMoney(v, currency, { compact: true }), chartLeft - 4, y + 3, { align: "right" });
       }
 
-      // Balance line — green when >= 0, red when < 0 (split at zero crossings)
+      // Balance line - green when >= 0, red when < 0 (split at zero crossings)
       const GREEN: [number, number, number] = [34, 197, 94];
       const RED: [number, number, number] = [239, 68, 68];
       doc.setLineWidth(1.4);

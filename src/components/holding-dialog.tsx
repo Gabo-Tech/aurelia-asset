@@ -138,7 +138,7 @@ export function HoldingDialog({ open, onOpenChange, editing }: Props) {
         }
       } catch (e) {
         setResults([]);
-        toast.error("Search failed — try a different proxy in Settings");
+        toast.error("Search failed - try a different proxy in Settings");
         console.error(e);
       } finally {
         setSearching(false);
@@ -220,7 +220,7 @@ export function HoldingDialog({ open, onOpenChange, editing }: Props) {
           base.currentPrice = q.price;
           if (q.currency) base.priceCurrency = q.currency;
         } catch {
-          toast.warning("Couldn't fetch price — you can refresh later");
+          toast.warning("Couldn't fetch price - you can refresh later");
         }
       }
       if (editing) {

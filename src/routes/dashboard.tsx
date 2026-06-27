@@ -362,7 +362,7 @@ function Dashboard() {
         <StatCard
           icon={<TrendingUp className="h-4 w-4 text-success" />}
           label="Top asset"
-          value={topAlloc ? topAlloc.name : "—"}
+          value={topAlloc ? topAlloc.name : "-"}
           sub={topAlloc ? mask(topAlloc.value, currency) : undefined}
         />
         <StatCard

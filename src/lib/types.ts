@@ -15,7 +15,7 @@ export type Holding = {
   color: string;
   coinGeckoId?: string;
   lastPriceAt?: number;
-  /** Custom asset (not on any market) — user-managed history (sorted ascending by t) */
+  /** Custom asset (not on any market) - user-managed history (sorted ascending by t) */
   customHistory?: CustomPricePoint[];
   /** Free-form notes for custom holdings */
   notes?: string;
@@ -47,9 +47,9 @@ export type CashflowEntry = {
    *  `amount` as a percentage of the base selected via `percentOf`. */
   amountKind?: "fixed" | "percent";
   /** For percent entries: what the percentage is taken from.
-   *  - "all-income" (default) — % of total fixed income in scope
-   *  - "all-expense" — % of total fixed expenses in scope
-   *  - any other string — id of another (fixed) entry to subscribe to */
+   *  - "all-income" (default) - % of total fixed income in scope
+   *  - "all-expense" - % of total fixed expenses in scope
+   *  - any other string - id of another (fixed) entry to subscribe to */
   percentOf?: "all-income" | "all-expense" | string;
   /** Optional short description / note (max 200 chars). */
   description?: string;

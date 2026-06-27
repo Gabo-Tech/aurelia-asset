@@ -49,7 +49,7 @@ const pt: Translation = {
       badge: "Sem registo · Sem rastreio · 100% no seu navegador",
       titleStart: "Toda a sua carteira,",
       titleHighlight: "num painel privado",
-      subtitle: "Acompanhe ações, ETFs, cripto e metais. Visualize alocação, desempenho e fluxo de caixa com gráficos elegantes — sem entregar os seus dados a ninguém.",
+      subtitle: "Acompanhe ações, ETFs, cripto e metais. Visualize alocação, desempenho e fluxo de caixa com gráficos elegantes - sem entregar os seus dados a ninguém.",
       ctaPrimary: "Lançar o gestor",
       ctaSecondary: "Ver o que inclui",
       screenshotAlt: "Painel do gestor de carteira com gráfico de alocação e fluxo de caixa",
@@ -59,21 +59,21 @@ const pt: Translation = {
       heading: "Tudo o que precisa para realmente entender o seu dinheiro",
       subheading: "Não é mais um painel inchado. Apenas as vistas que ajudam a decidir.",
       items: {
-        assets: { title: "Todos os seus ativos numa vista", body: "Ações, ETFs, cripto, metais e ativos personalizados — lado a lado, na sua moeda de visualização." },
+        assets: { title: "Todos os seus ativos numa vista", body: "Ações, ETFs, cripto, metais e ativos personalizados - lado a lado, na sua moeda de visualização." },
         performance: { title: "Desempenho que se lê num relance", body: "Retornos ponderados pelo tempo e gráficos históricos com dados públicos gratuitos." },
         sankey: { title: "Sankey de fluxo de caixa", body: "Receitas, despesas, poupanças e investimentos fluem por um belo diagrama Sankey com categorias personalizadas." },
-        categories: { title: "Categorias personalizadas", body: "Crie as suas fontes de receita e categorias de despesa — incluindo poupanças e investimentos — com cores próprias." },
+        categories: { title: "Categorias personalizadas", body: "Crie as suas fontes de receita e categorias de despesa - incluindo poupanças e investimentos - com cores próprias." },
         private: { title: "Privado por design", body: "Tudo é guardado no seu navegador. Sem contas, sem servidores, sem analítica sobre as suas posições." },
         elegant: { title: "Elegante em qualquer ecrã", body: "Pensado para desktop e mobile com uma interface calma, escura e sem distrações." },
       },
     },
     how: {
       heading: "De zero a clareza em 60 segundos",
-      cta: "Experimente já — grátis",
+      cta: "Experimente já - grátis",
       steps: {
         one: { title: "Abra a app", body: "Sem registo. O gestor carrega instantaneamente e corre inteiramente no seu navegador." },
         two: { title: "Adicione ativos e movimentos", body: "Procure um ticker ou introduza um ativo personalizado. Registe receitas e despesas com as suas categorias." },
-        three: { title: "Veja a sua carteira ganhar vida", body: "Alocação, desempenho, património líquido e Sankey — atualizados com preços de mercado ao vivo." },
+        three: { title: "Veja a sua carteira ganhar vida", body: "Alocação, desempenho, património líquido e Sankey - atualizados com preços de mercado ao vivo." },
       },
     },
     comparison: {
@@ -94,10 +94,10 @@ const pt: Translation = {
     faq: {
       heading: "Perguntas frequentes",
       items: {
-        free: { q: "É mesmo grátis?", a: "Sim — todas as funcionalidades são grátis, sem registo nem plano premium. A app corre inteiramente no seu navegador." },
+        free: { q: "É mesmo grátis?", a: "Sim - todas as funcionalidades são grátis, sem registo nem plano premium. A app corre inteiramente no seu navegador." },
         storage: { q: "Onde ficam os meus dados?", a: "Tudo vive no seu navegador via localStorage. Nada é enviado, sincronizado ou partilhado. Limpar o armazenamento limpa a sua carteira." },
         assets: { q: "Que ativos posso acompanhar?", a: "Ações, ETFs, criptomoedas, metais preciosos e qualquer ativo personalizado com preço manual." },
-        account: { q: "Preciso de conta?", a: "Não — abra a app e comece imediatamente. Sem login, sem email, sem analítica sobre as suas posições." },
+        account: { q: "Preciso de conta?", a: "Não - abra a app e comece imediatamente. Sem login, sem email, sem analítica sobre as suas posições." },
       },
     },
     cta: {
@@ -123,13 +123,13 @@ const pt: Translation = {
     },
     footer: { brand: "Gestor de carteira", madeBy: "Feito por" },
     meta: {
-      title: "Gestor de carteira grátis para ações, cripto e ETFs — Privado e local",
+      title: "Gestor de carteira grátis para ações, cripto e ETFs - Privado e local",
       description: "Acompanhe ações, ETFs, cripto e metais preciosos num painel elegante. 100% no cliente, sem registo, sem rastreio. Veja alocação, desempenho e fluxo de caixa em segundos.",
     },
   },
   dashboard: {
-    metaTitle: "Painel — Gestor de carteira",
-    metaDesc: "A sua carteira num relance — alocação, valor e atividade recente.",
+    metaTitle: "Painel - Gestor de carteira",
+    metaDesc: "A sua carteira num relance - alocação, valor e atividade recente.",
     title: "Painel",
     description: "Bem-vindo à sua carteira.",
     portfolioValue: "Valor total da carteira",
@@ -143,7 +143,7 @@ const pt: Translation = {
     hideAll: "Ocultar tudo",
   },
   holdings: {
-    metaTitle: "Ativos — Elegant Portfolio Tracker",
+    metaTitle: "Ativos - Elegant Portfolio Tracker",
     metaDesc: "Gerencie as suas ações, cripto, ETFs e metais.",
     title: "Ativos",
     description: "Gerencie as suas ações, cripto, ETFs e metais.",
@@ -168,17 +168,17 @@ const pt: Translation = {
     fees: "Taxas",
   },
   performance: {
-    metaTitle: "Desempenho — Elegant Portfolio Tracker",
+    metaTitle: "Desempenho - Elegant Portfolio Tracker",
     metaDesc: "Acompanhe retornos ao longo do tempo nos seus ativos.",
     title: "Desempenho",
     description: "Valor histórico da carteira período a período.",
     emptyState: "Adicione ativos primeiro para ver o seu desempenho histórico.",
   },
   cashflow: {
-    metaTitle: "Fluxo de caixa — Elegant Portfolio Tracker",
+    metaTitle: "Fluxo de caixa - Elegant Portfolio Tracker",
     metaDesc: "Registe receitas, despesas, poupanças e investimentos.",
     title: "Fluxo de caixa",
-    description: "Registe cada euro que entra e sai — e veja para onde vai.",
+    description: "Registe cada euro que entra e sai - e veja para onde vai.",
     income: "Receita",
     expense: "Despesa",
     expenses: "Despesas",
@@ -213,7 +213,7 @@ const pt: Translation = {
     newCategory: "Nova categoria",
   },
   admin: {
-    title: "Admin — Patrocinadores",
+    title: "Admin - Patrocinadores",
     addSponsor: "Adicionar patrocinador",
     sponsorsSaved: "Patrocinadores guardados no GitHub",
     wrongPassword: "Palavra-passe incorreta",
@@ -227,7 +227,7 @@ const pt: Translation = {
     needName: "Cada patrocinador precisa de um nome",
   },
   settings: {
-    metaTitle: "Definições — Elegant Portfolio Tracker",
+    metaTitle: "Definições - Elegant Portfolio Tracker",
     metaDesc: "Opções de API, importar/exportar e gestão de dados.",
     title: "Definições",
     description: "Opções de API e gestão de dados.",

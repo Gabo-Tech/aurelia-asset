@@ -300,8 +300,8 @@ function Comparison() {
               {rows.map((r) => (
                 <tr key={r.label}>
                   <td className="px-4 py-3">{r.label}</td>
-                  <td className="px-4 py-3 text-center">{r.us ? "✓" : "—"}</td>
-                  <td className="px-4 py-3 text-center text-muted-foreground">{r.them ? "✓" : "—"}</td>
+                  <td className="px-4 py-3 text-center">{r.us ? "✓" : "-"}</td>
+                  <td className="px-4 py-3 text-center text-muted-foreground">{r.them ? "✓" : "-"}</td>
                 </tr>
               ))}
             </tbody>

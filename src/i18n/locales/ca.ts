@@ -50,7 +50,7 @@ const ca: Translation = {
       badge: "Sense registre · Sense rastreig · 100% al teu navegador",
       titleStart: "Tota la teua cartera,",
       titleHighlight: "en un panell privat",
-      subtitle: "Segueix accions, ETFs, cripto i metalls. Visualitza assignació, rendiment i flux de caixa amb gràfics elegants — sense entregar les teues dades a ningú.",
+      subtitle: "Segueix accions, ETFs, cripto i metalls. Visualitza assignació, rendiment i flux de caixa amb gràfics elegants - sense entregar les teues dades a ningú.",
       ctaPrimary: "Obrir el gestor",
       ctaSecondary: "Veure què inclou",
       screenshotAlt: "Panell del gestor de cartera amb gràfic d'assignació i flux de caixa",
@@ -60,21 +60,21 @@ const ca: Translation = {
       heading: "Tot el que necessites per entendre de veritat els teus diners",
       subheading: "No un altre panell inflat. Només les vistes que t'ajuden a decidir.",
       items: {
-        assets: { title: "Tots els teus actius en una vista", body: "Accions, ETFs, cripto, metalls i actius personalitzats — junts, en la teua moneda de visualització." },
+        assets: { title: "Tots els teus actius en una vista", body: "Accions, ETFs, cripto, metalls i actius personalitzats - junts, en la teua moneda de visualització." },
         performance: { title: "Rendiment que es llig d'un colp d'ull", body: "Rendiments ponderats pel temps i gràfics històrics amb dades públiques gratuïtes." },
         sankey: { title: "Sankey de flux de caixa", body: "Ingressos, despeses, estalvis i inversions flueixen per un diagrama Sankey amb categories personalitzades." },
-        categories: { title: "Categories personalitzades", body: "Crea les teues fonts d'ingrés i categories de despesa — inclòs estalvi i inversió — amb colors propis." },
+        categories: { title: "Categories personalitzades", body: "Crea les teues fonts d'ingrés i categories de despesa - inclòs estalvi i inversió - amb colors propis." },
         private: { title: "Privat per disseny", body: "Tot es desa al teu navegador. Sense comptes, sense servidors, sense analítica sobre les teues posicions." },
         elegant: { title: "Elegant en qualsevol pantalla", body: "Pensat per a escriptori i mòbil amb una interfície calmada, fosca i sense distraccions." },
       },
     },
     how: {
       heading: "De zero a comprensió en 60 segons",
-      cta: "Prova-ho ja — gratis",
+      cta: "Prova-ho ja - gratis",
       steps: {
         one: { title: "Obri l'app", body: "Sense registre. El gestor carrega a l'instant i funciona íntegrament al teu navegador." },
         two: { title: "Afig els teus actius i moviments", body: "Cerca un ticker o introduïx un actiu personalitzat. Registra ingressos i despeses amb les teues categories." },
-        three: { title: "Mira com cobra vida la teua cartera", body: "Assignació, rendiment, patrimoni net i Sankey — actualitzat amb preus de mercat en directe." },
+        three: { title: "Mira com cobra vida la teua cartera", body: "Assignació, rendiment, patrimoni net i Sankey - actualitzat amb preus de mercat en directe." },
       },
     },
     comparison: {
@@ -95,10 +95,10 @@ const ca: Translation = {
     faq: {
       heading: "Preguntes freqüents",
       items: {
-        free: { q: "És realment gratis?", a: "Sí — totes les funcions són gratis, sense registre ni pla premium. L'app funciona íntegrament al teu navegador." },
+        free: { q: "És realment gratis?", a: "Sí - totes les funcions són gratis, sense registre ni pla premium. L'app funciona íntegrament al teu navegador." },
         storage: { q: "On es guarden les meues dades?", a: "Tot viu al teu navegador via localStorage. Res no es puja, sincronitza ni comparteix. Esborrar l'emmagatzematge esborra la cartera." },
         assets: { q: "Quins actius puc seguir?", a: "Accions, ETFs, criptomonedes, metalls preciosos i qualsevol actiu personalitzat amb preu manual." },
-        account: { q: "Cal un compte?", a: "No — obri l'app i comença a l'instant. Sense login, sense correu, sense analítica sobre les teues posicions." },
+        account: { q: "Cal un compte?", a: "No - obri l'app i comença a l'instant. Sense login, sense correu, sense analítica sobre les teues posicions." },
       },
     },
     cta: {
@@ -124,13 +124,13 @@ const ca: Translation = {
     },
     footer: { brand: "Gestor de cartera", madeBy: "Fet per" },
     meta: {
-      title: "Gestor de cartera gratuït per a accions, cripto i ETFs — Privat i local",
+      title: "Gestor de cartera gratuït per a accions, cripto i ETFs - Privat i local",
       description: "Segueix accions, ETFs, cripto i metalls preciosos en un panell elegant. 100% al client, sense registre, sense rastreig. Veges assignació, rendiment i flux de caixa en segons.",
     },
   },
   dashboard: {
-    metaTitle: "Panell — Gestor de cartera",
-    metaDesc: "La teua cartera d'un colp d'ull — assignació, valor i activitat recent.",
+    metaTitle: "Panell - Gestor de cartera",
+    metaDesc: "La teua cartera d'un colp d'ull - assignació, valor i activitat recent.",
     title: "Panell",
     description: "Benvingut a la teua cartera.",
     portfolioValue: "Valor total de la cartera",
@@ -144,7 +144,7 @@ const ca: Translation = {
     hideAll: "Amagar tot",
   },
   holdings: {
-    metaTitle: "Actius — Elegant Portfolio Tracker",
+    metaTitle: "Actius - Elegant Portfolio Tracker",
     metaDesc: "Gestiona les teues accions, cripto, ETFs i metalls.",
     title: "Actius",
     description: "Gestiona les teues accions, cripto, ETFs i metalls.",
@@ -169,17 +169,17 @@ const ca: Translation = {
     fees: "Comissions",
   },
   performance: {
-    metaTitle: "Rendiment — Elegant Portfolio Tracker",
+    metaTitle: "Rendiment - Elegant Portfolio Tracker",
     metaDesc: "Segueix la rendibilitat en el temps dels teus actius.",
     title: "Rendiment",
     description: "Valor històric de la cartera període a període.",
     emptyState: "Afig actius primer per veure el teu rendiment històric.",
   },
   cashflow: {
-    metaTitle: "Flux de caixa — Elegant Portfolio Tracker",
+    metaTitle: "Flux de caixa - Elegant Portfolio Tracker",
     metaDesc: "Registra ingressos, despeses, estalvis i inversions.",
     title: "Flux de caixa",
-    description: "Registra cada euro que entra i ix — i veges on va.",
+    description: "Registra cada euro que entra i ix - i veges on va.",
     income: "Ingrés",
     expense: "Despesa",
     expenses: "Despeses",
@@ -214,7 +214,7 @@ const ca: Translation = {
     newCategory: "Nova categoria",
   },
   admin: {
-    title: "Admin — Patrocinadors",
+    title: "Admin - Patrocinadors",
     addSponsor: "Afegir patrocinador",
     sponsorsSaved: "Patrocinadors guardats a GitHub",
     wrongPassword: "Contrasenya incorrecta",
@@ -228,7 +228,7 @@ const ca: Translation = {
     needName: "Cada patrocinador necessita un nom",
   },
   settings: {
-    metaTitle: "Ajustos — Elegant Portfolio Tracker",
+    metaTitle: "Ajustos - Elegant Portfolio Tracker",
     metaDesc: "Opcions d'API, importar/exportar i gestió de dades.",
     title: "Ajustos",
     description: "Opcions d'API i gestió de dades.",
