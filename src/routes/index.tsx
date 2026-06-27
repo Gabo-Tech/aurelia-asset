@@ -342,20 +342,24 @@ function FAQ() {
   );
 }
 
-const RELEASES_BASE = "https://github.com/gabovega/portfolio-tracker/releases/latest/download";
+import debAsset from "@/assets/portfolio-tracker-deb.asset.json";
+import rpmAsset from "@/assets/portfolio-tracker-rpm.asset.json";
+import appImageAsset from "@/assets/portfolio-tracker-appimage.asset.json";
+
 const DOWNLOADS: Array<{
   key: "windows" | "mac" | "linuxDeb" | "linuxRpm" | "linuxAppImage" | "android" | "ios";
   icon: typeof MonitorDown;
   href: string | null;
 }> = [
-  { key: "windows", icon: MonitorDown, href: `${RELEASES_BASE}/PortfolioTracker-setup.exe` },
-  { key: "mac", icon: Apple, href: `${RELEASES_BASE}/PortfolioTracker.dmg` },
-  { key: "linuxAppImage", icon: Download, href: `${RELEASES_BASE}/PortfolioTracker.AppImage` },
-  { key: "linuxDeb", icon: Download, href: `${RELEASES_BASE}/portfolio-tracker.deb` },
-  { key: "linuxRpm", icon: Download, href: `${RELEASES_BASE}/portfolio-tracker.rpm` },
+  { key: "windows", icon: MonitorDown, href: null },
+  { key: "mac", icon: Apple, href: null },
+  { key: "linuxAppImage", icon: Download, href: appImageAsset.url },
+  { key: "linuxDeb", icon: Download, href: debAsset.url },
+  { key: "linuxRpm", icon: Download, href: rpmAsset.url },
   { key: "android", icon: Smartphone, href: null },
   { key: "ios", icon: Apple, href: null },
 ];
+
 
 function Downloads() {
   const { t } = useTranslation();
