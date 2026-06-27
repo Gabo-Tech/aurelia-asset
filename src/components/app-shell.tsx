@@ -49,9 +49,12 @@ function PrivacyToggle({ className }: { className?: string }) {
 
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const isNavigating = useRouterState({
+    select: (s) => s.isLoading || s.isTransitioning || s.status === "pending",
+  });
   const { hydrated } = useStore();
   const fxReady = useFxReady();
-  const ready = hydrated && fxReady;
+  const ready = hydrated && fxReady && !isNavigating;
   const { t } = useTranslation();
   const nav = navItems.map((n) => ({ ...n, label: t(`nav.${n.key}`) }));
 
