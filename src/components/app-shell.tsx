@@ -14,6 +14,7 @@ import {
 import { cn } from "@/lib/utils";
 import { usePrivacy, useStore, useFxReady } from "@/lib/store";
 import { SponsorBanner } from "./sponsor-banner";
+import { ThemeToggle } from "./theme-toggle";
 import { PageLoader } from "./page-loader";
 import logoAsset from "@/assets/logo.png.asset.json";
 
@@ -69,6 +70,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               <div className="text-sm font-semibold tracking-tight">{t("shell.brand")}</div>
               <div className="text-xs text-muted-foreground">{t("shell.brandTagline")}</div>
             </div>
+            <ThemeToggle />
             <PrivacyToggle />
           </div>
           <nav className="flex-1 px-3 space-y-1">
@@ -104,7 +106,10 @@ export function AppShell({ children }: { children: ReactNode }) {
             <img src={logoAsset.url} alt="Logo" className="h-8 w-8 shrink-0 rounded-lg object-contain" />
             <div className="truncate font-semibold text-sm">{t("shell.brand")} {t("shell.brandTagline")}</div>
           </Link>
-          <PrivacyToggle />
+          <div className="flex items-center gap-1">
+            <ThemeToggle />
+            <PrivacyToggle />
+          </div>
         </header>
 
         {/* Main */}
