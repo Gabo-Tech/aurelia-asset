@@ -106,6 +106,21 @@ const pt: Translation = {
       button: "Abrir o gestor",
       footnote: "Funciona em qualquer navegador moderno · Compatível com mobile",
     },
+    downloads: {
+      heading: "Baixe o app nativo",
+      subheading: "O mesmo rastreador privado, empacotado como app nativo para cada plataforma.",
+      web: "Ou abra direto no navegador",
+      soon: "Em breve",
+      platforms: {
+        windows: "Windows",
+        mac: "macOS",
+        linuxDeb: "Linux .deb",
+        linuxRpm: "Linux .rpm",
+        linuxAppImage: "Linux AppImage",
+        android: "Android",
+        ios: "iOS",
+      },
+    },
     footer: { brand: "Gestor de carteira", madeBy: "Feito por" },
     meta: {
       title: "Gestor de carteira grátis para ações, cripto e ETFs — Privado e local",
