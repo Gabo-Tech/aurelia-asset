@@ -342,6 +342,78 @@ function FAQ() {
   );
 }
 
+const RELEASES_BASE = "https://github.com/gabovega/portfolio-tracker/releases/latest/download";
+const DOWNLOADS: Array<{
+  key: "windows" | "mac" | "linuxDeb" | "linuxRpm" | "linuxAppImage" | "android" | "ios";
+  icon: typeof MonitorDown;
+  href: string | null;
+}> = [
+  { key: "windows", icon: MonitorDown, href: `${RELEASES_BASE}/PortfolioTracker-setup.exe` },
+  { key: "mac", icon: Apple, href: `${RELEASES_BASE}/PortfolioTracker.dmg` },
+  { key: "linuxAppImage", icon: Download, href: `${RELEASES_BASE}/PortfolioTracker.AppImage` },
+  { key: "linuxDeb", icon: Download, href: `${RELEASES_BASE}/portfolio-tracker.deb` },
+  { key: "linuxRpm", icon: Download, href: `${RELEASES_BASE}/portfolio-tracker.rpm` },
+  { key: "android", icon: Smartphone, href: null },
+  { key: "ios", icon: Apple, href: null },
+];
+
+function Downloads() {
+  const { t } = useTranslation();
+  return (
+    <section id="downloads" className="border-b border-border/50">
+      <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
+        <div className="mx-auto max-w-2xl text-center">
+          <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+            {t("landing.downloads.heading")}
+          </h2>
+          <p className="mt-3 text-muted-foreground">{t("landing.downloads.subheading")}</p>
+        </div>
+        <div className="mt-12 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+          {DOWNLOADS.map((d) => {
+            const Icon = d.icon;
+            const label = t(`landing.downloads.platforms.${d.key}`);
+            const disabled = !d.href;
+            const inner = (
+              <>
+                <Icon className="h-7 w-7 text-primary" />
+                <div className="mt-3 text-sm font-semibold">{label}</div>
+                {disabled && (
+                  <div className="mt-1 text-[10px] uppercase tracking-wider text-muted-foreground">
+                    {t("landing.downloads.soon")}
+                  </div>
+                )}
+              </>
+            );
+            const cls =
+              "flex flex-col items-center justify-center rounded-2xl border border-border/60 bg-card/40 p-6 text-center transition-colors";
+            return disabled ? (
+              <div key={d.key} className={`${cls} opacity-60`} aria-disabled>
+                {inner}
+              </div>
+            ) : (
+              <a
+                key={d.key}
+                href={d.href!}
+                rel="noopener"
+                className={`${cls} hover:border-primary/60 hover:bg-card`}
+              >
+                {inner}
+              </a>
+            );
+          })}
+        </div>
+        <div className="mt-8 text-center text-sm text-muted-foreground">
+          <Link to="/dashboard" className="inline-flex items-center gap-1.5 hover:text-foreground">
+            <Globe className="h-4 w-4" />
+            {t("landing.downloads.web")} <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+
 function FinalCTA() {
   const { t } = useTranslation();
   return (
