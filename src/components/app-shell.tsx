@@ -14,6 +14,7 @@ import {
 import { cn } from "@/lib/utils";
 import { usePrivacy, useStore, useFxReady } from "@/lib/store";
 import { SponsorBanner } from "./sponsor-banner";
+import { ThemeToggle } from "./theme-toggle";
 import { PageLoader } from "./page-loader";
 import logoAsset from "@/assets/logo.png.asset.json";
 
