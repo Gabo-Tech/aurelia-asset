@@ -14,7 +14,12 @@ import {
   Github,
   Coins,
   Globe,
+  Apple,
+  Smartphone,
+  MonitorDown,
+  Download,
 } from "lucide-react";
+
 import i18n from "@/i18n";
 
 const SITE_URL = "https://financetracker.putopulse.org";
