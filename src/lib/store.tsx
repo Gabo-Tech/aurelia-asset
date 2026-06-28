@@ -137,14 +137,51 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           transactions: s.transactions.filter((t) => t.holdingId !== id),
         })),
       addCashflow: (c) =>
-        setState((s) => ({ ...s, cashflows: [...s.cashflows, { ...c, id: uid() }] })),
+        setState((s) => applyCashflowTransferLinks(s, { ...c, id: uid() }, uid)),
       updateCashflow: (id, patch) =>
-        setState((s) => ({
-          ...s,
-          cashflows: s.cashflows.map((c) => (c.id === id ? { ...c, ...patch } : c)),
-        })),
+        setState((s) => {
+          const existing = s.cashflows.find((c) => c.id === id);
+          if (!existing) return s;
+          // Remove any previously linked transaction; re-link after applying the patch.
+          let next: AppState = { ...s };
+          if (existing.linkedTransactionId) {
+            next = {
+              ...next,
+              transactions: next.transactions.filter(
+                (t) => t.id !== existing.linkedTransactionId,
+              ),
+            };
+          }
+          const merged: CashflowEntry = { ...existing, ...patch, linkedTransactionId: undefined };
+          // Apply link for transfers
+          next = {
+            ...next,
+            cashflows: next.cashflows.map((c) => (c.id === id ? merged : c)),
+          };
+          if (merged.kind === "transfer") {
+            next = applyCashflowTransferLinks(
+              { ...next, cashflows: next.cashflows.filter((c) => c.id !== id) },
+              merged,
+              uid,
+            );
+          } else {
+            next = syncQuantities(next);
+          }
+          return next;
+        }),
       removeCashflow: (id) =>
-        setState((s) => ({ ...s, cashflows: s.cashflows.filter((c) => c.id !== id) })),
+        setState((s) => {
+          const existing = s.cashflows.find((c) => c.id === id);
+          let next: AppState = { ...s, cashflows: s.cashflows.filter((c) => c.id !== id) };
+          if (existing?.linkedTransactionId) {
+            next = {
+              ...next,
+              transactions: next.transactions.filter((t) => t.id !== existing.linkedTransactionId),
+            };
+            next = syncQuantities(next);
+          }
+          return next;
+        }),
       addTransaction: (t) =>
         setState((s) => {
           const holdings = s.holdings.map((h) => {
