@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { PALETTE, type CustomPricePoint, type Holding, type SearchResult } from "@/lib/types";
+import { PALETTE, type CustomPricePoint, type Holding, type HoldingHorizon, type SearchResult } from "@/lib/types";
 import { CURRENCIES } from "@/lib/currency";
 import { searchAssets, fetchCurrentQuote } from "@/lib/finance";
 import { Loader2, Search, Upload, Info } from "lucide-react";
