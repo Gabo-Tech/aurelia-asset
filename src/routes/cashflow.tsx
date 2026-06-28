@@ -64,6 +64,27 @@ import { GROUP_COLORS, type Category, type CategoryGroup, type CashflowEntry, ty
 export function expandCashflows(entries: CashflowEntry[], until: Date = new Date()): (CashflowEntry & { parentId: string; isOccurrence: boolean })[] {
   const out: (CashflowEntry & { parentId: string; isOccurrence: boolean })[] = [];
   for (const e of entries) {
+    // Installment plans expand into N scheduled child charges.
+    if (e.installmentPlan && e.kind === "expense") {
+      const plan = e.installmentPlan;
+      const perCharge = plan.total / Math.max(1, plan.count);
+      const start = new Date(plan.firstDueDate);
+      for (let i = 0; i < plan.count; i++) {
+        const occ = plan.frequency === "weekly" ? addWeeks(start, i) : addMonths(start, i);
+        if (occ > until) break;
+        out.push({
+          ...e,
+          id: `${e.id}__inst${i}`,
+          amount: perCharge,
+          amountKind: "fixed",
+          date: occ.toISOString(),
+          installmentPlan: undefined,
+          parentId: e.id,
+          isOccurrence: i > 0,
+        });
+      }
+      continue;
+    }
     if (!e.recurrence) {
       out.push({ ...e, parentId: e.id, isOccurrence: false });
       continue;
@@ -78,7 +99,6 @@ export function expandCashflows(entries: CashflowEntry[], until: Date = new Date
           ? (d: Date, i: number) => addMonths(d, i)
           : (d: Date, i: number) => addYears(d, i);
     let i = 0;
-    // Safety cap (e.g. 600 weekly = ~11 years)
     while (i < 600) {
       const occ = step(start, i);
       if (occ > last) break;
@@ -93,6 +113,35 @@ export function expandCashflows(entries: CashflowEntry[], until: Date = new Date
     }
   }
   return out;
+}
+
+/** Signed change to liquidity caused by an expanded cashflow entry, in the
+ *  entry's source currency. Use with `toDisplay` to convert. */
+export function liquidityImpact(entry: CashflowEntry, valueInDisplay: number): number {
+  if (entry.kind === "income") return valueInDisplay;
+  if (entry.kind === "expense") {
+    const pm = entry.paymentMethod;
+    if (pm && pm.startsWith("credit:")) return 0;
+    return -valueInDisplay;
+  }
+  // transfer
+  const from = entry.fromAccount;
+  const to = entry.toAccount;
+  let delta = 0;
+  if (from === "liquidity") delta -= valueInDisplay;
+  if (to === "liquidity") delta += valueInDisplay;
+  return delta;
+}
+
+/** Signed change to a specific card's balance owed. */
+export function cardDebtImpact(entry: CashflowEntry, cardId: string, valueInDisplay: number): number {
+  const ref = `credit:${cardId}` as const;
+  if (entry.kind === "expense" && entry.paymentMethod === ref) return valueInDisplay;
+  if (entry.kind === "transfer") {
+    if (entry.toAccount === ref) return -valueInDisplay; // paying card down
+    if (entry.fromAccount === ref) return valueInDisplay; // refund / new debt
+  }
+  return 0;
 }
 
 /** Resolve each entry to its display-currency value.
