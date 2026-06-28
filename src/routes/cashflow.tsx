@@ -1011,7 +1011,7 @@ function EntriesPanel({
                         <td className="py-2.5">
                           <div>
                             {c.kind === "transfer"
-                              ? `${labelAccount(c.fromAccount, holdings, creditCards)} → ${labelAccount(c.toAccount, holdings, creditCards)}`
+                              ? `${labelAccount(c.fromAccount)} → ${labelAccount(c.toAccount)}`
                               : c.kind === "income"
                                 ? c.source
                                 : c.category}
