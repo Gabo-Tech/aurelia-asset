@@ -513,6 +513,7 @@ function EntriesPanel({
     const byDay = new Map<string, { income: number; expense: number; entries: Entry[] }>();
     for (const d of days) byDay.set(format(d, "yyyy-MM-dd"), { income: 0, expense: 0, entries: [] });
     for (const c of filtered) {
+      if (c.kind === "transfer") continue;
       const key = format(new Date(c.date), "yyyy-MM-dd");
       const bucket = byDay.get(key) ?? { income: 0, expense: 0, entries: [] };
       const v = values.get(c.id) ?? 0;
@@ -520,7 +521,7 @@ function EntriesPanel({
       else bucket.expense += v;
       bucket.entries.push({
         name: (c.kind === "income" ? c.source : c.category) || "Other",
-        kind: c.kind,
+        kind: c.kind as "income" | "expense",
         value: +v.toFixed(2),
       });
       byDay.set(key, bucket);
