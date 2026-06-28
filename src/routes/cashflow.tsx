@@ -161,7 +161,7 @@ export function valuesByEntry(
     const v = toDisplay(e.amount, e.currency);
     fixed.set(e.id, v);
     if (e.kind === "income") baseIncome += v;
-    else baseExpense += v;
+    else if (e.kind === "expense") baseExpense += v;
   }
   // Map fixed parent id back to its origin id (recurring occurrences carry parentId).
   const fixedByParent = new Map<string, number>();
