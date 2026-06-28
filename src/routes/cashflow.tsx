@@ -493,6 +493,24 @@ function EntriesPanel({
   onRemove: (id: string) => void;
   onUpdate: (id: string, patch: Partial<import("@/lib/types").CashflowEntry>) => void;
 }) {
+  const { state: storeState2 } = useStore();
+  const holdings = storeState2.holdings;
+  const creditCards = storeState2.creditCards ?? [];
+  const labelAccount = (ref?: string): string => {
+    if (!ref) return "?";
+    if (ref === "liquidity") return "Liquidity";
+    if (ref.startsWith("holding:")) {
+      const id = ref.slice("holding:".length);
+      const h = holdings.find((x) => x.id === id);
+      return h ? `${h.symbol || h.name}` : "Holding";
+    }
+    if (ref.startsWith("credit:")) {
+      const id = ref.slice("credit:".length);
+      const c = creditCards.find((x) => x.id === id);
+      return c ? c.name : "Card";
+    }
+    return ref;
+  };
   const [editing, setEditing] = useState<import("@/lib/types").CashflowEntry | null>(null);
   const [kindFilter, setKindFilter] = useState<"all" | "income" | "expense">("all");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
