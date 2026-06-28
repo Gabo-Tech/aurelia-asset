@@ -1369,7 +1369,7 @@ function StatCard({
 }
 
 type FormVals = {
-  kind: "income" | "expense";
+  kind: "income" | "expense" | "transfer";
   source: string;
   category: string;
   amount: number;
@@ -1379,6 +1379,10 @@ type FormVals = {
   amountKind?: "fixed" | "percent";
   percentOf?: "all-income" | "all-expense" | string;
   description?: string;
+  paymentMethod?: string;
+  fromAccount?: string;
+  toAccount?: string;
+  installmentPlan?: { total: number; count: number; frequency: "weekly" | "monthly"; firstDueDate: string };
 };
 
 function AddForm({
