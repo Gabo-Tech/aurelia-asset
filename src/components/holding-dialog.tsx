@@ -100,6 +100,7 @@ export function HoldingDialog({ open, onOpenChange, editing }: Props) {
       setCustomSymbol(editing.symbol);
       setCustomName(editing.name);
       setCustomNotes(editing.notes ?? "");
+      setHorizon(editing.horizon ?? "long");
       setHistory(editing.customHistory ?? []);
       setHistoryText(
         (editing.customHistory ?? [])
