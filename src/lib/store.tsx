@@ -26,6 +26,7 @@ async function loadState(): Promise<AppState> {
       ...DEFAULT_STATE,
       ...parsed,
       transactions: Array.isArray(parsed.transactions) ? parsed.transactions : [],
+      creditCards: Array.isArray(parsed.creditCards) ? parsed.creditCards : [],
       categories:
         Array.isArray(parsed.categories) && parsed.categories.length > 0
           ? parsed.categories
