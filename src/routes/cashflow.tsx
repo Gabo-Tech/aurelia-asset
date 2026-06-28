@@ -57,6 +57,7 @@ export const Route = createFileRoute("/cashflow")({
 });
 
 import { GROUP_COLORS, type Category, type CategoryGroup, type CashflowEntry, type RecurrenceFrequency } from "@/lib/types";
+import { CreditCardsManager } from "@/components/credit-cards-manager";
 
 /** Expand recurring cashflow entries into individual occurrences up to `until`.
  *  Each occurrence keeps the original id (with a date suffix) and a `parentId`
