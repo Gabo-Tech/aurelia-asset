@@ -29,7 +29,7 @@ const DEFAULT_COLORS = ["#6366f1", "#ec4899", "#0ea5e9", "#f97316", "#22c55e", "
 export function CreditCardsManager() {
   const { state, addCreditCard, updateCreditCard, removeCreditCard } = useStore();
   const cards = state.creditCards ?? [];
-  const { currency, toDisplay, formatMoney } = useDisplayCurrency();
+  const { currency, toDisplay } = useMoney();
 
   const expanded = expandCashflows(state.cashflows, new Date());
   const debtByCard = new Map<string, number>();
