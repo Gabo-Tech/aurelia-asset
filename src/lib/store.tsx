@@ -211,6 +211,21 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             transactions: s.transactions.filter((t) => t.id !== id),
           }),
         ),
+      addCreditCard: (c) => {
+        const created: CreditCard = { ...c, id: uid() };
+        setState((s) => ({ ...s, creditCards: [...(s.creditCards ?? []), created] }));
+        return created;
+      },
+      updateCreditCard: (id, patch) =>
+        setState((s) => ({
+          ...s,
+          creditCards: (s.creditCards ?? []).map((c) => (c.id === id ? { ...c, ...patch } : c)),
+        })),
+      removeCreditCard: (id) =>
+        setState((s) => ({
+          ...s,
+          creditCards: (s.creditCards ?? []).filter((c) => c.id !== id),
+        })),
       addCategory: (c) => {
         const created: Category = { ...c, id: uid() };
         setState((s) => ({ ...s, categories: [...s.categories, created] }));
