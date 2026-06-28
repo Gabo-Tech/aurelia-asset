@@ -1038,6 +1038,7 @@ function EditEntryDialog({
 
   useEffect(() => {
     if (!entry) return;
+    if (entry.kind === "transfer") return;
     setKind(entry.kind);
     setName(entry.kind === "income" ? entry.source : entry.category);
     setAmount(String(entry.amount));
