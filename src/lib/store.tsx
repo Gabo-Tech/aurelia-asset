@@ -7,7 +7,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { AppState, DEFAULT_STATE, DEFAULT_CATEGORIES, Holding, CashflowEntry, Category, Settings, HoldingTransaction } from "./types";
+import { AppState, DEFAULT_STATE, DEFAULT_CATEGORIES, Holding, CashflowEntry, Category, Settings, HoldingTransaction, CreditCard } from "./types";
 import { getFxRates, convert, type FxRates } from "./finance/fx";
 import { formatMoney, maskMoney, MASK } from "./format";
 import { secureGet, secureSet } from "./secure-storage";
@@ -26,6 +26,7 @@ async function loadState(): Promise<AppState> {
       ...DEFAULT_STATE,
       ...parsed,
       transactions: Array.isArray(parsed.transactions) ? parsed.transactions : [],
+      creditCards: Array.isArray(parsed.creditCards) ? parsed.creditCards : [],
       categories:
         Array.isArray(parsed.categories) && parsed.categories.length > 0
           ? parsed.categories
@@ -51,6 +52,9 @@ type Ctx = {
   addTransaction: (t: Omit<HoldingTransaction, "id">) => void;
   updateTransaction: (id: string, patch: Partial<HoldingTransaction>) => void;
   removeTransaction: (id: string) => void;
+  addCreditCard: (c: Omit<CreditCard, "id">) => CreditCard;
+  updateCreditCard: (id: string, patch: Partial<CreditCard>) => void;
+  removeCreditCard: (id: string) => void;
   addCategory: (c: Omit<Category, "id">) => Category;
   updateCategory: (id: string, patch: Partial<Category>) => void;
   removeCategory: (id: string) => void;
@@ -80,6 +84,61 @@ function syncQuantities(state: AppState): AppState {
     return { ...h, quantity: qty };
   });
   return changed ? { ...state, holdings } : state;
+}
+
+/** When a cashflow transfer involves a holding, automatically create the
+ *  corresponding HoldingTransaction (buy on the receiving side, sell on the
+ *  sending side) and link it back via `linkedTransactionId`. Transfers between
+ *  liquidity and credit cards do not need a holding tx. */
+function applyCashflowTransferLinks(
+  state: AppState,
+  entry: CashflowEntry,
+  uid: () => string,
+): AppState {
+  if (entry.kind !== "transfer") {
+    return { ...state, cashflows: [...state.cashflows, entry] };
+  }
+  const findHoldingRef = (ref?: string): string | null => {
+    if (!ref) return null;
+    if (ref.startsWith("holding:")) return ref.slice("holding:".length);
+    return null;
+  };
+  const buyHoldingId = findHoldingRef(entry.toAccount);
+  const sellHoldingId = findHoldingRef(entry.fromAccount);
+  const targetId = buyHoldingId ?? sellHoldingId;
+  if (!targetId) {
+    return { ...state, cashflows: [...state.cashflows, entry] };
+  }
+  const holding = state.holdings.find((h) => h.id === targetId);
+  if (!holding) {
+    return { ...state, cashflows: [...state.cashflows, entry] };
+  }
+  const price = holding.currentPrice > 0 ? holding.currentPrice : 1;
+  const qty = Math.abs(Number(entry.amount) || 0) / price;
+  const tx: HoldingTransaction = {
+    id: uid(),
+    holdingId: targetId,
+    kind: buyHoldingId ? "buy" : "sell",
+    date: entry.date,
+    quantity: qty,
+    pricePerUnit: price,
+    currency: entry.currency || holding.priceCurrency || "USD",
+    notes: `Transfer: ${entry.description || ""}`.trim(),
+  };
+  const linked: CashflowEntry = { ...entry, linkedTransactionId: tx.id };
+  // Capture openingQuantity baseline if first tx for this holding.
+  const holdings = state.holdings.map((h) => {
+    if (h.id !== targetId) return h;
+    if (h.openingQuantity != null) return h;
+    const hasExisting = state.transactions.some((x) => x.holdingId === h.id);
+    return { ...h, openingQuantity: hasExisting ? 0 : Number(h.quantity) || 0 };
+  });
+  return syncQuantities({
+    ...state,
+    holdings,
+    cashflows: [...state.cashflows, linked],
+    transactions: [...state.transactions, tx],
+  });
 }
 
 const StoreContext = createContext<Ctx | null>(null);
@@ -133,14 +192,51 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           transactions: s.transactions.filter((t) => t.holdingId !== id),
         })),
       addCashflow: (c) =>
-        setState((s) => ({ ...s, cashflows: [...s.cashflows, { ...c, id: uid() }] })),
+        setState((s) => applyCashflowTransferLinks(s, { ...c, id: uid() }, uid)),
       updateCashflow: (id, patch) =>
-        setState((s) => ({
-          ...s,
-          cashflows: s.cashflows.map((c) => (c.id === id ? { ...c, ...patch } : c)),
-        })),
+        setState((s) => {
+          const existing = s.cashflows.find((c) => c.id === id);
+          if (!existing) return s;
+          // Remove any previously linked transaction; re-link after applying the patch.
+          let next: AppState = { ...s };
+          if (existing.linkedTransactionId) {
+            next = {
+              ...next,
+              transactions: next.transactions.filter(
+                (t) => t.id !== existing.linkedTransactionId,
+              ),
+            };
+          }
+          const merged: CashflowEntry = { ...existing, ...patch, linkedTransactionId: undefined };
+          // Apply link for transfers
+          next = {
+            ...next,
+            cashflows: next.cashflows.map((c) => (c.id === id ? merged : c)),
+          };
+          if (merged.kind === "transfer") {
+            next = applyCashflowTransferLinks(
+              { ...next, cashflows: next.cashflows.filter((c) => c.id !== id) },
+              merged,
+              uid,
+            );
+          } else {
+            next = syncQuantities(next);
+          }
+          return next;
+        }),
       removeCashflow: (id) =>
-        setState((s) => ({ ...s, cashflows: s.cashflows.filter((c) => c.id !== id) })),
+        setState((s) => {
+          const existing = s.cashflows.find((c) => c.id === id);
+          let next: AppState = { ...s, cashflows: s.cashflows.filter((c) => c.id !== id) };
+          if (existing?.linkedTransactionId) {
+            next = {
+              ...next,
+              transactions: next.transactions.filter((t) => t.id !== existing.linkedTransactionId),
+            };
+            next = syncQuantities(next);
+          }
+          return next;
+        }),
       addTransaction: (t) =>
         setState((s) => {
           const holdings = s.holdings.map((h) => {
@@ -170,6 +266,21 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             transactions: s.transactions.filter((t) => t.id !== id),
           }),
         ),
+      addCreditCard: (c) => {
+        const created: CreditCard = { ...c, id: uid() };
+        setState((s) => ({ ...s, creditCards: [...(s.creditCards ?? []), created] }));
+        return created;
+      },
+      updateCreditCard: (id, patch) =>
+        setState((s) => ({
+          ...s,
+          creditCards: (s.creditCards ?? []).map((c) => (c.id === id ? { ...c, ...patch } : c)),
+        })),
+      removeCreditCard: (id) =>
+        setState((s) => ({
+          ...s,
+          creditCards: (s.creditCards ?? []).filter((c) => c.id !== id),
+        })),
       addCategory: (c) => {
         const created: Category = { ...c, id: uid() };
         setState((s) => ({ ...s, categories: [...s.categories, created] }));

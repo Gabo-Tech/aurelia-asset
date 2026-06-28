@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { PALETTE, type CustomPricePoint, type Holding, type SearchResult } from "@/lib/types";
+import { PALETTE, type CustomPricePoint, type Holding, type HoldingHorizon, type SearchResult } from "@/lib/types";
 import { CURRENCIES } from "@/lib/currency";
 import { searchAssets, fetchCurrentQuote } from "@/lib/finance";
 import { Loader2, Search, Upload, Info } from "lucide-react";
@@ -66,6 +66,7 @@ export function HoldingDialog({ open, onOpenChange, editing }: Props) {
   const [manualPrice, setManualPrice] = useState("");
   const [currency, setCurrency] = useState(defaultCurrency);
   const [saving, setSaving] = useState(false);
+  const [horizon, setHorizon] = useState<HoldingHorizon>("long");
 
   // Custom holding fields
   const [customSymbol, setCustomSymbol] = useState("");
@@ -99,6 +100,7 @@ export function HoldingDialog({ open, onOpenChange, editing }: Props) {
       setCustomSymbol(editing.symbol);
       setCustomName(editing.name);
       setCustomNotes(editing.notes ?? "");
+      setHorizon(editing.horizon ?? "long");
       setHistory(editing.customHistory ?? []);
       setHistoryText(
         (editing.customHistory ?? [])
@@ -118,6 +120,7 @@ export function HoldingDialog({ open, onOpenChange, editing }: Props) {
       setCustomNotes("");
       setHistoryText("");
       setHistory([]);
+      setHorizon("long");
     }
   }, [open, editing, defaultCurrency]);
 
@@ -184,6 +187,7 @@ export function HoldingDialog({ open, onOpenChange, editing }: Props) {
           customHistory: history,
           notes: customNotes.trim() || undefined,
           lastPriceAt: Date.now(),
+          horizon,
         };
         if (editing) {
           updateHolding(editing.id, base);
@@ -213,6 +217,7 @@ export function HoldingDialog({ open, onOpenChange, editing }: Props) {
         currentPrice: manual ?? 0,
         priceCurrency: currency,
         lastPriceAt: Date.now(),
+        horizon,
       };
       if (manual == null) {
         try {
@@ -464,6 +469,32 @@ export function HoldingDialog({ open, onOpenChange, editing }: Props) {
             />
           </div>
         </div>
+
+        <div>
+          <Label>Horizon</Label>
+          <div className="mt-2 flex gap-2">
+            <Button
+              type="button"
+              size="sm"
+              variant={horizon === "long" ? "default" : "outline"}
+              onClick={() => setHorizon("long")}
+            >
+              Long-term
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant={horizon === "short" ? "default" : "outline"}
+              onClick={() => setHorizon("short")}
+            >
+              Short-term / cash-like
+            </Button>
+          </div>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Short-term holdings (e.g. lending platforms, broker cash) can be used as transfer accounts in Cashflow.
+          </p>
+        </div>
+
 
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>

@@ -16,7 +16,7 @@ import { formatPct } from "@/lib/format";
 import { ArrowUpRight, Wallet, TrendingUp, TrendingDown, PiggyBank } from "lucide-react";
 import { PageHeader } from "@/components/app-shell";
 import { ChartFrame } from "@/components/chart-frame";
-import { expandCashflows, valuesByEntry } from "@/routes/cashflow";
+import { expandCashflows, valuesByEntry, liquidityImpact, cardDebtImpact } from "@/routes/cashflow";
 import { useTranslation } from "react-i18next";
 import i18n from "@/i18n";
 
@@ -89,12 +89,27 @@ function Dashboard() {
     let bal = 0;
     for (const e of expanded) {
       const v = values.get(e.id) ?? 0;
-      bal += (e.kind === "income" ? 1 : -1) * v;
+      bal += liquidityImpact(e, v);
     }
     return bal;
   }, [cashflows, toDisplay]);
 
-  const netWorth = useMemo(() => portfolioTotal + cashflowBalance, [portfolioTotal, cashflowBalance]);
+  const cardDebt = useMemo(() => {
+    const expanded = expandCashflows(cashflows, new Date());
+    const values = valuesByEntry(expanded, toDisplay);
+    const cards = state.creditCards ?? [];
+    let total = 0;
+    for (const e of expanded) {
+      const v = values.get(e.id) ?? 0;
+      for (const c of cards) total += cardDebtImpact(e, c.id, v);
+    }
+    return total;
+  }, [cashflows, toDisplay, state.creditCards]);
+
+  const netWorth = useMemo(
+    () => portfolioTotal + cashflowBalance - cardDebt,
+    [portfolioTotal, cashflowBalance, cardDebt],
+  );
 
   const net30 = useMemo(() => {
     const now = new Date();
@@ -105,10 +120,11 @@ function Dashboard() {
     for (const e of expanded) {
       if (new Date(e.date).getTime() < cutoff) continue;
       const v = values.get(e.id) ?? 0;
-      bal += (e.kind === "income" ? 1 : -1) * v;
+      bal += liquidityImpact(e, v);
     }
     return bal;
   }, [cashflows, toDisplay]);
+
 
   const topAlloc = allocation[0];
 

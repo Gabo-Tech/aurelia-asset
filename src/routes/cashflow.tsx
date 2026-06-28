@@ -57,6 +57,7 @@ export const Route = createFileRoute("/cashflow")({
 });
 
 import { GROUP_COLORS, type Category, type CategoryGroup, type CashflowEntry, type RecurrenceFrequency } from "@/lib/types";
+import { CreditCardsManager } from "@/components/credit-cards-manager";
 
 /** Expand recurring cashflow entries into individual occurrences up to `until`.
  *  Each occurrence keeps the original id (with a date suffix) and a `parentId`
@@ -64,6 +65,27 @@ import { GROUP_COLORS, type Category, type CategoryGroup, type CashflowEntry, ty
 export function expandCashflows(entries: CashflowEntry[], until: Date = new Date()): (CashflowEntry & { parentId: string; isOccurrence: boolean })[] {
   const out: (CashflowEntry & { parentId: string; isOccurrence: boolean })[] = [];
   for (const e of entries) {
+    // Installment plans expand into N scheduled child charges.
+    if (e.installmentPlan && e.kind === "expense") {
+      const plan = e.installmentPlan;
+      const perCharge = plan.total / Math.max(1, plan.count);
+      const start = new Date(plan.firstDueDate);
+      for (let i = 0; i < plan.count; i++) {
+        const occ = plan.frequency === "weekly" ? addWeeks(start, i) : addMonths(start, i);
+        if (occ > until) break;
+        out.push({
+          ...e,
+          id: `${e.id}__inst${i}`,
+          amount: perCharge,
+          amountKind: "fixed",
+          date: occ.toISOString(),
+          installmentPlan: undefined,
+          parentId: e.id,
+          isOccurrence: i > 0,
+        });
+      }
+      continue;
+    }
     if (!e.recurrence) {
       out.push({ ...e, parentId: e.id, isOccurrence: false });
       continue;
@@ -78,7 +100,6 @@ export function expandCashflows(entries: CashflowEntry[], until: Date = new Date
           ? (d: Date, i: number) => addMonths(d, i)
           : (d: Date, i: number) => addYears(d, i);
     let i = 0;
-    // Safety cap (e.g. 600 weekly = ~11 years)
     while (i < 600) {
       const occ = step(start, i);
       if (occ > last) break;
@@ -93,6 +114,35 @@ export function expandCashflows(entries: CashflowEntry[], until: Date = new Date
     }
   }
   return out;
+}
+
+/** Signed change to liquidity caused by an expanded cashflow entry, in the
+ *  entry's source currency. Use with `toDisplay` to convert. */
+export function liquidityImpact(entry: CashflowEntry, valueInDisplay: number): number {
+  if (entry.kind === "income") return valueInDisplay;
+  if (entry.kind === "expense") {
+    const pm = entry.paymentMethod;
+    if (pm && pm.startsWith("credit:")) return 0;
+    return -valueInDisplay;
+  }
+  // transfer
+  const from = entry.fromAccount;
+  const to = entry.toAccount;
+  let delta = 0;
+  if (from === "liquidity") delta -= valueInDisplay;
+  if (to === "liquidity") delta += valueInDisplay;
+  return delta;
+}
+
+/** Signed change to a specific card's balance owed. */
+export function cardDebtImpact(entry: CashflowEntry, cardId: string, valueInDisplay: number): number {
+  const ref = `credit:${cardId}` as const;
+  if (entry.kind === "expense" && entry.paymentMethod === ref) return valueInDisplay;
+  if (entry.kind === "transfer") {
+    if (entry.toAccount === ref) return -valueInDisplay; // paying card down
+    if (entry.fromAccount === ref) return valueInDisplay; // refund / new debt
+  }
+  return 0;
 }
 
 /** Resolve each entry to its display-currency value.
@@ -112,7 +162,7 @@ export function valuesByEntry(
     const v = toDisplay(e.amount, e.currency);
     fixed.set(e.id, v);
     if (e.kind === "income") baseIncome += v;
-    else baseExpense += v;
+    else if (e.kind === "expense") baseExpense += v;
   }
   // Map fixed parent id back to its origin id (recurring occurrences carry parentId).
   const fixedByParent = new Map<string, number>();
@@ -314,10 +364,10 @@ function CashflowPage() {
   const subscribeOptions = useMemo(
     () =>
       cashflows
-        .filter((c) => (c.amountKind ?? "fixed") === "fixed")
+        .filter((c) => (c.amountKind ?? "fixed") === "fixed" && c.kind !== "transfer")
         .map((c) => ({
           id: c.id,
-          kind: c.kind,
+          kind: c.kind as "income" | "expense",
           label: (c.kind === "income" ? c.source : c.category) || "(unnamed)",
         })),
     [cashflows],
@@ -338,18 +388,22 @@ function CashflowPage() {
       </div>
 
       <div className="mt-5 grid gap-5 lg:grid-cols-2">
-        <AddForm
-          defaultCurrency={currency}
-          categories={categories}
-          subscribeOptions={subscribeOptions}
-          onAddCategory={addCategory}
-          onUpdateCategory={updateCategory}
-          onRemoveCategory={removeCategory}
-          onAdd={(e) => {
-            addCashflow(e);
-            toast.success(`${e.kind === "income" ? "Income" : "Expense"} added`);
-          }}
-        />
+        <div className="space-y-5">
+          <AddForm
+            defaultCurrency={currency}
+            categories={categories}
+            subscribeOptions={subscribeOptions}
+            onAddCategory={addCategory}
+            onUpdateCategory={updateCategory}
+            onRemoveCategory={removeCategory}
+            onAdd={(e) => {
+              addCashflow(e as unknown as Omit<CashflowEntry, "id">);
+              toast.success(`${e.kind === "income" ? "Income" : e.kind === "expense" ? "Expense" : "Transfer"} added`);
+            }}
+          />
+          <CreditCardsManager />
+        </div>
+
 
         <Card className="border-border/60 min-w-0">
           <CardHeader className="px-3 sm:px-6">
@@ -439,6 +493,24 @@ function EntriesPanel({
   onRemove: (id: string) => void;
   onUpdate: (id: string, patch: Partial<import("@/lib/types").CashflowEntry>) => void;
 }) {
+  const { state: storeState2 } = useStore();
+  const holdings = storeState2.holdings;
+  const creditCards = storeState2.creditCards ?? [];
+  const labelAccount = (ref?: string): string => {
+    if (!ref) return "?";
+    if (ref === "liquidity") return "Liquidity";
+    if (ref.startsWith("holding:")) {
+      const id = ref.slice("holding:".length);
+      const h = holdings.find((x) => x.id === id);
+      return h ? `${h.symbol || h.name}` : "Holding";
+    }
+    if (ref.startsWith("credit:")) {
+      const id = ref.slice("credit:".length);
+      const c = creditCards.find((x) => x.id === id);
+      return c ? c.name : "Card";
+    }
+    return ref;
+  };
   const [editing, setEditing] = useState<import("@/lib/types").CashflowEntry | null>(null);
   const [kindFilter, setKindFilter] = useState<"all" | "income" | "expense">("all");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
@@ -513,6 +585,7 @@ function EntriesPanel({
     const byDay = new Map<string, { income: number; expense: number; entries: Entry[] }>();
     for (const d of days) byDay.set(format(d, "yyyy-MM-dd"), { income: 0, expense: 0, entries: [] });
     for (const c of filtered) {
+      if (c.kind === "transfer") continue;
       const key = format(new Date(c.date), "yyyy-MM-dd");
       const bucket = byDay.get(key) ?? { income: 0, expense: 0, entries: [] };
       const v = values.get(c.id) ?? 0;
@@ -520,7 +593,7 @@ function EntriesPanel({
       else bucket.expense += v;
       bucket.entries.push({
         name: (c.kind === "income" ? c.source : c.category) || "Other",
-        kind: c.kind,
+        kind: c.kind as "income" | "expense",
         value: +v.toFixed(2),
       });
       byDay.set(key, bucket);
@@ -824,19 +897,28 @@ function EntriesPanel({
                                     <span className="flex items-center gap-1.5">
                                       <span
                                         className={`inline-block h-1.5 w-1.5 rounded-full ${
-                                          e.kind === "income" ? "bg-success" : "bg-destructive"
+                                          e.kind === "income"
+                                            ? "bg-success"
+                                            : e.kind === "expense"
+                                              ? "bg-destructive"
+                                              : "bg-muted-foreground"
                                         }`}
                                       />
                                       <span className="text-foreground">{e.name}</span>
                                     </span>
                                     <span
                                       className={`tabular-nums ${
-                                        e.kind === "income" ? "text-success" : "text-destructive"
+                                        e.kind === "income"
+                                          ? "text-success"
+                                          : e.kind === "expense"
+                                            ? "text-destructive"
+                                            : "text-muted-foreground"
                                       }`}
                                     >
-                                      {e.kind === "income" ? "+" : "−"}
+                                      {e.kind === "income" ? "+" : e.kind === "expense" ? "−" : "↔"}
                                       {privacy ? MASK : formatMoney(e.value, currency)}
                                     </span>
+
                                   </div>
                                 ))}
                               </div>
@@ -894,16 +976,28 @@ function EntriesPanel({
                           {format(new Date(c.date), "MMM d, yyyy")}
                         </td>
                         <td className="py-2.5">
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex items-center gap-1.5 flex-wrap">
                             <span
                               className={`text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded ${
                                 c.kind === "income"
                                   ? "bg-success/15 text-success"
-                                  : "bg-destructive/15 text-destructive"
+                                  : c.kind === "expense"
+                                    ? "bg-destructive/15 text-destructive"
+                                    : "bg-muted text-muted-foreground"
                               }`}
                             >
                               {c.kind}
                             </span>
+                            {c.kind === "expense" && c.paymentMethod?.startsWith("credit:") && (
+                              <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-orange-500/15 text-orange-500">
+                                💳
+                              </span>
+                            )}
+                            {c.installmentPlan && (
+                              <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-purple-500/15 text-purple-500">
+                                {c.installmentPlan.count}× {c.installmentPlan.frequency}
+                              </span>
+                            )}
                             {recurring && (
                               <span
                                 className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-muted text-muted-foreground"
@@ -915,13 +1009,20 @@ function EntriesPanel({
                           </div>
                         </td>
                         <td className="py-2.5">
-                          <div>{c.kind === "income" ? c.source : c.category}</div>
+                          <div>
+                            {c.kind === "transfer"
+                              ? `${labelAccount(c.fromAccount)} → ${labelAccount(c.toAccount)}`
+                              : c.kind === "income"
+                                ? c.source
+                                : c.category}
+                          </div>
                           {c.description && (
                             <div className="text-[11px] text-muted-foreground truncate max-w-[28ch]" title={c.description}>
                               {c.description}
                             </div>
                           )}
                         </td>
+
                         <td className="py-2.5 text-right tabular-nums font-medium">
                           {(() => {
                             const isPct = (c.amountKind ?? "fixed") === "percent";
@@ -1037,6 +1138,7 @@ function EditEntryDialog({
 
   useEffect(() => {
     if (!entry) return;
+    if (entry.kind === "transfer") return;
     setKind(entry.kind);
     setName(entry.kind === "income" ? entry.source : entry.category);
     setAmount(String(entry.amount));
@@ -1318,7 +1420,7 @@ function StatCard({
 }
 
 type FormVals = {
-  kind: "income" | "expense";
+  kind: "income" | "expense" | "transfer";
   source: string;
   category: string;
   amount: number;
@@ -1328,6 +1430,10 @@ type FormVals = {
   amountKind?: "fixed" | "percent";
   percentOf?: "all-income" | "all-expense" | string;
   description?: string;
+  paymentMethod?: string;
+  fromAccount?: string;
+  toAccount?: string;
+  installmentPlan?: { total: number; count: number; frequency: "weekly" | "monthly"; firstDueDate: string };
 };
 
 function AddForm({
@@ -1347,7 +1453,17 @@ function AddForm({
   onUpdateCategory: (id: string, patch: Partial<Category>) => void;
   onRemoveCategory: (id: string) => void;
 }) {
-  const [kind, setKind] = useState<"income" | "expense">("income");
+  const { state: storeState } = useStore();
+  const holdings = storeState.holdings;
+  const creditCards = storeState.creditCards ?? [];
+  const accountOptions = useMemo(() => {
+    const opts: { value: string; label: string }[] = [{ value: "liquidity", label: "Liquidity (cash)" }];
+    for (const h of holdings) opts.push({ value: `holding:${h.id}`, label: `Holding · ${h.symbol || h.name}` });
+    for (const c of creditCards) opts.push({ value: `credit:${c.id}`, label: `Credit card · ${c.name}` });
+    return opts;
+  }, [holdings, creditCards]);
+
+  const [kind, setKind] = useState<"income" | "expense" | "transfer">("income");
   const [categoryName, setCategoryName] = useState<string>("");
   const [amount, setAmount] = useState("");
   const [entryCurrency, setEntryCurrency] = useState(defaultCurrency);
@@ -1358,25 +1474,61 @@ function AddForm({
   const [isPercent, setIsPercent] = useState(false);
   const [percentOf, setPercentOf] = useState<string>("all-income");
   const [description, setDescription] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState<string>("liquidity");
+  const [useInstallments, setUseInstallments] = useState(false);
+  const [instCount, setInstCount] = useState("4");
+  const [instFreq, setInstFreq] = useState<"weekly" | "monthly">("monthly");
+  const [instStart, setInstStart] = useState(format(new Date(), "yyyy-MM-dd"));
+  const [fromAccount, setFromAccount] = useState<string>("liquidity");
+  const [toAccount, setToAccount] = useState<string>(accountOptions[1]?.value ?? "liquidity");
 
   const visibleCategories = useMemo(
-    () => categories.filter((c) => c.kind === kind),
+    () => categories.filter((c) => c.kind === (kind === "transfer" ? "expense" : kind)),
     [categories, kind],
   );
 
-  // Keep the selected category valid when switching tabs.
   useEffect(() => {
+    if (kind === "transfer") return;
     if (!visibleCategories.find((c) => c.name === categoryName)) {
       setCategoryName(visibleCategories[0]?.name ?? "");
     }
-  }, [visibleCategories, categoryName]);
+  }, [visibleCategories, categoryName, kind]);
 
   function submit() {
     const a = parseFloat(amount);
     if (!isFinite(a) || a <= 0) return toast.error("Amount must be > 0");
     if (isPercent && a > 1000) return toast.error("Percentage looks too high");
-    if (!categoryName.trim()) return toast.error("Pick a category");
     const desc = description.trim().slice(0, 200);
+
+    if (kind === "transfer") {
+      if (!fromAccount || !toAccount) return toast.error("Pick both accounts");
+      if (fromAccount === toAccount) return toast.error("Accounts must differ");
+      onAdd({
+        kind: "transfer",
+        source: "",
+        category: "Transfer",
+        amount: a,
+        currency: entryCurrency,
+        date: new Date(date).toISOString(),
+        fromAccount,
+        toAccount,
+        description: desc || undefined,
+      });
+      setAmount("");
+      setDescription("");
+      return;
+    }
+
+    if (!categoryName.trim()) return toast.error("Pick a category");
+    const installmentPlan =
+      kind === "expense" && useInstallments && !isPercent
+        ? {
+            total: a,
+            count: Math.max(1, Math.min(120, parseInt(instCount) || 1)),
+            frequency: instFreq,
+            firstDueDate: new Date(instStart).toISOString(),
+          }
+        : undefined;
     onAdd({
       kind,
       source: kind === "income" ? categoryName : "",
@@ -1384,12 +1536,14 @@ function AddForm({
       amount: a,
       currency: entryCurrency,
       date: new Date(date).toISOString(),
-      recurrence: recurring
+      recurrence: recurring && !installmentPlan
         ? { frequency, ...(until ? { until: new Date(until).toISOString() } : {}) }
         : undefined,
       amountKind: isPercent ? "percent" : "fixed",
       percentOf: isPercent ? percentOf : undefined,
       description: desc || undefined,
+      paymentMethod: kind === "expense" ? paymentMethod : undefined,
+      installmentPlan,
     });
     setAmount("");
     setDescription("");
@@ -1407,66 +1561,167 @@ function AddForm({
         />
       </CardHeader>
       <CardContent>
-        <Tabs value={kind} onValueChange={(v) => setKind(v as "income" | "expense")}>
-          <TabsList className="grid grid-cols-2">
+        <Tabs value={kind} onValueChange={(v) => setKind(v as typeof kind)}>
+          <TabsList className="grid grid-cols-3">
             <TabsTrigger value="income">Income</TabsTrigger>
             <TabsTrigger value="expense">Expense</TabsTrigger>
+            <TabsTrigger value="transfer">Transfer</TabsTrigger>
           </TabsList>
-          <TabsContent value={kind} className="mt-4 space-y-3">
-            <Field label={kind === "income" ? "Source" : "Category"}>
-              <CategoryPicker
-                kind={kind}
-                value={categoryName}
-                onChange={setCategoryName}
-                categories={visibleCategories}
-                onCreate={(c) => {
-                  const created = onAddCategory(c);
-                  setCategoryName(created.name);
-                }}
-              />
-            </Field>
-            {sharedFields()}
-            <Field label="Description (optional)">
-              <Input
-                type="text"
-                maxLength={200}
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="e.g. groceries at Migros"
-              />
-            </Field>
-            <div className="rounded-md border border-border/60 p-3 space-y-3">
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={recurring}
-                  onChange={(e) => setRecurring(e.target.checked)}
-                  className="h-4 w-4"
+          {kind !== "transfer" ? (
+            <TabsContent value={kind} className="mt-4 space-y-3">
+              <Field label={kind === "income" ? "Source" : "Category"}>
+                <CategoryPicker
+                  kind={kind}
+                  value={categoryName}
+                  onChange={setCategoryName}
+                  categories={visibleCategories}
+                  onCreate={(c) => {
+                    const created = onAddCategory(c);
+                    setCategoryName(created.name);
+                  }}
                 />
-                <span>Repeats automatically</span>
-              </label>
-              {recurring && (
-                <div className="grid grid-cols-2 gap-3">
-                  <Field label="Frequency">
-                    <Select value={frequency} onValueChange={(v) => setFrequency(v as RecurrenceFrequency)}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="weekly">Weekly</SelectItem>
-                        <SelectItem value="monthly">Monthly</SelectItem>
-                        <SelectItem value="yearly">Yearly</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </Field>
-                  <Field label="Until (optional)">
-                    <Input type="date" value={until} onChange={(e) => setUntil(e.target.value)} />
-                  </Field>
+              </Field>
+              {sharedFields()}
+              <Field label="Description (optional)">
+                <Input
+                  type="text"
+                  maxLength={200}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="e.g. groceries at Migros"
+                />
+              </Field>
+              {kind === "expense" && (
+                <Field label="Paid with">
+                  <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {accountOptions
+                        .filter((o) => o.value === "liquidity" || o.value.startsWith("credit:"))
+                        .map((o) => (
+                          <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </Field>
+              )}
+              {kind === "expense" && !isPercent && (
+                <div className="rounded-md border border-border/60 p-3 space-y-3">
+                  <label className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={useInstallments}
+                      onChange={(e) => setUseInstallments(e.target.checked)}
+                      className="h-4 w-4"
+                    />
+                    <span>Split into installments (financing)</span>
+                  </label>
+                  {useInstallments && (
+                    <div className="grid grid-cols-3 gap-3">
+                      <Field label="# Payments">
+                        <Input type="number" min={1} max={120} value={instCount} onChange={(e) => setInstCount(e.target.value)} />
+                      </Field>
+                      <Field label="Every">
+                        <Select value={instFreq} onValueChange={(v) => setInstFreq(v as "weekly" | "monthly")}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="weekly">Week</SelectItem>
+                            <SelectItem value="monthly">Month</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </Field>
+                      <Field label="First due">
+                        <Input type="date" value={instStart} onChange={(e) => setInstStart(e.target.value)} />
+                      </Field>
+                    </div>
+                  )}
                 </div>
               )}
-            </div>
-          </TabsContent>
+              {!useInstallments && (
+                <div className="rounded-md border border-border/60 p-3 space-y-3">
+                  <label className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={recurring}
+                      onChange={(e) => setRecurring(e.target.checked)}
+                      className="h-4 w-4"
+                    />
+                    <span>Repeats automatically</span>
+                  </label>
+                  {recurring && (
+                    <div className="grid grid-cols-2 gap-3">
+                      <Field label="Frequency">
+                        <Select value={frequency} onValueChange={(v) => setFrequency(v as RecurrenceFrequency)}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="weekly">Weekly</SelectItem>
+                            <SelectItem value="monthly">Monthly</SelectItem>
+                            <SelectItem value="yearly">Yearly</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </Field>
+                      <Field label="Until (optional)">
+                        <Input type="date" value={until} onChange={(e) => setUntil(e.target.value)} />
+                      </Field>
+                    </div>
+                  )}
+                </div>
+              )}
+            </TabsContent>
+          ) : (
+            <TabsContent value="transfer" className="mt-4 space-y-3">
+              <p className="text-xs text-muted-foreground">
+                Move money between accounts without affecting income or expense totals.
+                E.g. selling part of an investment to pay a credit card, or paying down card debt from liquidity.
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="From">
+                  <Select value={fromAccount} onValueChange={setFromAccount}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {accountOptions.map((o) => (
+                        <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </Field>
+                <Field label="To">
+                  <Select value={toAccount} onValueChange={setToAccount}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {accountOptions.map((o) => (
+                        <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </Field>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                <Field label="Amount">
+                  <Input type="number" step="any" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" />
+                </Field>
+                <Field label="Currency">
+                  <Select value={entryCurrency} onValueChange={setEntryCurrency}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent className="max-h-72">
+                      {CURRENCIES.map((c) => (
+                        <SelectItem key={c.code} value={c.code}>{c.code} · {c.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </Field>
+                <Field label="Date">
+                  <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+                </Field>
+              </div>
+              <Field label="Description (optional)">
+                <Input type="text" maxLength={200} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="e.g. Quanloop withdrawal to pay Amex" />
+              </Field>
+            </TabsContent>
+          )}
         </Tabs>
         <Button className="mt-4 w-full" onClick={submit}>
-          <Plus className="mr-2 h-4 w-4" /> Add {recurring ? "recurring " : ""}{kind}
+          <Plus className="mr-2 h-4 w-4" /> Add {kind === "transfer" ? "transfer" : `${recurring && !useInstallments ? "recurring " : ""}${useInstallments && kind === "expense" ? "financed " : ""}${kind}`}
         </Button>
       </CardContent>
     </Card>
