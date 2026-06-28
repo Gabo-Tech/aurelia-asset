@@ -387,18 +387,22 @@ function CashflowPage() {
       </div>
 
       <div className="mt-5 grid gap-5 lg:grid-cols-2">
-        <AddForm
-          defaultCurrency={currency}
-          categories={categories}
-          subscribeOptions={subscribeOptions}
-          onAddCategory={addCategory}
-          onUpdateCategory={updateCategory}
-          onRemoveCategory={removeCategory}
-          onAdd={(e) => {
-            addCashflow(e as unknown as Omit<CashflowEntry, "id">);
-            toast.success(`${e.kind === "income" ? "Income" : e.kind === "expense" ? "Expense" : "Transfer"} added`);
-          }}
-        />
+        <div className="space-y-5">
+          <AddForm
+            defaultCurrency={currency}
+            categories={categories}
+            subscribeOptions={subscribeOptions}
+            onAddCategory={addCategory}
+            onUpdateCategory={updateCategory}
+            onRemoveCategory={removeCategory}
+            onAdd={(e) => {
+              addCashflow(e as unknown as Omit<CashflowEntry, "id">);
+              toast.success(`${e.kind === "income" ? "Income" : e.kind === "expense" ? "Expense" : "Transfer"} added`);
+            }}
+          />
+          <CreditCardsManager />
+        </div>
+
 
         <Card className="border-border/60 min-w-0">
           <CardHeader className="px-3 sm:px-6">
