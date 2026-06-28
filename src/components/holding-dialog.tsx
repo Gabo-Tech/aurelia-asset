@@ -66,6 +66,7 @@ export function HoldingDialog({ open, onOpenChange, editing }: Props) {
   const [manualPrice, setManualPrice] = useState("");
   const [currency, setCurrency] = useState(defaultCurrency);
   const [saving, setSaving] = useState(false);
+  const [horizon, setHorizon] = useState<HoldingHorizon>("long");
 
   // Custom holding fields
   const [customSymbol, setCustomSymbol] = useState("");
