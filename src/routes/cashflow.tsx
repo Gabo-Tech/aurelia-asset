@@ -314,10 +314,10 @@ function CashflowPage() {
   const subscribeOptions = useMemo(
     () =>
       cashflows
-        .filter((c) => (c.amountKind ?? "fixed") === "fixed")
+        .filter((c) => (c.amountKind ?? "fixed") === "fixed" && c.kind !== "transfer")
         .map((c) => ({
           id: c.id,
-          kind: c.kind,
+          kind: c.kind as "income" | "expense",
           label: (c.kind === "income" ? c.source : c.category) || "(unnamed)",
         })),
     [cashflows],
