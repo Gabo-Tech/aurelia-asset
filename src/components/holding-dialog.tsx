@@ -217,6 +217,7 @@ export function HoldingDialog({ open, onOpenChange, editing }: Props) {
         currentPrice: manual ?? 0,
         priceCurrency: currency,
         lastPriceAt: Date.now(),
+        horizon,
       };
       if (manual == null) {
         try {
