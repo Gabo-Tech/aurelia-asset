@@ -86,6 +86,61 @@ function syncQuantities(state: AppState): AppState {
   return changed ? { ...state, holdings } : state;
 }
 
+/** When a cashflow transfer involves a holding, automatically create the
+ *  corresponding HoldingTransaction (buy on the receiving side, sell on the
+ *  sending side) and link it back via `linkedTransactionId`. Transfers between
+ *  liquidity and credit cards do not need a holding tx. */
+function applyCashflowTransferLinks(
+  state: AppState,
+  entry: CashflowEntry,
+  uid: () => string,
+): AppState {
+  if (entry.kind !== "transfer") {
+    return { ...state, cashflows: [...state.cashflows, entry] };
+  }
+  const findHoldingRef = (ref?: string): string | null => {
+    if (!ref) return null;
+    if (ref.startsWith("holding:")) return ref.slice("holding:".length);
+    return null;
+  };
+  const buyHoldingId = findHoldingRef(entry.toAccount);
+  const sellHoldingId = findHoldingRef(entry.fromAccount);
+  const targetId = buyHoldingId ?? sellHoldingId;
+  if (!targetId) {
+    return { ...state, cashflows: [...state.cashflows, entry] };
+  }
+  const holding = state.holdings.find((h) => h.id === targetId);
+  if (!holding) {
+    return { ...state, cashflows: [...state.cashflows, entry] };
+  }
+  const price = holding.currentPrice > 0 ? holding.currentPrice : 1;
+  const qty = Math.abs(Number(entry.amount) || 0) / price;
+  const tx: HoldingTransaction = {
+    id: uid(),
+    holdingId: targetId,
+    kind: buyHoldingId ? "buy" : "sell",
+    date: entry.date,
+    quantity: qty,
+    pricePerUnit: price,
+    currency: entry.currency || holding.priceCurrency || "USD",
+    notes: `Transfer: ${entry.description || ""}`.trim(),
+  };
+  const linked: CashflowEntry = { ...entry, linkedTransactionId: tx.id };
+  // Capture openingQuantity baseline if first tx for this holding.
+  const holdings = state.holdings.map((h) => {
+    if (h.id !== targetId) return h;
+    if (h.openingQuantity != null) return h;
+    const hasExisting = state.transactions.some((x) => x.holdingId === h.id);
+    return { ...h, openingQuantity: hasExisting ? 0 : Number(h.quantity) || 0 };
+  });
+  return syncQuantities({
+    ...state,
+    holdings,
+    cashflows: [...state.cashflows, linked],
+    transactions: [...state.transactions, tx],
+  });
+}
+
 const StoreContext = createContext<Ctx | null>(null);
 
 export function StoreProvider({ children }: { children: ReactNode }) {
