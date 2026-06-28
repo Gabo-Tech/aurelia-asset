@@ -32,27 +32,47 @@ export type Recurrence = {
   until?: string;
 };
 
+/** Reference to an account participating in a transfer.
+ *  - "liquidity" : the implicit cash pool
+ *  - "holding:<id>" : a specific holding (typically short-term / cash-like)
+ *  - "credit:<id>" : a credit card */
+export type AccountRef = "liquidity" | `holding:${string}` | `credit:${string}`;
+
+/** How a one-off purchase is split. The expense entry stays in the list but
+ *  is rendered as N scheduled charges; each occurrence is generated at expand
+ *  time, similar to recurrences. */
+export type InstallmentPlan = {
+  total: number;
+  count: number;
+  frequency: "weekly" | "monthly";
+  firstDueDate: string; // ISO
+};
+
 export type CashflowEntry = {
   id: string;
-  kind: "income" | "expense";
+  /** "transfer" moves money between accounts and is excluded from income /
+   *  expense totals. */
+  kind: "income" | "expense" | "transfer";
   source: string;
   category: string;
   amount: number;
-  /** Currency of `amount`. Defaults to "USD" for legacy entries. */
   currency?: string;
-  date: string; // ISO (first occurrence for recurring entries)
-  /** When set, this entry repeats on the given cadence starting from `date`. */
+  date: string;
   recurrence?: Recurrence;
-  /** "fixed" (default) treats `amount` as a money value; "percent" treats
-   *  `amount` as a percentage of the base selected via `percentOf`. */
   amountKind?: "fixed" | "percent";
-  /** For percent entries: what the percentage is taken from.
-   *  - "all-income" (default) - % of total fixed income in scope
-   *  - "all-expense" - % of total fixed expenses in scope
-   *  - any other string - id of another (fixed) entry to subscribe to */
   percentOf?: "all-income" | "all-expense" | string;
-  /** Optional short description / note (max 200 chars). */
   description?: string;
+  /** Expenses only. Defaults to "liquidity". When set to a card, the charge
+   *  does not reduce liquidity; it increases the card's balance owed. */
+  paymentMethod?: AccountRef;
+  /** Transfers only. */
+  fromAccount?: AccountRef;
+  toAccount?: AccountRef;
+  /** Expenses only. When set, the entry expands into N scheduled charges. */
+  installmentPlan?: InstallmentPlan;
+  /** Transfers only: id(s) of HoldingTransaction(s) auto-created by the
+   *  store for this transfer. Used to keep them in sync. */
+  linkedTransactionId?: string;
 };
 
 /**
