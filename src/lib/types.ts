@@ -100,11 +100,24 @@ export type Settings = {
   displayCurrency?: string;
 };
 
+export type CreditCard = {
+  id: string;
+  name: string;
+  color: string;
+  currency: string;
+  /** Day of the month the statement closes (1-31), optional. */
+  statementDay?: number;
+  /** Day of the month payment is due (1-31), optional. */
+  dueDay?: number;
+  creditLimit?: number;
+};
+
 export type AppState = {
   holdings: Holding[];
   cashflows: CashflowEntry[];
   transactions: HoldingTransaction[];
   categories: Category[];
+  creditCards: CreditCard[];
   settings: Settings;
 };
 
