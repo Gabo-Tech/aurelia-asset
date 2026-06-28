@@ -187,6 +187,7 @@ export function HoldingDialog({ open, onOpenChange, editing }: Props) {
           customHistory: history,
           notes: customNotes.trim() || undefined,
           lastPriceAt: Date.now(),
+          horizon,
         };
         if (editing) {
           updateHolding(editing.id, base);
