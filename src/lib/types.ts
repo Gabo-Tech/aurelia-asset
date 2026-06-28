@@ -2,6 +2,8 @@ export type AssetType = "crypto" | "stock" | "etf" | "metal" | "other";
 
 export type CustomPricePoint = { t: number; p: number };
 
+export type HoldingHorizon = "long" | "short";
+
 export type Holding = {
   id: string;
   symbol: string;
@@ -10,18 +12,16 @@ export type Holding = {
   quantity: number;
   manualPrice?: number;
   currentPrice: number;
-  /** Currency of currentPrice / manualPrice / customHistory. Defaults to "USD". */
   priceCurrency?: string;
   color: string;
   coinGeckoId?: string;
   lastPriceAt?: number;
-  /** Custom asset (not on any market) - user-managed history (sorted ascending by t) */
   customHistory?: CustomPricePoint[];
-  /** Free-form notes for custom holdings */
   notes?: string;
-  /** Baseline quantity captured the first time a transaction is added.
-   *  Derived quantity = openingQuantity + sum(buys) - sum(sells). */
   openingQuantity?: number;
+  /** Investment horizon. Defaults to "long". Short-term holdings are
+   *  treated as cash-like accounts (lending platforms, savings, broker cash). */
+  horizon?: HoldingHorizon;
 };
 
 export type RecurrenceFrequency = "weekly" | "monthly" | "yearly";
