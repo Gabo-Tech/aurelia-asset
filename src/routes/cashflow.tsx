@@ -1402,7 +1402,17 @@ function AddForm({
   onUpdateCategory: (id: string, patch: Partial<Category>) => void;
   onRemoveCategory: (id: string) => void;
 }) {
-  const [kind, setKind] = useState<"income" | "expense">("income");
+  const { state: storeState } = useStore();
+  const holdings = storeState.holdings;
+  const creditCards = storeState.creditCards ?? [];
+  const accountOptions = useMemo(() => {
+    const opts: { value: string; label: string }[] = [{ value: "liquidity", label: "Liquidity (cash)" }];
+    for (const h of holdings) opts.push({ value: `holding:${h.id}`, label: `Holding · ${h.symbol || h.name}` });
+    for (const c of creditCards) opts.push({ value: `credit:${c.id}`, label: `Credit card · ${c.name}` });
+    return opts;
+  }, [holdings, creditCards]);
+
+  const [kind, setKind] = useState<"income" | "expense" | "transfer">("income");
   const [categoryName, setCategoryName] = useState<string>("");
   const [amount, setAmount] = useState("");
   const [entryCurrency, setEntryCurrency] = useState(defaultCurrency);
@@ -1413,25 +1423,61 @@ function AddForm({
   const [isPercent, setIsPercent] = useState(false);
   const [percentOf, setPercentOf] = useState<string>("all-income");
   const [description, setDescription] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState<string>("liquidity");
+  const [useInstallments, setUseInstallments] = useState(false);
+  const [instCount, setInstCount] = useState("4");
+  const [instFreq, setInstFreq] = useState<"weekly" | "monthly">("monthly");
+  const [instStart, setInstStart] = useState(format(new Date(), "yyyy-MM-dd"));
+  const [fromAccount, setFromAccount] = useState<string>("liquidity");
+  const [toAccount, setToAccount] = useState<string>(accountOptions[1]?.value ?? "liquidity");
 
   const visibleCategories = useMemo(
-    () => categories.filter((c) => c.kind === kind),
+    () => categories.filter((c) => c.kind === (kind === "transfer" ? "expense" : kind)),
     [categories, kind],
   );
 
-  // Keep the selected category valid when switching tabs.
   useEffect(() => {
+    if (kind === "transfer") return;
     if (!visibleCategories.find((c) => c.name === categoryName)) {
       setCategoryName(visibleCategories[0]?.name ?? "");
     }
-  }, [visibleCategories, categoryName]);
+  }, [visibleCategories, categoryName, kind]);
 
   function submit() {
     const a = parseFloat(amount);
     if (!isFinite(a) || a <= 0) return toast.error("Amount must be > 0");
     if (isPercent && a > 1000) return toast.error("Percentage looks too high");
-    if (!categoryName.trim()) return toast.error("Pick a category");
     const desc = description.trim().slice(0, 200);
+
+    if (kind === "transfer") {
+      if (!fromAccount || !toAccount) return toast.error("Pick both accounts");
+      if (fromAccount === toAccount) return toast.error("Accounts must differ");
+      onAdd({
+        kind: "transfer",
+        source: "",
+        category: "Transfer",
+        amount: a,
+        currency: entryCurrency,
+        date: new Date(date).toISOString(),
+        fromAccount,
+        toAccount,
+        description: desc || undefined,
+      });
+      setAmount("");
+      setDescription("");
+      return;
+    }
+
+    if (!categoryName.trim()) return toast.error("Pick a category");
+    const installmentPlan =
+      kind === "expense" && useInstallments && !isPercent
+        ? {
+            total: a,
+            count: Math.max(1, Math.min(120, parseInt(instCount) || 1)),
+            frequency: instFreq,
+            firstDueDate: new Date(instStart).toISOString(),
+          }
+        : undefined;
     onAdd({
       kind,
       source: kind === "income" ? categoryName : "",
@@ -1439,12 +1485,14 @@ function AddForm({
       amount: a,
       currency: entryCurrency,
       date: new Date(date).toISOString(),
-      recurrence: recurring
+      recurrence: recurring && !installmentPlan
         ? { frequency, ...(until ? { until: new Date(until).toISOString() } : {}) }
         : undefined,
       amountKind: isPercent ? "percent" : "fixed",
       percentOf: isPercent ? percentOf : undefined,
       description: desc || undefined,
+      paymentMethod: kind === "expense" ? paymentMethod : undefined,
+      installmentPlan,
     });
     setAmount("");
     setDescription("");
@@ -1462,66 +1510,167 @@ function AddForm({
         />
       </CardHeader>
       <CardContent>
-        <Tabs value={kind} onValueChange={(v) => setKind(v as "income" | "expense")}>
-          <TabsList className="grid grid-cols-2">
+        <Tabs value={kind} onValueChange={(v) => setKind(v as typeof kind)}>
+          <TabsList className="grid grid-cols-3">
             <TabsTrigger value="income">Income</TabsTrigger>
             <TabsTrigger value="expense">Expense</TabsTrigger>
+            <TabsTrigger value="transfer">Transfer</TabsTrigger>
           </TabsList>
-          <TabsContent value={kind} className="mt-4 space-y-3">
-            <Field label={kind === "income" ? "Source" : "Category"}>
-              <CategoryPicker
-                kind={kind}
-                value={categoryName}
-                onChange={setCategoryName}
-                categories={visibleCategories}
-                onCreate={(c) => {
-                  const created = onAddCategory(c);
-                  setCategoryName(created.name);
-                }}
-              />
-            </Field>
-            {sharedFields()}
-            <Field label="Description (optional)">
-              <Input
-                type="text"
-                maxLength={200}
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="e.g. groceries at Migros"
-              />
-            </Field>
-            <div className="rounded-md border border-border/60 p-3 space-y-3">
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={recurring}
-                  onChange={(e) => setRecurring(e.target.checked)}
-                  className="h-4 w-4"
+          {kind !== "transfer" ? (
+            <TabsContent value={kind} className="mt-4 space-y-3">
+              <Field label={kind === "income" ? "Source" : "Category"}>
+                <CategoryPicker
+                  kind={kind}
+                  value={categoryName}
+                  onChange={setCategoryName}
+                  categories={visibleCategories}
+                  onCreate={(c) => {
+                    const created = onAddCategory(c);
+                    setCategoryName(created.name);
+                  }}
                 />
-                <span>Repeats automatically</span>
-              </label>
-              {recurring && (
-                <div className="grid grid-cols-2 gap-3">
-                  <Field label="Frequency">
-                    <Select value={frequency} onValueChange={(v) => setFrequency(v as RecurrenceFrequency)}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="weekly">Weekly</SelectItem>
-                        <SelectItem value="monthly">Monthly</SelectItem>
-                        <SelectItem value="yearly">Yearly</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </Field>
-                  <Field label="Until (optional)">
-                    <Input type="date" value={until} onChange={(e) => setUntil(e.target.value)} />
-                  </Field>
+              </Field>
+              {sharedFields()}
+              <Field label="Description (optional)">
+                <Input
+                  type="text"
+                  maxLength={200}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="e.g. groceries at Migros"
+                />
+              </Field>
+              {kind === "expense" && (
+                <Field label="Paid with">
+                  <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {accountOptions
+                        .filter((o) => o.value === "liquidity" || o.value.startsWith("credit:"))
+                        .map((o) => (
+                          <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </Field>
+              )}
+              {kind === "expense" && !isPercent && (
+                <div className="rounded-md border border-border/60 p-3 space-y-3">
+                  <label className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={useInstallments}
+                      onChange={(e) => setUseInstallments(e.target.checked)}
+                      className="h-4 w-4"
+                    />
+                    <span>Split into installments (financing)</span>
+                  </label>
+                  {useInstallments && (
+                    <div className="grid grid-cols-3 gap-3">
+                      <Field label="# Payments">
+                        <Input type="number" min={1} max={120} value={instCount} onChange={(e) => setInstCount(e.target.value)} />
+                      </Field>
+                      <Field label="Every">
+                        <Select value={instFreq} onValueChange={(v) => setInstFreq(v as "weekly" | "monthly")}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="weekly">Week</SelectItem>
+                            <SelectItem value="monthly">Month</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </Field>
+                      <Field label="First due">
+                        <Input type="date" value={instStart} onChange={(e) => setInstStart(e.target.value)} />
+                      </Field>
+                    </div>
+                  )}
                 </div>
               )}
-            </div>
-          </TabsContent>
+              {!useInstallments && (
+                <div className="rounded-md border border-border/60 p-3 space-y-3">
+                  <label className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={recurring}
+                      onChange={(e) => setRecurring(e.target.checked)}
+                      className="h-4 w-4"
+                    />
+                    <span>Repeats automatically</span>
+                  </label>
+                  {recurring && (
+                    <div className="grid grid-cols-2 gap-3">
+                      <Field label="Frequency">
+                        <Select value={frequency} onValueChange={(v) => setFrequency(v as RecurrenceFrequency)}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="weekly">Weekly</SelectItem>
+                            <SelectItem value="monthly">Monthly</SelectItem>
+                            <SelectItem value="yearly">Yearly</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </Field>
+                      <Field label="Until (optional)">
+                        <Input type="date" value={until} onChange={(e) => setUntil(e.target.value)} />
+                      </Field>
+                    </div>
+                  )}
+                </div>
+              )}
+            </TabsContent>
+          ) : (
+            <TabsContent value="transfer" className="mt-4 space-y-3">
+              <p className="text-xs text-muted-foreground">
+                Move money between accounts without affecting income or expense totals.
+                E.g. selling part of an investment to pay a credit card, or paying down card debt from liquidity.
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="From">
+                  <Select value={fromAccount} onValueChange={setFromAccount}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {accountOptions.map((o) => (
+                        <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </Field>
+                <Field label="To">
+                  <Select value={toAccount} onValueChange={setToAccount}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {accountOptions.map((o) => (
+                        <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </Field>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                <Field label="Amount">
+                  <Input type="number" step="any" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" />
+                </Field>
+                <Field label="Currency">
+                  <Select value={entryCurrency} onValueChange={setEntryCurrency}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent className="max-h-72">
+                      {CURRENCIES.map((c) => (
+                        <SelectItem key={c.code} value={c.code}>{c.code} · {c.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </Field>
+                <Field label="Date">
+                  <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+                </Field>
+              </div>
+              <Field label="Description (optional)">
+                <Input type="text" maxLength={200} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="e.g. Quanloop withdrawal to pay Amex" />
+              </Field>
+            </TabsContent>
+          )}
         </Tabs>
         <Button className="mt-4 w-full" onClick={submit}>
-          <Plus className="mr-2 h-4 w-4" /> Add {recurring ? "recurring " : ""}{kind}
+          <Plus className="mr-2 h-4 w-4" /> Add {kind === "transfer" ? "transfer" : `${recurring && !useInstallments ? "recurring " : ""}${useInstallments && kind === "expense" ? "financed " : ""}${kind}`}
         </Button>
       </CardContent>
     </Card>
