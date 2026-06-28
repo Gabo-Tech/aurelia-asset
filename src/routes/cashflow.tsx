@@ -879,19 +879,28 @@ function EntriesPanel({
                                     <span className="flex items-center gap-1.5">
                                       <span
                                         className={`inline-block h-1.5 w-1.5 rounded-full ${
-                                          e.kind === "income" ? "bg-success" : "bg-destructive"
+                                          e.kind === "income"
+                                            ? "bg-success"
+                                            : e.kind === "expense"
+                                              ? "bg-destructive"
+                                              : "bg-muted-foreground"
                                         }`}
                                       />
                                       <span className="text-foreground">{e.name}</span>
                                     </span>
                                     <span
                                       className={`tabular-nums ${
-                                        e.kind === "income" ? "text-success" : "text-destructive"
+                                        e.kind === "income"
+                                          ? "text-success"
+                                          : e.kind === "expense"
+                                            ? "text-destructive"
+                                            : "text-muted-foreground"
                                       }`}
                                     >
-                                      {e.kind === "income" ? "+" : "−"}
+                                      {e.kind === "income" ? "+" : e.kind === "expense" ? "−" : "↔"}
                                       {privacy ? MASK : formatMoney(e.value, currency)}
                                     </span>
+
                                   </div>
                                 ))}
                               </div>
