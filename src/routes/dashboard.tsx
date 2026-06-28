@@ -16,7 +16,7 @@ import { formatPct } from "@/lib/format";
 import { ArrowUpRight, Wallet, TrendingUp, TrendingDown, PiggyBank } from "lucide-react";
 import { PageHeader } from "@/components/app-shell";
 import { ChartFrame } from "@/components/chart-frame";
-import { expandCashflows, valuesByEntry } from "@/routes/cashflow";
+import { expandCashflows, valuesByEntry, liquidityImpact, cardDebtImpact } from "@/routes/cashflow";
 import { useTranslation } from "react-i18next";
 import i18n from "@/i18n";
 
