@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useStore } from "@/lib/store";
+import { useStore, useMoney } from "@/lib/store";
 import { CURRENCIES } from "@/lib/currency";
 import {
   Select,
@@ -22,7 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { expandCashflows, cardDebtImpact } from "@/routes/cashflow";
-import { useDisplayCurrency } from "@/lib/finance/useDisplayCurrency";
+import { formatMoney } from "@/lib/format";
 
 const DEFAULT_COLORS = ["#6366f1", "#ec4899", "#0ea5e9", "#f97316", "#22c55e", "#a855f7"];
 
