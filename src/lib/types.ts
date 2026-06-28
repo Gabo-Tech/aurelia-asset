@@ -166,6 +166,7 @@ export const DEFAULT_STATE: AppState = {
   cashflows: [],
   transactions: [],
   categories: DEFAULT_CATEGORIES,
+  creditCards: [],
   settings: {
     useCorsProxy: true,
     corsProxy: "https://corsproxy.io/?",
