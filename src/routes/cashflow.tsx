@@ -395,8 +395,8 @@ function CashflowPage() {
           onUpdateCategory={updateCategory}
           onRemoveCategory={removeCategory}
           onAdd={(e) => {
-            addCashflow(e);
-            toast.success(`${e.kind === "income" ? "Income" : "Expense"} added`);
+            addCashflow(e as unknown as Omit<CashflowEntry, "id">);
+            toast.success(`${e.kind === "income" ? "Income" : e.kind === "expense" ? "Expense" : "Transfer"} added`);
           }}
         />
 
