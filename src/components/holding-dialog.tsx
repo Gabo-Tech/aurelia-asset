@@ -120,6 +120,7 @@ export function HoldingDialog({ open, onOpenChange, editing }: Props) {
       setCustomNotes("");
       setHistoryText("");
       setHistory([]);
+      setHorizon("long");
     }
   }, [open, editing, defaultCurrency]);
 
