@@ -958,16 +958,28 @@ function EntriesPanel({
                           {format(new Date(c.date), "MMM d, yyyy")}
                         </td>
                         <td className="py-2.5">
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex items-center gap-1.5 flex-wrap">
                             <span
                               className={`text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded ${
                                 c.kind === "income"
                                   ? "bg-success/15 text-success"
-                                  : "bg-destructive/15 text-destructive"
+                                  : c.kind === "expense"
+                                    ? "bg-destructive/15 text-destructive"
+                                    : "bg-muted text-muted-foreground"
                               }`}
                             >
                               {c.kind}
                             </span>
+                            {c.kind === "expense" && c.paymentMethod?.startsWith("credit:") && (
+                              <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-orange-500/15 text-orange-500">
+                                💳
+                              </span>
+                            )}
+                            {c.installmentPlan && (
+                              <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-purple-500/15 text-purple-500">
+                                {c.installmentPlan.count}× {c.installmentPlan.frequency}
+                              </span>
+                            )}
                             {recurring && (
                               <span
                                 className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-muted text-muted-foreground"
@@ -979,13 +991,20 @@ function EntriesPanel({
                           </div>
                         </td>
                         <td className="py-2.5">
-                          <div>{c.kind === "income" ? c.source : c.category}</div>
+                          <div>
+                            {c.kind === "transfer"
+                              ? `${labelAccount(c.fromAccount, holdings, creditCards)} → ${labelAccount(c.toAccount, holdings, creditCards)}`
+                              : c.kind === "income"
+                                ? c.source
+                                : c.category}
+                          </div>
                           {c.description && (
                             <div className="text-[11px] text-muted-foreground truncate max-w-[28ch]" title={c.description}>
                               {c.description}
                             </div>
                           )}
                         </td>
+
                         <td className="py-2.5 text-right tabular-nums font-medium">
                           {(() => {
                             const isPct = (c.amountKind ?? "fixed") === "percent";
