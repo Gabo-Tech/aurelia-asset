@@ -470,6 +470,32 @@ export function HoldingDialog({ open, onOpenChange, editing }: Props) {
           </div>
         </div>
 
+        <div>
+          <Label>Horizon</Label>
+          <div className="mt-2 flex gap-2">
+            <Button
+              type="button"
+              size="sm"
+              variant={horizon === "long" ? "default" : "outline"}
+              onClick={() => setHorizon("long")}
+            >
+              Long-term
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant={horizon === "short" ? "default" : "outline"}
+              onClick={() => setHorizon("short")}
+            >
+              Short-term / cash-like
+            </Button>
+          </div>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Short-term holdings (e.g. lending platforms, broker cash) can be used as transfer accounts in Cashflow.
+          </p>
+        </div>
+
+
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
             Cancel
