@@ -273,7 +273,7 @@ function Dashboard() {
                     onClick={hideAll}
                     className="text-xs text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
                   >
-                    Hide all
+                    {t("more.pcHideAll")}
                   </button>
                 </div>
               </div>
