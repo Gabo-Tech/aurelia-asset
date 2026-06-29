@@ -167,7 +167,7 @@ function PerformancePage() {
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-          Assets
+          {t("more.perfAssets")}
         </span>
         <button
           onClick={() => setHideTotal((v) => !v)}
@@ -182,7 +182,7 @@ function PerformancePage() {
             className="h-1.5 w-1.5 rounded-full ring-1 ring-black/10"
             style={{ backgroundColor: "var(--primary)" }}
           />
-          Total
+          {t("more.perfTotalLabel")}
         </button>
         {state.holdings.map((h) => (
           <button
