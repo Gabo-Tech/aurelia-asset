@@ -161,7 +161,7 @@ export function SankeyChart({
             ))}
           </defs>
 
-          <g fill="none" style={{ mixBlendMode: "screen" as any }}>
+          <g fill="none" className="[mix-blend-mode:multiply] dark:[mix-blend-mode:screen]">
             {graph.links.map((l: any, i: number) => (
               <path
                 key={i}
