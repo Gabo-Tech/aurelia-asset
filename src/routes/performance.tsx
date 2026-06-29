@@ -337,7 +337,7 @@ function PerformancePage() {
       </Card>
 
       {metrics && (
-        <Card className="border-border/60 mt-5">
+        <Card className="border-border/60 mt-5" data-tour="perf-returns">
           <CardHeader>
             <CardTitle>{t("more.perfReturnsByAsset")} · {period}</CardTitle>
           </CardHeader>
