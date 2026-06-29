@@ -289,6 +289,7 @@ function CashflowPage() {
     if (!expandedToToday.length) return null;
     const incomes = expandedToToday.filter((c) => c.kind === "income");
     const expenses = expandedToToday.filter((c) => c.kind === "expense");
+    const transfers = expandedToToday.filter((c) => c.kind === "transfer");
 
     const applyOrder = (items: string[], saved: string[]) => {
       const set = new Set(items);
@@ -307,46 +308,148 @@ function CashflowPage() {
     const POOL = "Cash Pool";
     const SAVED = "Saved";
 
-    const totalIn = incomes.reduce((s, c) => s + (valuesTop.get(c.id) ?? 0), 0);
-    const totalOut = expenses.reduce((s, c) => s + (valuesTop.get(c.id) ?? 0), 0);
-    const saved = Math.max(0, totalIn - totalOut);
+    // Resolve account refs to display labels + colors.
+    const cardById = new Map(state.creditCards.map((c) => [c.id, c]));
+    const holdById = new Map(state.holdings.map((h) => [h.id, h]));
+    const baseLabelOf = (ref: string) => {
+      if (ref === "liquidity") return POOL;
+      if (ref.startsWith("credit:")) {
+        const c = cardById.get(ref.slice(7));
+        return c ? `💳 ${c.name}` : POOL;
+      }
+      if (ref.startsWith("holding:")) {
+        const h = holdById.get(ref.slice(8));
+        return h ? `📈 ${h.symbol || h.name}` : POOL;
+      }
+      return POOL;
+    };
+    const colorOf = (ref: string): string => {
+      if (ref === "liquidity") return prefs.nodeColors[POOL] ?? POOL_COLOR;
+      if (ref.startsWith("credit:"))
+        return cardById.get(ref.slice(7))?.color ?? "#f97316";
+      if (ref.startsWith("holding:"))
+        return holdById.get(ref.slice(8))?.color ?? "#a855f7";
+      return POOL_COLOR;
+    };
 
-    type NodeMeta = { name: string; kind: "income" | "pool" | "expense" | "saved"; fill: string };
+    // Determine if a non-liquidity account is used on both sides (cycle risk).
+    const usedAsSource = new Set<string>();
+    const usedAsTarget = new Set<string>();
+    for (const t of transfers) {
+      if (t.fromAccount && t.fromAccount !== "liquidity") usedAsSource.add(t.fromAccount);
+      if (t.toAccount && t.toAccount !== "liquidity") usedAsTarget.add(t.toAccount);
+    }
+    for (const e of expenses) {
+      if (e.paymentMethod && e.paymentMethod !== "liquidity") usedAsSource.add(e.paymentMethod);
+    }
+    const needsSplit = (ref: string) =>
+      ref !== "liquidity" && usedAsSource.has(ref) && usedAsTarget.has(ref);
+    const nameFor = (ref: string, role: "source" | "target") => {
+      if (ref === "liquidity") return POOL;
+      const base = baseLabelOf(ref);
+      if (!needsSplit(ref)) return base;
+      return role === "source" ? `${base} →` : `← ${base}`;
+    };
+
+    type NodeMeta = {
+      name: string;
+      kind: "income" | "pool" | "expense" | "saved" | "account";
+      fill: string;
+    };
     const nodes: NodeMeta[] = [];
+    const pushNode = (n: NodeMeta) => {
+      if (!nodes.find((x) => x.name === n.name)) nodes.push(n);
+    };
 
     sources.forEach((s) =>
-      nodes.push({ name: s, kind: "income", fill: colorFor(s, "income") }),
+      pushNode({ name: s, kind: "income", fill: colorFor(s, "income") }),
     );
-    nodes.push({ name: POOL, kind: "pool", fill: prefs.nodeColors[POOL] ?? POOL_COLOR });
+    pushNode({ name: POOL, kind: "pool", fill: prefs.nodeColors[POOL] ?? POOL_COLOR });
+
+    // Account intermediary nodes (cards / holdings)
+    const accountNodes = new Set<string>();
+    const registerAccount = (ref: string, role: "source" | "target") => {
+      if (ref === "liquidity") return;
+      const name = nameFor(ref, role);
+      const fill = prefs.nodeColors[name] ?? colorOf(ref);
+      pushNode({ name, kind: "account", fill });
+      accountNodes.add(name);
+    };
+    for (const t of transfers) {
+      if (t.fromAccount) registerAccount(t.fromAccount, "source");
+      if (t.toAccount) registerAccount(t.toAccount, "target");
+    }
+    for (const e of expenses) {
+      if (e.paymentMethod && e.paymentMethod !== "liquidity") {
+        registerAccount(e.paymentMethod, "source");
+      }
+    }
+
     cats.forEach((c) => {
       const meta = catByName.get(c);
       const group: CategoryGroup = meta?.group ?? "expense";
-      nodes.push({ name: c, kind: "expense", fill: colorFor(c, group) });
+      pushNode({ name: c, kind: "expense", fill: colorFor(c, group) });
     });
-    if (saved > 0) {
-      nodes.push({ name: SAVED, kind: "saved", fill: prefs.nodeColors[SAVED] ?? SAVED_COLOR });
-    }
 
     const idx = (name: string) => nodes.findIndex((n) => n.name === name);
     const links: { source: number; target: number; value: number }[] = [];
+    const addLink = (a: string, b: string, v: number) => {
+      if (!(v > 0)) return;
+      const si = idx(a);
+      const ti = idx(b);
+      if (si < 0 || ti < 0 || si === ti) return;
+      const existing = links.find((l) => l.source === si && l.target === ti);
+      if (existing) existing.value += v;
+      else links.push({ source: si, target: ti, value: v });
+    };
 
+    // Income → pool
     for (const s of sources) {
       const sum = incomes
         .filter((i) => (i.source || "Other") === s)
         .reduce((a, b) => a + (valuesTop.get(b.id) ?? 0), 0);
-      if (sum > 0) links.push({ source: idx(s), target: idx(POOL), value: sum });
+      addLink(s, POOL, sum);
     }
-    for (const c of cats) {
-      const sum = expenses
-        .filter((e) => (e.category || "Other") === c)
-        .reduce((a, b) => a + (valuesTop.get(b.id) ?? 0), 0);
-      if (sum > 0) links.push({ source: idx(POOL), target: idx(c), value: sum });
+    // Expenses: pool→cat or card→cat
+    for (const e of expenses) {
+      const v = valuesTop.get(e.id) ?? 0;
+      const cat = e.category || "Other";
+      const from =
+        e.paymentMethod && e.paymentMethod !== "liquidity"
+          ? nameFor(e.paymentMethod, "source")
+          : POOL;
+      addLink(from, cat, v);
     }
-    if (saved > 0) links.push({ source: idx(POOL), target: idx(SAVED), value: saved });
+    // Transfers
+    for (const t of transfers) {
+      const v = valuesTop.get(t.id) ?? 0;
+      if (!t.fromAccount || !t.toAccount) continue;
+      const from = nameFor(t.fromAccount, "source");
+      const to = nameFor(t.toAccount, "target");
+      addLink(from, to, v);
+    }
+
+    // Saved residue = leftover liquidity after pool outflows.
+    const totalIntoPool = incomes.reduce((s, c) => s + (valuesTop.get(c.id) ?? 0), 0)
+      + transfers
+        .filter((t) => t.toAccount === "liquidity")
+        .reduce((s, t) => s + (valuesTop.get(t.id) ?? 0), 0);
+    const totalOutOfPool = expenses
+      .filter((e) => !e.paymentMethod || e.paymentMethod === "liquidity")
+      .reduce((s, c) => s + (valuesTop.get(c.id) ?? 0), 0)
+      + transfers
+        .filter((t) => t.fromAccount === "liquidity")
+        .reduce((s, t) => s + (valuesTop.get(t.id) ?? 0), 0);
+    const saved = Math.max(0, totalIntoPool - totalOutOfPool);
+    if (saved > 0) {
+      pushNode({ name: SAVED, kind: "saved", fill: prefs.nodeColors[SAVED] ?? SAVED_COLOR });
+      addLink(POOL, SAVED, saved);
+    }
 
     if (!links.length) return null;
     return { nodes, links };
-  }, [expandedToToday, valuesTop, prefs.nodeColors, prefs.incomeOrder, prefs.expenseOrder, catByName]);
+  }, [expandedToToday, valuesTop, prefs.nodeColors, prefs.incomeOrder, prefs.expenseOrder, catByName, state.creditCards, state.holdings]);
+
 
 
   // Unique node names for the color customizer.

@@ -161,15 +161,16 @@ export function SankeyChart({
             ))}
           </defs>
 
-          <g fill="none" style={{ mixBlendMode: "screen" as any }}>
+          <g fill="none" className="[mix-blend-mode:multiply] dark:[mix-blend-mode:screen]">
             {graph.links.map((l: any, i: number) => (
               <path
                 key={i}
                 d={linkPath(l) ?? ""}
                 stroke={`url(#sk-grad-${i})`}
                 strokeWidth={Math.max(1, l.width)}
-                strokeOpacity={0.45}
-                className="transition-[stroke-opacity] duration-150 hover:!stroke-opacity-80"
+                strokeOpacity={0.6}
+                className="transition-[stroke-opacity] duration-150 hover:!stroke-opacity-90"
+
               >
                 <title>{`${l.source.name} → ${l.target.name}\n${format(l.value)}`}</title>
               </path>
