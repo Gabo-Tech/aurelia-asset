@@ -141,25 +141,25 @@ export function TransactionsPanel() {
 
         <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground mb-3">
           <span className="rounded-md bg-success/15 text-success px-2 py-1">
-            Invested: {privacy ? MASK : formatMoney(totals.invested, currency)}
+            {t("more.tpInvested")}: {privacy ? MASK : formatMoney(totals.invested, currency)}
           </span>
           <span className="rounded-md bg-destructive/15 text-destructive px-2 py-1">
-            Proceeds: {privacy ? MASK : formatMoney(totals.proceeds, currency)}
+            {t("more.tpProceeds")}: {privacy ? MASK : formatMoney(totals.proceeds, currency)}
           </span>
           <span className="rounded-md bg-muted/50 px-2 py-1">
-            Fees: {privacy ? MASK : formatMoney(totals.fees, currency)}
+            {t("more.tpFeesLabel")}: {privacy ? MASK : formatMoney(totals.fees, currency)}
           </span>
           <span className={cn("rounded-md px-2 py-1", totals.net >= 0 ? "bg-success/15 text-success" : "bg-destructive/15 text-destructive")}>
-            Net invested: {privacy ? MASK : `${totals.net >= 0 ? "+" : "−"}${formatMoney(Math.abs(totals.net), currency)}`}
+            {t("more.tpNetInvested")}: {privacy ? MASK : `${totals.net >= 0 ? "+" : "−"}${formatMoney(Math.abs(totals.net), currency)}`}
           </span>
-          <span className="ml-auto">{filtered.length} transactions</span>
+          <span className="ml-auto">{filtered.length} {t("more.tpCountSuffix")}</span>
         </div>
 
         {filtered.length === 0 ? (
           <div className="py-10 text-center text-sm text-muted-foreground">
             {state.transactions.length === 0
-              ? "No transactions yet. Add a buy or sell to start tracking."
-              : "No transactions match the filters."}
+              ? t("more.tpEmpty")
+              : t("more.tpEmptyFilters")}
           </div>
         ) : (
           <div className="overflow-x-auto">
