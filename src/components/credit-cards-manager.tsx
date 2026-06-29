@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { CreditCard as CardIcon, Plus, Trash2, Pencil, ArrowRightLeft } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -8,7 +9,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -71,6 +71,7 @@ function toPatch(f: FormState): Partial<CreditCard> {
 }
 
 export function CreditCardsManager() {
+  const { t } = useTranslation();
   const { state, addCreditCard, updateCreditCard, removeCreditCard, addCashflow } = useStore();
   const cards = state.creditCards ?? [];
   const { currency, toDisplay } = useMoney();
@@ -94,16 +95,16 @@ export function CreditCardsManager() {
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <div className="flex items-center gap-2">
           <CardIcon className="h-4 w-4 text-muted-foreground" />
-          <h3 className="text-sm font-semibold">Credit cards</h3>
+          <h3 className="text-sm font-semibold">{t("cards.title")}</h3>
         </div>
         <Button size="sm" variant="outline" onClick={() => setAddOpen(true)}>
-          <Plus className="mr-1 h-3.5 w-3.5" /> Add card
+          <Plus className="mr-1 h-3.5 w-3.5" /> {t("cards.add")}
         </Button>
       </div>
 
       {cards.length === 0 ? (
         <p className="mt-3 text-xs text-muted-foreground">
-          No cards yet. Add a card to track debt from credit purchases and pay it down with transfers.
+          {t("cards.empty")}
         </p>
       ) : (
         <ul className="mt-3 space-y-2">
@@ -129,8 +130,8 @@ export function CreditCardsManager() {
                       <div className="text-sm font-medium truncate">{c.name}</div>
                       <div className="text-[11px] text-muted-foreground">
                         {c.currency}
-                        {c.statementDay ? ` · stmt day ${c.statementDay}` : ""}
-                        {c.dueDay ? ` · due day ${c.dueDay}` : ""}
+                        {c.statementDay ? ` · ${t("cards.statementDayAbbr")} ${c.statementDay}` : ""}
+                        {c.dueDay ? ` · ${t("cards.dueDayAbbr")} ${c.dueDay}` : ""}
                       </div>
                     </div>
                   </div>
@@ -140,16 +141,16 @@ export function CreditCardsManager() {
                       variant="outline"
                       className="h-7 px-2 text-xs"
                       onClick={() => setPaying(c)}
-                      title="Pay card from liquidity"
+                      title={t("cards.payAria")}
                     >
-                      <ArrowRightLeft className="mr-1 h-3 w-3" /> Pay
+                      <ArrowRightLeft className="mr-1 h-3 w-3" /> {t("cards.pay")}
                     </Button>
                     <Button
                       size="icon"
                       variant="ghost"
                       className="h-7 w-7"
                       onClick={() => setEditing(c)}
-                      aria-label="Edit card"
+                      aria-label={t("cards.editAria")}
                     >
                       <Pencil className="h-3.5 w-3.5" />
                     </Button>
@@ -158,11 +159,11 @@ export function CreditCardsManager() {
                       variant="ghost"
                       className="h-7 w-7"
                       onClick={() => {
-                        if (!confirm(`Remove "${c.name}"?`)) return;
+                        if (!confirm(t("cards.removeConfirm", { name: c.name }))) return;
                         removeCreditCard(c.id);
-                        toast.success("Card removed");
+                        toast.success(t("cards.cardRemoved"));
                       }}
-                      aria-label="Delete card"
+                      aria-label={t("cards.deleteAria")}
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
@@ -171,21 +172,21 @@ export function CreditCardsManager() {
 
                 <div className="grid grid-cols-3 gap-2 text-[11px]">
                   <div>
-                    <div className="text-muted-foreground">Balance owed</div>
+                    <div className="text-muted-foreground">{t("cards.balanceOwed")}</div>
                     <div className={`text-sm font-mono ${debt > 0 ? "text-destructive" : "text-emerald-500"}`}>
                       {formatMoney(debt, currency)}
                     </div>
                   </div>
                   <div>
-                    <div className="text-muted-foreground">Limit</div>
+                    <div className="text-muted-foreground">{t("cards.limit")}</div>
                     <div className="text-sm font-mono">
-                      {limit > 0 ? formatMoney(limit, c.currency) : "—"}
+                      {limit > 0 ? formatMoney(limit, c.currency) : "-"}
                     </div>
                   </div>
                   <div>
-                    <div className="text-muted-foreground">Available</div>
+                    <div className="text-muted-foreground">{t("cards.available")}</div>
                     <div className={`text-sm font-mono ${overLimit ? "text-destructive" : ""}`}>
-                      {available != null ? formatMoney(available, c.currency) : "—"}
+                      {available != null ? formatMoney(available, c.currency) : "-"}
                     </div>
                   </div>
                 </div>
@@ -202,7 +203,7 @@ export function CreditCardsManager() {
                       />
                     </div>
                     <div className="mt-1 text-[10px] text-muted-foreground tabular-nums">
-                      {pct.toFixed(0)}% used{overLimit ? " · over limit" : ""}
+                      {t("cards.used", { pct: pct.toFixed(0) })}{overLimit ? ` · ${t("cards.overLimit")}` : ""}
                     </div>
                   </div>
                 )}
@@ -212,36 +213,33 @@ export function CreditCardsManager() {
         </ul>
       )}
 
-      {/* Add dialog */}
       <CardFormDialog
         open={addOpen}
-        title="New credit card"
+        title={t("cards.newCard")}
         initial={emptyForm(currency)}
         onClose={() => setAddOpen(false)}
         onSubmit={(f) => {
-          if (!f.name.trim()) return toast.error("Name required");
+          if (!f.name.trim()) return toast.error(t("cards.nameRequired"));
           addCreditCard(toPatch(f) as Omit<CreditCard, "id">);
-          toast.success("Card added");
+          toast.success(t("cards.cardAdded"));
           setAddOpen(false);
         }}
       />
 
-      {/* Edit dialog */}
       <CardFormDialog
         open={!!editing}
-        title="Edit credit card"
+        title={t("cards.editCard")}
         initial={editing ? fromCard(editing) : emptyForm(currency)}
         onClose={() => setEditing(null)}
         onSubmit={(f) => {
           if (!editing) return;
-          if (!f.name.trim()) return toast.error("Name required");
+          if (!f.name.trim()) return toast.error(t("cards.nameRequired"));
           updateCreditCard(editing.id, toPatch(f));
-          toast.success("Card updated");
+          toast.success(t("cards.cardUpdated"));
           setEditing(null);
         }}
       />
 
-      {/* Pay dialog */}
       <PayCardDialog
         card={paying}
         currentDebt={paying ? debtByCard.get(paying.id) ?? 0 : 0}
@@ -252,15 +250,15 @@ export function CreditCardsManager() {
           addCashflow({
             kind: "transfer",
             source: "",
-            category: "Card payment",
+            category: t("cards.paymentCategory"),
             amount,
             currency: paying.currency,
             date: new Date().toISOString(),
             fromAccount: fromAccount as any,
             toAccount: `credit:${paying.id}` as any,
-            description: `Payment to ${paying.name}`,
+            description: t("cards.paymentTo", { name: paying.name }),
           });
-          toast.success(`Recorded payment to ${paying.name}`);
+          toast.success(t("cards.paymentRecorded", { name: paying.name }));
           setPaying(null);
         }}
       />
@@ -281,6 +279,7 @@ function CardFormDialog({
   onClose: () => void;
   onSubmit: (f: FormState) => void;
 }) {
+  const { t } = useTranslation();
   const [f, setF] = useState<FormState>(initial);
   useEffect(() => {
     if (open) setF(initial);
@@ -293,17 +292,17 @@ function CardFormDialog({
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>
-            Track balance and available credit. Charges and payments come from your cashflow entries.
+            {t("cards.dialogDescription")}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
           <div>
-            <Label>Name</Label>
-            <Input value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} placeholder="Amex Gold" />
+            <Label>{t("cards.name")}</Label>
+            <Input value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} placeholder={t("cards.namePlaceholder")} />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label>Currency</Label>
+              <Label>{t("cards.currency")}</Label>
               <Select value={f.currency} onValueChange={(v) => setF({ ...f, currency: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent className="max-h-72">
@@ -314,7 +313,7 @@ function CardFormDialog({
               </Select>
             </div>
             <div>
-              <Label>Credit limit</Label>
+              <Label>{t("cards.creditLimit")}</Label>
               <Input
                 type="number"
                 value={f.creditLimit}
@@ -325,7 +324,7 @@ function CardFormDialog({
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label>Statement day</Label>
+              <Label>{t("cards.statementDayLabel")}</Label>
               <Input
                 type="number"
                 min={1}
@@ -336,7 +335,7 @@ function CardFormDialog({
               />
             </div>
             <div>
-              <Label>Due day</Label>
+              <Label>{t("cards.dueDayLabel")}</Label>
               <Input
                 type="number"
                 min={1}
@@ -348,7 +347,7 @@ function CardFormDialog({
             </div>
           </div>
           <div>
-            <Label>Color</Label>
+            <Label>{t("cards.color")}</Label>
             <div className="mt-2 flex flex-wrap gap-2">
               {DEFAULT_COLORS.map((c) => (
                 <button
@@ -363,8 +362,8 @@ function CardFormDialog({
           </div>
         </div>
         <DialogFooter>
-          <Button variant="ghost" onClick={onClose}>Cancel</Button>
-          <Button onClick={() => onSubmit(f)}>Save</Button>
+          <Button variant="ghost" onClick={onClose}>{t("cards.cancel")}</Button>
+          <Button onClick={() => onSubmit(f)}>{t("cards.save")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -384,6 +383,7 @@ function PayCardDialog({
   onClose: () => void;
   onPay: (amount: number, fromAccount: string) => void;
 }) {
+  const { t } = useTranslation();
   const { state } = useStore();
   const [amount, setAmount] = useState("");
   const [from, setFrom] = useState("liquidity");
@@ -396,7 +396,7 @@ function PayCardDialog({
   }, [card, currentDebt]);
 
   const accountOptions = [
-    { value: "liquidity", label: "Liquidity (cash)" },
+    { value: "liquidity", label: t("cashflow.liquidityCash") },
     ...state.holdings.map((h) => ({
       value: `holding:${h.id}`,
       label: `📈 ${h.symbol || h.name}`,
@@ -407,9 +407,9 @@ function PayCardDialog({
     <Dialog open={!!card} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-sm">
         <DialogHeader>
-          <DialogTitle>Pay {card?.name}</DialogTitle>
+          <DialogTitle>{t("cards.payTitle", { name: card?.name ?? "" })}</DialogTitle>
           <DialogDescription>
-            Records a transfer that reduces this card's balance owed. Current debt:{" "}
+            {t("cards.payDesc")}{" "}
             <span className={currentDebt > 0 ? "text-destructive" : "text-emerald-500"}>
               {formatMoney(currentDebt, displayCurrency)}
             </span>
@@ -417,7 +417,7 @@ function PayCardDialog({
         </DialogHeader>
         <div className="space-y-3">
           <div>
-            <Label>Pay from</Label>
+            <Label>{t("cards.payFrom")}</Label>
             <Select value={from} onValueChange={setFrom}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -428,7 +428,7 @@ function PayCardDialog({
             </Select>
           </div>
           <div>
-            <Label>Amount ({card?.currency})</Label>
+            <Label>{t("cards.amount")} ({card?.currency})</Label>
             <Input
               type="number"
               step="any"
@@ -439,18 +439,18 @@ function PayCardDialog({
           </div>
         </div>
         <DialogFooter>
-          <Button variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button variant="ghost" onClick={onClose}>{t("cards.cancel")}</Button>
           <Button
             onClick={() => {
               const a = parseFloat(amount);
               if (!isFinite(a) || a <= 0) {
-                toast.error("Amount must be > 0");
+                toast.error(t("cashflow.amountGtZero"));
                 return;
               }
               onPay(a, from);
             }}
           >
-            Record payment
+            {t("cards.recordPayment")}
           </Button>
         </DialogFooter>
       </DialogContent>
