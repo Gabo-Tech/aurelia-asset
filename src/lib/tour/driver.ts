@@ -30,6 +30,8 @@ export function resetTourCompleted(): void {
   }
 }
 
+export const resetTourCompletion = resetTourCompleted;
+
 export async function waitForEl(
   selector: string,
   timeoutMs = 2500,
