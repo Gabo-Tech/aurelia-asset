@@ -90,22 +90,22 @@ export function TransactionsPanel() {
       <CardContent>
         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4 mb-4">
           <div>
-            <Label className="text-xs">Type</Label>
+            <Label className="text-xs">{t("more.tpType")}</Label>
             <Select value={kindFilter} onValueChange={(v) => setKindFilter(v as typeof kindFilter)}>
               <SelectTrigger className="h-9 mt-1.5"><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All</SelectItem>
-                <SelectItem value="buy">Buy</SelectItem>
-                <SelectItem value="sell">Sell</SelectItem>
+                <SelectItem value="all">{t("more.tpAll")}</SelectItem>
+                <SelectItem value="buy">{t("more.tpBuy")}</SelectItem>
+                <SelectItem value="sell">{t("more.tpSell")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <div>
-            <Label className="text-xs">Holding</Label>
+            <Label className="text-xs">{t("more.tpHolding")}</Label>
             <Select value={holdingFilter} onValueChange={setHoldingFilter}>
               <SelectTrigger className="h-9 mt-1.5"><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All holdings</SelectItem>
+                <SelectItem value="all">{t("more.tpAllHoldings")}</SelectItem>
                 {state.holdings.map((h) => (
                   <SelectItem key={h.id} value={h.id}>{h.symbol}</SelectItem>
                 ))}
@@ -113,26 +113,26 @@ export function TransactionsPanel() {
             </Select>
           </div>
           <div>
-            <Label className="text-xs">Period</Label>
+            <Label className="text-xs">{t("more.tpPeriod")}</Label>
             <Select value={period} onValueChange={(v) => setPeriod(v as PeriodKey)}>
               <SelectTrigger className="h-9 mt-1.5"><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All time</SelectItem>
-                <SelectItem value="week">This week</SelectItem>
-                <SelectItem value="month">This month</SelectItem>
-                <SelectItem value="year">This year</SelectItem>
-                <SelectItem value="custom">Custom range</SelectItem>
+                <SelectItem value="all">{t("more.tpAllTime")}</SelectItem>
+                <SelectItem value="week">{t("more.tpThisWeek")}</SelectItem>
+                <SelectItem value="month">{t("more.tpThisMonth")}</SelectItem>
+                <SelectItem value="year">{t("more.tpThisYear")}</SelectItem>
+                <SelectItem value="custom">{t("more.tpCustomRange")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
           {period === "custom" && (
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <Label className="text-xs">From</Label>
+                <Label className="text-xs">{t("more.tpFrom")}</Label>
                 <Input type="date" className="h-9 mt-1.5" value={customFrom} onChange={(e) => setCustomFrom(e.target.value)} />
               </div>
               <div>
-                <Label className="text-xs">To</Label>
+                <Label className="text-xs">{t("more.tpTo")}</Label>
                 <Input type="date" className="h-9 mt-1.5" value={customTo} onChange={(e) => setCustomTo(e.target.value)} />
               </div>
             </div>
