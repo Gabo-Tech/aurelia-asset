@@ -362,11 +362,11 @@ function PerformancePage() {
                         <span className="text-muted-foreground text-xs truncate">{h.name}</span>
                       </div>
                     </td>
-                    <td className="py-2.5 text-right tabular-nums">{mask(start)}</td>
-                    <td className="py-2.5 text-right tabular-nums">{mask(end)}</td>
+                    <td className="py-2.5 pl-4 text-right tabular-nums whitespace-nowrap">{mask(start)}</td>
+                    <td className="py-2.5 pl-4 text-right tabular-nums whitespace-nowrap">{mask(end)}</td>
                     <td
                       className={cn(
-                        "py-2.5 text-right tabular-nums",
+                        "py-2.5 pl-4 text-right tabular-nums whitespace-nowrap",
                         abs >= 0 ? "text-success" : "text-destructive"
                       )}
                     >
@@ -375,7 +375,7 @@ function PerformancePage() {
                     </td>
                     <td
                       className={cn(
-                        "py-2.5 text-right tabular-nums font-medium",
+                        "py-2.5 pl-4 text-right tabular-nums font-medium whitespace-nowrap",
                         pct >= 0 ? "text-success" : "text-destructive"
                       )}
                     >
