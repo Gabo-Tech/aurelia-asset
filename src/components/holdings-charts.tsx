@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import {
   AreaChart,
@@ -75,6 +76,7 @@ function buildQuantityByDate(
 }
 
 export function HoldingsCharts() {
+  const { t } = useTranslation();
   const { state } = useStore();
   const { currency, rates, mask, privacy } = useMoney();
   const [period, setPeriod] = useState<PeriodId>("3M");
@@ -188,7 +190,7 @@ export function HoldingsCharts() {
   return (
     <Card className="border-border/60 mt-5">
       <CardHeader className="flex flex-row items-center justify-between flex-wrap gap-2">
-        <CardTitle>Portfolio over time</CardTitle>
+        <CardTitle>{t("more.pcTitle")}</CardTitle>
         <div className="flex flex-wrap gap-1.5">
           {PERIODS.map((p) => (
             <Button
@@ -218,13 +220,13 @@ export function HoldingsCharts() {
           }}
         >
           <TabsList className="grid w-full sm:w-auto grid-cols-2">
-            <TabsTrigger value="stacked">Value per asset</TabsTrigger>
-            <TabsTrigger value="invested">Invested vs Value</TabsTrigger>
+            <TabsTrigger value="stacked">{t("more.pcValuePerAsset")}</TabsTrigger>
+            <TabsTrigger value="invested">{t("more.pcInvestedVsValue")}</TabsTrigger>
           </TabsList>
 
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-              Assets
+              {t("more.pcAssets")}
             </span>
             {state.holdings.map((h) => {
               const off = hidden.has(h.id);
@@ -261,7 +263,7 @@ export function HoldingsCharts() {
             {state.holdings.length > 1 && tab === "stacked" && (
               <div className="ml-auto flex items-center gap-1.5">
                 <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => setHidden(new Set())}>
-                  Show all
+                  {t("more.pcShowAll")}
                 </Button>
                 <Button
                   variant="ghost"
@@ -269,7 +271,7 @@ export function HoldingsCharts() {
                   className="h-7 px-2 text-xs"
                   onClick={() => setHidden(new Set(state.holdings.map((h) => h.id)))}
                 >
-                  Hide all
+                  {t("more.pcHideAll")}
                 </Button>
               </div>
             )}
@@ -278,7 +280,7 @@ export function HoldingsCharts() {
 
 
           <TabsContent value="stacked" className="mt-4">
-            <ChartFrame filename="holdings-stacked" title={`Value per asset · ${period}`}>
+            <ChartFrame filename="holdings-stacked" title={`${t("more.pcValuePerAsset")} · ${period}`}>
               <div className="flex h-72 items-center justify-center sm:h-80">
                 {isLoading ? (
                   <Skeleton className="h-full w-full" />
@@ -325,7 +327,7 @@ export function HoldingsCharts() {
           </TabsContent>
 
           <TabsContent value="invested" className="mt-4">
-            <ChartFrame filename="holdings-invested" title={`Invested vs Value · ${period}`}>
+            <ChartFrame filename="holdings-invested" title={`${t("more.pcInvestedVsValue")} · ${period}`}>
               <div className="flex h-72 items-center justify-center sm:h-80">
                 {isLoading ? (
                   <Skeleton className="h-full w-full" />

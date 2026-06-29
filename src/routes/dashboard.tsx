@@ -223,10 +223,10 @@ function Dashboard() {
         <Card className="lg:col-span-3 border-border/60">
           <CardHeader className="flex flex-col gap-4">
             <div className="flex flex-row items-center justify-between gap-4 flex-wrap">
-              <CardTitle>Allocation</CardTitle>
+              <CardTitle>{t("dashboard.allocation")}</CardTitle>
               <div className="flex items-center gap-2">
                 <Label htmlFor="all-labels" className="text-xs text-muted-foreground">
-                  Show all labels
+                  {t("dashboard.showAllLabels")}
                 </Label>
                 <Switch
                   id="all-labels"
@@ -265,7 +265,7 @@ function Dashboard() {
                     onClick={showAll}
                     className="text-xs text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
                   >
-                    Show all
+                    {t("more.pcShowAll")}
                   </button>
                   <span className="text-muted-foreground">·</span>
                   <button
@@ -273,7 +273,7 @@ function Dashboard() {
                     onClick={hideAll}
                     className="text-xs text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
                   >
-                    Hide all
+                    {t("more.pcHideAll")}
                   </button>
                 </div>
               </div>
@@ -340,7 +340,7 @@ function Dashboard() {
 
         <Card className="lg:col-span-2 border-border/60">
           <CardHeader>
-            <CardTitle>Breakdown</CardTitle>
+            <CardTitle>{t("more.dashBreakdown")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
             {visibleAllocation.slice(0, 8).map((a) => {
@@ -372,12 +372,12 @@ function Dashboard() {
       <div className="mt-5 grid gap-5 md:grid-cols-3">
         <StatCard
           icon={<Wallet className="h-4 w-4" />}
-          label="Holdings"
+          label={t("more.dashHoldings")}
           value={String(holdings.length)}
         />
         <StatCard
           icon={<TrendingUp className="h-4 w-4 text-success" />}
-          label="Top asset"
+          label={t("dashboard.topAsset")}
           value={topAlloc ? topAlloc.name : "-"}
           sub={topAlloc ? mask(topAlloc.value, currency) : undefined}
         />
@@ -389,7 +389,7 @@ function Dashboard() {
               <TrendingDown className="h-4 w-4 text-destructive" />
             )
           }
-          label="Net 30d"
+          label={t("dashboard.net30")}
           value={`${net30 >= 0 ? "+" : "-"}${mask(Math.abs(net30), currency)}`}
         />
       </div>
@@ -423,13 +423,14 @@ function StatCard({
 }
 
 function EmptyState() {
+  const { t } = useTranslation();
   return (
     <Card className="border-dashed border-border/70">
       <CardContent className="p-10 text-center">
         <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-primary/15 text-primary mb-4">
           <Wallet className="h-6 w-6" />
         </div>
-        <h2 className="text-lg font-semibold">No holdings yet</h2>
+        <h2 className="text-lg font-semibold">{t("more.dashNoHoldings")}</h2>
         <p className="text-sm text-muted-foreground mt-1 max-w-md mx-auto">
           Add your first stock, ETF, crypto or metal to see allocation, performance and
           beautiful charts.
