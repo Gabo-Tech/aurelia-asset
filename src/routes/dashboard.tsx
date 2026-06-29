@@ -265,7 +265,7 @@ function Dashboard() {
                     onClick={showAll}
                     className="text-xs text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
                   >
-                    Show all
+                    {t("more.pcShowAll")}
                   </button>
                   <span className="text-muted-foreground">·</span>
                   <button
