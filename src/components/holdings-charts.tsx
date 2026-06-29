@@ -327,7 +327,7 @@ export function HoldingsCharts() {
           </TabsContent>
 
           <TabsContent value="invested" className="mt-4">
-            <ChartFrame filename="holdings-invested" title={`Invested vs Value · ${period}`}>
+            <ChartFrame filename="holdings-invested" title={`${t("more.pcInvestedVsValue")} · ${period}`}>
               <div className="flex h-72 items-center justify-center sm:h-80">
                 {isLoading ? (
                   <Skeleton className="h-full w-full" />
