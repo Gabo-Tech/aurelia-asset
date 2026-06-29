@@ -152,7 +152,7 @@ function PerformancePage() {
         description={t("performance.description")}
       />
 
-      <div className="mb-4 flex flex-wrap gap-1.5">
+      <div className="mb-4 flex flex-wrap gap-1.5" data-tour="perf-period">
         {PERIODS.map((p) => (
           <Button
             key={p.id}
