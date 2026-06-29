@@ -528,9 +528,14 @@ function SiteFooter() {
     <footer className="bg-background">
       <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-4 py-10 text-sm text-muted-foreground sm:flex-row sm:px-6">
         <div className="flex items-center gap-2">
-          <div className="grid h-7 w-7 place-items-center rounded-lg bg-primary/15 text-primary">
-            <Sparkles className="h-3.5 w-3.5" />
-          </div>
+          <img
+            src={logoAsset.url}
+            alt="Portfolio Tracker logo"
+            className="h-7 w-7 rounded-lg object-contain"
+            width={28}
+            height={28}
+          />
+
           <span>{t("landing.footer.brand")} · © {new Date().getFullYear()}</span>
         </div>
         <div className="flex items-center gap-5">
