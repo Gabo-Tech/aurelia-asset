@@ -140,9 +140,14 @@ function SiteHeader() {
     <header className="sticky top-0 z-40 border-b border-border/50 bg-background/80 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
         <Link to="/" className="flex items-center gap-2">
-          <div className="grid h-8 w-8 place-items-center rounded-xl bg-primary/15 text-primary">
-            <Sparkles className="h-4 w-4" />
-          </div>
+          <img
+            src={logoAsset.url}
+            alt="Portfolio Tracker logo"
+            className="h-8 w-8 rounded-xl object-contain"
+            width={32}
+            height={32}
+          />
+
           <div className="leading-tight">
             <div className="text-sm font-semibold tracking-tight">{t("landing.footer.brand")}</div>
             <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
