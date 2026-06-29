@@ -133,9 +133,11 @@ const de: Translation = {
     },
     footer: { brand: "Portfolio Tracker", madeBy: "Gemacht von" },
     meta: {
-      title: "Kostenloser Portfolio-Tracker für Aktien, Krypto & ETFs - Privat & lokal",
-      description: "Verfolge Aktien, ETFs, Krypto und Edelmetalle in einem eleganten Dashboard. 100% client-seitig, keine Anmeldung, kein Tracking. Allokation, Performance und Cashflow in Sekunden.",
+      title: "Kostenloser Portfolio-Tracker - Aktien, Krypto & ETFs",
+      description: "Verfolge Aktien, ETFs, Krypto und Edelmetalle in einem eleganten Dashboard. 100% privat, ohne Anmeldung. Allokation, Performance und Cashflow in Sekunden.",
+      keywords: "Portfolio Tracker, Aktien Tracker, Krypto Portfolio, ETF Tracker, Vermögensübersicht, kostenlose Finanz-App, privater Investment Tracker, Sankey Cashflow",
     },
+
   },
   dashboard: {
     metaTitle: "Übersicht - Portfolio Tracker",
