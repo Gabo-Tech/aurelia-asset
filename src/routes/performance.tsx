@@ -217,7 +217,7 @@ function PerformancePage() {
               className="h-7 px-2 text-xs"
               onClick={() => setHidden(new Set())}
             >
-              Show all
+              {t("more.pcShowAll")}
             </Button>
             <Button
               variant="ghost"
@@ -225,7 +225,7 @@ function PerformancePage() {
               className="h-7 px-2 text-xs"
               onClick={() => setHidden(new Set(state.holdings.map((h) => h.symbol)))}
             >
-              Hide all
+              {t("more.pcHideAll")}
             </Button>
           </div>
         )}
