@@ -165,7 +165,7 @@ function PerformancePage() {
         ))}
       </div>
 
-      <div className="mb-4 flex flex-wrap items-center gap-2">
+      <div className="mb-4 flex flex-wrap items-center gap-2" data-tour="perf-assets">
         <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
           {t("more.perfAssets")}
         </span>
