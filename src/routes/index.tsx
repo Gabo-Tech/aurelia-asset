@@ -363,9 +363,11 @@ const DOWNLOAD_PLATFORMS: Array<{
   directHref?: string;
   /** Suggested filename for the downloaded file. */
   downloadAs?: string;
+  /** Marks the platform as not yet available. */
+  comingSoon?: boolean;
 }> = [
-  { key: "windows", icon: MonitorDown, assetGlob: ".msi" },
-  { key: "mac", icon: Apple, assetGlob: ".dmg" },
+  { key: "windows", icon: MonitorDown, assetGlob: ".msi", comingSoon: true },
+  { key: "mac", icon: Apple, assetGlob: ".dmg", comingSoon: true },
   { key: "linuxAppImage", icon: Download, assetGlob: ".AppImage" },
   { key: "linuxDeb", icon: Download, assetGlob: ".deb" },
   { key: "linuxRpm", icon: Download, assetGlob: ".rpm" },
@@ -376,8 +378,9 @@ const DOWNLOAD_PLATFORMS: Array<{
     directHref: apkAsset.url,
     downloadAs: "portfolio-tracker.apk",
   },
-  { key: "ios", icon: Apple, assetGlob: ".ipa" },
+  { key: "ios", icon: Apple, assetGlob: ".ipa", comingSoon: true },
 ];
+
 
 function Downloads() {
   const { t } = useTranslation();
@@ -408,7 +411,22 @@ function Downloads() {
             const href = d.directHref ?? releaseBase ?? "https://github.com";
             const isDirect = Boolean(d.directHref);
             const cls =
-              "flex flex-col items-center justify-center rounded-2xl border border-border/60 bg-card/40 p-6 text-center transition-colors hover:border-primary/60 hover:bg-card";
+              "relative flex flex-col items-center justify-center rounded-2xl border border-border/60 bg-card/40 p-6 text-center transition-colors hover:border-primary/60 hover:bg-card";
+            if (d.comingSoon) {
+              return (
+                <div
+                  key={d.key}
+                  className="relative flex flex-col items-center justify-center rounded-2xl border border-border/60 bg-card/20 p-6 text-center opacity-60"
+                  aria-disabled="true"
+                >
+                  <Icon className="h-7 w-7 text-muted-foreground" />
+                  <div className="mt-3 text-sm font-semibold">{label}</div>
+                  <div className="mt-1 text-[10px] font-medium uppercase tracking-wide text-primary/80">
+                    {t("landing.downloads.comingSoon", { defaultValue: "Coming soon" })}
+                  </div>
+                </div>
+              );
+            }
             return (
               <a
                 key={d.key}
@@ -428,6 +446,7 @@ function Downloads() {
               </a>
             );
           })}
+
         </div>
         <p className="mt-6 text-center text-xs text-muted-foreground">
           {t("landing.downloads.unsignedNotice")}
