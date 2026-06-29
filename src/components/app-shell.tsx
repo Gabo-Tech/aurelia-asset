@@ -16,6 +16,7 @@ import { usePrivacy, useStore, useFxReady } from "@/lib/store";
 import { SponsorBanner } from "./sponsor-banner";
 import { ThemeToggle } from "./theme-toggle";
 import { PageLoader } from "./page-loader";
+import { TourLauncher } from "./tour-launcher";
 import logoAsset from "@/assets/logo.png.asset.json";
 
 const navItems = [
@@ -42,6 +43,7 @@ function PrivacyToggle({ className }: { className?: string }) {
         privacy && "text-primary hover:text-primary",
         className,
       )}
+      data-tour="privacy-toggle"
     >
       {privacy ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
     </button>
@@ -71,9 +73,10 @@ export function AppShell({ children }: { children: ReactNode }) {
               <div className="text-xs text-muted-foreground">{t("shell.brandTagline")}</div>
             </div>
             <ThemeToggle />
+            <TourLauncher />
             <PrivacyToggle />
           </div>
-          <nav className="flex-1 px-3 space-y-1">
+          <nav className="flex-1 px-3 space-y-1" data-tour="sidebar-nav">
             {nav.map((item) => {
               const active =
                 pathname === item.to || pathname.startsWith(item.to + "/");
@@ -108,6 +111,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </Link>
           <div className="flex items-center gap-1">
             <ThemeToggle />
+            <TourLauncher />
             <PrivacyToggle />
           </div>
         </header>
@@ -126,6 +130,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <nav
         className="md:hidden fixed bottom-0 inset-x-0 z-30 border-t border-border/60 bg-sidebar/95 backdrop-blur pb-[env(safe-area-inset-bottom)]"
         aria-label="Primary"
+        data-tour="bottom-nav"
       >
         <div className="grid grid-cols-5">
           {nav.map((item) => {

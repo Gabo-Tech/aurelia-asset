@@ -152,7 +152,7 @@ function PerformancePage() {
         description={t("performance.description")}
       />
 
-      <div className="mb-4 flex flex-wrap gap-1.5">
+      <div className="mb-4 flex flex-wrap gap-1.5" data-tour="perf-period">
         {PERIODS.map((p) => (
           <Button
             key={p.id}
@@ -165,7 +165,7 @@ function PerformancePage() {
         ))}
       </div>
 
-      <div className="mb-4 flex flex-wrap items-center gap-2">
+      <div className="mb-4 flex flex-wrap items-center gap-2" data-tour="perf-assets">
         <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
           {t("more.perfAssets")}
         </span>
@@ -231,7 +231,7 @@ function PerformancePage() {
         )}
       </div>
 
-      <Card className="border-border/60">
+      <Card className="border-border/60" data-tour="perf-chart">
         <CardHeader className="flex flex-row items-baseline justify-between flex-wrap gap-2">
           <CardTitle>{t("more.perfPortfolioValue")}</CardTitle>
           {metrics && (
@@ -337,7 +337,7 @@ function PerformancePage() {
       </Card>
 
       {metrics && (
-        <Card className="border-border/60 mt-5">
+        <Card className="border-border/60 mt-5" data-tour="perf-returns">
           <CardHeader>
             <CardTitle>{t("more.perfReturnsByAsset")} · {period}</CardTitle>
           </CardHeader>

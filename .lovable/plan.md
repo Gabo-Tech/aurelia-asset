@@ -1,101 +1,88 @@
-# Linking Cashflow ↔ Holdings, Credit Cards, and Installments
+## Goal
 
-Goal: stop forcing every money movement to be "income" or "expense". Add a small set of new entry kinds so transfers between accounts, credit-card cycles, and financed purchases stop polluting P&L, while still showing up in projections, balances, and the Sankey.
+Add a detailed, step-by-step onboarding tour that walks users through every page of the app (Dashboard, Holdings, Performance, Cashflow, Settings) and explains each major functionality. Fully translated into the 6 supported languages (EN, ES, PT, NL, DE, CA).
 
-## 1. Classify holdings by horizon
+## Library choice
 
-Add `horizon: "long" | "short"` (default `long`) on `Holding`.
+Use **Driver.js v1** (`driver.js`):
+- Lightweight (~5KB gzipped), zero dependencies
+- MIT licensed, actively maintained
+- Built-in multi-step tours, highlighting, popovers, keyboard nav, progress, custom buttons
+- Easy theming via CSS variables so it matches our dark/light palette
+- Works with SPA route changes (we drive it manually between steps)
 
-- New optional field in `HoldingDialog` (segmented control: "Long term" / "Short term").
-- Filter chip on Holdings page + dashboard split: "Long-term portfolio" vs "Short-term / liquid".
-- Used by the new transfer flow to suggest which holdings can act as a "cash-like" source/destination (short-term lending platforms, savings, brokerage cash).
+Alternative considered: Shepherd.js (heavier, Tippy-based) and Intro.js (AGPL/commercial split). Driver.js wins on weight + license.
 
-## 2. New cashflow entry kind: `transfer`
+## UX flow
 
-Extend `CashflowEntry.kind` to `"income" | "expense" | "transfer"`.
+1. **Auto-start once**: on first visit after onboarding, show a welcome modal ("Take the tour?" / "Skip"). Persisted in localStorage (`tour:completed:v1`) so it never auto-shows again.
+2. **Manual restart**: a "Take the tour" button in Settings → Help, plus a small `?` (HelpCircle) icon in the top header next to the language switcher available on every page.
+3. **Cross-page tour**: the tour is a single sequence that navigates between routes using `useNavigate`. Between routes it waits for the target selector to mount (small `waitForEl` helper with timeout) before showing the next popover.
+4. **Skippable + resumable**: user can close anytime; we save the last completed step index so "Resume tour" appears if they bailed out.
+5. **Mobile**: on small viewports we shorten popover text and skip steps that target desktop-only elements (sidebar items). Mobile gets its own step list pointing at the bottom nav.
 
-A transfer has `fromAccount` and `toAccount`, where each side is one of:
-- `liquidity` (the implicit cash pool we already track)
-- `holding:<holdingId>` (any Holding, typically short-term)
-- `credit:<cardId>` (see §3)
+## Tour content (sections)
 
-Behavior:
-- Transfers are excluded from income/expense totals, Sankey income/expense columns, and the cashflow line "delta".
-- They DO move balances: liquidity goes down/up, and the matching Holding gets an auto-generated `HoldingTransaction` (buy on the receiving side, sell on the sending side) tagged `source: "transfer"` so it's not double-counted.
-- Sankey gets an optional "Transfers" middle band (toggle in chart settings) so you can visualize them without mixing with P&L.
+Each step = highlighted element + title + description. Steps grouped per page:
 
-User scenarios solved:
-- "Invested 1751.71 into Quanloop" → Transfer: liquidity → holding:quanloop. Creates a Buy on Quanloop; not an expense.
-- "Sold 1900 from Quanloop to pay the card" → Transfer: holding:quanloop → liquidity (sell on Quanloop). Then the card payment is its own entry (see §3). Neither shows as income.
+- **Welcome** (centered modal): what the app does, privacy note (local-only encrypted storage).
+- **Shell**: sidebar nav, currency switcher, privacy/eye toggle, theme toggle, language switcher.
+- **Dashboard**: net worth vs portfolio value vs liquidity stat cards, allocation pie, breakdown list, top asset card.
+- **Holdings**: add holding button, horizon (short/long term), search + type filter, table sort, row actions (edit, add transaction, refresh price), transactions panel (filters, totals, export).
+- **Performance**: period selector, asset legend toggles, portfolio chart, fullscreen + PNG export, returns-by-asset table.
+- **Cashflow**: add entry form (recurring vs one-off, percent amounts), categories manager, Sankey flow (drag to reorder, label modes, color customization), entries panel (filters, edit, PDF export), credit cards + loans + transfers.
+- **Settings**: currency, language, theme, CORS proxy, export/import (encrypted), GitHub repo link, restart tour.
+- **Wrap-up** (centered): link to landing page Downloads and "Made by GABO" footer.
 
-## 3. Credit cards as first-class accounts
+Approx. 35-45 steps total. Each step ≤ 2 short sentences to stay scannable.
 
-New top-level concept `CreditCard` (stored alongside holdings/categories):
-- `id, name, color, currency, statementDay, dueDay, creditLimit?`
-- Internally modeled as a liability account with negative-going balance.
+## i18n
 
-Three entry shapes touch a card:
-1. **Charge** = existing `expense` entry with `paymentMethod: "credit:<cardId>"`. Counts as expense immediately (real economic cost), but does NOT decrease liquidity; instead it increases card balance owed.
-2. **Statement / payment** = `transfer` from `liquidity` → `credit:<cardId>`. Reduces card balance owed; not an expense (the expense already hit when you charged).
-3. **Refund/credit on card** = `transfer` from `credit:<cardId>` → `liquidity` (or negative charge).
+All step titles and descriptions live in a new namespace `tour.*` inside each `src/i18n/locales/{en,es,pt,nl,de,ca}.ts`. No hardcoded strings inside the tour module.
 
-UI:
-- Add `paymentMethod` selector on every expense (default `liquidity`). Persist last used per category.
-- New "Cards" panel on Cashflow page: per-card balance owed, current cycle spend, next due date, "Mark statement paid" shortcut that prefills the transfer.
-- Dashboard stat: "Card debt" line under Liquidity. Net worth = portfolio + liquidity - card debt.
-
-This fixes the double-count problem: paying the card is not a new expense, and charging the card is not deferred - it shows the day it happened.
-
-## 4. Installment / financed purchases
-
-Add `installmentPlan` to any `expense` entry:
+Keys structure:
 ```
-installmentPlan?: {
-  total: number;        // total price
-  count: number;        // e.g. 4
-  frequency: "weekly" | "monthly";
-  firstDueDate: string;
-  paymentMethod: "liquidity" | "credit:<cardId>";
+tour: {
+  start: "Take the tour",
+  skip: "Skip",
+  next: "Next",
+  prev: "Back",
+  done: "Done",
+  welcomeTitle: "...",
+  welcomeBody: "...",
+  steps: {
+    sidebar: { title, body },
+    currency: { title, body },
+    ... (one per step)
+  }
 }
 ```
 
-When set, the entry is rendered as N scheduled child charges (similar to existing `expandCashflows` recurrence expansion) instead of one lump sum. Each installment hits cashflow on its due date via the chosen payment method (so a financed purchase on a card behaves correctly per §3).
+## Files to add / modify
 
-UI:
-- In Add Entry form, "Pay in installments" toggle revealing count / frequency / first due date.
-- Entries list groups installments under the parent purchase with progress ("2 of 4 paid, €X remaining").
-- Filter chip "Installments" + a "Remaining installment obligations" stat on dashboard.
+**New**
+- `src/lib/tour/driver.ts` - thin wrapper around Driver.js (init, theme, waitForSelector, navigateThenHighlight, persistence helpers).
+- `src/lib/tour/steps.ts` - exports `buildTourSteps(t, navigate, isMobile)` returning the ordered step list with `element` selectors + i18n keys.
+- `src/components/tour-launcher.tsx` - the HelpCircle button (header) + auto-start logic on mount, listens for a custom `"app:start-tour"` event so Settings can trigger it.
+- `src/components/tour-welcome-dialog.tsx` - first-visit welcome modal.
 
-## 5. Entries list & filters
+**Modified**
+- `src/components/app-shell.tsx` - add `data-tour="..."` attributes to sidebar items, currency switcher, privacy toggle, theme toggle, language switcher, bottom-nav items; mount `<TourLauncher />` in header.
+- `src/routes/dashboard.tsx`, `holdings.tsx`, `performance.tsx`, `cashflow.tsx`, `settings.tsx` - add `data-tour="..."` hooks on the elements the tour targets (no UI changes). Settings gets a "Restart tour" button.
+- `src/styles.css` - small block overriding Driver.js CSS variables to match our palette (popover bg, border, accent, overlay opacity) for both light and dark.
+- `src/i18n/locales/{en,es,pt,nl,de,ca}.ts` - add the `tour` namespace, fully translated.
+- `package.json` - add `driver.js`.
 
-- Add "Type" filter: Income / Expense / Transfer / Installment.
-- Add "Account" filter: Liquidity, each card, each holding (for transfers).
-- Show a small badge per row: payment method, transfer arrow `Liquidity → Quanloop`, installment progress.
+## Technical notes
 
-## 6. Sankey / charts impact
+- Driver.js is client-only; we import it inside an effect / event handler to avoid SSR issues.
+- `waitForEl(selector, timeoutMs=2000)` uses a `MutationObserver` to wait for cross-route navigations to render the target before showing the next popover.
+- Selectors use `data-tour` attributes only (no class/id coupling) so future refactors don't break the tour.
+- Persistence keys: `tour:completed:v1` (bool), `tour:lastStep:v1` (number). Stored via the existing `secure-storage` wrapper so it's encrypted like the rest.
+- Bundle impact: ~6 KB gzipped + step strings (loaded on demand via dynamic import of `steps.ts` when the user actually starts the tour).
 
-- Sankey: incomes and expenses unchanged. New optional middle column "Movements" showing transfers between liquidity / holdings / cards. Off by default to keep the classic view clean.
-- Cashflow line chart: unchanged for cash balance; add a toggle "Include card debt" to plot net liquidity (liquidity - cardDebt).
-- Holdings invested-vs-value chart: transfers feed Buys/Sells naturally so the existing chart "just works".
+## Out of scope
 
-## 7. Data model summary (technical)
-
-- `Holding.horizon?: "long" | "short"`
-- `CashflowEntry.kind` += `"transfer"`, plus `fromAccount?`, `toAccount?`, `paymentMethod?`, `installmentPlan?`, `linkedTransactionId?` (set when a transfer auto-creates a HoldingTransaction).
-- New `CreditCard` collection in `AppState` + `creditCards: CreditCard[]`.
-- Migration: existing entries default `paymentMethod = "liquidity"`, no transfers, no installments. No data loss.
-- Export/import envelope picks up the new fields automatically once added to the schema.
-
-## 8. Rollout order
-
-1. Add `horizon` to holdings + UI filter.
-2. Add `paymentMethod` + Credit Cards CRUD + card debt stat.
-3. Add `transfer` kind + auto-linked HoldingTransaction + Sankey toggle.
-4. Add `installmentPlan` + expansion in `expandCashflows` + UI.
-5. Update PDF export, filters, dashboard cards, i18n strings (6 locales).
-
-## Open questions
-
-1. For transfers into a holding, should we let you enter the **quantity** received (e.g. 0.031 XMR for €1751.71) or always treat the transfer as a pure cash-value buy and back out the price? I'd default to: ask for quantity only if the destination holding has a market price; for cash-like holdings (Quanloop, savings), skip quantity and treat 1 unit = 1 currency.
-2. Should card-charge expenses count toward the "Net 30 days" stat the day of the charge, or the day they actually hit liquidity via the statement payment? I'd default to: count on charge date (true economic cost) and separately show "Upcoming card payments" on the dashboard.
-3. Do you want a single global "Liquidity" pool or multiple cash accounts (e.g. checking, savings)? Multi-account is a bigger change; happy to scope it as a follow-up.
+- Video/animated demos
+- Per-feature tooltips outside the tour
+- Analytics on which step users drop off (no telemetry in this app)

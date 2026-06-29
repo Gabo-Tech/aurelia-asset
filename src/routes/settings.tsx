@@ -266,7 +266,7 @@ function SettingsPage() {
       <PageHeader title={t("settings.title")} description={t("settings.description")} />
 
       <div className="grid gap-5 lg:grid-cols-2">
-        <Card className="border-border/60">
+        <Card className="border-border/60" data-tour="settings-api">
           <CardHeader>
             <CardTitle>{t("settings.api.title")}</CardTitle>
             <CardDescription>{t("settings.api.description")}</CardDescription>
@@ -360,7 +360,7 @@ function SettingsPage() {
         </Card>
 
         <div className="space-y-5">
-          <Card className="border-border/60">
+          <Card className="border-border/60" data-tour="settings-language">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Languages className="h-4 w-4" />
@@ -385,7 +385,7 @@ function SettingsPage() {
             </CardContent>
           </Card>
 
-          <Card className="border-border/60">
+          <Card className="border-border/60" data-tour="settings-data">
             <CardHeader>
               <CardTitle>{t("settings.data.title")}</CardTitle>
               <CardDescription>{t("settings.data.description")}</CardDescription>
@@ -447,6 +447,30 @@ function SettingsPage() {
 
       <Card className="border-border/60 mt-5">
         <CardHeader>
+          <CardTitle>{t("tour.restartTitle", { defaultValue: "Onboarding tour" })}</CardTitle>
+          <CardDescription>
+            {t("tour.restartDesc", {
+              defaultValue: "Replay the guided tour at any time to refresh your memory.",
+            })}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button
+            variant="outline"
+            onClick={() => {
+              import("@/lib/tour/driver").then(({ resetTourCompletion }) => {
+                resetTourCompletion();
+                window.dispatchEvent(new CustomEvent("tour:start"));
+              });
+            }}
+          >
+            {t("tour.restartButton", { defaultValue: "Start tour" })}
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card className="border-border/60 mt-5">
+        <CardHeader>
           <CardTitle>{t("settings.about.title")}</CardTitle>
         </CardHeader>
         <CardContent className="text-sm text-muted-foreground space-y-2">
@@ -454,6 +478,7 @@ function SettingsPage() {
           <p>{t("settings.about.metalsHint")}</p>
         </CardContent>
       </Card>
+
 
       <Download className="hidden" />
     </>

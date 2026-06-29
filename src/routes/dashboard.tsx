@@ -149,7 +149,7 @@ function Dashboard() {
         }
       />
 
-      <div className="grid gap-5 lg:grid-cols-4">
+      <div className="grid gap-5 lg:grid-cols-4" data-tour="dash-stats">
         <Card className="lg:col-span-2 relative overflow-hidden border-border/60">
           <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent pointer-events-none" />
           <CardHeader className="pb-2">
@@ -220,7 +220,7 @@ function Dashboard() {
       </div>
 
       <div className="mt-5 grid gap-5 lg:grid-cols-5">
-        <Card className="lg:col-span-3 border-border/60">
+        <Card className="lg:col-span-3 border-border/60" data-tour="dash-allocation">
           <CardHeader className="flex flex-col gap-4">
             <div className="flex flex-row items-center justify-between gap-4 flex-wrap">
               <CardTitle>{t("dashboard.allocation")}</CardTitle>
@@ -338,7 +338,7 @@ function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card className="lg:col-span-2 border-border/60">
+        <Card className="lg:col-span-2 border-border/60" data-tour="dash-breakdown">
           <CardHeader>
             <CardTitle>{t("more.dashBreakdown")}</CardTitle>
           </CardHeader>
