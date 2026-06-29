@@ -447,6 +447,30 @@ function SettingsPage() {
 
       <Card className="border-border/60 mt-5">
         <CardHeader>
+          <CardTitle>{t("tour.restartTitle", { defaultValue: "Onboarding tour" })}</CardTitle>
+          <CardDescription>
+            {t("tour.restartDesc", {
+              defaultValue: "Replay the guided tour at any time to refresh your memory.",
+            })}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button
+            variant="outline"
+            onClick={() => {
+              import("@/lib/tour/driver").then(({ resetTourCompletion }) => {
+                resetTourCompletion();
+                window.dispatchEvent(new CustomEvent("tour:start"));
+              });
+            }}
+          >
+            {t("tour.restartButton", { defaultValue: "Start tour" })}
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card className="border-border/60 mt-5">
+        <CardHeader>
           <CardTitle>{t("settings.about.title")}</CardTitle>
         </CardHeader>
         <CardContent className="text-sm text-muted-foreground space-y-2">
@@ -454,6 +478,7 @@ function SettingsPage() {
           <p>{t("settings.about.metalsHint")}</p>
         </CardContent>
       </Card>
+
 
       <Download className="hidden" />
     </>
