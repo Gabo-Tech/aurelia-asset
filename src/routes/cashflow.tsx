@@ -481,10 +481,10 @@ function CashflowPage() {
       <PageHeader title={t("cashflow.title")} description={t("cashflow.description")} />
 
       <div className="grid grid-cols-3 gap-2 sm:gap-5">
-        <StatCard label="Income" value={privacy ? MASK : formatMoney(totals.income, currency)} tone="success" />
-        <StatCard label="Expenses" value={privacy ? MASK : formatMoney(totals.expense, currency)} tone="destructive" />
+        <StatCard label={t("cashflow.income")} value={privacy ? MASK : formatMoney(totals.income, currency)} tone="success" />
+        <StatCard label={t("cashflow.expenses")} value={privacy ? MASK : formatMoney(totals.expense, currency)} tone="destructive" />
         <StatCard
-          label="Net"
+          label={t("cashflow.net")}
           value={privacy ? MASK : `${totals.net >= 0 ? "+" : "-"}${formatMoney(Math.abs(totals.net), currency)}`}
           tone={totals.net >= 0 ? "success" : "destructive"}
         />
@@ -501,7 +501,13 @@ function CashflowPage() {
             onRemoveCategory={removeCategory}
             onAdd={(e) => {
               addCashflow(e as unknown as Omit<CashflowEntry, "id">);
-              toast.success(`${e.kind === "income" ? "Income" : e.kind === "expense" ? "Expense" : "Transfer"} added`);
+              toast.success(
+                e.kind === "income"
+                  ? t("cashflow.incomeAdded")
+                  : e.kind === "expense"
+                    ? t("cashflow.expenseAdded")
+                    : t("cashflow.transferAdded"),
+              );
             }}
           />
           <CreditCardsManager />
@@ -510,12 +516,12 @@ function CashflowPage() {
 
         <Card className="border-border/60 min-w-0">
           <CardHeader className="px-3 sm:px-6">
-            <CardTitle>Flow</CardTitle>
+            <CardTitle>{t("cashflow.flow")}</CardTitle>
           </CardHeader>
           <CardContent className="px-2 sm:px-6">
             <ChartFrame
               filename="cashflow"
-              title="Cashflow"
+              title={t("cashflow.title")}
               extras={
                 <SankeyControls
                   prefs={prefs}
@@ -543,7 +549,7 @@ function CashflowPage() {
                   />
                 ) : (
                   <div className="grid h-80 place-items-center text-sm text-muted-foreground">
-                    Add some income and expenses to see the flow.
+                    {t("cashflow.emptyFlow")}
                   </div>
                 )}
               </div>
