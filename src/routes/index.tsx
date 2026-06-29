@@ -405,15 +405,17 @@ function Downloads() {
             const Icon = d.icon;
             const label = t(`landing.downloads.platforms.${d.key}`);
             const note = t(`landing.downloads.notes.${d.key}`, { defaultValue: "" });
-            const href = releaseBase ?? "https://github.com";
+            const href = d.directHref ?? releaseBase ?? "https://github.com";
+            const isDirect = Boolean(d.directHref);
             const cls =
               "flex flex-col items-center justify-center rounded-2xl border border-border/60 bg-card/40 p-6 text-center transition-colors hover:border-primary/60 hover:bg-card";
             return (
               <a
                 key={d.key}
                 href={href}
-                target="_blank"
-                rel="noopener noreferrer"
+                target={isDirect ? undefined : "_blank"}
+                rel={isDirect ? undefined : "noopener noreferrer"}
+                download={isDirect ? (d.downloadAs ?? true) : undefined}
                 className={cls}
               >
                 <Icon className="h-7 w-7 text-primary" />
