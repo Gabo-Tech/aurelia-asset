@@ -48,7 +48,7 @@ export function TourLauncher({ className }: { className?: string }) {
     if (isTourCompleted()) return;
     // Delay to let the first page render
     const id = window.setTimeout(() => {
-      startTour(t, (path) => navigate({ to: path }));
+      startTour(t, (path) => navigate({ to: path as never }));
     }, 900);
     return () => window.clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
