@@ -149,7 +149,7 @@ function Dashboard() {
         }
       />
 
-      <div className="grid gap-5 lg:grid-cols-4">
+      <div className="grid gap-5 lg:grid-cols-4" data-tour="dash-stats">
         <Card className="lg:col-span-2 relative overflow-hidden border-border/60">
           <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent pointer-events-none" />
           <CardHeader className="pb-2">
