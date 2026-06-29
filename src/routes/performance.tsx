@@ -251,17 +251,17 @@ function PerformancePage() {
           )}
         </CardHeader>
         <CardContent>
-          <ChartFrame filename="performance" title={`Portfolio value · ${period}`}>
+          <ChartFrame filename="performance" title={`${t("more.perfPortfolioValue")} · ${period}`}>
             <div className="flex h-72 items-center justify-center sm:h-80">
               {isLoading ? (
                 <Skeleton className="h-full w-full" />
               ) : isError ? (
                 <div className="grid h-full place-items-center text-sm text-destructive">
-                  Couldn't load price history. Try enabling the CORS proxy in Settings.
+                  {t("more.perfCouldntLoad")}
                 </div>
               ) : !chartData.length ? (
                 <div className="grid h-full place-items-center text-sm text-muted-foreground">
-                  No data
+                  {t("more.perfNoData")}
                 </div>
               ) : (
                 <ResponsiveContainer width="100%" height="100%">
