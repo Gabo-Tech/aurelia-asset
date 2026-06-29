@@ -389,7 +389,7 @@ function Dashboard() {
               <TrendingDown className="h-4 w-4 text-destructive" />
             )
           }
-          label="Net 30d"
+          label={t("dashboard.net30")}
           value={`${net30 >= 0 ? "+" : "-"}${mask(Math.abs(net30), currency)}`}
         />
       </div>
