@@ -69,7 +69,7 @@ export function TourLauncher({ className }: { className?: string }) {
   return (
     <button
       type="button"
-      onClick={() => startTour(t, (path) => navigate({ to: path }))}
+      onClick={() => startTour(t, (path) => navigate({ to: path as never }))}
       title={t("tour.start")}
       aria-label={t("tour.start")}
       className={cn(
