@@ -339,16 +339,16 @@ function PerformancePage() {
       {metrics && (
         <Card className="border-border/60 mt-5">
           <CardHeader>
-            <CardTitle>Returns by asset · {period}</CardTitle>
+            <CardTitle>{t("more.perfReturnsByAsset")} · {period}</CardTitle>
           </CardHeader>
           <CardContent className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left text-xs uppercase tracking-wider text-muted-foreground">
-                  <th className="py-2">Asset</th>
-                  <th className="py-2 text-right">Start</th>
-                  <th className="py-2 text-right">End</th>
-                  <th className="py-2 text-right">Change</th>
+                  <th className="py-2">{t("more.perfAsset")}</th>
+                  <th className="py-2 text-right">{t("more.perfStart")}</th>
+                  <th className="py-2 text-right">{t("more.perfEnd")}</th>
+                  <th className="py-2 text-right">{t("more.perfChange")}</th>
                   <th className="py-2 text-right">%</th>
                 </tr>
               </thead>
