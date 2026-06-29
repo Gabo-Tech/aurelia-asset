@@ -166,13 +166,13 @@ export function TransactionsPanel() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left text-xs uppercase tracking-wider text-muted-foreground [&>th]:px-3 [&>th]:py-2">
-                  <th>Date</th>
-                  <th>Type</th>
-                  <th>Holding</th>
-                  <th className="text-right">Quantity</th>
-                  <th className="text-right">Price</th>
-                  <th className="text-right">Fees</th>
-                  <th className="text-right">Total</th>
+                  <th>{t("more.tpDate")}</th>
+                  <th>{t("more.tpType")}</th>
+                  <th>{t("more.tpHolding")}</th>
+                  <th className="text-right">{t("more.tpQuantity")}</th>
+                  <th className="text-right">{t("more.tpPrice")}</th>
+                  <th className="text-right">{t("more.tpFeesLabel")}</th>
+                  <th className="text-right">{t("more.tpTotal")}</th>
                   <th></th>
                 </tr>
               </thead>
