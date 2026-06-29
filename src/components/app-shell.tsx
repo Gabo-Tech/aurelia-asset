@@ -73,9 +73,10 @@ export function AppShell({ children }: { children: ReactNode }) {
               <div className="text-xs text-muted-foreground">{t("shell.brandTagline")}</div>
             </div>
             <ThemeToggle />
+            <TourLauncher />
             <PrivacyToggle />
           </div>
-          <nav className="flex-1 px-3 space-y-1">
+          <nav className="flex-1 px-3 space-y-1" data-tour="sidebar-nav">
             {nav.map((item) => {
               const active =
                 pathname === item.to || pathname.startsWith(item.to + "/");
