@@ -220,7 +220,7 @@ function Dashboard() {
       </div>
 
       <div className="mt-5 grid gap-5 lg:grid-cols-5">
-        <Card className="lg:col-span-3 border-border/60">
+        <Card className="lg:col-span-3 border-border/60" data-tour="dash-allocation">
           <CardHeader className="flex flex-col gap-4">
             <div className="flex flex-row items-center justify-between gap-4 flex-wrap">
               <CardTitle>{t("dashboard.allocation")}</CardTitle>
