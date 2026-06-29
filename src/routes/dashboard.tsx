@@ -223,7 +223,7 @@ function Dashboard() {
         <Card className="lg:col-span-3 border-border/60">
           <CardHeader className="flex flex-col gap-4">
             <div className="flex flex-row items-center justify-between gap-4 flex-wrap">
-              <CardTitle>Allocation</CardTitle>
+              <CardTitle>{t("dashboard.allocation")}</CardTitle>
               <div className="flex items-center gap-2">
                 <Label htmlFor="all-labels" className="text-xs text-muted-foreground">
                   Show all labels
