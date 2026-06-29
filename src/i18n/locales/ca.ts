@@ -134,9 +134,11 @@ const ca: Translation = {
     },
     footer: { brand: "Gestor de cartera", madeBy: "Fet per" },
     meta: {
-      title: "Gestor de cartera gratuït per a accions, cripto i ETFs - Privat i local",
-      description: "Segueix accions, ETFs, cripto i metalls preciosos en un panell elegant. 100% al client, sense registre, sense rastreig. Veges assignació, rendiment i flux de caixa en segons.",
+      title: "Gestor de cartera gratuït - Accions, Cripto i ETFs",
+      description: "Segueix accions, ETFs, cripto i metalls en un panell elegant. 100% privat, sense registre. Assignació, rendiment i flux de caixa en segons.",
+      keywords: "gestor de cartera, seguiment d'accions, cartera cripto, seguiment ETF, patrimoni net, app de finances gratis, inversor privat, flux de caixa sankey",
     },
+
   },
   dashboard: {
     metaTitle: "Panell - Gestor de cartera",
