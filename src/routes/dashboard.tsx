@@ -226,7 +226,7 @@ function Dashboard() {
               <CardTitle>{t("dashboard.allocation")}</CardTitle>
               <div className="flex items-center gap-2">
                 <Label htmlFor="all-labels" className="text-xs text-muted-foreground">
-                  Show all labels
+                  {t("dashboard.showAllLabels")}
                 </Label>
                 <Switch
                   id="all-labels"
