@@ -167,7 +167,7 @@ function PerformancePage() {
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-          Assets
+          {t("more.perfAssets")}
         </span>
         <button
           onClick={() => setHideTotal((v) => !v)}
@@ -182,7 +182,7 @@ function PerformancePage() {
             className="h-1.5 w-1.5 rounded-full ring-1 ring-black/10"
             style={{ backgroundColor: "var(--primary)" }}
           />
-          Total
+          {t("more.perfTotalLabel")}
         </button>
         {state.holdings.map((h) => (
           <button
@@ -217,7 +217,7 @@ function PerformancePage() {
               className="h-7 px-2 text-xs"
               onClick={() => setHidden(new Set())}
             >
-              Show all
+              {t("more.pcShowAll")}
             </Button>
             <Button
               variant="ghost"
@@ -225,7 +225,7 @@ function PerformancePage() {
               className="h-7 px-2 text-xs"
               onClick={() => setHidden(new Set(state.holdings.map((h) => h.symbol)))}
             >
-              Hide all
+              {t("more.pcHideAll")}
             </Button>
           </div>
         )}
@@ -233,7 +233,7 @@ function PerformancePage() {
 
       <Card className="border-border/60">
         <CardHeader className="flex flex-row items-baseline justify-between flex-wrap gap-2">
-          <CardTitle>Portfolio value</CardTitle>
+          <CardTitle>{t("more.perfPortfolioValue")}</CardTitle>
           {metrics && (
             <div className="text-right">
               <div className="text-2xl font-semibold tabular-nums">
@@ -251,17 +251,17 @@ function PerformancePage() {
           )}
         </CardHeader>
         <CardContent>
-          <ChartFrame filename="performance" title={`Portfolio value · ${period}`}>
+          <ChartFrame filename="performance" title={`${t("more.perfPortfolioValue")} · ${period}`}>
             <div className="flex h-72 items-center justify-center sm:h-80">
               {isLoading ? (
                 <Skeleton className="h-full w-full" />
               ) : isError ? (
                 <div className="grid h-full place-items-center text-sm text-destructive">
-                  Couldn't load price history. Try enabling the CORS proxy in Settings.
+                  {t("more.perfCouldntLoad")}
                 </div>
               ) : !chartData.length ? (
                 <div className="grid h-full place-items-center text-sm text-muted-foreground">
-                  No data
+                  {t("more.perfNoData")}
                 </div>
               ) : (
                 <ResponsiveContainer width="100%" height="100%">
@@ -339,16 +339,16 @@ function PerformancePage() {
       {metrics && (
         <Card className="border-border/60 mt-5">
           <CardHeader>
-            <CardTitle>Returns by asset · {period}</CardTitle>
+            <CardTitle>{t("more.perfReturnsByAsset")} · {period}</CardTitle>
           </CardHeader>
           <CardContent className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left text-xs uppercase tracking-wider text-muted-foreground">
-                  <th className="py-2">Asset</th>
-                  <th className="py-2 text-right">Start</th>
-                  <th className="py-2 text-right">End</th>
-                  <th className="py-2 text-right">Change</th>
+                  <th className="py-2">{t("more.perfAsset")}</th>
+                  <th className="py-2 text-right">{t("more.perfStart")}</th>
+                  <th className="py-2 text-right">{t("more.perfEnd")}</th>
+                  <th className="py-2 text-right">{t("more.perfChange")}</th>
                   <th className="py-2 text-right">%</th>
                 </tr>
               </thead>
@@ -384,7 +384,7 @@ function PerformancePage() {
                   </tr>
                 ))}
                 <tr className="font-semibold">
-                  <td className="py-2.5">Total</td>
+                  <td className="py-2.5">{t("more.perfTotal")}</td>
                   <td className="py-2.5 text-right tabular-nums">
                     {mask(metrics.first.total)}
                   </td>

@@ -171,7 +171,7 @@ function HoldingsPage() {
         <CardContent className="p-4 sm:p-6 space-y-4">
           <div className="flex flex-wrap items-center gap-2">
             <Input
-              placeholder="Search symbol or name…"
+              placeholder={t("more.hSearch")}
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
@@ -181,22 +181,22 @@ function HoldingsPage() {
             />
             <Select value={typeFilter} onValueChange={(v) => { setTypeFilter(v); setPage(0); }}>
               <SelectTrigger className="w-40">
-                <SelectValue placeholder="Type" />
+                <SelectValue placeholder={t("more.hType")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All types</SelectItem>
-                <SelectItem value="stock">Stocks</SelectItem>
-                <SelectItem value="etf">ETFs</SelectItem>
-                <SelectItem value="crypto">Crypto</SelectItem>
-                <SelectItem value="metal">Metals</SelectItem>
-                <SelectItem value="other">Other</SelectItem>
+                <SelectItem value="all">{t("more.hAllTypes")}</SelectItem>
+                <SelectItem value="stock">{t("more.hTypeStock")}</SelectItem>
+                <SelectItem value="etf">{t("more.hTypeEtf")}</SelectItem>
+                <SelectItem value="crypto">{t("more.hTypeCrypto")}</SelectItem>
+                <SelectItem value="metal">{t("more.hTypeMetal")}</SelectItem>
+                <SelectItem value="other">{t("more.hTypeOther")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           {rows.length === 0 ? (
             <div className="py-16 text-center text-sm text-muted-foreground">
-              No holdings match your filters.
+              {t("more.hNoMatch")}
             </div>
           ) : (
             <div className="overflow-x-auto rounded-lg border border-border/60">
@@ -204,12 +204,12 @@ function HoldingsPage() {
                 <TableHeader>
                   <TableRow className="bg-muted/30 hover:bg-muted/30">
                     <TableHead className="w-10"></TableHead>
-                    <SortHead label="Symbol" k="symbol" sort={sort} onClick={toggleSort} />
-                    <TableHead>Name</TableHead>
-                    <SortHead label="Type" k="type" sort={sort} onClick={toggleSort} />
-                    <SortHead label="Quantity" k="quantity" sort={sort} onClick={toggleSort} className="text-right" />
-                    <SortHead label="Price" k="currentPrice" sort={sort} onClick={toggleSort} className="text-right" />
-                    <SortHead label="Value" k="marketValue" sort={sort} onClick={toggleSort} className="text-right" />
+                    <SortHead label={t("more.hSymbol")} k="symbol" sort={sort} onClick={toggleSort} />
+                    <TableHead>{t("more.hName")}</TableHead>
+                    <SortHead label={t("more.hType")} k="type" sort={sort} onClick={toggleSort} />
+                    <SortHead label={t("more.hQuantity")} k="quantity" sort={sort} onClick={toggleSort} className="text-right" />
+                    <SortHead label={t("more.hPrice")} k="currentPrice" sort={sort} onClick={toggleSort} className="text-right" />
+                    <SortHead label={t("more.hValue")} k="marketValue" sort={sort} onClick={toggleSort} className="text-right" />
                     <SortHead label="%" k="pct" sort={sort} onClick={toggleSort} className="text-right" />
                     <TableHead className="w-10"></TableHead>
                   </TableRow>
@@ -238,7 +238,7 @@ function HoldingsPage() {
                       <TableCell className="text-right tabular-nums">
                         {formatMoney(h.currentPrice, h.priceCurrency || "USD")}
                         {h.manualPrice != null && (
-                          <span className="ml-1 text-[10px] text-muted-foreground">man</span>
+                          <span className="ml-1 text-[10px] text-muted-foreground">{t("more.hManual")}</span>
                         )}
                       </TableCell>
                       <TableCell className="text-right tabular-nums font-medium">
