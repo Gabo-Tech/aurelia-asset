@@ -492,6 +492,7 @@ function CashflowPage() {
 
       <div className="mt-5 grid gap-5 lg:grid-cols-2">
         <div className="space-y-5">
+          <div data-tour="cf-add">
           <AddForm
             defaultCurrency={currency}
             categories={categories}
@@ -510,11 +511,12 @@ function CashflowPage() {
               );
             }}
           />
-          <CreditCardsManager />
+          </div>
+          <div data-tour="cf-cards"><CreditCardsManager /></div>
         </div>
 
 
-        <Card className="border-border/60 min-w-0">
+        <Card className="border-border/60 min-w-0" data-tour="cf-sankey">
           <CardHeader className="px-3 sm:px-6">
             <CardTitle>{t("cashflow.flow")}</CardTitle>
           </CardHeader>
