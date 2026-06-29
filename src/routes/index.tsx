@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useTranslation } from "react-i18next";
 import {
@@ -109,14 +109,7 @@ export const Route = createFileRoute("/")({
 
 
 function LandingPage() {
-  const navigate = useNavigate();
-  useEffect(() => {
-    try {
-      if (typeof window !== "undefined" && window.localStorage.getItem("ept_state_v1")) {
-        navigate({ to: "/dashboard", replace: true });
-      }
-    } catch {}
-  }, [navigate]);
+
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-background text-foreground">
