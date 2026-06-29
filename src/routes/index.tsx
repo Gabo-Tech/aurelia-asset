@@ -24,6 +24,7 @@ import { getGithubRepo } from "@/lib/repo.functions";
 import apkAsset from "@/assets/portfolio-tracker-apk.asset.json";
 import logoAsset from "@/assets/logo.png.asset.json";
 
+import { MouseGlow, ScrollAurora, Reveal } from "@/components/landing-ambient";
 import i18n from "@/i18n";
 
 
@@ -118,21 +119,25 @@ function LandingPage() {
   }, [navigate]);
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <SiteHeader />
-      <Hero />
-      <SocialProof />
-      <Features />
-      <HowItWorks />
-      <Comparison />
-      <Downloads />
-      <FAQ />
-      <FinalCTA />
-
-      <SiteFooter />
+    <div className="relative min-h-screen overflow-hidden bg-background text-foreground">
+      <ScrollAurora />
+      <MouseGlow />
+      <div className="relative z-10">
+        <SiteHeader />
+        <Hero />
+        <Reveal><SocialProof /></Reveal>
+        <Reveal delay={60}><Features /></Reveal>
+        <Reveal delay={60}><HowItWorks /></Reveal>
+        <Reveal delay={60}><Comparison /></Reveal>
+        <Reveal delay={60}><Downloads /></Reveal>
+        <Reveal delay={60}><FAQ /></Reveal>
+        <Reveal delay={60}><FinalCTA /></Reveal>
+        <SiteFooter />
+      </div>
     </div>
   );
 }
+
 
 function SiteHeader() {
   const { t } = useTranslation();
@@ -177,37 +182,37 @@ function Hero() {
     <section className="relative overflow-hidden border-b border-border/50">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_50%_at_50%_0%,hsl(var(--primary)/0.18),transparent_70%)]" />
       <div className="relative mx-auto max-w-6xl px-4 py-20 text-center sm:px-6 sm:py-28">
-        <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-border/60 bg-card/60 px-3 py-1 text-xs text-muted-foreground">
+        <div className="mx-auto inline-flex animate-fade-in items-center gap-2 rounded-full border border-border/60 bg-card/60 px-3 py-1 text-xs text-muted-foreground" style={{ animationDelay: "0ms", animationFillMode: "both" }}>
           <ShieldCheck className="h-3.5 w-3.5 text-primary" />
           {t("landing.hero.badge")}
         </div>
-        <h1 className="mx-auto mt-6 max-w-3xl text-4xl font-semibold tracking-tight sm:text-6xl">
+        <h1 className="mx-auto mt-6 max-w-3xl animate-fade-in text-4xl font-semibold tracking-tight sm:text-6xl" style={{ animationDelay: "120ms", animationDuration: "700ms", animationFillMode: "both" }}>
           {t("landing.hero.titleStart")}{" "}
           <span className="bg-gradient-to-br from-primary via-primary to-foreground bg-clip-text text-transparent">
             {t("landing.hero.titleHighlight")}
           </span>
           .
         </h1>
-        <p className="mx-auto mt-5 max-w-2xl text-base text-muted-foreground sm:text-lg">
+        <p className="mx-auto mt-5 max-w-2xl animate-fade-in text-base text-muted-foreground sm:text-lg" style={{ animationDelay: "240ms", animationDuration: "700ms", animationFillMode: "both" }}>
           {t("landing.hero.subtitle")}
         </p>
 
-        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+        <div className="mt-8 flex animate-fade-in flex-wrap items-center justify-center gap-3" style={{ animationDelay: "360ms", animationDuration: "700ms", animationFillMode: "both" }}>
           <Link
             to="/dashboard"
-            className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-medium text-primary-foreground shadow-lg shadow-primary/20 hover:bg-primary/90"
+            className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-medium text-primary-foreground shadow-lg shadow-primary/20 transition-transform hover:bg-primary/90 hover:-translate-y-0.5"
           >
             {t("landing.hero.ctaPrimary")} <ArrowRight className="h-4 w-4" />
           </Link>
           <a
             href="#features"
-            className="inline-flex items-center gap-2 rounded-xl border border-border bg-card/60 px-5 py-3 text-sm font-medium text-foreground hover:bg-card"
+            className="inline-flex items-center gap-2 rounded-xl border border-border bg-card/60 px-5 py-3 text-sm font-medium text-foreground transition-colors hover:bg-card"
           >
             {t("landing.hero.ctaSecondary")}
           </a>
         </div>
 
-        <div className="mx-auto mt-14 max-w-5xl">
+        <div className="mx-auto mt-14 max-w-5xl animate-fade-in" style={{ animationDelay: "480ms", animationDuration: "900ms", animationFillMode: "both" }}>
           <div className="rounded-2xl border border-border/60 bg-card/40 p-2 shadow-2xl shadow-primary/5">
             <img
               src={OG_IMAGE}
@@ -217,6 +222,7 @@ function Hero() {
             />
           </div>
         </div>
+
       </div>
     </section>
   );
