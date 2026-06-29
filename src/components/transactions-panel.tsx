@@ -78,13 +78,13 @@ export function TransactionsPanel() {
   return (
     <Card className="border-border/60 mt-5">
       <CardHeader className="flex-row items-center justify-between space-y-0 gap-2 flex-wrap">
-        <CardTitle>Transactions</CardTitle>
+        <CardTitle>{t("more.tpTitle")}</CardTitle>
         <Button
           size="sm"
           onClick={() => { setEditing(null); setOpen(true); }}
           disabled={!state.holdings.length}
         >
-          <Plus className="mr-1.5 h-3.5 w-3.5" /> Add transaction
+          <Plus className="mr-1.5 h-3.5 w-3.5" /> {t("more.tpAddTransaction")}
         </Button>
       </CardHeader>
       <CardContent>
