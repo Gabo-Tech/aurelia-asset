@@ -31,26 +31,55 @@ const SITE_URL = "https://financetracker.putopulse.org";
 const OG_IMAGE =
   "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/1d9991ee-e308-44b0-ad20-1eb489a2da74/id-preview-4950e4f3--c8e820b7-6ae8-4377-943a-0e5181cbbc73.lovable.app-1781927384080.png";
 
+const LOCALES = ["en", "es", "pt", "de", "nl", "ca"] as const;
+const OG_LOCALE_MAP: Record<(typeof LOCALES)[number], string> = {
+  en: "en_US",
+  es: "es_ES",
+  pt: "pt_PT",
+  de: "de_DE",
+  nl: "nl_NL",
+  ca: "ca_ES",
+};
+
 export const Route = createFileRoute("/")({
   head: () => {
     const title = i18n.t("landing.meta.title");
     const desc = i18n.t("landing.meta.description");
+    const keywords = i18n.t("landing.meta.keywords", {
+      defaultValue:
+        "portfolio tracker, stock tracker, crypto tracker, ETF tracker, net worth tracker, free portfolio app, private finance tracker, sankey cashflow",
+    });
+    const currentLang = (i18n.language?.slice(0, 2) ?? "en") as (typeof LOCALES)[number];
+    const ogLocale = OG_LOCALE_MAP[currentLang] ?? "en_US";
     return {
       meta: [
         { title },
         { name: "description", content: desc },
-        { name: "keywords", content: "portfolio tracker, stock tracker, crypto tracker, ETF tracker, net worth tracker, free portfolio app, private finance tracker, sankey cashflow" },
+        { name: "keywords", content: keywords },
         { property: "og:title", content: title },
         { property: "og:description", content: desc },
         { property: "og:type", content: "website" },
         { property: "og:url", content: SITE_URL + "/" },
         { property: "og:image", content: OG_IMAGE },
+        { property: "og:locale", content: ogLocale },
+        ...LOCALES.filter((l) => OG_LOCALE_MAP[l] !== ogLocale).map((l) => ({
+          property: "og:locale:alternate",
+          content: OG_LOCALE_MAP[l],
+        })),
         { name: "twitter:card", content: "summary_large_image" },
         { name: "twitter:title", content: title },
         { name: "twitter:description", content: desc },
         { name: "twitter:image", content: OG_IMAGE },
       ],
-      links: [{ rel: "canonical", href: SITE_URL + "/" }],
+      links: [
+        { rel: "canonical", href: SITE_URL + "/" },
+        ...LOCALES.map((l) => ({
+          rel: "alternate",
+          hrefLang: l,
+          href: `${SITE_URL}/?lang=${l}`,
+        })),
+        { rel: "alternate", hrefLang: "x-default", href: SITE_URL + "/" },
+      ],
       scripts: [
         {
           type: "application/ld+json",
@@ -59,9 +88,10 @@ export const Route = createFileRoute("/")({
             "@type": "SoftwareApplication",
             name: "Portfolio Tracker",
             applicationCategory: "FinanceApplication",
-            operatingSystem: "Web",
+            operatingSystem: "Web, Android, Linux, Windows, macOS, iOS",
             description: desc,
             url: SITE_URL + "/",
+            inLanguage: LOCALES as unknown as string[],
             offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
             aggregateRating: {
               "@type": "AggregateRating",
@@ -75,6 +105,7 @@ export const Route = createFileRoute("/")({
   },
   component: LandingPage,
 });
+
 
 function LandingPage() {
   const navigate = useNavigate();
