@@ -384,7 +384,7 @@ function PerformancePage() {
                   </tr>
                 ))}
                 <tr className="font-semibold">
-                  <td className="py-2.5">Total</td>
+                  <td className="py-2.5">{t("more.perfTotal")}</td>
                   <td className="py-2.5 text-right tabular-nums">
                     {mask(metrics.first.total)}
                   </td>
