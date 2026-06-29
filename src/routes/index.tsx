@@ -24,6 +24,7 @@ import { getGithubRepo } from "@/lib/repo.functions";
 import apkAsset from "@/assets/portfolio-tracker-apk.asset.json";
 import logoAsset from "@/assets/logo.png.asset.json";
 
+import { MouseGlow, ScrollAurora, Reveal } from "@/components/landing-ambient";
 import i18n from "@/i18n";
 
 
@@ -118,21 +119,25 @@ function LandingPage() {
   }, [navigate]);
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <SiteHeader />
-      <Hero />
-      <SocialProof />
-      <Features />
-      <HowItWorks />
-      <Comparison />
-      <Downloads />
-      <FAQ />
-      <FinalCTA />
-
-      <SiteFooter />
+    <div className="relative min-h-screen overflow-hidden bg-background text-foreground">
+      <ScrollAurora />
+      <MouseGlow />
+      <div className="relative z-10">
+        <SiteHeader />
+        <Hero />
+        <Reveal><SocialProof /></Reveal>
+        <Reveal delay={60}><Features /></Reveal>
+        <Reveal delay={60}><HowItWorks /></Reveal>
+        <Reveal delay={60}><Comparison /></Reveal>
+        <Reveal delay={60}><Downloads /></Reveal>
+        <Reveal delay={60}><FAQ /></Reveal>
+        <Reveal delay={60}><FinalCTA /></Reveal>
+        <SiteFooter />
+      </div>
     </div>
   );
 }
+
 
 function SiteHeader() {
   const { t } = useTranslation();
