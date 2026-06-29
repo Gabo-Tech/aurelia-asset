@@ -340,7 +340,7 @@ function Dashboard() {
 
         <Card className="lg:col-span-2 border-border/60">
           <CardHeader>
-            <CardTitle>Breakdown</CardTitle>
+            <CardTitle>{t("more.dashBreakdown")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
             {visibleAllocation.slice(0, 8).map((a) => {
