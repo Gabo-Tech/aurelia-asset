@@ -211,3 +211,22 @@
   color: var(--muted-foreground) !important;
 }
 
+
+@keyframes aurora-drift-slow {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 4% 3%; }
+}
+@keyframes aurora-drift-slower {
+  0%, 100% { translate: 0 0; }
+  50% { translate: -3% -4%; }
+}
+.animate-aurora-drift-slow {
+  animation: aurora-drift-slow 24s ease-in-out infinite;
+}
+.animate-aurora-drift-slower {
+  animation: aurora-drift-slower 32s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-aurora-drift-slow,
+  .animate-aurora-drift-slower { animation: none !important; }
+}
