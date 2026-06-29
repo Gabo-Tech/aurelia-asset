@@ -9,7 +9,7 @@ export function buildTourSteps(t: TFunction, isMobile: boolean): TourStepDef[] {
     key: string,
     selector: string | undefined,
     route?: string,
-    side: "top" | "bottom" | "left" | "right" | "over" = "bottom",
+    side: "top" | "bottom" | "left" | "right" = "bottom",
   ): TourStepDef => ({
     element: selector,
     selector,
