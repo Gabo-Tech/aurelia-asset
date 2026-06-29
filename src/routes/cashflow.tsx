@@ -602,6 +602,7 @@ function EntriesPanel({
   onRemove: (id: string) => void;
   onUpdate: (id: string, patch: Partial<import("@/lib/types").CashflowEntry>) => void;
 }) {
+  const { t } = useTranslation();
   const { state: storeState2 } = useStore();
   const holdings = storeState2.holdings;
   const creditCards = storeState2.creditCards ?? [];
@@ -882,37 +883,37 @@ function EntriesPanel({
 
     const fname = `cashflow_${period}_${format(new Date(), "yyyyMMdd_HHmm")}.pdf`;
     doc.save(fname);
-    toast.success("PDF exported");
+    toast.success(t("more.entriesPdfExported"));
   }
 
   return (
     <Card className="border-border/60 mt-5">
       <CardHeader className="flex-row items-center justify-between space-y-0 gap-2 flex-wrap">
-        <CardTitle>Entries</CardTitle>
+        <CardTitle>{t("cashflow.entries")}</CardTitle>
         <Button size="sm" variant="outline" onClick={exportPdf} className="gap-1.5">
-          <Download className="h-3.5 w-3.5" /> Export PDF
+          <Download className="h-3.5 w-3.5" /> {t("cashflow.exportPdf")}
         </Button>
       </CardHeader>
       <CardContent>
         {/* Filters */}
         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4 mb-4">
           <div>
-            <Label className="text-xs">Type</Label>
+            <Label className="text-xs">{t("more.entriesFiltersType")}</Label>
             <Select value={kindFilter} onValueChange={(v) => setKindFilter(v as typeof kindFilter)}>
               <SelectTrigger className="h-9 mt-1.5"><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All</SelectItem>
-                <SelectItem value="income">Income</SelectItem>
-                <SelectItem value="expense">Expense</SelectItem>
+                <SelectItem value="all">{t("more.entriesAll")}</SelectItem>
+                <SelectItem value="income">{t("more.entriesIncome")}</SelectItem>
+                <SelectItem value="expense">{t("more.entriesExpense")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <div>
-            <Label className="text-xs">Category</Label>
+            <Label className="text-xs">{t("more.entriesFiltersCategory")}</Label>
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
               <SelectTrigger className="h-9 mt-1.5"><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All categories</SelectItem>
+                <SelectItem value="all">{t("more.entriesAllCategories")}</SelectItem>
                 {availableCategories.map((c) => (
                   <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
                 ))}
@@ -920,46 +921,48 @@ function EntriesPanel({
             </Select>
           </div>
           <div>
-            <Label className="text-xs">Period</Label>
+            <Label className="text-xs">{t("more.entriesFiltersPeriod")}</Label>
             <Select value={period} onValueChange={(v) => setPeriod(v as PeriodKey)}>
               <SelectTrigger className="h-9 mt-1.5"><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="week">This week</SelectItem>
-                <SelectItem value="month">This month</SelectItem>
-                <SelectItem value="year">This year</SelectItem>
-                <SelectItem value="all">All time</SelectItem>
-                <SelectItem value="custom">Custom range</SelectItem>
+                <SelectItem value="week">{t("more.entriesThisWeek")}</SelectItem>
+                <SelectItem value="month">{t("more.entriesThisMonth")}</SelectItem>
+                <SelectItem value="year">{t("more.entriesThisYear")}</SelectItem>
+                <SelectItem value="all">{t("more.entriesAllTime")}</SelectItem>
+                <SelectItem value="custom">{t("more.entriesCustomRange")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
           {period === "custom" && (
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <Label className="text-xs">From</Label>
+                <Label className="text-xs">{t("more.entriesFiltersFrom")}</Label>
                 <Input type="date" className="h-9 mt-1.5" value={customFrom} onChange={(e) => setCustomFrom(e.target.value)} />
               </div>
               <div>
-                <Label className="text-xs">To</Label>
+                <Label className="text-xs">{t("more.entriesFiltersTo")}</Label>
                 <Input type="date" className="h-9 mt-1.5" value={customTo} onChange={(e) => setCustomTo(e.target.value)} />
               </div>
             </div>
           )}
         </div>
 
+
         {/* Summary chips */}
         <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground mb-3">
           <span className="rounded-md bg-muted/50 px-2 py-1">{periodLabel}</span>
           <span className="rounded-md bg-success/15 text-success px-2 py-1">
-            Income: {privacy ? MASK : formatMoney(totals.income, currency)}
+            {t("more.entriesIncomeLabel")}: {privacy ? MASK : formatMoney(totals.income, currency)}
           </span>
           <span className="rounded-md bg-destructive/15 text-destructive px-2 py-1">
-            Expenses: {privacy ? MASK : formatMoney(totals.expense, currency)}
+            {t("more.entriesExpensesLabel")}: {privacy ? MASK : formatMoney(totals.expense, currency)}
           </span>
           <span className={`rounded-md px-2 py-1 ${totals.net >= 0 ? "bg-success/15 text-success" : "bg-destructive/15 text-destructive"}`}>
-            Net: {privacy ? MASK : `${totals.net >= 0 ? "+" : "-"}${formatMoney(Math.abs(totals.net), currency)}`}
+            {t("more.entriesNetLabel")}: {privacy ? MASK : `${totals.net >= 0 ? "+" : "-"}${formatMoney(Math.abs(totals.net), currency)}`}
           </span>
-          <span className="ml-auto">{filtered.length} entries</span>
+          <span className="ml-auto">{t("more.entriesCount", { count: filtered.length })}</span>
         </div>
+
 
         {/* Evolution chart */}
         {chartData.length > 0 ? (
@@ -994,7 +997,7 @@ function EntriesPanel({
                           <div className="rounded-lg border border-border bg-popover px-3 py-2 text-xs shadow-md">
                             <div className="font-medium text-foreground">{d.label}</div>
                             <div className="mt-1 text-muted-foreground">
-                              Balance:{" "}
+                              {t("more.entriesBalance")}:{" "}
                               <span className={`font-medium tabular-nums ${d.balance >= 0 ? "text-success" : "text-destructive"}`}>
                                 {privacy ? MASK : formatMoney(d.balance, currency)}
                               </span>
@@ -1032,7 +1035,7 @@ function EntriesPanel({
                                 ))}
                               </div>
                             ) : (
-                              <div className="mt-1 text-muted-foreground italic">No activity</div>
+                              <div className="mt-1 text-muted-foreground italic">{t("more.entriesNoActivity")}</div>
                             )}
                           </div>
                         );
@@ -1045,7 +1048,7 @@ function EntriesPanel({
                       strokeWidth={2}
                       dot={false}
                       activeDot={{ r: 4 }}
-                      name="Balance"
+                      name={t("more.entriesBalance")}
                     />
                   </LineChart>
                 );
@@ -1055,21 +1058,21 @@ function EntriesPanel({
 
         ) : (
           <div className="h-32 grid place-items-center text-sm text-muted-foreground border border-dashed border-border/50 rounded-md mb-4">
-            No data for the selected filters.
+            {t("more.entriesNoChart")}
           </div>
         )}
 
         {filtered.length === 0 ? (
-          <div className="py-10 text-center text-sm text-muted-foreground">No entries match the filters.</div>
+          <div className="py-10 text-center text-sm text-muted-foreground">{t("more.entriesEmpty")}</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left text-xs uppercase tracking-wider text-muted-foreground [&>th]:px-3 [&>th]:py-2">
-                  <th>Date</th>
-                  <th>Type</th>
-                  <th>Source / Category</th>
-                  <th className="text-right">Amount</th>
+                  <th>{t("more.entriesDate")}</th>
+                  <th>{t("more.entriesType")}</th>
+                  <th>{t("more.entriesSourceCategory")}</th>
+                  <th className="text-right">{t("more.entriesAmount")}</th>
                   <th></th>
                 </tr>
               </thead>
@@ -1095,7 +1098,7 @@ function EntriesPanel({
                                     : "bg-muted text-muted-foreground"
                               }`}
                             >
-                              {c.kind}
+                              {c.kind === "income" ? t("more.entriesIncome") : c.kind === "expense" ? t("more.entriesExpense") : c.kind}
                             </span>
                             {c.kind === "expense" && c.paymentMethod?.startsWith("credit:") && (
                               <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-orange-500/15 text-orange-500">
@@ -1172,7 +1175,7 @@ function EntriesPanel({
                               size="icon"
                               className="h-8 w-8"
                               onClick={() => parent && setEditing(parent)}
-                              aria-label="Edit entry"
+                              aria-label={t("more.entriesEditAria")}
                               disabled={!parent}
                             >
                               <Pencil className="h-4 w-4" />
@@ -1185,12 +1188,12 @@ function EntriesPanel({
                                 if (!parent) return;
                                 if (
                                   parent.recurrence &&
-                                  !confirm("Delete the entire recurring entry and all its occurrences?")
+                                  !confirm(t("more.entriesDeleteRecurringConfirm"))
                                 )
                                   return;
                                 onRemove(parent.id);
                               }}
-                              aria-label="Delete entry"
+                              aria-label={t("more.entriesDeleteAria")}
                               disabled={!parent}
                             >
                               <Trash2 className="h-4 w-4" />
@@ -1213,7 +1216,7 @@ function EntriesPanel({
         onSave={(patch) => {
           if (editing) onUpdate(editing.id, patch);
           setEditing(null);
-          toast.success("Entry updated");
+          toast.success(t("more.entriesUpdated"));
         }}
       />
     </Card>
@@ -1434,6 +1437,7 @@ function SankeyControls({
   nodes: { name: string; fill: string; kind: string }[];
   resetColors: () => void;
 }) {
+  const { t } = useTranslation();
   return (
     <div className="flex items-center gap-1.5">
       <Select
@@ -1444,9 +1448,9 @@ function SankeyControls({
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="always">Labels: always</SelectItem>
-          <SelectItem value="hover">Labels: hover</SelectItem>
-          <SelectItem value="off">Labels: off</SelectItem>
+          <SelectItem value="always">{t("more.skLabelsAlways")}</SelectItem>
+          <SelectItem value="hover">{t("more.skLabelsHover")}</SelectItem>
+          <SelectItem value="off">{t("more.skLabelsOff")}</SelectItem>
         </SelectContent>
       </Select>
       <Popover>
@@ -1456,8 +1460,8 @@ function SankeyControls({
             variant="outline"
             size="icon"
             className="h-8 w-8"
-            title="Customize colors"
-            aria-label="Customize colors"
+            title={t("more.skCustomizeColors")}
+            aria-label={t("more.skCustomizeColors")}
             disabled={nodes.length === 0}
           >
             <Palette className="h-4 w-4" />
@@ -1465,14 +1469,14 @@ function SankeyControls({
         </PopoverTrigger>
         <PopoverContent align="end" className="w-72">
           <div className="flex items-center justify-between">
-            <div className="text-xs font-medium">Node colors</div>
+            <div className="text-xs font-medium">{t("more.skNodeColors")}</div>
             <Button
               variant="ghost"
               size="sm"
               className="h-7 gap-1 text-xs"
               onClick={resetColors}
             >
-              <RotateCcw className="h-3 w-3" /> Reset
+              <RotateCcw className="h-3 w-3" /> {t("more.skReset")}
             </Button>
           </div>
           <div className="mt-2 max-h-64 space-y-1.5 overflow-y-auto pr-1">
@@ -2124,6 +2128,7 @@ function CategoriesManager({
   onUpdate: (id: string, patch: Partial<Category>) => void;
   onRemove: (id: string) => void;
 }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [newName, setNewName] = useState("");
   const [newKind, setNewKind] = useState<"income" | "expense">("expense");
@@ -2145,7 +2150,7 @@ function CategoriesManager({
 
   function create() {
     const n = newName.trim();
-    if (!n) return toast.error("Name required");
+    if (!n) return toast.error(t("more.mcNameRequired"));
     onAdd({ name: n, kind: newKind, group: newGroup, color: newColor });
     setNewName("");
   }
@@ -2157,28 +2162,27 @@ function CategoriesManager({
           variant="ghost"
           size="sm"
           className="h-8 gap-1.5 text-xs"
-          title="Manage categories"
+          title={t("more.mcTitle")}
         >
-          <SettingsIcon className="h-3.5 w-3.5" /> Categories
+          <SettingsIcon className="h-3.5 w-3.5" /> {t("more.mcTrigger")}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Manage categories</DialogTitle>
+          <DialogTitle>{t("more.mcTitle")}</DialogTitle>
           <DialogDescription>
-            Organize income sources and expense categories. Savings and Investments are
-            expense-side categories with their own coloring.
+            {t("more.mcDesc")}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
           <div className="rounded-md border border-border/60 p-3">
-            <div className="text-xs font-medium mb-2">Add new</div>
+            <div className="text-xs font-medium mb-2">{t("more.mcAddNew")}</div>
             <div className="grid grid-cols-[1fr,auto] gap-2">
               <Input
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
-                placeholder="Category name"
+                placeholder={t("more.mcNamePlaceholder")}
               />
               <input
                 type="color"
@@ -2193,8 +2197,8 @@ function CategoriesManager({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="income">Income</SelectItem>
-                  <SelectItem value="expense">Expense</SelectItem>
+                  <SelectItem value="income">{t("more.mcIncome")}</SelectItem>
+                  <SelectItem value="expense">{t("more.mcExpense")}</SelectItem>
                 </SelectContent>
               </Select>
               <Select value={newGroup} onValueChange={(v) => setNewGroup(v as CategoryGroup)}>
@@ -2207,25 +2211,25 @@ function CategoriesManager({
                     : (["expense", "savings", "investment"] as CategoryGroup[])
                   ).map((g) => (
                     <SelectItem key={g} value={g}>
-                      {g[0].toUpperCase() + g.slice(1)}
+                      {t(`more.mc${g[0].toUpperCase() + g.slice(1)}` as never)}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
               <Button size="sm" onClick={create}>
-                <Plus className="mr-1 h-3.5 w-3.5" /> Add
+                <Plus className="mr-1 h-3.5 w-3.5" /> {t("more.mcAdd")}
               </Button>
             </div>
           </div>
 
           <CategoryList
-            title="Income"
+            title={t("more.mcIncomeHeader")}
             list={grouped.inc}
             onUpdate={onUpdate}
             onRemove={onRemove}
           />
           <CategoryList
-            title="Expenses"
+            title={t("more.mcExpensesHeader")}
             list={grouped.exp}
             onUpdate={onUpdate}
             onRemove={onRemove}
