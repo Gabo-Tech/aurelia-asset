@@ -168,8 +168,9 @@ export function SankeyChart({
                 d={linkPath(l) ?? ""}
                 stroke={`url(#sk-grad-${i})`}
                 strokeWidth={Math.max(1, l.width)}
-                strokeOpacity={0.45}
-                className="transition-[stroke-opacity] duration-150 hover:!stroke-opacity-80"
+                strokeOpacity={0.6}
+                className="transition-[stroke-opacity] duration-150 hover:!stroke-opacity-90"
+
               >
                 <title>{`${l.source.name} → ${l.target.name}\n${format(l.value)}`}</title>
               </path>
