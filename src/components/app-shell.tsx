@@ -43,6 +43,7 @@ function PrivacyToggle({ className }: { className?: string }) {
         privacy && "text-primary hover:text-primary",
         className,
       )}
+      data-tour="privacy-toggle"
     >
       {privacy ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
     </button>
