@@ -561,6 +561,7 @@ function CashflowPage() {
         </Card>
       </div>
 
+      <div data-tour="cf-entries">
       <EntriesPanel
         cashflows={cashflows}
         categories={categories}
@@ -573,6 +574,7 @@ function CashflowPage() {
         onRemove={removeCashflow}
         onUpdate={updateCashflow}
       />
+      </div>
     </>
   );
 }
