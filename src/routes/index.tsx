@@ -1,5 +1,6 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useTranslation } from "react-i18next";
 import {
   ArrowRight,
@@ -19,6 +20,7 @@ import {
   MonitorDown,
   Download,
 } from "lucide-react";
+import { getGithubRepo } from "@/lib/repo.functions";
 
 import i18n from "@/i18n";
 
@@ -342,27 +344,42 @@ function FAQ() {
   );
 }
 
-import debAsset from "@/assets/portfolio-tracker-deb.asset.json";
-import rpmAsset from "@/assets/portfolio-tracker-rpm.asset.json";
-import appImageAsset from "@/assets/portfolio-tracker-appimage.asset.json";
+type PlatformKey =
+  | "windows"
+  | "mac"
+  | "linuxDeb"
+  | "linuxRpm"
+  | "linuxAppImage"
+  | "android"
+  | "ios";
 
-const DOWNLOADS: Array<{
-  key: "windows" | "mac" | "linuxDeb" | "linuxRpm" | "linuxAppImage" | "android" | "ios";
+const DOWNLOAD_PLATFORMS: Array<{
+  key: PlatformKey;
   icon: typeof MonitorDown;
-  href: string | null;
+  /** Filename suffix pattern at github.com/<repo>/releases/latest/download/. Null = link to release page. */
+  assetGlob: string | null;
 }> = [
-  { key: "windows", icon: MonitorDown, href: null },
-  { key: "mac", icon: Apple, href: null },
-  { key: "linuxAppImage", icon: Download, href: appImageAsset.url },
-  { key: "linuxDeb", icon: Download, href: debAsset.url },
-  { key: "linuxRpm", icon: Download, href: rpmAsset.url },
-  { key: "android", icon: Smartphone, href: null },
-  { key: "ios", icon: Apple, href: null },
+  { key: "windows", icon: MonitorDown, assetGlob: ".msi" },
+  { key: "mac", icon: Apple, assetGlob: ".dmg" },
+  { key: "linuxAppImage", icon: Download, assetGlob: ".AppImage" },
+  { key: "linuxDeb", icon: Download, assetGlob: ".deb" },
+  { key: "linuxRpm", icon: Download, assetGlob: ".rpm" },
+  { key: "android", icon: Smartphone, assetGlob: ".apk" },
+  { key: "ios", icon: Apple, assetGlob: ".ipa" },
 ];
-
 
 function Downloads() {
   const { t } = useTranslation();
+  const fetchRepo = useServerFn(getGithubRepo);
+  const [repo, setRepo] = useState<string | null>(null);
+  useEffect(() => {
+    fetchRepo({})
+      .then((r) => setRepo(r?.repo ?? null))
+      .catch(() => setRepo(null));
+  }, [fetchRepo]);
+
+  const releaseBase = repo ? `https://github.com/${repo}/releases/latest` : null;
+
   return (
     <section id="downloads" className="border-b border-border/50">
       <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
@@ -373,40 +390,35 @@ function Downloads() {
           <p className="mt-3 text-muted-foreground">{t("landing.downloads.subheading")}</p>
         </div>
         <div className="mt-12 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-          {DOWNLOADS.map((d) => {
+          {DOWNLOAD_PLATFORMS.map((d) => {
             const Icon = d.icon;
             const label = t(`landing.downloads.platforms.${d.key}`);
-            const disabled = !d.href;
-            const inner = (
-              <>
-                <Icon className="h-7 w-7 text-primary" />
-                <div className="mt-3 text-sm font-semibold">{label}</div>
-                {disabled && (
-                  <div className="mt-1 text-[10px] uppercase tracking-wider text-muted-foreground">
-                    {t("landing.downloads.soon")}
-                  </div>
-                )}
-              </>
-            );
+            const note = t(`landing.downloads.notes.${d.key}`, { defaultValue: "" });
+            const href = releaseBase ?? "https://github.com";
             const cls =
-              "flex flex-col items-center justify-center rounded-2xl border border-border/60 bg-card/40 p-6 text-center transition-colors";
-            return disabled ? (
-              <div key={d.key} className={`${cls} opacity-60`} aria-disabled>
-                {inner}
-              </div>
-            ) : (
+              "flex flex-col items-center justify-center rounded-2xl border border-border/60 bg-card/40 p-6 text-center transition-colors hover:border-primary/60 hover:bg-card";
+            return (
               <a
                 key={d.key}
-                href={d.href!}
-                rel="noopener"
-                download
-                className={`${cls} hover:border-primary/60 hover:bg-card`}
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={cls}
               >
-                {inner}
+                <Icon className="h-7 w-7 text-primary" />
+                <div className="mt-3 text-sm font-semibold">{label}</div>
+                {note && (
+                  <div className="mt-1 text-[10px] leading-tight text-muted-foreground">
+                    {note}
+                  </div>
+                )}
               </a>
             );
           })}
         </div>
+        <p className="mt-6 text-center text-xs text-muted-foreground">
+          {t("landing.downloads.unsignedNotice")}
+        </p>
         <div className="mt-8 text-center text-sm text-muted-foreground">
           <Link to="/dashboard" className="inline-flex items-center gap-1.5 hover:text-foreground">
             <Globe className="h-4 w-4" />
