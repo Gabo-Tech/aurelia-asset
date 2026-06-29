@@ -226,13 +226,13 @@ export function TransactionsPanel() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem onClick={() => { setEditing(t); setOpen(true); }}>
-                                <Pencil className="mr-2 h-4 w-4" /> Edit
+                                <Pencil className="mr-2 h-4 w-4" /> {t("more.tpEdit")}
                               </DropdownMenuItem>
                               <DropdownMenuItem
                                 className="text-destructive focus:text-destructive"
-                                onClick={() => { removeTransaction(t.id); toast.success("Transaction removed"); }}
+                                onClick={() => { removeTransaction(t.id); toast.success(t("more.tpRemoved")); }}
                               >
-                                <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                <Trash2 className="mr-2 h-4 w-4" /> {t("more.tpDelete")}
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
