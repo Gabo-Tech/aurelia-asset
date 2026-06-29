@@ -385,7 +385,7 @@ function SettingsPage() {
             </CardContent>
           </Card>
 
-          <Card className="border-border/60">
+          <Card className="border-border/60" data-tour="settings-data">
             <CardHeader>
               <CardTitle>{t("settings.data.title")}</CardTitle>
               <CardDescription>{t("settings.data.description")}</CardDescription>
