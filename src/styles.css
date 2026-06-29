@@ -154,3 +154,56 @@
     -webkit-font-smoothing: antialiased;
   }
 }
+
+/* Driver.js theming */
+.driver-popover {
+  background: var(--popover) !important;
+  color: var(--popover-foreground) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.35) !important;
+  max-width: 360px;
+}
+.driver-popover-title {
+  font-weight: 600 !important;
+  font-size: 15px !important;
+  color: var(--foreground) !important;
+}
+.driver-popover-description {
+  color: var(--muted-foreground) !important;
+  font-size: 13px !important;
+  line-height: 1.5 !important;
+}
+.driver-popover-progress-text {
+  color: var(--muted-foreground) !important;
+  font-size: 11px !important;
+}
+.driver-popover-footer button,
+.driver-popover-footer .driver-skip-btn {
+  background: var(--primary) !important;
+  color: var(--primary-foreground) !important;
+  border: none !important;
+  border-radius: 8px !important;
+  padding: 6px 12px !important;
+  font-size: 12px !important;
+  text-shadow: none !important;
+  box-shadow: none !important;
+  cursor: pointer;
+}
+.driver-popover-footer .driver-popover-prev-btn {
+  background: var(--secondary) !important;
+  color: var(--secondary-foreground) !important;
+}
+.driver-popover-footer .driver-skip-btn {
+  background: transparent !important;
+  color: var(--muted-foreground) !important;
+  margin-right: auto;
+}
+.driver-popover-arrow-side-top.driver-popover-arrow { border-top-color: var(--popover) !important; }
+.driver-popover-arrow-side-bottom.driver-popover-arrow { border-bottom-color: var(--popover) !important; }
+.driver-popover-arrow-side-left.driver-popover-arrow { border-left-color: var(--popover) !important; }
+.driver-popover-arrow-side-right.driver-popover-arrow { border-right-color: var(--popover) !important; }
+.driver-popover-close-btn {
+  color: var(--muted-foreground) !important;
+}
+
