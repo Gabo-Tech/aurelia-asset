@@ -111,6 +111,7 @@ const nl: Translation = {
       subheading: "Dezelfde privé-tracker, verpakt als native app voor elk platform.",
       web: "Of open hem direct in de browser",
       soon: "Binnenkort",
+      unsignedNotice: "Alle builds zijn niet ondertekend en worden direct verspreid. Je systeem kan de eerste keer een waarschuwing tonen - dat is normaal.",
       platforms: {
         windows: "Windows",
         mac: "macOS",
@@ -119,6 +120,15 @@ const nl: Translation = {
         linuxAppImage: "Linux AppImage",
         android: "Android",
         ios: "iOS",
+      },
+      notes: {
+        windows: "SmartScreen: Meer info > Toch uitvoeren",
+        mac: "Rechtermuisknop > Openen bij eerste start",
+        linuxDeb: "Debian, Ubuntu, Mint",
+        linuxRpm: "Fedora, RHEL, openSUSE",
+        linuxAppImage: "Draagbaar, elke distro",
+        android: "Installatie uit onbekende bronnen toestaan",
+        ios: "Vereist AltStore of Sideloadly",
       },
     },
     footer: { brand: "Portfolio Tracker", madeBy: "Gemaakt door" },

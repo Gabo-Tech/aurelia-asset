@@ -111,6 +111,7 @@ const pt: Translation = {
       subheading: "O mesmo rastreador privado, empacotado como app nativo para cada plataforma.",
       web: "Ou abra direto no navegador",
       soon: "Em breve",
+      unsignedNotice: "Todos os builds são sem assinatura e distribuídos diretamente. Seu sistema pode mostrar um aviso na primeira vez - é normal.",
       platforms: {
         windows: "Windows",
         mac: "macOS",
@@ -119,6 +120,15 @@ const pt: Translation = {
         linuxAppImage: "Linux AppImage",
         android: "Android",
         ios: "iOS",
+      },
+      notes: {
+        windows: "SmartScreen: Mais informações > Executar mesmo assim",
+        mac: "Clique direito > Abrir na primeira vez",
+        linuxDeb: "Debian, Ubuntu, Mint",
+        linuxRpm: "Fedora, RHEL, openSUSE",
+        linuxAppImage: "Portátil, qualquer distro",
+        android: "Permitir instalação de fontes desconhecidas",
+        ios: "Requer AltStore ou Sideloadly",
       },
     },
     footer: { brand: "Gestor de carteira", madeBy: "Feito por" },
