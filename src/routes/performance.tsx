@@ -233,7 +233,7 @@ function PerformancePage() {
 
       <Card className="border-border/60">
         <CardHeader className="flex flex-row items-baseline justify-between flex-wrap gap-2">
-          <CardTitle>Portfolio value</CardTitle>
+          <CardTitle>{t("more.perfPortfolioValue")}</CardTitle>
           {metrics && (
             <div className="text-right">
               <div className="text-2xl font-semibold tabular-nums">
