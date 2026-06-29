@@ -22,8 +22,10 @@ import {
 } from "lucide-react";
 import { getGithubRepo } from "@/lib/repo.functions";
 import apkAsset from "@/assets/portfolio-tracker-apk.asset.json";
+import logoAsset from "@/assets/logo.png.asset.json";
 
 import i18n from "@/i18n";
+
 
 const SITE_URL = "https://financetracker.putopulse.org";
 const OG_IMAGE =
