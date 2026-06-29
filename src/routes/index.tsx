@@ -363,9 +363,11 @@ const DOWNLOAD_PLATFORMS: Array<{
   directHref?: string;
   /** Suggested filename for the downloaded file. */
   downloadAs?: string;
+  /** Marks the platform as not yet available. */
+  comingSoon?: boolean;
 }> = [
-  { key: "windows", icon: MonitorDown, assetGlob: ".msi" },
-  { key: "mac", icon: Apple, assetGlob: ".dmg" },
+  { key: "windows", icon: MonitorDown, assetGlob: ".msi", comingSoon: true },
+  { key: "mac", icon: Apple, assetGlob: ".dmg", comingSoon: true },
   { key: "linuxAppImage", icon: Download, assetGlob: ".AppImage" },
   { key: "linuxDeb", icon: Download, assetGlob: ".deb" },
   { key: "linuxRpm", icon: Download, assetGlob: ".rpm" },
@@ -376,8 +378,9 @@ const DOWNLOAD_PLATFORMS: Array<{
     directHref: apkAsset.url,
     downloadAs: "portfolio-tracker.apk",
   },
-  { key: "ios", icon: Apple, assetGlob: ".ipa" },
+  { key: "ios", icon: Apple, assetGlob: ".ipa", comingSoon: true },
 ];
+
 
 function Downloads() {
   const { t } = useTranslation();
