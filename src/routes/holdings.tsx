@@ -322,8 +322,8 @@ function HoldingsPage() {
         </CardContent>
       </Card>
 
-      <HoldingsCharts />
-      <TransactionsPanel />
+      <div data-tour="holdings-charts"><HoldingsCharts /></div>
+      <div data-tour="holdings-tx"><TransactionsPanel /></div>
 
       <HoldingDialog open={open} onOpenChange={setOpen} editing={editing} />
       <TransactionDialog
