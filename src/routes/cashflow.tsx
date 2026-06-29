@@ -1562,15 +1562,16 @@ function AddForm({
   onUpdateCategory: (id: string, patch: Partial<Category>) => void;
   onRemoveCategory: (id: string) => void;
 }) {
+  const { t } = useTranslation();
   const { state: storeState } = useStore();
   const holdings = storeState.holdings;
   const creditCards = storeState.creditCards ?? [];
   const accountOptions = useMemo(() => {
-    const opts: { value: string; label: string }[] = [{ value: "liquidity", label: "Liquidity (cash)" }];
-    for (const h of holdings) opts.push({ value: `holding:${h.id}`, label: `Holding · ${h.symbol || h.name}` });
-    for (const c of creditCards) opts.push({ value: `credit:${c.id}`, label: `Credit card · ${c.name}` });
+    const opts: { value: string; label: string }[] = [{ value: "liquidity", label: t("cashflow.liquidityCash") }];
+    for (const h of holdings) opts.push({ value: `holding:${h.id}`, label: `${t("cashflow.holdingPrefix")} · ${h.symbol || h.name}` });
+    for (const c of creditCards) opts.push({ value: `credit:${c.id}`, label: `${t("cashflow.cardPrefix")} · ${c.name}` });
     return opts;
-  }, [holdings, creditCards]);
+  }, [holdings, creditCards, t]);
 
   const [kind, setKind] = useState<"income" | "expense" | "transfer">("income");
   const [categoryName, setCategoryName] = useState<string>("");
@@ -1605,13 +1606,13 @@ function AddForm({
 
   function submit() {
     const a = parseFloat(amount);
-    if (!isFinite(a) || a <= 0) return toast.error("Amount must be > 0");
-    if (isPercent && a > 1000) return toast.error("Percentage looks too high");
+    if (!isFinite(a) || a <= 0) return toast.error(t("cashflow.amountGtZero"));
+    if (isPercent && a > 1000) return toast.error(t("cashflow.percentTooHigh"));
     const desc = description.trim().slice(0, 200);
 
     if (kind === "transfer") {
-      if (!fromAccount || !toAccount) return toast.error("Pick both accounts");
-      if (fromAccount === toAccount) return toast.error("Accounts must differ");
+      if (!fromAccount || !toAccount) return toast.error(t("cashflow.pickBothAccounts"));
+      if (fromAccount === toAccount) return toast.error(t("cashflow.accountsMustDiffer"));
       onAdd({
         kind: "transfer",
         source: "",
@@ -1628,7 +1629,7 @@ function AddForm({
       return;
     }
 
-    if (!categoryName.trim()) return toast.error("Pick a category");
+    if (!categoryName.trim()) return toast.error(t("cashflow.pickCategory"));
     const installmentPlan =
       kind === "expense" && useInstallments && !isPercent
         ? {
@@ -1658,10 +1659,23 @@ function AddForm({
     setDescription("");
   }
 
+  const submitLabel =
+    kind === "transfer"
+      ? t("cashflow.addTransferBtn")
+      : kind === "income"
+        ? recurring && !useInstallments
+          ? t("cashflow.addRecurringIncome")
+          : t("cashflow.addIncomeBtn")
+        : useInstallments
+          ? t("cashflow.addFinancedExpense")
+          : recurring
+            ? t("cashflow.addRecurringExpense")
+            : t("cashflow.addExpenseBtn");
+
   return (
     <Card className="border-border/60">
       <CardHeader className="flex-row items-center justify-between space-y-0 gap-2 flex-wrap">
-        <CardTitle>Add entry</CardTitle>
+        <CardTitle>{t("cashflow.addEntry")}</CardTitle>
         <CategoriesManager
           categories={categories}
           onAdd={onAddCategory}
@@ -1672,13 +1686,13 @@ function AddForm({
       <CardContent>
         <Tabs value={kind} onValueChange={(v) => setKind(v as typeof kind)}>
           <TabsList className="grid grid-cols-3">
-            <TabsTrigger value="income">Income</TabsTrigger>
-            <TabsTrigger value="expense">Expense</TabsTrigger>
-            <TabsTrigger value="transfer">Transfer</TabsTrigger>
+            <TabsTrigger value="income">{t("cashflow.income")}</TabsTrigger>
+            <TabsTrigger value="expense">{t("cashflow.expense")}</TabsTrigger>
+            <TabsTrigger value="transfer">{t("cashflow.transferTab")}</TabsTrigger>
           </TabsList>
           {kind !== "transfer" ? (
             <TabsContent value={kind} className="mt-4 space-y-3">
-              <Field label={kind === "income" ? "Source" : "Category"}>
+              <Field label={kind === "income" ? t("cashflow.source") : t("common.category")}>
                 <CategoryPicker
                   kind={kind}
                   value={categoryName}
@@ -1691,17 +1705,17 @@ function AddForm({
                 />
               </Field>
               {sharedFields()}
-              <Field label="Description (optional)">
+              <Field label={t("cashflow.descriptionLabel")}>
                 <Input
                   type="text"
                   maxLength={200}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="e.g. groceries at Migros"
+                  placeholder={t("cashflow.descriptionPlaceholder")}
                 />
               </Field>
               {kind === "expense" && (
-                <Field label="Paid with">
+                <Field label={t("cashflow.paidWith")}>
                   <Select value={paymentMethod} onValueChange={setPaymentMethod}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
@@ -1723,23 +1737,23 @@ function AddForm({
                       onChange={(e) => setUseInstallments(e.target.checked)}
                       className="h-4 w-4"
                     />
-                    <span>Split into installments (financing)</span>
+                    <span>{t("cashflow.splitInstallments")}</span>
                   </label>
                   {useInstallments && (
                     <div className="grid grid-cols-3 gap-3">
-                      <Field label="# Payments">
+                      <Field label={t("cashflow.payments")}>
                         <Input type="number" min={1} max={120} value={instCount} onChange={(e) => setInstCount(e.target.value)} />
                       </Field>
-                      <Field label="Every">
+                      <Field label={t("cashflow.every")}>
                         <Select value={instFreq} onValueChange={(v) => setInstFreq(v as "weekly" | "monthly")}>
                           <SelectTrigger><SelectValue /></SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="weekly">Week</SelectItem>
-                            <SelectItem value="monthly">Month</SelectItem>
+                            <SelectItem value="weekly">{t("cashflow.weekOpt")}</SelectItem>
+                            <SelectItem value="monthly">{t("cashflow.monthOpt")}</SelectItem>
                           </SelectContent>
                         </Select>
                       </Field>
-                      <Field label="First due">
+                      <Field label={t("cashflow.firstDue")}>
                         <Input type="date" value={instStart} onChange={(e) => setInstStart(e.target.value)} />
                       </Field>
                     </div>
@@ -1755,21 +1769,21 @@ function AddForm({
                       onChange={(e) => setRecurring(e.target.checked)}
                       className="h-4 w-4"
                     />
-                    <span>Repeats automatically</span>
+                    <span>{t("cashflow.repeats")}</span>
                   </label>
                   {recurring && (
                     <div className="grid grid-cols-2 gap-3">
-                      <Field label="Frequency">
+                      <Field label={t("cashflow.frequency")}>
                         <Select value={frequency} onValueChange={(v) => setFrequency(v as RecurrenceFrequency)}>
                           <SelectTrigger><SelectValue /></SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="weekly">Weekly</SelectItem>
-                            <SelectItem value="monthly">Monthly</SelectItem>
-                            <SelectItem value="yearly">Yearly</SelectItem>
+                            <SelectItem value="weekly">{t("cashflow.weekly")}</SelectItem>
+                            <SelectItem value="monthly">{t("cashflow.monthly")}</SelectItem>
+                            <SelectItem value="yearly">{t("cashflow.yearly")}</SelectItem>
                           </SelectContent>
                         </Select>
                       </Field>
-                      <Field label="Until (optional)">
+                      <Field label={t("cashflow.untilOptional")}>
                         <Input type="date" value={until} onChange={(e) => setUntil(e.target.value)} />
                       </Field>
                     </div>
@@ -1780,11 +1794,10 @@ function AddForm({
           ) : (
             <TabsContent value="transfer" className="mt-4 space-y-3">
               <p className="text-xs text-muted-foreground">
-                Move money between accounts without affecting income or expense totals.
-                E.g. selling part of an investment to pay a credit card, or paying down card debt from liquidity.
+                {t("cashflow.transferIntro")}
               </p>
               <div className="grid grid-cols-2 gap-3">
-                <Field label="From">
+                <Field label={t("cashflow.from")}>
                   <Select value={fromAccount} onValueChange={setFromAccount}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
@@ -1794,7 +1807,7 @@ function AddForm({
                     </SelectContent>
                   </Select>
                 </Field>
-                <Field label="To">
+                <Field label={t("cashflow.to")}>
                   <Select value={toAccount} onValueChange={setToAccount}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
@@ -1806,10 +1819,10 @@ function AddForm({
                 </Field>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                <Field label="Amount">
+                <Field label={t("common.amount")}>
                   <Input type="number" step="any" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" />
                 </Field>
-                <Field label="Currency">
+                <Field label={t("common.currency")}>
                   <Select value={entryCurrency} onValueChange={setEntryCurrency}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent className="max-h-72">
@@ -1819,18 +1832,18 @@ function AddForm({
                     </SelectContent>
                   </Select>
                 </Field>
-                <Field label="Date">
+                <Field label={t("common.date")}>
                   <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
                 </Field>
               </div>
-              <Field label="Description (optional)">
-                <Input type="text" maxLength={200} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="e.g. Quanloop withdrawal to pay Amex" />
+              <Field label={t("cashflow.descriptionLabel")}>
+                <Input type="text" maxLength={200} value={description} onChange={(e) => setDescription(e.target.value)} placeholder={t("cashflow.transferDescPlaceholder")} />
               </Field>
             </TabsContent>
           )}
         </Tabs>
         <Button className="mt-4 w-full" onClick={submit}>
-          <Plus className="mr-2 h-4 w-4" /> Add {kind === "transfer" ? "transfer" : `${recurring && !useInstallments ? "recurring " : ""}${useInstallments && kind === "expense" ? "financed " : ""}${kind}`}
+          <Plus className="mr-2 h-4 w-4" /> {submitLabel}
         </Button>
       </CardContent>
     </Card>
@@ -1846,10 +1859,10 @@ function AddForm({
             onChange={(e) => setIsPercent(e.target.checked)}
             className="h-4 w-4"
           />
-          <span>Use a percentage of another entry (e.g. taxes)</span>
+          <span>{t("cashflow.percentToggle")}</span>
         </label>
         {isPercent && (
-          <Field label="Percent of">
+          <Field label={t("cashflow.percentOfShort")}>
             <PercentTargetPicker
               value={percentOf}
               onChange={setPercentOf}
@@ -1858,7 +1871,7 @@ function AddForm({
           </Field>
         )}
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          <Field label={isPercent ? "Percent" : "Amount"}>
+          <Field label={isPercent ? t("cashflow.percent") : t("common.amount")}>
             <div className="relative">
               <Input
                 type="number"
@@ -1876,7 +1889,7 @@ function AddForm({
             </div>
           </Field>
           {!isPercent && (
-            <Field label="Currency">
+            <Field label={t("common.currency")}>
               <Select value={entryCurrency} onValueChange={setEntryCurrency}>
                 <SelectTrigger>
                   <SelectValue />
@@ -1892,7 +1905,7 @@ function AddForm({
             </Field>
           )}
           <div className={isPercent ? "col-span-1" : "col-span-2 sm:col-span-1"}>
-            <Field label="Date">
+            <Field label={t("common.date")}>
               <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
             </Field>
           </div>
