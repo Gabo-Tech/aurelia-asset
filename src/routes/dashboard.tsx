@@ -423,13 +423,14 @@ function StatCard({
 }
 
 function EmptyState() {
+  const { t } = useTranslation();
   return (
     <Card className="border-dashed border-border/70">
       <CardContent className="p-10 text-center">
         <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-primary/15 text-primary mb-4">
           <Wallet className="h-6 w-6" />
         </div>
-        <h2 className="text-lg font-semibold">No holdings yet</h2>
+        <h2 className="text-lg font-semibold">{t("more.dashNoHoldings")}</h2>
         <p className="text-sm text-muted-foreground mt-1 max-w-md mx-auto">
           Add your first stock, ETF, crypto or metal to see allocation, performance and
           beautiful charts.
