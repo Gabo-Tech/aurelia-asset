@@ -16,6 +16,7 @@ import { usePrivacy, useStore, useFxReady } from "@/lib/store";
 import { SponsorBanner } from "./sponsor-banner";
 import { ThemeToggle } from "./theme-toggle";
 import { PageLoader } from "./page-loader";
+import { TourLauncher } from "./tour-launcher";
 import logoAsset from "@/assets/logo.png.asset.json";
 
 const navItems = [
