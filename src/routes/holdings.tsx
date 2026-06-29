@@ -238,8 +238,7 @@ function HoldingsPage() {
                       <TableCell className="text-right tabular-nums">
                         {formatMoney(h.currentPrice, h.priceCurrency || "USD")}
                         {h.manualPrice != null && (
-                          <span className="ml-1 text-[10px] text-muted-foreground">man</span>
-                        )}
+                          <span className="ml-1 text-[10px] text-muted-foreground">{t("more.hManual")}</span>
                       </TableCell>
                       <TableCell className="text-right tabular-nums font-medium">
                         {maskMoney(h.marketValue, currency, privacy)}
