@@ -372,7 +372,7 @@ function Dashboard() {
       <div className="mt-5 grid gap-5 md:grid-cols-3">
         <StatCard
           icon={<Wallet className="h-4 w-4" />}
-          label="Holdings"
+          label={t("more.dashHoldings")}
           value={String(holdings.length)}
         />
         <StatCard
