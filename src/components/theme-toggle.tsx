@@ -17,6 +17,7 @@ export function ThemeToggle({ className }: { className?: string }) {
         "grid h-8 w-8 place-items-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-sidebar-accent/60 transition-colors",
         className,
       )}
+      data-tour="theme-toggle"
     >
       {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
     </button>
