@@ -1,10 +1,13 @@
 import { DEFAULT_STATE, type Settings } from "../types";
 
+// Only proxies surfaced in the Settings UI are used. Adding undisclosed
+// fallbacks would silently leak portfolio queries to services the user
+// never consented to.
 const FALLBACK_PROXIES = [
   "https://corsproxy.io/?",
   "https://api.allorigins.win/raw?url=",
-  "https://cors.eu.org/",
 ];
+
 
 // In-memory snapshot pushed by the store after decrypting state from disk.
 // We can't read encrypted localStorage synchronously, so the store keeps
