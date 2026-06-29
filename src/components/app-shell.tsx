@@ -111,6 +111,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </Link>
           <div className="flex items-center gap-1">
             <ThemeToggle />
+            <TourLauncher />
             <PrivacyToggle />
           </div>
         </header>
