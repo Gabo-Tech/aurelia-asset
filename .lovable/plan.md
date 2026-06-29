@@ -1,88 +1,62 @@
 ## Goal
 
-Add a detailed, step-by-step onboarding tour that walks users through every page of the app (Dashboard, Holdings, Performance, Cashflow, Settings) and explains each major functionality. Fully translated into the 6 supported languages (EN, ES, PT, NL, DE, CA).
+Build installers for **all platforms** in CI on tag push, all unsigned, distributed by direct download from the website. No App Store, no code-signing certs, no secrets required.
 
-## Library choice
+## Reality of "unsigned" per platform
 
-Use **Driver.js v1** (`driver.js`):
-- Lightweight (~5KB gzipped), zero dependencies
-- MIT licensed, actively maintained
-- Built-in multi-step tours, highlighting, popovers, keyboard nav, progress, custom buttons
-- Easy theming via CSS variables so it matches our dark/light palette
-- Works with SPA route changes (we drive it manually between steps)
+| Platform | What CI produces | User experience |
+|---|---|---|
+| Linux | `.deb`, `.rpm`, `.AppImage` | Install normally, no warning |
+| Windows | `.msi`, `.exe` (NSIS) | SmartScreen warns first time → "More info" → "Run anyway" |
+| macOS | `.dmg` (universal) | Gatekeeper blocks → right-click → Open → confirm. Quarantine attribute requires `xattr -dr com.apple.quarantine` if downloaded via Safari |
+| Android | `.apk` (signed with auto-generated debug key) | "Unknown sources" prompt, then installs |
+| iOS | unsigned `.ipa` | Requires AltStore / Sideloadly + user's free Apple ID, re-sign every 7 days |
 
-Alternative considered: Shepherd.js (heavier, Tippy-based) and Intro.js (AGPL/commercial split). Driver.js wins on weight + license.
+No GitHub secrets needed for any of this. Android already has a debug-key fallback in the workflow.
 
-## UX flow
+## Changes
 
-1. **Auto-start once**: on first visit after onboarding, show a welcome modal ("Take the tour?" / "Skip"). Persisted in localStorage (`tour:completed:v1`) so it never auto-shows again.
-2. **Manual restart**: a "Take the tour" button in Settings → Help, plus a small `?` (HelpCircle) icon in the top header next to the language switcher available on every page.
-3. **Cross-page tour**: the tour is a single sequence that navigates between routes using `useNavigate`. Between routes it waits for the target selector to mount (small `waitForEl` helper with timeout) before showing the next popover.
-4. **Skippable + resumable**: user can close anytime; we save the last completed step index so "Resume tour" appears if they bailed out.
-5. **Mobile**: on small viewports we shorten popover text and skip steps that target desktop-only elements (sidebar items). Mobile gets its own step list pointing at the bottom nav.
+### 1. `.github/workflows/tauri-release.yml`
+- **Android**: keep the keystore-signing block but make it conditional - if no `ANDROID_KEYSTORE_BASE64` secret, fall back to building debug APK (`cargo tauri android build --apk --debug`). Currently it requires the secret.
+- **iOS**: add new `ios` job on `macos-latest`:
+  - Install Rust iOS targets (`aarch64-apple-ios`, `x86_64-apple-ios`, `aarch64-apple-ios-sim`)
+  - `cargo install tauri-cli`
+  - `cargo tauri ios init`
+  - Patch generated Xcode project to disable code signing (`CODE_SIGNING_REQUIRED=NO`, `CODE_SIGN_IDENTITY=""`, `CODE_SIGNING_ALLOWED=NO`) via `xcodebuild` flags
+  - `cargo tauri ios build --export-method debugging` then repackage `.app` → unsigned `.ipa` by zipping into a `Payload/` folder
+  - Upload `.ipa` to the GitHub release alongside the other artifacts
+- **macOS / Windows**: leave as-is - they already build unsigned by default.
 
-## Tour content (sections)
+### 2. `src-tauri/README.md`
+- Replace the signing-secrets section with a short "Distribution & first-run warnings" table mirroring the matrix above, so users know what to expect.
+- Add a "How to install the unsigned .ipa" subsection pointing to AltStore + Sideloadly.
 
-Each step = highlighted element + title + description. Steps grouped per page:
+### 3. Landing page Downloads section
+- Currently Windows / macOS / iOS are marked "coming soon".
+- Replace with real download links pointing to the latest GitHub release assets (`https://github.com/<owner>/<repo>/releases/latest/download/<file>`).
+- Per-platform notes/tooltips:
+  - macOS: "Right-click → Open on first launch"
+  - Windows: "Click 'More info' → 'Run anyway' on SmartScreen"
+  - iOS: "Requires AltStore or Sideloadly"
+  - Android: "Enable installs from unknown sources"
+- Translate the new strings in all 6 locales (`en`, `es`, `ca`, `pt`, `nl`, `de`) under the existing landing namespace.
 
-- **Welcome** (centered modal): what the app does, privacy note (local-only encrypted storage).
-- **Shell**: sidebar nav, currency switcher, privacy/eye toggle, theme toggle, language switcher.
-- **Dashboard**: net worth vs portfolio value vs liquidity stat cards, allocation pie, breakdown list, top asset card.
-- **Holdings**: add holding button, horizon (short/long term), search + type filter, table sort, row actions (edit, add transaction, refresh price), transactions panel (filters, totals, export).
-- **Performance**: period selector, asset legend toggles, portfolio chart, fullscreen + PNG export, returns-by-asset table.
-- **Cashflow**: add entry form (recurring vs one-off, percent amounts), categories manager, Sankey flow (drag to reorder, label modes, color customization), entries panel (filters, edit, PDF export), credit cards + loans + transfers.
-- **Settings**: currency, language, theme, CORS proxy, export/import (encrypted), GitHub repo link, restart tour.
-- **Wrap-up** (centered): link to landing page Downloads and "Made by GABO" footer.
+### 4. Repo name source
+- The GitHub repo name comes from the `GITHUB_REPO` runtime secret already set in this project; I'll read it to wire the download URLs, falling back to `import.meta.env.VITE_GITHUB_REPO` so the landing page doesn't need a server call.
+- If not present at build time, links degrade to a generic "Latest releases" GitHub link.
 
-Approx. 35-45 steps total. Each step ≤ 2 short sentences to stay scannable.
+## What's NOT in scope
+- Auto-update (Tauri updater) - would require a signing key. Skip for now; users re-download.
+- macOS notarization, Windows code-signing, iOS provisioning - all explicitly out per your decision.
+- Publishing to Play Store / App Store / Microsoft Store.
 
-## i18n
+## After merge
 
-All step titles and descriptions live in a new namespace `tour.*` inside each `src/i18n/locales/{en,es,pt,nl,de,ca}.ts`. No hardcoded strings inside the tour module.
+Tag a release: `git tag v0.1.0 && git push --tags`. CI produces (~25-40 min):
+- `*.deb`, `*.rpm`, `*.AppImage`
+- `*.msi`, `*-setup.exe`
+- `*.dmg` (universal)
+- `*.apk` (debug-signed)
+- `*.ipa` (unsigned)
 
-Keys structure:
-```
-tour: {
-  start: "Take the tour",
-  skip: "Skip",
-  next: "Next",
-  prev: "Back",
-  done: "Done",
-  welcomeTitle: "...",
-  welcomeBody: "...",
-  steps: {
-    sidebar: { title, body },
-    currency: { title, body },
-    ... (one per step)
-  }
-}
-```
-
-## Files to add / modify
-
-**New**
-- `src/lib/tour/driver.ts` - thin wrapper around Driver.js (init, theme, waitForSelector, navigateThenHighlight, persistence helpers).
-- `src/lib/tour/steps.ts` - exports `buildTourSteps(t, navigate, isMobile)` returning the ordered step list with `element` selectors + i18n keys.
-- `src/components/tour-launcher.tsx` - the HelpCircle button (header) + auto-start logic on mount, listens for a custom `"app:start-tour"` event so Settings can trigger it.
-- `src/components/tour-welcome-dialog.tsx` - first-visit welcome modal.
-
-**Modified**
-- `src/components/app-shell.tsx` - add `data-tour="..."` attributes to sidebar items, currency switcher, privacy toggle, theme toggle, language switcher, bottom-nav items; mount `<TourLauncher />` in header.
-- `src/routes/dashboard.tsx`, `holdings.tsx`, `performance.tsx`, `cashflow.tsx`, `settings.tsx` - add `data-tour="..."` hooks on the elements the tour targets (no UI changes). Settings gets a "Restart tour" button.
-- `src/styles.css` - small block overriding Driver.js CSS variables to match our palette (popover bg, border, accent, overlay opacity) for both light and dark.
-- `src/i18n/locales/{en,es,pt,nl,de,ca}.ts` - add the `tour` namespace, fully translated.
-- `package.json` - add `driver.js`.
-
-## Technical notes
-
-- Driver.js is client-only; we import it inside an effect / event handler to avoid SSR issues.
-- `waitForEl(selector, timeoutMs=2000)` uses a `MutationObserver` to wait for cross-route navigations to render the target before showing the next popover.
-- Selectors use `data-tour` attributes only (no class/id coupling) so future refactors don't break the tour.
-- Persistence keys: `tour:completed:v1` (bool), `tour:lastStep:v1` (number). Stored via the existing `secure-storage` wrapper so it's encrypted like the rest.
-- Bundle impact: ~6 KB gzipped + step strings (loaded on demand via dynamic import of `steps.ts` when the user actually starts the tour).
-
-## Out of scope
-
-- Video/animated demos
-- Per-feature tooltips outside the tour
-- Analytics on which step users drop off (no telemetry in this app)
+All attached to a draft GitHub Release. You publish the release, and the landing page's "latest" links start working immediately.
