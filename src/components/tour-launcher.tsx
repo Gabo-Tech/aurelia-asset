@@ -56,10 +56,14 @@ export function TourLauncher({ className }: { className?: string }) {
 
   useEffect(() => {
     function onStart() {
-      startTour(t, (path) => navigate({ to: path }));
+      startTour(t, (path) => navigate({ to: path as never }));
     }
     window.addEventListener("app:start-tour", onStart);
-    return () => window.removeEventListener("app:start-tour", onStart);
+    window.addEventListener("tour:start", onStart);
+    return () => {
+      window.removeEventListener("app:start-tour", onStart);
+      window.removeEventListener("tour:start", onStart);
+    };
   }, [t, navigate]);
 
   return (
