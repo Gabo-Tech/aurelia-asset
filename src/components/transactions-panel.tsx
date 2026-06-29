@@ -179,19 +179,19 @@ export function TransactionsPanel() {
               <tbody className="divide-y divide-border/40 [&>tr>td]:px-3">
                 {[...filtered]
                   .sort((a, b) => +new Date(b.date) - +new Date(a.date))
-                  .map((t) => {
-                    const h = holdingById.get(t.holdingId);
-                    const cur = (t.currency || h?.priceCurrency || "USD").toUpperCase();
-                    const total = t.quantity * t.pricePerUnit + (t.fees ?? 0) * (t.kind === "buy" ? 1 : -1);
+                  .map((tx) => {
+                    const h = holdingById.get(tx.holdingId);
+                    const cur = (tx.currency || h?.priceCurrency || "USD").toUpperCase();
+                    const total = tx.quantity * tx.pricePerUnit + (tx.fees ?? 0) * (tx.kind === "buy" ? 1 : -1);
                     return (
-                      <tr key={t.id}>
-                        <td className="py-2.5 text-muted-foreground">{format(new Date(t.date), "MMM d, yyyy")}</td>
+                      <tr key={tx.id}>
+                        <td className="py-2.5 text-muted-foreground">{format(new Date(tx.date), "MMM d, yyyy")}</td>
                         <td className="py-2.5">
                           <span className={cn(
                             "text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded",
-                            t.kind === "buy" ? "bg-success/15 text-success" : "bg-destructive/15 text-destructive",
+                            tx.kind === "buy" ? "bg-success/15 text-success" : "bg-destructive/15 text-destructive",
                           )}>
-                            {t.kind}
+                            {tx.kind}
                           </span>
                         </td>
                         <td className="py-2.5">
@@ -200,22 +200,22 @@ export function TransactionsPanel() {
                             <span className="font-medium">{h?.symbol ?? "-"}</span>
                             {h && <span className="text-muted-foreground text-xs truncate max-w-[140px]">{h.name}</span>}
                           </div>
-                          {t.notes && (
-                            <div className="text-[11px] text-muted-foreground mt-0.5 truncate max-w-[260px]" title={t.notes}>
-                              {t.notes}
+                          {tx.notes && (
+                            <div className="text-[11px] text-muted-foreground mt-0.5 truncate max-w-[260px]" title={tx.notes}>
+                              {tx.notes}
                             </div>
                           )}
                         </td>
-                        <td className="py-2.5 text-right tabular-nums">{t.quantity}</td>
-                        <td className="py-2.5 text-right tabular-nums">{formatMoney(t.pricePerUnit, cur)}</td>
+                        <td className="py-2.5 text-right tabular-nums">{tx.quantity}</td>
+                        <td className="py-2.5 text-right tabular-nums">{formatMoney(tx.pricePerUnit, cur)}</td>
                         <td className="py-2.5 text-right tabular-nums text-muted-foreground">
-                          {t.fees ? formatMoney(t.fees, cur) : "-"}
+                          {tx.fees ? formatMoney(tx.fees, cur) : "-"}
                         </td>
                         <td className={cn(
                           "py-2.5 text-right tabular-nums font-medium",
-                          t.kind === "buy" ? "text-success" : "text-destructive",
+                          tx.kind === "buy" ? "text-success" : "text-destructive",
                         )}>
-                          {privacy ? MASK : (t.kind === "buy" ? "+" : "−") + mask(total, t.currency)}
+                          {privacy ? MASK : (tx.kind === "buy" ? "+" : "−") + mask(total, tx.currency)}
                         </td>
                         <td>
                           <DropdownMenu>
@@ -225,12 +225,12 @@ export function TransactionsPanel() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => { setEditing(t); setOpen(true); }}>
+                              <DropdownMenuItem onClick={() => { setEditing(tx); setOpen(true); }}>
                                 <Pencil className="mr-2 h-4 w-4" /> {t("more.tpEdit")}
                               </DropdownMenuItem>
                               <DropdownMenuItem
                                 className="text-destructive focus:text-destructive"
-                                onClick={() => { removeTransaction(t.id); toast.success(t("more.tpRemoved")); }}
+                                onClick={() => { removeTransaction(tx.id); toast.success(t("more.tpRemoved")); }}
                               >
                                 <Trash2 className="mr-2 h-4 w-4" /> {t("more.tpDelete")}
                               </DropdownMenuItem>
