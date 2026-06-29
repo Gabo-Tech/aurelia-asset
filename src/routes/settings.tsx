@@ -266,7 +266,7 @@ function SettingsPage() {
       <PageHeader title={t("settings.title")} description={t("settings.description")} />
 
       <div className="grid gap-5 lg:grid-cols-2">
-        <Card className="border-border/60">
+        <Card className="border-border/60" data-tour="settings-api">
           <CardHeader>
             <CardTitle>{t("settings.api.title")}</CardTitle>
             <CardDescription>{t("settings.api.description")}</CardDescription>
