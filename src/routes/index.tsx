@@ -358,13 +358,23 @@ const DOWNLOAD_PLATFORMS: Array<{
   icon: typeof MonitorDown;
   /** Filename suffix pattern at github.com/<repo>/releases/latest/download/. Null = link to release page. */
   assetGlob: string | null;
+  /** Optional direct URL that overrides the GitHub release link. */
+  directHref?: string;
+  /** Suggested filename for the downloaded file. */
+  downloadAs?: string;
 }> = [
   { key: "windows", icon: MonitorDown, assetGlob: ".msi" },
   { key: "mac", icon: Apple, assetGlob: ".dmg" },
   { key: "linuxAppImage", icon: Download, assetGlob: ".AppImage" },
   { key: "linuxDeb", icon: Download, assetGlob: ".deb" },
   { key: "linuxRpm", icon: Download, assetGlob: ".rpm" },
-  { key: "android", icon: Smartphone, assetGlob: ".apk" },
+  {
+    key: "android",
+    icon: Smartphone,
+    assetGlob: ".apk",
+    directHref: apkAsset.url,
+    downloadAs: "portfolio-tracker.apk",
+  },
   { key: "ios", icon: Apple, assetGlob: ".ipa" },
 ];
 
