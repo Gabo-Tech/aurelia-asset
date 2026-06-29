@@ -21,6 +21,7 @@ import {
   Download,
 } from "lucide-react";
 import { getGithubRepo } from "@/lib/repo.functions";
+import apkAsset from "@/assets/portfolio-tracker-apk.asset.json";
 
 import i18n from "@/i18n";
 
@@ -358,13 +359,23 @@ const DOWNLOAD_PLATFORMS: Array<{
   icon: typeof MonitorDown;
   /** Filename suffix pattern at github.com/<repo>/releases/latest/download/. Null = link to release page. */
   assetGlob: string | null;
+  /** Optional direct URL that overrides the GitHub release link. */
+  directHref?: string;
+  /** Suggested filename for the downloaded file. */
+  downloadAs?: string;
 }> = [
   { key: "windows", icon: MonitorDown, assetGlob: ".msi" },
   { key: "mac", icon: Apple, assetGlob: ".dmg" },
   { key: "linuxAppImage", icon: Download, assetGlob: ".AppImage" },
   { key: "linuxDeb", icon: Download, assetGlob: ".deb" },
   { key: "linuxRpm", icon: Download, assetGlob: ".rpm" },
-  { key: "android", icon: Smartphone, assetGlob: ".apk" },
+  {
+    key: "android",
+    icon: Smartphone,
+    assetGlob: ".apk",
+    directHref: apkAsset.url,
+    downloadAs: "portfolio-tracker.apk",
+  },
   { key: "ios", icon: Apple, assetGlob: ".ipa" },
 ];
 
@@ -394,15 +405,17 @@ function Downloads() {
             const Icon = d.icon;
             const label = t(`landing.downloads.platforms.${d.key}`);
             const note = t(`landing.downloads.notes.${d.key}`, { defaultValue: "" });
-            const href = releaseBase ?? "https://github.com";
+            const href = d.directHref ?? releaseBase ?? "https://github.com";
+            const isDirect = Boolean(d.directHref);
             const cls =
               "flex flex-col items-center justify-center rounded-2xl border border-border/60 bg-card/40 p-6 text-center transition-colors hover:border-primary/60 hover:bg-card";
             return (
               <a
                 key={d.key}
                 href={href}
-                target="_blank"
-                rel="noopener noreferrer"
+                target={isDirect ? undefined : "_blank"}
+                rel={isDirect ? undefined : "noopener noreferrer"}
+                download={isDirect ? (d.downloadAs ?? true) : undefined}
                 className={cls}
               >
                 <Icon className="h-7 w-7 text-primary" />
