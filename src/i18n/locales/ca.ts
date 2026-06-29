@@ -112,6 +112,7 @@ const ca: Translation = {
       subheading: "El mateix gestor privat, empaquetat com a app nativa per a cada plataforma que uses.",
       web: "O obre-la directament al navegador",
       soon: "Properament",
+      unsignedNotice: "Totes les compilacions són sense signar i es distribueixen directament. El teu sistema pot mostrar un avís la primera vegada - és normal.",
       platforms: {
         windows: "Windows",
         mac: "macOS",
@@ -120,6 +121,15 @@ const ca: Translation = {
         linuxAppImage: "Linux AppImage",
         android: "Android",
         ios: "iOS",
+      },
+      notes: {
+        windows: "SmartScreen: Més informació > Executa igualment",
+        mac: "Clic dret > Obre la primera vegada",
+        linuxDeb: "Debian, Ubuntu, Mint",
+        linuxRpm: "Fedora, RHEL, openSUSE",
+        linuxAppImage: "Portable, qualsevol distro",
+        android: "Permet instal·lar d'orígens desconeguts",
+        ios: "Requereix AltStore o Sideloadly",
       },
     },
     footer: { brand: "Gestor de cartera", madeBy: "Fet per" },

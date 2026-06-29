@@ -1,67 +1,77 @@
-# Portfolio Tracker — Tauri wrapper
+# Portfolio Tracker - Tauri wrapper
 
-This folder contains a [Tauri v2](https://tauri.app) wrapper that compiles the
-web app into native binaries for **Windows, macOS, Linux (deb / rpm / AppImage),
-Android and iOS**. The wrapper loads the published web app
-(`https://financetracker.putopulse.org`) inside a native webview, so all data
+[Tauri v2](https://tauri.app) wrapper that compiles the web app into native
+binaries for **Windows, macOS, Linux (deb / rpm / AppImage), Android and iOS**.
+The wrapper loads the published web app inside a native webview, so all data
 still lives locally in the user's browser storage.
 
-## Prerequisites
+## Continuous releases (recommended)
 
-Install once on your build machine:
-
-- Rust (`https://www.rust-lang.org/tools/install`)
-- Tauri CLI: `cargo install tauri-cli --version "^2.0" --locked`
-- Platform toolchains:
-  - **macOS**: Xcode + Command Line Tools
-  - **Windows**: Visual Studio 2022 Build Tools (Desktop development with C++)
-  - **Linux**: `libwebkit2gtk-4.1-dev`, `libssl-dev`, `libayatana-appindicator3-dev`, `librsvg2-dev`, `patchelf`, `rpm`
-  - **Android**: Android Studio + NDK, set `ANDROID_HOME` and `NDK_HOME`
-  - **iOS**: Xcode + `rustup target add aarch64-apple-ios x86_64-apple-ios aarch64-apple-ios-sim`
-
-## Icons
-
-Place a square 1024×1024 PNG in `src-tauri/app-icon.png`, then run:
+Push a `v*` tag and `.github/workflows/tauri-release.yml` builds everything and
+attaches it to a draft GitHub Release:
 
 ```
-cargo tauri icon src-tauri/app-icon.png
+git tag v0.1.0
+git push --tags
 ```
 
-This regenerates everything under `src-tauri/icons/`.
+Artifacts produced:
 
-## Build
+| File | Platform |
+|---|---|
+| `*.deb`, `*.rpm`, `*.AppImage` | Linux |
+| `*.msi`, `*-setup.exe` | Windows |
+| `*.dmg` | macOS (universal) |
+| `*.apk` (+ `.aab` if signed) | Android |
+| `*-unsigned.ipa` | iOS |
 
-From the project root:
+**No signing secrets are required.** All builds ship unsigned. If you later add
+an Android release keystore (set `ANDROID_KEYSTORE_BASE64`,
+`ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD` repo
+secrets), the workflow automatically switches to a signed release APK + AAB.
+
+## Distribution & first-run warnings
+
+| Platform | What users see | Workaround |
+|---|---|---|
+| Linux deb/rpm/AppImage | Installs normally | None |
+| Windows .msi/.exe | SmartScreen blocks first run | Click "More info" > "Run anyway" |
+| macOS .dmg | Gatekeeper blocks first launch | Right-click the app > Open > confirm. If Safari quarantines: `xattr -dr com.apple.quarantine /Applications/Portfolio\ Tracker.app` |
+| Android .apk | "Install from unknown sources" prompt | Enable in Settings > Security |
+| iOS .ipa (unsigned) | iOS refuses direct install | Install with [AltStore](https://altstore.io) or [Sideloadly](https://sideloadly.io) using your free Apple ID. Re-sign every 7 days. |
+
+## Local builds
 
 ```
 # Desktop (current OS)
 cargo tauri build
 
-# Linux specific bundles
+# Linux
 cargo tauri build --bundles deb,rpm,appimage
 
-# Windows
+# Windows (on Windows)
 cargo tauri build --bundles msi,nsis
 
-# macOS
+# macOS (on macOS)
 cargo tauri build --bundles app,dmg
 
 # Android (first time)
 cargo tauri android init
-cargo tauri android build
+cargo tauri android build --apk
 
 # iOS (first time, macOS only)
 cargo tauri ios init
 cargo tauri ios build
 ```
 
-Artifacts land under `src-tauri/target/release/bundle/` (desktop) and
-`src-tauri/gen/android` / `src-tauri/gen/apple` for mobile.
+Requires: Rust, `cargo install tauri-cli --version "^2.0" --locked`, plus the
+platform toolchain (Xcode, VS 2022 Build Tools, Android Studio + NDK, or the
+Linux dev packages: `libwebkit2gtk-4.1-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev patchelf rpm`).
 
-## Continuous releases
+## Icons
 
-A ready-to-use GitHub Actions workflow lives at
-`.github/workflows/tauri-release.yml`. Push a tag like `v0.1.0` and it builds
-all desktop targets and attaches the binaries to a GitHub Release. Mobile
-builds run on the same workflow but require additional signing secrets — see
-the comments in the workflow file.
+Place a 1024x1024 PNG at `src-tauri/app-icon.png`, then:
+
+```
+cargo tauri icon src-tauri/app-icon.png
+```

@@ -149,6 +149,7 @@ const en = {
       subheading: "Same private tracker, packaged as a native app for every platform you use.",
       web: "Or just open it in your browser",
       soon: "Coming soon",
+      unsignedNotice: "All builds are unsigned and distributed directly. Your OS may show a first-run warning - this is expected.",
       platforms: {
         windows: "Windows",
         mac: "macOS",
@@ -157,6 +158,15 @@ const en = {
         linuxAppImage: "Linux AppImage",
         android: "Android",
         ios: "iOS",
+      },
+      notes: {
+        windows: "SmartScreen: More info > Run anyway",
+        mac: "Right-click > Open on first launch",
+        linuxDeb: "Debian, Ubuntu, Mint",
+        linuxRpm: "Fedora, RHEL, openSUSE",
+        linuxAppImage: "Portable, any distro",
+        android: "Allow installs from unknown sources",
+        ios: "Requires AltStore or Sideloadly",
       },
     },
 

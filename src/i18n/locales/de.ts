@@ -111,6 +111,7 @@ const de: Translation = {
       subheading: "Derselbe private Tracker, als native App für jede Plattform verpackt.",
       web: "Oder einfach im Browser öffnen",
       soon: "Demnächst",
+      unsignedNotice: "Alle Builds sind unsigniert und werden direkt verteilt. Dein System zeigt evtl. eine Warnung beim ersten Start - das ist normal.",
       platforms: {
         windows: "Windows",
         mac: "macOS",
@@ -119,6 +120,15 @@ const de: Translation = {
         linuxAppImage: "Linux AppImage",
         android: "Android",
         ios: "iOS",
+      },
+      notes: {
+        windows: "SmartScreen: Weitere Infos > Trotzdem ausführen",
+        mac: "Rechtsklick > Öffnen beim ersten Start",
+        linuxDeb: "Debian, Ubuntu, Mint",
+        linuxRpm: "Fedora, RHEL, openSUSE",
+        linuxAppImage: "Portabel, jede Distro",
+        android: "Installation aus unbekannten Quellen erlauben",
+        ios: "Benötigt AltStore oder Sideloadly",
       },
     },
     footer: { brand: "Portfolio Tracker", madeBy: "Gemacht von" },
