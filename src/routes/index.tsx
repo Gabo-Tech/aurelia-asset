@@ -21,6 +21,7 @@ import {
   Download,
 } from "lucide-react";
 import { getGithubRepo } from "@/lib/repo.functions";
+import apkAsset from "@/assets/portfolio-tracker-apk.asset.json";
 
 import i18n from "@/i18n";
 
