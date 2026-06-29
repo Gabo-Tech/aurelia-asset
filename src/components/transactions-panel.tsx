@@ -22,6 +22,7 @@ import { cn } from "@/lib/utils";
 type PeriodKey = "all" | "week" | "month" | "year" | "custom";
 
 export function TransactionsPanel() {
+  const { t } = useTranslation();
   const { state, removeTransaction } = useStore();
   const { mask, toDisplay, currency, privacy, MASK } = useMoney();
   const [open, setOpen] = useState(false);
