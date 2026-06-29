@@ -385,15 +385,15 @@ function PerformancePage() {
                 ))}
                 <tr className="font-semibold">
                   <td className="py-2.5">{t("more.perfTotal")}</td>
-                  <td className="py-2.5 text-right tabular-nums">
+                  <td className="py-2.5 pl-4 text-right tabular-nums whitespace-nowrap">
                     {mask(metrics.first.total)}
                   </td>
-                  <td className="py-2.5 text-right tabular-nums">
+                  <td className="py-2.5 pl-4 text-right tabular-nums whitespace-nowrap">
                     {mask(metrics.last.total)}
                   </td>
                   <td
                     className={cn(
-                      "py-2.5 text-right tabular-nums",
+                      "py-2.5 pl-4 text-right tabular-nums whitespace-nowrap",
                       metrics.last.total - metrics.first.total >= 0
                         ? "text-success"
                         : "text-destructive"
@@ -403,7 +403,7 @@ function PerformancePage() {
                   </td>
                   <td
                     className={cn(
-                      "py-2.5 text-right tabular-nums",
+                      "py-2.5 pl-4 text-right tabular-nums whitespace-nowrap",
                       metrics.totalPct >= 0 ? "text-success" : "text-destructive"
                     )}
                   >
