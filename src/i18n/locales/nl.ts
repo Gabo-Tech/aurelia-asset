@@ -133,9 +133,11 @@ const nl: Translation = {
     },
     footer: { brand: "Portfolio Tracker", madeBy: "Gemaakt door" },
     meta: {
-      title: "Gratis Portfolio Tracker voor aandelen, crypto & ETF's - Privé & lokaal",
-      description: "Volg aandelen, ETF's, crypto en edelmetalen in één elegant dashboard. 100% client-side, geen registratie, geen tracking. Zie allocatie, rendement en kasstroom binnen seconden.",
+      title: "Gratis Portfolio Tracker - Aandelen, Crypto & ETF's",
+      description: "Volg aandelen, ETF's, crypto en edelmetalen in één elegant dashboard. 100% privé, geen registratie. Allocatie, rendement en kasstroom in seconden.",
+      keywords: "portfolio tracker, aandelen tracker, crypto portfolio, ETF tracker, vermogensoverzicht, gratis financiële app, privé beleggingstracker, sankey kasstroom",
     },
+
   },
   dashboard: {
     metaTitle: "Dashboard - Portfolio Tracker",

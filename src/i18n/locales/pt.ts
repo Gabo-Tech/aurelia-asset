@@ -133,9 +133,11 @@ const pt: Translation = {
     },
     footer: { brand: "Gestor de carteira", madeBy: "Feito por" },
     meta: {
-      title: "Gestor de carteira grátis para ações, cripto e ETFs - Privado e local",
-      description: "Acompanhe ações, ETFs, cripto e metais preciosos num painel elegante. 100% no cliente, sem registo, sem rastreio. Veja alocação, desempenho e fluxo de caixa em segundos.",
+      title: "Gestor de carteira grátis - Ações, Cripto e ETFs",
+      description: "Acompanhe ações, ETFs, cripto e metais num painel elegante. 100% privado, sem registo. Alocação, desempenho e fluxo de caixa em segundos.",
+      keywords: "gestor de carteira, acompanhar ações, carteira cripto, tracker ETF, património líquido, app de finanças grátis, investidor privado, fluxo de caixa sankey",
     },
+
   },
   dashboard: {
     metaTitle: "Painel - Gestor de carteira",

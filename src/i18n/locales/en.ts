@@ -175,10 +175,13 @@ const en = {
       madeBy: "Made by",
     },
     meta: {
-      title: "Free Portfolio Tracker for Stocks, Crypto & ETFs - Private & Local",
+      title: "Free Portfolio Tracker - Stocks, Crypto & ETFs",
       description:
-        "Track stocks, ETFs, crypto and precious metals in one elegant dashboard. 100% client-side, no signup, no tracking. See allocation, performance and cashflow in seconds.",
+        "Track stocks, ETFs, crypto and metals in one elegant dashboard. 100% private, no signup. See allocation, performance and cashflow in seconds.",
+      keywords:
+        "portfolio tracker, stock tracker, crypto portfolio, ETF tracker, net worth app, free finance tracker, private investment tracker, sankey cashflow, offline portfolio",
     },
+
   },
   dashboard: {
     metaTitle: "Dashboard - Portfolio Tracker",

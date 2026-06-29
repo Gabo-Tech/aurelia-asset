@@ -139,9 +139,11 @@ const es: Translation = {
     },
     footer: { brand: "Gestor de cartera", madeBy: "Hecho por" },
     meta: {
-      title: "Gestor de cartera gratuito para acciones, cripto y ETFs - Privado y local",
-      description: "Sigue acciones, ETFs, cripto y metales preciosos en un panel elegante. 100% en cliente, sin registro, sin rastreo. Mira asignación, rendimiento y flujo de caja en segundos.",
+      title: "Gestor de cartera gratuito - Acciones, Cripto y ETFs",
+      description: "Sigue acciones, ETFs, cripto y metales en un panel elegante. 100% privado, sin registro. Asignación, rendimiento y flujo de caja en segundos.",
+      keywords: "gestor de cartera, seguimiento de acciones, cartera cripto, seguimiento ETF, patrimonio neto, app de finanzas gratis, inversor privado, flujo de caja sankey",
     },
+
   },
   dashboard: {
     metaTitle: "Panel - Gestor de cartera",
