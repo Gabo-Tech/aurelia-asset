@@ -59,21 +59,14 @@ export function buildTourSteps(t: TFunction, isMobile: boolean): TourStepDef[] {
 
     // Cashflow
     step("cfAdd", '[data-tour="cf-add"]', "/cashflow", "bottom"),
-    step("cfCategories", '[data-tour="cf-categories"]', "/cashflow", "bottom"),
-    step("cfRecurring", '[data-tour="cf-recurring"]', "/cashflow", "bottom"),
     step("cfSankey", '[data-tour="cf-sankey"]', "/cashflow", "top"),
     step("cfEntries", '[data-tour="cf-entries"]', "/cashflow", "top"),
     step("cfCards", '[data-tour="cf-cards"]', "/cashflow", "top"),
-    step("cfLoans", '[data-tour="cf-loans"]', "/cashflow", "top"),
-    step("cfTransfers", '[data-tour="cf-transfers"]', "/cashflow", "top"),
-    step("cfExport", '[data-tour="cf-export"]', "/cashflow", "top"),
 
     // Settings
-    step("setCurrency", '[data-tour="set-currency"]', "/settings", "bottom"),
-    step("setLanguage", '[data-tour="set-language"]', "/settings", "bottom"),
-    step("setProxy", '[data-tour="set-proxy"]', "/settings", "bottom"),
-    step("setData", '[data-tour="set-data"]', "/settings", "top"),
-    step("setTour", '[data-tour="set-tour"]', "/settings", "top"),
+    step("setApi", '[data-tour="settings-api"]', "/settings", "bottom"),
+    step("setLanguage", '[data-tour="settings-language"]', "/settings", "bottom"),
+    step("setData", '[data-tour="settings-data"]', "/settings", "top"),
 
     center("finish", "/dashboard"),
   ];
