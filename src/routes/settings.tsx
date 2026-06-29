@@ -360,7 +360,7 @@ function SettingsPage() {
         </Card>
 
         <div className="space-y-5">
-          <Card className="border-border/60">
+          <Card className="border-border/60" data-tour="settings-language">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Languages className="h-4 w-4" />
