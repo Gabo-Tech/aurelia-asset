@@ -156,6 +156,7 @@ function HoldingsPage() {
               {t("holdings.refresh")}
             </Button>
             <Button
+              data-tour="holdings-add"
               onClick={() => {
                 setEditing(null);
                 setOpen(true);
@@ -167,9 +168,9 @@ function HoldingsPage() {
         }
       />
 
-      <Card className="border-border/60">
+      <Card className="border-border/60" data-tour="holdings-table">
         <CardContent className="p-4 sm:p-6 space-y-4">
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2" data-tour="holdings-filters">
             <Input
               placeholder={t("more.hSearch")}
               value={search}
