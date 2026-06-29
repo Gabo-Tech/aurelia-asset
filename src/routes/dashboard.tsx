@@ -338,7 +338,7 @@ function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card className="lg:col-span-2 border-border/60">
+        <Card className="lg:col-span-2 border-border/60" data-tour="dash-breakdown">
           <CardHeader>
             <CardTitle>{t("more.dashBreakdown")}</CardTitle>
           </CardHeader>
