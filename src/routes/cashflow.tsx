@@ -586,6 +586,49 @@ function CashflowPage() {
                   <Input type="date" className="h-8 w-[130px] text-xs" value={sankeyTo} onChange={(e) => setSankeyTo(e.target.value)} />
                 </div>
               )}
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5">
+                    <RotateCcw className="h-3.5 w-3.5" />
+                    {t("cashflow.resetLastMonth", { defaultValue: "Reset last month" })}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>{t("cashflow.resetLastMonthTitle", { defaultValue: "Delete last month's entries?" })}</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      {t("cashflow.resetLastMonthDesc", {
+                        defaultValue: "This permanently removes every cashflow entry dated in {{range}}. Recurring rules are kept.",
+                        range: `${format(startOfMonth(subMonths(new Date(), 1)), "MMM d, yyyy")} – ${format(endOfMonth(subMonths(new Date(), 1)), "MMM d, yyyy")}`,
+                      })}
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => {
+                        const lastMonthStart = startOfMonth(subMonths(new Date(), 1));
+                        const lastMonthEnd = endOfMonth(subMonths(new Date(), 1));
+                        const ids = cashflows
+                          .filter((c) => {
+                            const d = new Date(c.date);
+                            return isWithinInterval(d, { start: lastMonthStart, end: lastMonthEnd });
+                          })
+                          .map((c) => c.id);
+                        ids.forEach((id) => removeCashflow(id));
+                        toast.success(
+                          t("cashflow.resetLastMonthDone", {
+                            defaultValue: "Removed {{count}} entries",
+                            count: ids.length,
+                          }),
+                        );
+                      }}
+                    >
+                      {t("common.delete")}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
           </CardHeader>
           <CardContent className="px-2 sm:px-6">
