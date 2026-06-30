@@ -41,6 +41,12 @@ function getAllowedTarget(request: Request): URL | Response {
   if (target.username || target.password) return jsonError("Credentials are not allowed", 400);
   if (!ALLOWED_HOSTS.has(target.hostname)) return jsonError("Host is not allowed", 403);
 
+  // Inject the server-side Finnhub key so the browser never sees it.
+  if (target.hostname === "finnhub.io" && !target.searchParams.get("token")) {
+    const key = process.env.FINNHUB_API_KEY;
+    if (key) target.searchParams.set("token", key);
+  }
+
   return target;
 }
 

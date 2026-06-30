@@ -64,16 +64,16 @@ export async function fetchCurrentQuote(h: Holding): Promise<FetchedQuote> {
   return firstQuote(
     [
       async () => {
+        const p = await finnhubQuote(h.symbol);
+        return p != null ? { price: p, currency: "USD" } : null;
+      },
+      async () => {
         const q = await getYahooQuote(h.symbol);
         return q.price ? { price: q.price, currency: q.currency ?? h.priceCurrency } : null;
       },
       async () => {
         const p = await getStooqQuote(h.symbol);
         return p != null ? { price: p, currency: h.priceCurrency ?? "USD" } : null;
-      },
-      async () => {
-        const p = await finnhubQuote(h.symbol);
-        return p != null ? { price: p, currency: "USD" } : null;
       },
     ],
     fallback,
@@ -145,13 +145,13 @@ async function fetchMaxHistory(h: Holding): Promise<PricePoint[]> {
             async () => await getBinanceHistory(h.symbol),
           ]
         : [
-            async () => await getYahooHistory(h.symbol, "max"),
-            async () => await getStooqHistory(h.symbol),
             async () => {
               const to = Math.floor(Date.now() / 1000);
               const from = to - 10 * 365 * 86400;
               return (await finnhubHistory(h.symbol, from, to)) ?? [];
             },
+            async () => await getYahooHistory(h.symbol, "max"),
+            async () => await getStooqHistory(h.symbol),
           ];
     const data = await fetchFromChain(chain);
     if (data.length) {
