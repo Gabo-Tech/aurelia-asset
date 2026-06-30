@@ -116,25 +116,20 @@ export async function fetchWithFallback<T>(
   let lastErr: unknown;
   for (const candidate of attempts) {
     try {
-      return (await fetchOnce(candidate, as)) as T;
+      const data = await fetchOnce(candidate, as);
+      if (
+        as === "text" &&
+        typeof data === "string" &&
+        /<(?:!doctype|html|body)\b/i.test(data.slice(0, 500))
+      ) {
+        throw new Error("Unexpected HTML response");
+      }
+      return data as T;
     } catch (e) {
       lastErr = e;
-      const status = (e as { status?: number }).status;
       // Mark a proxy as down so other callers skip it briefly.
       for (const p of DISCLOSED_PROXIES) {
         if (candidate.startsWith(p)) markDown(p);
-      }
-      // A direct 4xx that isn't 429 means the URL is likely bad; public-proxy
-      // 403s are common quota/CORS failures, so keep walking the chain.
-      if (
-        status &&
-        status >= 400 &&
-        status < 500 &&
-        status !== 429 &&
-        candidate === rawUrl &&
-        !isDisclosedProxyAttempt(candidate)
-      ) {
-        throw e;
       }
     }
   }
