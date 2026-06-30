@@ -32,6 +32,7 @@ const nl: Translation = {
     holdings: "Beleggingen",
     performance: "Rendement",
     cashflow: "Kasstroom",
+    planning: "Planning",
     settings: "Instellingen",
   },
   shell: {

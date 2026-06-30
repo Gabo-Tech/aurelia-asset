@@ -7,7 +7,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { AppState, DEFAULT_STATE, DEFAULT_CATEGORIES, Holding, CashflowEntry, Category, Settings, HoldingTransaction, CreditCard } from "./types";
+import { AppState, DEFAULT_STATE, DEFAULT_CATEGORIES, Holding, CashflowEntry, Category, Settings, HoldingTransaction, CreditCard, Budget, SavingsGoal, Loan } from "./types";
 import { getFxRates, convert, type FxRates } from "./finance/fx";
 import { formatMoney, maskMoney, MASK } from "./format";
 import { secureGet, secureSet } from "./secure-storage";
@@ -27,6 +27,9 @@ async function loadState(): Promise<AppState> {
       ...parsed,
       transactions: Array.isArray(parsed.transactions) ? parsed.transactions : [],
       creditCards: Array.isArray(parsed.creditCards) ? parsed.creditCards : [],
+      budgets: Array.isArray(parsed.budgets) ? parsed.budgets : [],
+      goals: Array.isArray(parsed.goals) ? parsed.goals : [],
+      loans: Array.isArray(parsed.loans) ? parsed.loans : [],
       categories:
         Array.isArray(parsed.categories) && parsed.categories.length > 0
           ? parsed.categories
@@ -58,6 +61,15 @@ type Ctx = {
   addCategory: (c: Omit<Category, "id">) => Category;
   updateCategory: (id: string, patch: Partial<Category>) => void;
   removeCategory: (id: string) => void;
+  addBudget: (b: Omit<Budget, "id">) => Budget;
+  updateBudget: (id: string, patch: Partial<Budget>) => void;
+  removeBudget: (id: string) => void;
+  addGoal: (g: Omit<SavingsGoal, "id">) => SavingsGoal;
+  updateGoal: (id: string, patch: Partial<SavingsGoal>) => void;
+  removeGoal: (id: string) => void;
+  addLoan: (l: Omit<Loan, "id">) => Loan;
+  updateLoan: (id: string, patch: Partial<Loan>) => void;
+  removeLoan: (id: string) => void;
   updateSettings: (patch: Partial<Settings>) => void;
   importState: (data: AppState) => void;
   reset: () => void;
@@ -293,6 +305,42 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         })),
       removeCategory: (id) =>
         setState((s) => ({ ...s, categories: s.categories.filter((c) => c.id !== id) })),
+      addBudget: (b) => {
+        const created: Budget = { ...b, id: uid() };
+        setState((s) => ({ ...s, budgets: [...(s.budgets ?? []), created] }));
+        return created;
+      },
+      updateBudget: (id, patch) =>
+        setState((s) => ({
+          ...s,
+          budgets: (s.budgets ?? []).map((b) => (b.id === id ? { ...b, ...patch } : b)),
+        })),
+      removeBudget: (id) =>
+        setState((s) => ({ ...s, budgets: (s.budgets ?? []).filter((b) => b.id !== id) })),
+      addGoal: (g) => {
+        const created: SavingsGoal = { ...g, id: uid() };
+        setState((s) => ({ ...s, goals: [...(s.goals ?? []), created] }));
+        return created;
+      },
+      updateGoal: (id, patch) =>
+        setState((s) => ({
+          ...s,
+          goals: (s.goals ?? []).map((g) => (g.id === id ? { ...g, ...patch } : g)),
+        })),
+      removeGoal: (id) =>
+        setState((s) => ({ ...s, goals: (s.goals ?? []).filter((g) => g.id !== id) })),
+      addLoan: (l) => {
+        const created: Loan = { ...l, id: uid() };
+        setState((s) => ({ ...s, loans: [...(s.loans ?? []), created] }));
+        return created;
+      },
+      updateLoan: (id, patch) =>
+        setState((s) => ({
+          ...s,
+          loans: (s.loans ?? []).map((l) => (l.id === id ? { ...l, ...patch } : l)),
+        })),
+      removeLoan: (id) =>
+        setState((s) => ({ ...s, loans: (s.loans ?? []).filter((l) => l.id !== id) })),
       updateSettings: (patch) =>
         setState((s) => ({ ...s, settings: { ...s.settings, ...patch } })),
       importState: (data) =>

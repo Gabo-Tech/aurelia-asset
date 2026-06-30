@@ -30,6 +30,7 @@ const en = {
     holdings: "Holdings",
     performance: "Performance",
     cashflow: "Cashflow",
+    planning: "Planning",
     settings: "Settings",
   },
   shell: {

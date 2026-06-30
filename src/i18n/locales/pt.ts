@@ -32,6 +32,7 @@ const pt: Translation = {
     holdings: "Ativos",
     performance: "Desempenho",
     cashflow: "Fluxo de caixa",
+    planning: "Planeamento",
     settings: "Definições",
   },
   shell: {

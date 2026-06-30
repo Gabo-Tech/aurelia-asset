@@ -6,6 +6,7 @@ import {
   Wallet,
   TrendingUp,
   ArrowLeftRight,
+  Target,
   Settings as SettingsIcon,
   Sparkles,
   Eye,
@@ -24,6 +25,7 @@ const navItems = [
   { to: "/holdings", key: "holdings", icon: Wallet },
   { to: "/performance", key: "performance", icon: TrendingUp },
   { to: "/cashflow", key: "cashflow", icon: ArrowLeftRight },
+  { to: "/planning", key: "planning", icon: Target },
   { to: "/settings", key: "settings", icon: SettingsIcon },
 ] as const;
 
@@ -132,7 +134,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         aria-label="Primary"
         data-tour="bottom-nav"
       >
-        <div className="grid grid-cols-5">
+        <div className="grid grid-cols-6">
           {nav.map((item) => {
             const active =
               pathname === item.to || pathname.startsWith(item.to + "/");

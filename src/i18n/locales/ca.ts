@@ -33,6 +33,7 @@ const ca: Translation = {
     holdings: "Actius",
     performance: "Rendiment",
     cashflow: "Flux de caixa",
+    planning: "Planificació",
     settings: "Ajustos",
   },
   shell: {
