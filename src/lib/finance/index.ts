@@ -145,13 +145,13 @@ async function fetchMaxHistory(h: Holding): Promise<PricePoint[]> {
             async () => await getBinanceHistory(h.symbol),
           ]
         : [
-            async () => await getYahooHistory(h.symbol, "max"),
-            async () => await getStooqHistory(h.symbol),
             async () => {
               const to = Math.floor(Date.now() / 1000);
               const from = to - 10 * 365 * 86400;
               return (await finnhubHistory(h.symbol, from, to)) ?? [];
             },
+            async () => await getYahooHistory(h.symbol, "max"),
+            async () => await getStooqHistory(h.symbol),
           ];
     const data = await fetchFromChain(chain);
     if (data.length) {
