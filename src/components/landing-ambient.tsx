@@ -44,14 +44,14 @@ export function MouseGlow() {
   return (
     <div
       aria-hidden
-      className="pointer-events-none fixed inset-0 z-0 overflow-hidden"
+      className="pointer-events-none fixed inset-0 z-[1] overflow-hidden mix-blend-screen"
     >
       <div
         ref={ref}
-        className="absolute h-[700px] w-[700px] rounded-full opacity-[0.28] blur-3xl will-change-transform"
+        className="absolute h-[800px] w-[800px] rounded-full opacity-70 blur-3xl will-change-transform"
         style={{
           background:
-            "radial-gradient(closest-side, hsl(var(--primary)/0.9), transparent 70%)",
+            "radial-gradient(closest-side, hsl(var(--primary)/1), transparent 70%)",
         }}
       />
     </div>
