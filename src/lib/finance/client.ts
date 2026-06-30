@@ -51,9 +51,12 @@ function buildAttempts(rawUrl: string, preferDirect: boolean): string[] {
   const s = getSettings();
   const out: string[] = [];
   // Try direct first when the caller hints the endpoint is CORS-friendly,
-  // OR when the user has explicitly disabled the proxy.
+  // OR when the user has explicitly disabled public proxies.
   if (preferDirect || !s.useCorsProxy) out.push(rawUrl);
   if (typeof window !== "undefined") out.push(sameOriginProxy(rawUrl));
+  // Native/static builds may not have a Start server route available, so keep
+  // a direct request in the chain after the same-origin proxy attempt.
+  if (!preferDirect && s.useCorsProxy) out.push(rawUrl);
   if (!s.useCorsProxy) return Array.from(new Set(out));
 
   const primary = s.corsProxy || DISCLOSED_PROXIES[0];
