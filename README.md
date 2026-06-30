@@ -41,6 +41,127 @@ data falls back to public providers and the admin panel is disabled.
 
 See [`.env.example`](./.env.example). All are read server-side only.
 
+## Using the app
+
+The app is fully client-side: your data lives in your browser's local
+storage, encrypted with an AES-GCM 256 key that never leaves your
+device. Nothing is sent to any server unless you explicitly query a
+price (and even then, only the asset symbol is sent).
+
+### First run
+
+1. Open `/` (landing page) and click **Open the app**, or go straight
+   to `/dashboard`.
+2. Optionally run the **onboarding tour** from the help icon in the
+   header - it walks you through every screen.
+3. Pick your **language**, **theme** (light/dark) and **base currency**
+   in **Settings**.
+
+### Cashflow (`/cashflow`)
+
+Track everything that moves money in or out.
+
+- **Add entry**: pick *Income* or *Expense*, amount, currency, date,
+  category, and an optional short description. Toggle **Recurring** to
+  set a frequency (weekly, monthly, yearly, custom) and an end date.
+- **Percent amounts**: switch the amount kind to **%** to compute a
+  value relative to another entry (useful for taxes, tithes, fees).
+- **Transfers**: move money between accounts (cash, holdings, credit
+  card). Transfers appear in the Sankey diagram and never count as
+  income or expense.
+- **Categories**: create your own under **Manage categories**. Defaults
+  use green for income, red for expenses, blue for savings, green for
+  investments.
+- **Filters**: filter the entries table by type, category, week,
+  month, year or custom date range.
+- **Edit / delete**: click any row to edit; recurring entries can be
+  edited as a single occurrence or for the whole series.
+- **Export PDF**: the *Export* button generates a styled PDF of the
+  filtered period including a colour-coded cumulative balance chart.
+- **Sankey diagram**: drag and drop nodes to reorder; the order is
+  remembered. Use the toolbar to toggle labels and customise colours.
+  Open fullscreen to resize and export as PNG.
+
+### Holdings (`/holdings`)
+
+- **Add holding**: ticker (e.g. `AAPL`, `BTC`, `VWCE.DE`), quantity,
+  currency, account, and **horizon** (short / long term).
+- **Buy / sell transactions**: add as many as you want; the current
+  quantity is computed from the transaction history.
+- **Credit cards**: track limit, balance and statement payments; use
+  the **Pay** shortcut to log a repayment as a cashflow transfer.
+- **Installments**: split a purchase into N scheduled payments.
+
+### Performance (`/performance`)
+
+Shows time-weighted return per asset and overall, using cached
+daily-history data. Switch period (1M / 3M / 6M / 1Y / All). The data
+is fetched once per day per asset and sliced locally to avoid
+rate-limits.
+
+### Planning (`/planning`)
+
+- **Budgets**: monthly spending limits per category, with progress
+  bars based on the current month's cashflow.
+- **Savings goals**: target amount and date; the app suggests a
+  monthly contribution.
+- **Forecast**: 24-month liquidity projection from your recurring
+  entries, with runway calculation.
+- **Loans**: enter principal, rate, term and optional extra payment;
+  see the full amortization table and payoff date.
+
+### Dashboard (`/dashboard`)
+
+Net worth (cashflow balance + holdings), portfolio value (holdings
+only), allocation pie, and quick stats.
+
+## Settings: data, proxy and API keys
+
+### Import / export
+
+In **Settings -> Data**:
+
+- **Export**: download a JSON file containing all entries, holdings,
+  transactions, categories, budgets, goals, loans and preferences.
+  Schema-validated; safe to keep as a backup.
+- **Import**: load a previously exported JSON file. Imports are
+  validated with Zod and replace your current data after confirmation.
+- **Reset**: wipes all local data (irreversible).
+
+### Finnhub API key (optional, recommended)
+
+The app ships with a server-side Finnhub key behind
+`/api/finance-proxy` so prices work out of the box. If you self-host
+or run the native app, add your own key for higher rate limits:
+
+1. Sign up for a free key at https://finnhub.io.
+2. **Self-hosted web**: set `FINNHUB_API_KEY` as a server env var (see
+   [`.env.example`](./.env.example)). The browser never sees it.
+3. **Native app or "bring your own key"**: paste it in
+   **Settings -> Finance providers -> Finnhub API key**. Stored
+   encrypted in local storage.
+
+### CORS proxy
+
+Some providers (Yahoo, Stooq) don't allow direct browser requests. The
+chain is:
+
+1. Direct request (when the endpoint allows it).
+2. Same-origin `/api/finance-proxy` (Cloudflare Workers route, allow-
+   listed hosts, HTTPS only, 2 MB cap). Best option, no third party.
+3. Disclosed public proxies (`corsproxy.io`, `allorigins.win`) - only
+   if you enable them in **Settings -> Finance providers**.
+
+To change the proxy or disable public proxies entirely, edit those
+fields in Settings. Native Tauri builds can talk to providers
+directly and skip proxies altogether.
+
+### Provider priority
+
+Finnhub -> Yahoo Finance -> Stooq -> CoinGecko / Binance (for crypto).
+The first provider that returns valid data wins; failed providers go
+into a 60-second cooldown to keep refreshes fast.
+
 ## Native builds
 
 ```bash
