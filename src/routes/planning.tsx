@@ -15,6 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Trash2, Plus, Pencil } from "lucide-react";
 import { expandCashflows, liquidityImpact, valuesByEntry } from "./cashflow";
 import { amortize } from "@/lib/finance/amortization";
+import { CURRENCIES } from "@/lib/currency";
 import {
   Area,
   AreaChart,
@@ -70,12 +71,26 @@ function PlanningPage() {
 
 /* -------------------- Budgets -------------------- */
 
+function CurrencyPicker({ value, onChange, className }: { value: string; onChange: (v: string) => void; className?: string }) {
+  return (
+    <Select value={value} onValueChange={onChange}>
+      <SelectTrigger className={className}><SelectValue /></SelectTrigger>
+      <SelectContent className="max-h-72">
+        {CURRENCIES.map((c) => (
+          <SelectItem key={c.code} value={c.code}>{c.code} · {c.name}</SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
 function BudgetsPanel() {
   const { state, addBudget, updateBudget, removeBudget } = useStore();
-  const { fmt, toDisplay } = useMoney();
+  const { fmt, toDisplay, currency: displayCurrency } = useMoney();
   const expenseCats = state.categories.filter((c) => c.kind === "expense");
   const [categoryId, setCategoryId] = useState<string>(expenseCats[0]?.id ?? "");
   const [amount, setAmount] = useState<string>("");
+  const [entryCurrency, setEntryCurrency] = useState<string>(displayCurrency);
 
   // Compute this month's spent per category
   const monthSpent = useMemo(() => {
@@ -98,7 +113,7 @@ function BudgetsPanel() {
   const submit = () => {
     const a = Number(amount);
     if (!categoryId || !Number.isFinite(a) || a <= 0) return;
-    addBudget({ categoryId, amount: a, period: "monthly" });
+    addBudget({ categoryId, amount: a, currency: entryCurrency, period: "monthly" });
     setAmount("");
   };
 
@@ -120,9 +135,15 @@ function BudgetsPanel() {
               </SelectContent>
             </Select>
           </div>
-          <div>
-            <Label>Monthly limit</Label>
-            <Input inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="e.g. 500" />
+          <div className="grid grid-cols-[1fr_auto] gap-2">
+            <div>
+              <Label>Monthly limit</Label>
+              <Input inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="e.g. 500" />
+            </div>
+            <div>
+              <Label>Currency</Label>
+              <CurrencyPicker value={entryCurrency} onChange={setEntryCurrency} className="w-28" />
+            </div>
           </div>
           <Button onClick={submit} className="w-full"><Plus className="h-4 w-4 mr-1" />Add budget</Button>
         </CardContent>
@@ -139,8 +160,9 @@ function BudgetsPanel() {
           {state.budgets.map((b) => {
             const cat = state.categories.find((c) => c.id === b.categoryId);
             const spent = monthSpent.get(b.categoryId) ?? 0;
-            const pct = Math.min(100, (spent / Math.max(0.0001, b.amount)) * 100);
-            const over = spent > b.amount;
+            const budgetDisp = toDisplay(b.amount, b.currency);
+            const pct = Math.min(100, (spent / Math.max(0.0001, budgetDisp)) * 100);
+            const over = spent > budgetDisp;
             return (
               <div key={b.id} className="space-y-1">
                 <div className="flex items-center justify-between gap-2 text-sm">
@@ -149,13 +171,13 @@ function BudgetsPanel() {
                     {cat?.name || "Unknown"}
                   </span>
                   <span className={over ? "text-destructive font-medium" : "text-muted-foreground"}>
-                    {fmt(spent)} / {fmt(b.amount)}
+                    {fmt(spent)} / {fmt(b.amount, b.currency)}
                   </span>
                 </div>
                 <Progress value={pct} className={over ? "[&>div]:bg-destructive" : ""} />
                 <div className="flex items-center justify-between text-xs">
                   <span className={over ? "text-destructive" : "text-muted-foreground"}>
-                    {over ? `Over by ${fmt(spent - b.amount)}` : `${fmt(b.amount - spent)} left`}
+                    {over ? `Over by ${fmt(spent - budgetDisp)}` : `${fmt(budgetDisp - spent)} left`}
                   </span>
                   <div className="flex items-center gap-1">
                     <EditBudgetButton budget={b} onSave={(patch) => updateBudget(b.id, patch)} />
@@ -197,8 +219,8 @@ const GOAL_COLORS = ["#0ea5e9", "#10b981", "#f59e0b", "#a78bfa", "#f472b6", "#22
 
 function GoalsPanel() {
   const { state, addGoal, updateGoal, removeGoal } = useStore();
-  const { fmt } = useMoney();
-  const [form, setForm] = useState({ name: "", target: "", current: "", date: "" });
+  const { fmt, currency: displayCurrency } = useMoney();
+  const [form, setForm] = useState({ name: "", target: "", current: "", date: "", currency: displayCurrency });
 
   const submit = () => {
     const target = Number(form.target);
@@ -209,9 +231,10 @@ function GoalsPanel() {
       targetAmount: target,
       currentAmount: current,
       targetDate: form.date || undefined,
+      currency: form.currency,
       color: GOAL_COLORS[state.goals.length % GOAL_COLORS.length],
     });
-    setForm({ name: "", target: "", current: "", date: "" });
+    setForm({ name: "", target: "", current: "", date: "", currency: displayCurrency });
   };
 
   return (
@@ -223,9 +246,15 @@ function GoalsPanel() {
             <Label>Name</Label>
             <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Emergency fund" />
           </div>
-          <div>
-            <Label>Target amount</Label>
-            <Input inputMode="decimal" value={form.target} onChange={(e) => setForm({ ...form, target: e.target.value })} placeholder="10000" />
+          <div className="grid grid-cols-[1fr_auto] gap-2">
+            <div>
+              <Label>Target amount</Label>
+              <Input inputMode="decimal" value={form.target} onChange={(e) => setForm({ ...form, target: e.target.value })} placeholder="10000" />
+            </div>
+            <div>
+              <Label>Currency</Label>
+              <CurrencyPicker value={form.currency} onChange={(v) => setForm({ ...form, currency: v })} className="w-28" />
+            </div>
           </div>
           <div>
             <Label>Already saved</Label>
@@ -272,18 +301,18 @@ function GoalsPanel() {
               <CardContent className="space-y-2">
                 <Progress value={pct} />
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">{fmt(g.currentAmount)} / {fmt(g.targetAmount)}</span>
+                  <span className="text-muted-foreground">{fmt(g.currentAmount, g.currency)} / {fmt(g.targetAmount, g.currency)}</span>
                   <span className="font-medium">{pct.toFixed(0)}%</span>
                 </div>
                 {monthly != null ? (
                   <div className="text-xs text-muted-foreground">
-                    Save ~{fmt(monthly)}/mo to hit your goal.
+                    Save ~{fmt(monthly, g.currency)}/mo to hit your goal.
                   </div>
                 ) : null}
                 <div className="flex items-center gap-2 pt-1">
                   <Input
                     inputMode="decimal"
-                    placeholder="Add contribution"
+                    placeholder={`Add contribution (${(g.currency || displayCurrency).toUpperCase()})`}
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
                         const v = Number((e.target as HTMLInputElement).value);
@@ -457,7 +486,7 @@ const LOAN_COLORS = ["#ef4444", "#f59e0b", "#a78bfa", "#0ea5e9", "#10b981"];
 
 function LoansPanel() {
   const { state, addLoan, updateLoan, removeLoan } = useStore();
-  const { fmt } = useMoney();
+  const { fmt, currency: displayCurrency } = useMoney();
   const [form, setForm] = useState({
     name: "",
     principal: "",
@@ -466,6 +495,7 @@ function LoansPanel() {
     start: new Date().toISOString().slice(0, 10),
     extra: "",
     notes: "",
+    currency: displayCurrency,
   });
   const [openId, setOpenId] = useState<string | null>(null);
 
@@ -482,9 +512,10 @@ function LoansPanel() {
       startDate: form.start,
       extraMonthly: Number(form.extra) || 0,
       notes: form.notes,
+      currency: form.currency,
       color: LOAN_COLORS[state.loans.length % LOAN_COLORS.length],
     });
-    setForm({ name: "", principal: "", apr: "", term: "", start: form.start, extra: "", notes: "" });
+    setForm({ name: "", principal: "", apr: "", term: "", start: form.start, extra: "", notes: "", currency: form.currency });
   };
 
   return (
@@ -501,7 +532,10 @@ function LoansPanel() {
             <div><Label>Term (months)</Label><Input inputMode="numeric" value={form.term} onChange={(e) => setForm({ ...form, term: e.target.value })} /></div>
             <div><Label>Start</Label><Input type="date" value={form.start} onChange={(e) => setForm({ ...form, start: e.target.value })} /></div>
           </div>
-          <div><Label>Extra monthly (optional)</Label><Input inputMode="decimal" value={form.extra} onChange={(e) => setForm({ ...form, extra: e.target.value })} /></div>
+          <div className="grid grid-cols-2 gap-2">
+            <div><Label>Extra monthly (optional)</Label><Input inputMode="decimal" value={form.extra} onChange={(e) => setForm({ ...form, extra: e.target.value })} /></div>
+            <div><Label>Currency</Label><CurrencyPicker value={form.currency} onChange={(v) => setForm({ ...form, currency: v })} /></div>
+          </div>
           <div><Label>Notes</Label><Textarea rows={2} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
           <Button onClick={submit} className="w-full"><Plus className="h-4 w-4 mr-1" />Add loan</Button>
         </CardContent>
@@ -533,7 +567,7 @@ function LoanCard({ loan, open, onToggle, onRemove, onPatch, fmt }: {
   onToggle: () => void;
   onRemove: () => void;
   onPatch: (p: Partial<Loan>) => void;
-  fmt: (n: number) => string;
+  fmt: (n: number, from?: string) => string;
 }) {
   const schedule = useMemo(() => amortize(loan), [loan]);
   const paidMonths = Math.max(0, Math.floor((Date.now() - new Date(loan.startDate).getTime()) / (30 * 24 * 3600 * 1000)));
@@ -541,6 +575,8 @@ function LoanCard({ loan, open, onToggle, onRemove, onPatch, fmt }: {
   const paidPrincipal = schedule.rows.slice(0, upto).reduce((s, r) => s + r.principal + r.extra, 0);
   const remaining = Math.max(0, loan.principal - paidPrincipal);
   const pct = Math.min(100, (paidPrincipal / Math.max(0.0001, loan.principal)) * 100);
+  const cur = loan.currency;
+  const f = (n: number) => fmt(n, cur);
 
   return (
     <Card>
@@ -551,7 +587,7 @@ function LoanCard({ loan, open, onToggle, onRemove, onPatch, fmt }: {
             {loan.name}
           </CardTitle>
           <div className="text-xs text-muted-foreground mt-0.5">
-            {fmt(loan.principal)} @ {loan.apr}% APR · {loan.termMonths} mo · starts {format(new Date(loan.startDate), "MMM yyyy")}
+            {f(loan.principal)} @ {loan.apr}% APR · {loan.termMonths} mo · starts {format(new Date(loan.startDate), "MMM yyyy")}
           </div>
         </div>
         <div className="flex items-center gap-1">
@@ -561,15 +597,15 @@ function LoanCard({ loan, open, onToggle, onRemove, onPatch, fmt }: {
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
-          <Stat label="Monthly payment" value={fmt(schedule.monthlyPayment)} />
-          <Stat label="Total interest" value={fmt(schedule.totalInterest)} />
-          <Stat label="Remaining" value={fmt(remaining)} />
+          <Stat label="Monthly payment" value={f(schedule.monthlyPayment)} />
+          <Stat label="Total interest" value={f(schedule.totalInterest)} />
+          <Stat label="Remaining" value={f(remaining)} />
           <Stat label="Payoff" value={format(new Date(schedule.payoffDate), "MMM yyyy")} />
         </div>
         <Progress value={pct} />
         <div className="flex items-center justify-between text-xs text-muted-foreground">
           <span>{pct.toFixed(1)}% paid down</span>
-          <span>Extra: {fmt(loan.extraMonthly || 0)}/mo</span>
+          <span>Extra: {f(loan.extraMonthly || 0)}/mo</span>
         </div>
         <div className="flex items-center gap-2">
           <Label className="text-xs whitespace-nowrap">Extra/mo</Label>
@@ -602,10 +638,10 @@ function LoanCard({ loan, open, onToggle, onRemove, onPatch, fmt }: {
                   <tr key={r.index} className="border-t border-border/40">
                     <td className="p-2">{r.index}</td>
                     <td className="p-2">{format(new Date(r.date), "MMM yyyy")}</td>
-                    <td className="p-2 text-right tabular-nums">{fmt(r.payment)}</td>
-                    <td className="p-2 text-right tabular-nums text-rose-500">{fmt(r.interest)}</td>
-                    <td className="p-2 text-right tabular-nums text-emerald-500">{fmt(r.principal + r.extra)}</td>
-                    <td className="p-2 text-right tabular-nums">{fmt(r.balance)}</td>
+                    <td className="p-2 text-right tabular-nums">{f(r.payment)}</td>
+                    <td className="p-2 text-right tabular-nums text-rose-500">{f(r.interest)}</td>
+                    <td className="p-2 text-right tabular-nums text-emerald-500">{f(r.principal + r.extra)}</td>
+                    <td className="p-2 text-right tabular-nums">{f(r.balance)}</td>
                   </tr>
                 ))}
               </tbody>

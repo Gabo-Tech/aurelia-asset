@@ -116,8 +116,10 @@ export type Budget = {
   id: string;
   /** Category this budget targets. */
   categoryId: string;
-  /** Monthly budget amount (in the entry's source currency, treated as display currency). */
+  /** Monthly budget amount. */
   amount: number;
+  /** Source currency for the amount; converted to display currency at render. */
+  currency?: string;
   /** Always monthly for now. */
   period: "monthly";
 };
@@ -130,6 +132,8 @@ export type SavingsGoal = {
   targetDate?: string; // ISO
   color: string;
   notes?: string;
+  /** Source currency for target / current amounts. */
+  currency?: string;
 };
 
 export type Loan = {
