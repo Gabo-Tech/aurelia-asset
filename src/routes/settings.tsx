@@ -67,6 +67,7 @@ const holdingSchema = z.object({
     .optional(),
   notes: z.string().max(2000).optional(),
   openingQuantity: finiteNumber.optional(),
+  horizon: z.enum(["long", "short"]).optional(),
 });
 
 const recurrenceSchema = z.object({
@@ -74,9 +75,21 @@ const recurrenceSchema = z.object({
   until: isoDate.optional(),
 });
 
+const accountRefSchema = z
+  .string()
+  .max(160)
+  .regex(/^(liquidity|holding:[\w-]+|credit:[\w-]+)$/);
+
+const installmentPlanSchema = z.object({
+  total: finiteNumber,
+  count: z.number().int().min(1).max(600),
+  frequency: z.enum(["weekly", "monthly"]),
+  firstDueDate: isoDate,
+});
+
 const cashflowSchema = z.object({
   id: z.string().min(1).max(128),
-  kind: z.enum(["income", "expense"]),
+  kind: z.enum(["income", "expense", "transfer"]),
   source: z.string().max(200),
   category: z.string().max(128),
   amount: finiteNumber,
@@ -86,6 +99,11 @@ const cashflowSchema = z.object({
   amountKind: z.enum(["fixed", "percent"]).optional(),
   percentOf: z.string().max(128).optional(),
   description: z.string().max(500).optional(),
+  paymentMethod: accountRefSchema.optional(),
+  fromAccount: accountRefSchema.optional(),
+  toAccount: accountRefSchema.optional(),
+  installmentPlan: installmentPlanSchema.optional(),
+  linkedTransactionId: z.string().max(128).optional(),
 });
 
 const transactionSchema = z.object({
@@ -108,6 +126,46 @@ const categorySchema = z.object({
   color: hexColor,
 });
 
+const creditCardSchema = z.object({
+  id: z.string().min(1).max(128),
+  name: z.string().max(200),
+  color: hexColor,
+  currency: z.string().max(16),
+  statementDay: z.number().int().min(1).max(31).optional(),
+  dueDay: z.number().int().min(1).max(31).optional(),
+  creditLimit: nonNegNumber.optional(),
+});
+
+const budgetSchema = z.object({
+  id: z.string().min(1).max(128),
+  categoryId: z.string().min(1).max(128),
+  amount: finiteNumber,
+  period: z.literal("monthly"),
+});
+
+const goalSchema = z.object({
+  id: z.string().min(1).max(128),
+  name: z.string().max(200),
+  targetAmount: nonNegNumber,
+  currentAmount: nonNegNumber,
+  targetDate: isoDate.optional(),
+  color: hexColor,
+  notes: z.string().max(2000).optional(),
+});
+
+const loanSchema = z.object({
+  id: z.string().min(1).max(128),
+  name: z.string().max(200),
+  principal: nonNegNumber,
+  apr: finiteNumber,
+  termMonths: z.number().int().min(1).max(1200),
+  startDate: isoDate,
+  extraMonthly: nonNegNumber.optional(),
+  color: hexColor,
+  notes: z.string().max(2000).optional(),
+  currency: z.string().max(16).optional(),
+});
+
 const settingsSchema = z.object({
   useCorsProxy: z.boolean(),
   corsProxy: z.enum(ALLOWED_CORS_PROXIES),
@@ -121,6 +179,10 @@ const appStateSchema = z.object({
   cashflows: z.array(cashflowSchema).max(20000),
   transactions: z.array(transactionSchema).max(20000),
   categories: z.array(categorySchema).max(1000),
+  creditCards: z.array(creditCardSchema).max(500).optional().default([]),
+  budgets: z.array(budgetSchema).max(2000).optional().default([]),
+  goals: z.array(goalSchema).max(500).optional().default([]),
+  loans: z.array(loanSchema).max(500).optional().default([]),
   settings: settingsSchema,
 });
 
