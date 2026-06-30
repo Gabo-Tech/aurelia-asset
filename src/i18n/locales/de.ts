@@ -32,6 +32,7 @@ const de: Translation = {
     holdings: "Positionen",
     performance: "Performance",
     cashflow: "Cashflow",
+    planning: "Planung",
     settings: "Einstellungen",
   },
   shell: {
