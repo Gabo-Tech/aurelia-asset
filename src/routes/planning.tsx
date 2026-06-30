@@ -219,8 +219,8 @@ const GOAL_COLORS = ["#0ea5e9", "#10b981", "#f59e0b", "#a78bfa", "#f472b6", "#22
 
 function GoalsPanel() {
   const { state, addGoal, updateGoal, removeGoal } = useStore();
-  const { fmt } = useMoney();
-  const [form, setForm] = useState({ name: "", target: "", current: "", date: "" });
+  const { fmt, currency: displayCurrency } = useMoney();
+  const [form, setForm] = useState({ name: "", target: "", current: "", date: "", currency: displayCurrency });
 
   const submit = () => {
     const target = Number(form.target);
@@ -231,9 +231,10 @@ function GoalsPanel() {
       targetAmount: target,
       currentAmount: current,
       targetDate: form.date || undefined,
+      currency: form.currency,
       color: GOAL_COLORS[state.goals.length % GOAL_COLORS.length],
     });
-    setForm({ name: "", target: "", current: "", date: "" });
+    setForm({ name: "", target: "", current: "", date: "", currency: displayCurrency });
   };
 
   return (
@@ -245,9 +246,15 @@ function GoalsPanel() {
             <Label>Name</Label>
             <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Emergency fund" />
           </div>
-          <div>
-            <Label>Target amount</Label>
-            <Input inputMode="decimal" value={form.target} onChange={(e) => setForm({ ...form, target: e.target.value })} placeholder="10000" />
+          <div className="grid grid-cols-[1fr_auto] gap-2">
+            <div>
+              <Label>Target amount</Label>
+              <Input inputMode="decimal" value={form.target} onChange={(e) => setForm({ ...form, target: e.target.value })} placeholder="10000" />
+            </div>
+            <div>
+              <Label>Currency</Label>
+              <CurrencyPicker value={form.currency} onChange={(v) => setForm({ ...form, currency: v })} className="w-28" />
+            </div>
           </div>
           <div>
             <Label>Already saved</Label>
@@ -294,18 +301,18 @@ function GoalsPanel() {
               <CardContent className="space-y-2">
                 <Progress value={pct} />
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">{fmt(g.currentAmount)} / {fmt(g.targetAmount)}</span>
+                  <span className="text-muted-foreground">{fmt(g.currentAmount, g.currency)} / {fmt(g.targetAmount, g.currency)}</span>
                   <span className="font-medium">{pct.toFixed(0)}%</span>
                 </div>
                 {monthly != null ? (
                   <div className="text-xs text-muted-foreground">
-                    Save ~{fmt(monthly)}/mo to hit your goal.
+                    Save ~{fmt(monthly, g.currency)}/mo to hit your goal.
                   </div>
                 ) : null}
                 <div className="flex items-center gap-2 pt-1">
                   <Input
                     inputMode="decimal"
-                    placeholder="Add contribution"
+                    placeholder={`Add contribution (${(g.currency || displayCurrency).toUpperCase()})`}
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
                         const v = Number((e.target as HTMLInputElement).value);
