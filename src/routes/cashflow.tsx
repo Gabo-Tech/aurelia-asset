@@ -269,8 +269,44 @@ function CashflowPage() {
   const colorFor = (name: string, fallbackGroup: CategoryGroup) =>
     prefs.nodeColors[name] ?? catByName.get(name)?.color ?? GROUP_COLORS[fallbackGroup];
 
-  // Expand recurring entries up to today for top-level totals and Sankey.
-  const expandedToToday = useMemo(() => expandCashflows(cashflows, new Date()), [cashflows]);
+  // Period selector for the flow diagram. Default to current month so the
+  // diagram naturally resets at the start of every month.
+  type SankeyPeriod = "week" | "month" | "year" | "all" | "custom";
+  const [sankeyPeriod, setSankeyPeriod] = useState<SankeyPeriod>("month");
+  const [sankeyFrom, setSankeyFrom] = useState(format(startOfMonth(new Date()), "yyyy-MM-dd"));
+  const [sankeyTo, setSankeyTo] = useState(format(new Date(), "yyyy-MM-dd"));
+
+  const sankeyInterval = useMemo(() => {
+    const now = new Date();
+    switch (sankeyPeriod) {
+      case "week":
+        return { start: startOfWeek(now, { weekStartsOn: 1 }), end: endOfWeek(now, { weekStartsOn: 1 }) };
+      case "month":
+        return { start: startOfMonth(now), end: endOfMonth(now) };
+      case "year":
+        return { start: startOfYear(now), end: endOfYear(now) };
+      case "custom":
+        return { start: parseISO(sankeyFrom), end: parseISO(sankeyTo) };
+      case "all":
+      default:
+        return null;
+    }
+  }, [sankeyPeriod, sankeyFrom, sankeyTo]);
+
+  const sankeyPeriodLabel = useMemo(() => {
+    if (!sankeyInterval) return t("more.entriesAllTime");
+    return `${format(sankeyInterval.start, "MMM d, yyyy")} – ${format(sankeyInterval.end, "MMM d, yyyy")}`;
+  }, [sankeyInterval, t]);
+
+  // Expand recurring entries within the active interval (or up to today for "all").
+  const expandedToToday = useMemo(() => {
+    const horizon = sankeyInterval
+      ? (sankeyInterval.end > new Date() ? sankeyInterval.end : new Date())
+      : new Date();
+    const all = expandCashflows(cashflows, horizon);
+    if (!sankeyInterval) return all;
+    return all.filter((c) => isWithinInterval(new Date(c.date), sankeyInterval));
+  }, [cashflows, sankeyInterval]);
 
   const valuesTop = useMemo(() => valuesByEntry(expandedToToday, toDisplay), [expandedToToday, toDisplay]);
 
