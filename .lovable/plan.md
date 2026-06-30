@@ -1,62 +1,69 @@
 ## Goal
 
-Build installers for **all platforms** in CI on tag push, all unsigned, distributed by direct download from the website. No App Store, no code-signing certs, no secrets required.
+Make price/history fetching resilient: chain multiple free quote providers and CORS proxies with automatic fallback, and stop re-hitting APIs for each period by caching full per-asset history locally and slicing from it.
 
-## Reality of "unsigned" per platform
+## Part 1 - Provider fallback chain
 
-| Platform | What CI produces | User experience |
-|---|---|---|
-| Linux | `.deb`, `.rpm`, `.AppImage` | Install normally, no warning |
-| Windows | `.msi`, `.exe` (NSIS) | SmartScreen warns first time → "More info" → "Run anyway" |
-| macOS | `.dmg` (universal) | Gatekeeper blocks → right-click → Open → confirm. Quarantine attribute requires `xattr -dr com.apple.quarantine` if downloaded via Safari |
-| Android | `.apk` (signed with auto-generated debug key) | "Unknown sources" prompt, then installs |
-| iOS | unsigned `.ipa` | Requires AltStore / Sideloadly + user's free Apple ID, re-sign every 7 days |
+Today: Yahoo first → Finnhub only as a last-resort quote fallback (no key by default, so it silently no-ops). Crypto: CoinGecko only. No retry across providers for history.
 
-No GitHub secrets needed for any of this. Android already has a debug-key fallback in the workflow.
+Add a unified resolver per asset class:
 
-## Changes
+**Stocks / ETFs / metals** (`src/lib/finance/index.ts`):
+quote chain → `yahoo` → `stooq` (CSV, no key, very permissive CORS) → `finnhub` (if key)
+history chain → `yahoo` → `stooq` (daily CSV `d1`, gives full history in one call) → `finnhub` (if key)
 
-### 1. `.github/workflows/tauri-release.yml`
-- **Android**: keep the keystore-signing block but make it conditional - if no `ANDROID_KEYSTORE_BASE64` secret, fall back to building debug APK (`cargo tauri android build --apk --debug`). Currently it requires the secret.
-- **iOS**: add new `ios` job on `macos-latest`:
-  - Install Rust iOS targets (`aarch64-apple-ios`, `x86_64-apple-ios`, `aarch64-apple-ios-sim`)
-  - `cargo install tauri-cli`
-  - `cargo tauri ios init`
-  - Patch generated Xcode project to disable code signing (`CODE_SIGNING_REQUIRED=NO`, `CODE_SIGN_IDENTITY=""`, `CODE_SIGNING_ALLOWED=NO`) via `xcodebuild` flags
-  - `cargo tauri ios build --export-method debugging` then repackage `.app` → unsigned `.ipa` by zipping into a `Payload/` folder
-  - Upload `.ipa` to the GitHub release alongside the other artifacts
-- **macOS / Windows**: leave as-is - they already build unsigned by default.
+**Crypto**:
+quote chain → `coingecko` → `coincap` (`api.coincap.io/v2/assets/{id}`, no key) → `binance` (`api.binance.com/api/v3/ticker/price?symbol=XXXUSDT`)
+history chain → `coingecko` → `coincap` (`/v2/assets/{id}/history?interval=d1`) → `binance` klines
 
-### 2. `src-tauri/README.md`
-- Replace the signing-secrets section with a short "Distribution & first-run warnings" table mirroring the matrix above, so users know what to expect.
-- Add a "How to install the unsigned .ipa" subsection pointing to AltStore + Sideloadly.
+**FX** (`src/lib/finance/fx.ts`): already has open.er-api fallback - extend with `frankfurter.app` (ECB, no key, CORS-enabled) as a 3rd link.
 
-### 3. Landing page Downloads section
-- Currently Windows / macOS / iOS are marked "coming soon".
-- Replace with real download links pointing to the latest GitHub release assets (`https://github.com/<owner>/<repo>/releases/latest/download/<file>`).
-- Per-platform notes/tooltips:
-  - macOS: "Right-click → Open on first launch"
-  - Windows: "Click 'More info' → 'Run anyway' on SmartScreen"
-  - iOS: "Requires AltStore or Sideloadly"
-  - Android: "Enable installs from unknown sources"
-- Translate the new strings in all 6 locales (`en`, `es`, `ca`, `pt`, `nl`, `de`) under the existing landing namespace.
+Resolver behavior:
+- Try providers in order; on any throw or empty result, advance to next.
+- On first success, return immediately (no further calls).
+- Mark each provider with a short-lived "cooldown" (e.g. 60s) after a failure so a known-down provider isn't retried on the next asset in the same refresh pass.
+- Expose `lastProvider` per holding (kept in memory, not persisted) so we can later surface "data from X" in the UI if desired - out of scope for this change unless you want it.
 
-### 4. Repo name source
-- The GitHub repo name comes from the `GITHUB_REPO` runtime secret already set in this project; I'll read it to wire the download URLs, falling back to `import.meta.env.VITE_GITHUB_REPO` so the landing page doesn't need a server call.
-- If not present at build time, links degrade to a generic "Latest releases" GitHub link.
+## Part 2 - CORS proxy fallback
 
-## What's NOT in scope
-- Auto-update (Tauri updater) - would require a signing key. Skip for now; users re-download.
-- macOS notarization, Windows code-signing, iOS provisioning - all explicitly out per your decision.
-- Publishing to Play Store / App Store / Microsoft Store.
+Already partially there in `client.ts` (`fetchJsonWithFallback` walks `FALLBACK_PROXIES`). Improvements:
+- Try direct first when not on `localhost` (some providers like CoinGecko/Stooq/Frankfurter work without proxy from the browser).
+- On HTTP 4xx that isn't 429, don't bother trying more proxies (the URL itself is bad).
+- On network error / 429 / 5xx, advance to next proxy.
+- Same per-proxy cooldown idea as providers.
+- Keep the disclosed proxy list (`corsproxy.io`, `allorigins.win`) - no undisclosed additions, per the prior security finding.
 
-## After merge
+## Part 3 - Local "max history" cache, period-sliced reads
 
-Tag a release: `git tag v0.1.0 && git push --tags`. CI produces (~25-40 min):
-- `*.deb`, `*.rpm`, `*.AppImage`
-- `*.msi`, `*-setup.exe`
-- `*.dmg` (universal)
-- `*.apk` (debug-signed)
-- `*.ipa` (unsigned)
+Today: each period button refetches that exact range, so 1D/7D/1M each cost an API call and the short ranges are the ones rate-limited hardest.
 
-All attached to a draft GitHub Release. You publish the release, and the landing page's "latest" links start working immediately.
+New flow in `src/lib/finance/index.ts`:
+
+1. Introduce `fetchMaxHistory(holding)` that pulls the longest range each provider supports in one shot:
+   - Yahoo: `range=max`
+   - Stooq: full daily CSV (always full history)
+   - CoinGecko: `days=max`
+   - CoinCap: `interval=d1` from genesis
+2. Persist the resulting `PricePoint[]` per holding under a versioned cache key in the existing `cache.ts` store (it already mirrors to `localStorage`). TTL: 24h for daily granularity, refreshed lazily on next access.
+3. `fetchHistorical(h, period)` becomes: read full series from cache (fetch + persist on miss) → slice to the requested period window in memory. No network call for period switches once the asset is warm.
+4. Intraday (`1D`) keeps a separate short-TTL path because daily granularity can't render it - falls through the same provider chain but with a `1d`/`days=1` request and a 5-min TTL.
+5. Add a "Refresh history" affordance in Settings to force-evict the cache.
+
+## Part 4 - Files touched
+
+- `src/lib/finance/client.ts` - smarter `fetchJsonWithFallback` (direct-first, cooldowns, status-aware).
+- `src/lib/finance/index.ts` - provider chains, `fetchMaxHistory`, period slicing.
+- `src/lib/finance/yahoo.ts` - unchanged API, but tolerate empty results without throwing so the chain advances cleanly.
+- `src/lib/finance/coingecko.ts` - same tolerance fix.
+- New `src/lib/finance/stooq.ts` - CSV parser for `https://stooq.com/q/d/l/?s={symbol}&i=d`.
+- New `src/lib/finance/coincap.ts` - assets + history endpoints.
+- New `src/lib/finance/binance.ts` - ticker + klines fallback for crypto.
+- `src/lib/finance/fx.ts` - add Frankfurter as 3rd provider.
+- `src/lib/finance/cache.ts` - add a `bust(prefix)` helper for the Settings "Refresh history" button.
+- `src/routes/settings.tsx` - small "Clear price cache" button.
+
+## Out of scope
+
+- Server-side proxy via a TanStack server route (would remove the CORS-proxy dependency entirely). Happy to add as a follow-up if you want zero reliance on public proxies.
+- UI to show which provider answered.
+- Replacing CoinGecko with a paid tier or adding new key-required providers (Alpha Vantage, Twelve Data, Polygon).
