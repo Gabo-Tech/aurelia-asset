@@ -553,8 +553,29 @@ function CashflowPage() {
 
 
         <Card className="border-border/60 min-w-0" data-tour="cf-sankey">
-          <CardHeader className="px-3 sm:px-6">
-            <CardTitle>{t("cashflow.flow")}</CardTitle>
+          <CardHeader className="px-3 sm:px-6 flex flex-row items-start justify-between gap-3 space-y-0">
+            <div className="min-w-0">
+              <CardTitle>{t("cashflow.flow")}</CardTitle>
+              <div className="mt-1 text-xs text-muted-foreground truncate">{sankeyPeriodLabel}</div>
+            </div>
+            <div className="flex flex-col items-end gap-2 shrink-0">
+              <Select value={sankeyPeriod} onValueChange={(v) => setSankeyPeriod(v as SankeyPeriod)}>
+                <SelectTrigger className="h-8 w-[140px] text-xs"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="week">{t("more.entriesThisWeek")}</SelectItem>
+                  <SelectItem value="month">{t("more.entriesThisMonth")}</SelectItem>
+                  <SelectItem value="year">{t("more.entriesThisYear")}</SelectItem>
+                  <SelectItem value="all">{t("more.entriesAllTime")}</SelectItem>
+                  <SelectItem value="custom">{t("more.entriesCustomRange")}</SelectItem>
+                </SelectContent>
+              </Select>
+              {sankeyPeriod === "custom" && (
+                <div className="flex gap-1">
+                  <Input type="date" className="h-8 w-[130px] text-xs" value={sankeyFrom} onChange={(e) => setSankeyFrom(e.target.value)} />
+                  <Input type="date" className="h-8 w-[130px] text-xs" value={sankeyTo} onChange={(e) => setSankeyTo(e.target.value)} />
+                </div>
+              )}
+            </div>
           </CardHeader>
           <CardContent className="px-2 sm:px-6">
             <ChartFrame
