@@ -140,6 +140,7 @@ const budgetSchema = z.object({
   id: z.string().min(1).max(128),
   categoryId: z.string().min(1).max(128),
   amount: finiteNumber,
+  currency: z.string().max(16).optional(),
   period: z.literal("monthly"),
 });
 
@@ -151,6 +152,7 @@ const goalSchema = z.object({
   targetDate: isoDate.optional(),
   color: hexColor,
   notes: z.string().max(2000).optional(),
+  currency: z.string().max(16).optional(),
 });
 
 const loanSchema = z.object({
