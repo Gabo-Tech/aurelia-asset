@@ -6,6 +6,7 @@ import {
   Wallet,
   TrendingUp,
   ArrowLeftRight,
+  Target,
   Settings as SettingsIcon,
   Sparkles,
   Eye,
@@ -24,6 +25,7 @@ const navItems = [
   { to: "/holdings", key: "holdings", icon: Wallet },
   { to: "/performance", key: "performance", icon: TrendingUp },
   { to: "/cashflow", key: "cashflow", icon: ArrowLeftRight },
+  { to: "/planning", key: "planning", icon: Target },
   { to: "/settings", key: "settings", icon: SettingsIcon },
 ] as const;
 

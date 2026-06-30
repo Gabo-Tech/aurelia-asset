@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as PlanningRouteImport } from './routes/planning'
 import { Route as PerformanceRouteImport } from './routes/performance'
 import { Route as HoldingsRouteImport } from './routes/holdings'
 import { Route as DashboardRouteImport } from './routes/dashboard'
@@ -21,6 +22,11 @@ import { Route as ApiFinanceProxyRouteImport } from './routes/api/finance-proxy'
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PlanningRoute = PlanningRouteImport.update({
+  id: '/planning',
+  path: '/planning',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PerformanceRoute = PerformanceRouteImport.update({
@@ -66,6 +72,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRoute
   '/holdings': typeof HoldingsRoute
   '/performance': typeof PerformanceRoute
+  '/planning': typeof PlanningRoute
   '/settings': typeof SettingsRoute
   '/api/finance-proxy': typeof ApiFinanceProxyRoute
 }
@@ -76,6 +83,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRoute
   '/holdings': typeof HoldingsRoute
   '/performance': typeof PerformanceRoute
+  '/planning': typeof PlanningRoute
   '/settings': typeof SettingsRoute
   '/api/finance-proxy': typeof ApiFinanceProxyRoute
 }
@@ -87,6 +95,7 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRoute
   '/holdings': typeof HoldingsRoute
   '/performance': typeof PerformanceRoute
+  '/planning': typeof PlanningRoute
   '/settings': typeof SettingsRoute
   '/api/finance-proxy': typeof ApiFinanceProxyRoute
 }
@@ -99,6 +108,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/holdings'
     | '/performance'
+    | '/planning'
     | '/settings'
     | '/api/finance-proxy'
   fileRoutesByTo: FileRoutesByTo
@@ -109,6 +119,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/holdings'
     | '/performance'
+    | '/planning'
     | '/settings'
     | '/api/finance-proxy'
   id:
@@ -119,6 +130,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/holdings'
     | '/performance'
+    | '/planning'
     | '/settings'
     | '/api/finance-proxy'
   fileRoutesById: FileRoutesById
@@ -130,6 +142,7 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRoute
   HoldingsRoute: typeof HoldingsRoute
   PerformanceRoute: typeof PerformanceRoute
+  PlanningRoute: typeof PlanningRoute
   SettingsRoute: typeof SettingsRoute
   ApiFinanceProxyRoute: typeof ApiFinanceProxyRoute
 }
@@ -141,6 +154,13 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/planning': {
+      id: '/planning'
+      path: '/planning'
+      fullPath: '/planning'
+      preLoaderRoute: typeof PlanningRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/performance': {
@@ -202,6 +222,7 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRoute,
   HoldingsRoute: HoldingsRoute,
   PerformanceRoute: PerformanceRoute,
+  PlanningRoute: PlanningRoute,
   SettingsRoute: SettingsRoute,
   ApiFinanceProxyRoute: ApiFinanceProxyRoute,
 }
