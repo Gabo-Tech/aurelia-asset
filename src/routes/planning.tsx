@@ -71,12 +71,26 @@ function PlanningPage() {
 
 /* -------------------- Budgets -------------------- */
 
+function CurrencyPicker({ value, onChange, className }: { value: string; onChange: (v: string) => void; className?: string }) {
+  return (
+    <Select value={value} onValueChange={onChange}>
+      <SelectTrigger className={className}><SelectValue /></SelectTrigger>
+      <SelectContent className="max-h-72">
+        {CURRENCIES.map((c) => (
+          <SelectItem key={c.code} value={c.code}>{c.code} · {c.name}</SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
 function BudgetsPanel() {
   const { state, addBudget, updateBudget, removeBudget } = useStore();
-  const { fmt, toDisplay } = useMoney();
+  const { fmt, toDisplay, currency: displayCurrency } = useMoney();
   const expenseCats = state.categories.filter((c) => c.kind === "expense");
   const [categoryId, setCategoryId] = useState<string>(expenseCats[0]?.id ?? "");
   const [amount, setAmount] = useState<string>("");
+  const [entryCurrency, setEntryCurrency] = useState<string>(displayCurrency);
 
   // Compute this month's spent per category
   const monthSpent = useMemo(() => {
@@ -99,7 +113,7 @@ function BudgetsPanel() {
   const submit = () => {
     const a = Number(amount);
     if (!categoryId || !Number.isFinite(a) || a <= 0) return;
-    addBudget({ categoryId, amount: a, period: "monthly" });
+    addBudget({ categoryId, amount: a, currency: entryCurrency, period: "monthly" });
     setAmount("");
   };
 
@@ -121,9 +135,15 @@ function BudgetsPanel() {
               </SelectContent>
             </Select>
           </div>
-          <div>
-            <Label>Monthly limit</Label>
-            <Input inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="e.g. 500" />
+          <div className="grid grid-cols-[1fr_auto] gap-2">
+            <div>
+              <Label>Monthly limit</Label>
+              <Input inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="e.g. 500" />
+            </div>
+            <div>
+              <Label>Currency</Label>
+              <CurrencyPicker value={entryCurrency} onChange={setEntryCurrency} className="w-28" />
+            </div>
           </div>
           <Button onClick={submit} className="w-full"><Plus className="h-4 w-4 mr-1" />Add budget</Button>
         </CardContent>
@@ -140,8 +160,9 @@ function BudgetsPanel() {
           {state.budgets.map((b) => {
             const cat = state.categories.find((c) => c.id === b.categoryId);
             const spent = monthSpent.get(b.categoryId) ?? 0;
-            const pct = Math.min(100, (spent / Math.max(0.0001, b.amount)) * 100);
-            const over = spent > b.amount;
+            const budgetDisp = toDisplay(b.amount, b.currency);
+            const pct = Math.min(100, (spent / Math.max(0.0001, budgetDisp)) * 100);
+            const over = spent > budgetDisp;
             return (
               <div key={b.id} className="space-y-1">
                 <div className="flex items-center justify-between gap-2 text-sm">
@@ -150,13 +171,13 @@ function BudgetsPanel() {
                     {cat?.name || "Unknown"}
                   </span>
                   <span className={over ? "text-destructive font-medium" : "text-muted-foreground"}>
-                    {fmt(spent)} / {fmt(b.amount)}
+                    {fmt(spent)} / {fmt(b.amount, b.currency)}
                   </span>
                 </div>
                 <Progress value={pct} className={over ? "[&>div]:bg-destructive" : ""} />
                 <div className="flex items-center justify-between text-xs">
                   <span className={over ? "text-destructive" : "text-muted-foreground"}>
-                    {over ? `Over by ${fmt(spent - b.amount)}` : `${fmt(b.amount - spent)} left`}
+                    {over ? `Over by ${fmt(spent - budgetDisp)}` : `${fmt(budgetDisp - spent)} left`}
                   </span>
                   <div className="flex items-center gap-1">
                     <EditBudgetButton budget={b} onSave={(patch) => updateBudget(b.id, patch)} />
