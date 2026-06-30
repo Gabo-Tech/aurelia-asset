@@ -112,12 +112,53 @@ export type CreditCard = {
   creditLimit?: number;
 };
 
+export type Budget = {
+  id: string;
+  /** Category this budget targets. */
+  categoryId: string;
+  /** Monthly budget amount (in the entry's source currency, treated as display currency). */
+  amount: number;
+  /** Always monthly for now. */
+  period: "monthly";
+};
+
+export type SavingsGoal = {
+  id: string;
+  name: string;
+  targetAmount: number;
+  currentAmount: number;
+  targetDate?: string; // ISO
+  color: string;
+  notes?: string;
+};
+
+export type Loan = {
+  id: string;
+  name: string;
+  /** Original principal. */
+  principal: number;
+  /** Annual interest rate as percent (e.g. 4.5 means 4.5%). */
+  apr: number;
+  /** Loan term in months. */
+  termMonths: number;
+  /** ISO date when the first payment is due. */
+  startDate: string;
+  /** Optional extra payment applied each month towards principal. */
+  extraMonthly?: number;
+  color: string;
+  notes?: string;
+  currency?: string;
+};
+
 export type AppState = {
   holdings: Holding[];
   cashflows: CashflowEntry[];
   transactions: HoldingTransaction[];
   categories: Category[];
   creditCards: CreditCard[];
+  budgets: Budget[];
+  goals: SavingsGoal[];
+  loans: Loan[];
   settings: Settings;
 };
 
@@ -167,6 +208,9 @@ export const DEFAULT_STATE: AppState = {
   transactions: [],
   categories: DEFAULT_CATEGORIES,
   creditCards: [],
+  budgets: [],
+  goals: [],
+  loans: [],
   settings: {
     useCorsProxy: true,
     corsProxy: "https://corsproxy.io/?",
@@ -174,6 +218,7 @@ export const DEFAULT_STATE: AppState = {
     displayCurrency: "USD",
   },
 };
+
 
 
 export type SearchResult = {
