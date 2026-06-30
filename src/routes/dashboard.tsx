@@ -149,8 +149,8 @@ function Dashboard() {
         }
       />
 
-      <div className="grid gap-5 lg:grid-cols-4" data-tour="dash-stats">
-        <Card className="lg:col-span-2 relative overflow-hidden border-border/60">
+      <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4" data-tour="dash-stats">
+        <Card className="sm:col-span-2 relative overflow-hidden border-border/60">
           <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent pointer-events-none" />
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -158,7 +158,7 @@ function Dashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-4xl sm:text-5xl font-semibold tracking-tight">
+            <div className="text-3xl sm:text-4xl xl:text-5xl font-semibold tracking-tight break-words tabular-nums">
               {mask(portfolioTotal, currency)}
             </div>
             <div className="mt-2 text-sm text-muted-foreground">
@@ -181,7 +181,7 @@ function Dashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-semibold tracking-tight">
+            <div className="text-2xl sm:text-3xl font-semibold tracking-tight break-words tabular-nums">
               {mask(netWorth, currency)}
             </div>
             <p className="mt-2 text-xs text-muted-foreground">
@@ -207,7 +207,7 @@ function Dashboard() {
           </CardHeader>
           <CardContent>
             <div
-              className={`text-3xl font-semibold tracking-tight ${
+              className={`text-2xl sm:text-3xl font-semibold tracking-tight break-words tabular-nums ${
                 net30 >= 0 ? "text-success" : "text-destructive"
               }`}
             >
