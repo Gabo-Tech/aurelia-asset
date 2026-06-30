@@ -94,22 +94,22 @@ export function ScrollAurora() {
   return (
     <div
       aria-hidden
-      className="pointer-events-none fixed inset-0 z-0 overflow-hidden"
+      className="pointer-events-none fixed inset-0 z-[1] overflow-hidden mix-blend-screen"
     >
       <div
         ref={aRef}
-        className="absolute -top-40 left-0 h-[65vh] w-[65vh] rounded-full opacity-[0.22] blur-3xl animate-aurora-drift-slow"
+        className="absolute -top-40 left-0 h-[75vh] w-[75vh] rounded-full opacity-80 blur-3xl animate-aurora-drift-slow"
         style={{
           background:
-            "radial-gradient(closest-side, hsl(var(--primary)/0.95), transparent 70%)",
+            "radial-gradient(closest-side, hsl(var(--primary)/1), transparent 70%)",
         }}
       />
       <div
         ref={bRef}
-        className="absolute top-[40vh] right-0 h-[70vh] w-[70vh] rounded-full opacity-[0.20] blur-3xl animate-aurora-drift-slower"
+        className="absolute top-[40vh] right-0 h-[80vh] w-[80vh] rounded-full opacity-70 blur-3xl animate-aurora-drift-slower"
         style={{
           background:
-            "radial-gradient(closest-side, hsl(var(--accent, var(--primary))/0.85), transparent 70%)",
+            "radial-gradient(closest-side, hsl(var(--accent, var(--primary))/1), transparent 70%)",
         }}
       />
     </div>
