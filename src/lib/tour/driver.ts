@@ -76,12 +76,12 @@ export function createTour(opts: {
     stagePadding: 6,
     stageRadius: 10,
     smoothScroll: true,
+    popoverOffset: 12,
     nextBtnText: labels.next,
     prevBtnText: labels.prev,
     doneBtnText: labels.done,
     progressText: labels.progress,
     onPopoverRender: (popover) => {
-      // Append a small skip link in the footer
       const skip = document.createElement("button");
       skip.innerText = labels.skip;
       skip.className = "driver-skip-btn";
@@ -94,13 +94,20 @@ export function createTour(opts: {
     steps: steps.map((s) => ({
       ...s,
       onHighlightStarted: async (_el, _step, ctx) => {
-        const def = steps[ctx.state.activeIndex ?? 0] as TourStepDef | undefined;
+        const idx = ctx.state.activeIndex ?? 0;
+        const def = steps[idx] as TourStepDef | undefined;
         if (!def) return;
         if (def.route && window.location.pathname !== def.route) {
           navigate(def.route);
         }
         if (def.selector) {
-          await waitForEl(def.selector);
+          const el = await waitForEl(def.selector);
+          if (!el) {
+            // Skip steps whose element isn't available (hidden on this viewport)
+            const isLast = idx >= steps.length - 1;
+            if (isLast) d.destroy();
+            else d.moveNext();
+          }
         }
       },
     })),
