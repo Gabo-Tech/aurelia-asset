@@ -269,8 +269,44 @@ function CashflowPage() {
   const colorFor = (name: string, fallbackGroup: CategoryGroup) =>
     prefs.nodeColors[name] ?? catByName.get(name)?.color ?? GROUP_COLORS[fallbackGroup];
 
-  // Expand recurring entries up to today for top-level totals and Sankey.
-  const expandedToToday = useMemo(() => expandCashflows(cashflows, new Date()), [cashflows]);
+  // Period selector for the flow diagram. Default to current month so the
+  // diagram naturally resets at the start of every month.
+  type SankeyPeriod = "week" | "month" | "year" | "all" | "custom";
+  const [sankeyPeriod, setSankeyPeriod] = useState<SankeyPeriod>("month");
+  const [sankeyFrom, setSankeyFrom] = useState(format(startOfMonth(new Date()), "yyyy-MM-dd"));
+  const [sankeyTo, setSankeyTo] = useState(format(new Date(), "yyyy-MM-dd"));
+
+  const sankeyInterval = useMemo(() => {
+    const now = new Date();
+    switch (sankeyPeriod) {
+      case "week":
+        return { start: startOfWeek(now, { weekStartsOn: 1 }), end: endOfWeek(now, { weekStartsOn: 1 }) };
+      case "month":
+        return { start: startOfMonth(now), end: endOfMonth(now) };
+      case "year":
+        return { start: startOfYear(now), end: endOfYear(now) };
+      case "custom":
+        return { start: parseISO(sankeyFrom), end: parseISO(sankeyTo) };
+      case "all":
+      default:
+        return null;
+    }
+  }, [sankeyPeriod, sankeyFrom, sankeyTo]);
+
+  const sankeyPeriodLabel = useMemo(() => {
+    if (!sankeyInterval) return t("more.entriesAllTime");
+    return `${format(sankeyInterval.start, "MMM d, yyyy")} – ${format(sankeyInterval.end, "MMM d, yyyy")}`;
+  }, [sankeyInterval, t]);
+
+  // Expand recurring entries within the active interval (or up to today for "all").
+  const expandedToToday = useMemo(() => {
+    const horizon = sankeyInterval
+      ? (sankeyInterval.end > new Date() ? sankeyInterval.end : new Date())
+      : new Date();
+    const all = expandCashflows(cashflows, horizon);
+    if (!sankeyInterval) return all;
+    return all.filter((c) => isWithinInterval(new Date(c.date), sankeyInterval));
+  }, [cashflows, sankeyInterval]);
 
   const valuesTop = useMemo(() => valuesByEntry(expandedToToday, toDisplay), [expandedToToday, toDisplay]);
 
@@ -517,8 +553,29 @@ function CashflowPage() {
 
 
         <Card className="border-border/60 min-w-0" data-tour="cf-sankey">
-          <CardHeader className="px-3 sm:px-6">
-            <CardTitle>{t("cashflow.flow")}</CardTitle>
+          <CardHeader className="px-3 sm:px-6 flex flex-row items-start justify-between gap-3 space-y-0">
+            <div className="min-w-0">
+              <CardTitle>{t("cashflow.flow")}</CardTitle>
+              <div className="mt-1 text-xs text-muted-foreground truncate">{sankeyPeriodLabel}</div>
+            </div>
+            <div className="flex flex-col items-end gap-2 shrink-0">
+              <Select value={sankeyPeriod} onValueChange={(v) => setSankeyPeriod(v as SankeyPeriod)}>
+                <SelectTrigger className="h-8 w-[140px] text-xs"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="week">{t("more.entriesThisWeek")}</SelectItem>
+                  <SelectItem value="month">{t("more.entriesThisMonth")}</SelectItem>
+                  <SelectItem value="year">{t("more.entriesThisYear")}</SelectItem>
+                  <SelectItem value="all">{t("more.entriesAllTime")}</SelectItem>
+                  <SelectItem value="custom">{t("more.entriesCustomRange")}</SelectItem>
+                </SelectContent>
+              </Select>
+              {sankeyPeriod === "custom" && (
+                <div className="flex gap-1">
+                  <Input type="date" className="h-8 w-[130px] text-xs" value={sankeyFrom} onChange={(e) => setSankeyFrom(e.target.value)} />
+                  <Input type="date" className="h-8 w-[130px] text-xs" value={sankeyTo} onChange={(e) => setSankeyTo(e.target.value)} />
+                </div>
+              )}
+            </div>
           </CardHeader>
           <CardContent className="px-2 sm:px-6">
             <ChartFrame
