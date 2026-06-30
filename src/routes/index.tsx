@@ -115,7 +115,7 @@ function LandingPage() {
     <div className="relative min-h-screen overflow-hidden bg-background text-foreground">
       <ScrollAurora />
       <MouseGlow />
-      <div className="relative z-10">
+      <div className="relative z-10 [&_section]:relative [&_section]:z-10 [&_section]:bg-background/70 [&_section]:backdrop-blur-[1px] [&_header]:bg-background/70">
         <SiteHeader />
         <Hero />
         <Reveal><SocialProof /></Reveal>
