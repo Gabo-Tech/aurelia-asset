@@ -134,7 +134,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         aria-label="Primary"
         data-tour="bottom-nav"
       >
-        <div className="grid grid-cols-5">
+        <div className="grid grid-cols-6">
           {nav.map((item) => {
             const active =
               pathname === item.to || pathname.startsWith(item.to + "/");
