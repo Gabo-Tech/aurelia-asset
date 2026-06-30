@@ -38,13 +38,27 @@ export function proxied(url: string) {
   return proxy + encodeURIComponent(url);
 }
 
-/** Build attempt chain: direct first when permitted, then disclosed proxies (preferred first). */
+function sameOriginProxy(rawUrl: string) {
+  return `/api/finance-proxy?url=${encodeURIComponent(rawUrl)}`;
+}
+
+function isDisclosedProxyAttempt(url: string) {
+  return DISCLOSED_PROXIES.some((p) => url.startsWith(p));
+}
+
+/** Build attempt chain: direct when useful, then our same-origin proxy, then optional disclosed public proxies. */
 function buildAttempts(rawUrl: string, preferDirect: boolean): string[] {
   const s = getSettings();
   const out: string[] = [];
   // Try direct first when the caller hints the endpoint is CORS-friendly,
-  // OR when the user has explicitly disabled the proxy.
+  // OR when the user has explicitly disabled public proxies.
   if (preferDirect || !s.useCorsProxy) out.push(rawUrl);
+  if (typeof window !== "undefined") out.push(sameOriginProxy(rawUrl));
+  // Native/static builds may not have a Start server route available, so keep
+  // a direct request in the chain after the same-origin proxy attempt.
+  if (!preferDirect && s.useCorsProxy) out.push(rawUrl);
+  if (!s.useCorsProxy) return Array.from(new Set(out));
+
   const primary = s.corsProxy || DISCLOSED_PROXIES[0];
   const ordered = [primary, ...DISCLOSED_PROXIES.filter((p) => p !== primary)];
   for (const p of ordered) {
@@ -54,7 +68,7 @@ function buildAttempts(rawUrl: string, preferDirect: boolean): string[] {
   if (out.length === (preferDirect || !s.useCorsProxy ? 1 : 0)) {
     for (const p of ordered) out.push(p + encodeURIComponent(rawUrl));
   }
-  return out;
+  return Array.from(new Set(out));
 }
 
 export function getFinnhubKey() {
@@ -84,7 +98,7 @@ export async function fetchJson<T>(url: string, retries = 1): Promise<T> {
   let lastErr: unknown;
   for (let i = 0; i <= retries; i++) {
     try {
-      return (await fetchOnce(url, "json")) as T;
+      return await fetchWithFallback<T>(url, { preferDirect: true });
     } catch (e) {
       lastErr = e;
       if (i < retries) await new Promise((r) => setTimeout(r, 300 * (i + 1)));
@@ -102,12 +116,17 @@ export async function fetchWithFallback<T>(
   let lastErr: unknown;
   for (const candidate of attempts) {
     try {
-      return (await fetchOnce(candidate, as)) as T;
+      const data = await fetchOnce(candidate, as);
+      if (
+        as === "text" &&
+        typeof data === "string" &&
+        /<(?:!doctype|html|body)\b/i.test(data.slice(0, 500))
+      ) {
+        throw new Error("Unexpected HTML response");
+      }
+      return data as T;
     } catch (e) {
       lastErr = e;
-      const status = (e as { status?: number }).status;
-      // A 4xx that isn't 429 means the URL is bad; no point trying more proxies.
-      if (status && status >= 400 && status < 500 && status !== 429) throw e;
       // Mark a proxy as down so other callers skip it briefly.
       for (const p of DISCLOSED_PROXIES) {
         if (candidate.startsWith(p)) markDown(p);

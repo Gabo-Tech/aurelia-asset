@@ -1,4 +1,5 @@
 import { getCache, setCache } from "./cache";
+import { fetchWithFallback } from "./client";
 
 /** USD-based rates: `rates[X]` = how many X per 1 USD. */
 export type FxRates = Record<string, number>;
@@ -37,18 +38,17 @@ export async function getFxRates(): Promise<FxRates> {
 }
 
 async function fetchOpenEr(url: string): Promise<FxRates> {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const data = (await res.json()) as { rates?: FxRates };
+  const data = await fetchWithFallback<{ rates?: FxRates }>(url, { preferDirect: true });
   if (!data.rates || typeof data.rates !== "object") throw new Error("Bad payload");
   return { USD: 1, ...data.rates };
 }
 
 async function fetchFrankfurter(): Promise<FxRates> {
   // Frankfurter is ECB-based (no USD as base in the index, but supports `base=USD`).
-  const res = await fetch("https://api.frankfurter.app/latest?from=USD");
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const data = (await res.json()) as { rates?: FxRates };
+  const data = await fetchWithFallback<{ rates?: FxRates }>(
+    "https://api.frankfurter.app/latest?from=USD",
+    { preferDirect: true },
+  );
   if (!data.rates || typeof data.rates !== "object") throw new Error("Bad payload");
   return { USD: 1, ...data.rates };
 }
