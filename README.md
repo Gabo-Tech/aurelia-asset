@@ -126,7 +126,128 @@ In **Settings -> Data**:
   Schema-validated; safe to keep as a backup.
 - **Import**: load a previously exported JSON file. Imports are
   validated with Zod and replace your current data after confirmation.
+  validated with Zod and replace your current data after confirmation.
 - **Reset**: wipes all local data (irreversible).
+
+#### Import file format
+
+The importer accepts the envelope produced by **Export**. Minimum
+viable file:
+
+```json
+{
+  "version": 1,
+  "exportedAt": "2026-06-30T12:00:00.000Z",
+  "state": {
+    "holdings": [
+      {
+        "id": "h_aapl",
+        "symbol": "AAPL",
+        "name": "Apple Inc.",
+        "type": "stock",
+        "quantity": 10,
+        "currentPrice": 195.5,
+        "priceCurrency": "USD",
+        "color": "#22c55e"
+      },
+      {
+        "id": "h_btc",
+        "symbol": "BTC",
+        "name": "Bitcoin",
+        "type": "crypto",
+        "quantity": 0.25,
+        "currentPrice": 65000,
+        "priceCurrency": "USD",
+        "color": "#f59e0b",
+        "coinGeckoId": "bitcoin"
+      }
+    ],
+    "cashflows": [
+      {
+        "id": "c_salary",
+        "kind": "income",
+        "source": "Acme Corp salary",
+        "category": "salary",
+        "amount": 3500,
+        "currency": "EUR",
+        "date": "2026-06-01",
+        "recurrence": { "frequency": "monthly" },
+        "description": "Net monthly salary"
+      },
+      {
+        "id": "c_rent",
+        "kind": "expense",
+        "source": "Apartment rent",
+        "category": "housing",
+        "amount": 1100,
+        "currency": "EUR",
+        "date": "2026-06-03",
+        "recurrence": { "frequency": "monthly", "until": "2027-06-01" }
+      },
+      {
+        "id": "c_tax",
+        "kind": "expense",
+        "source": "Income tax",
+        "category": "taxes",
+        "amount": 20,
+        "currency": "EUR",
+        "date": "2026-06-01",
+        "amountKind": "percent",
+        "percentOf": "c_salary"
+      }
+    ],
+    "transactions": [
+      {
+        "id": "t_aapl_buy",
+        "holdingId": "h_aapl",
+        "kind": "buy",
+        "date": "2025-01-15",
+        "quantity": 10,
+        "pricePerUnit": 180.2,
+        "currency": "USD",
+        "fees": 1.5
+      }
+    ],
+    "categories": [
+      { "id": "salary",  "name": "Salary",  "kind": "income",  "group": "income",     "color": "#22c55e" },
+      { "id": "housing", "name": "Housing", "kind": "expense", "group": "expense",    "color": "#ef4444" },
+      { "id": "taxes",   "name": "Taxes",   "kind": "expense", "group": "expense",    "color": "#f97316" },
+      { "id": "savings", "name": "Savings", "kind": "expense", "group": "savings",    "color": "#3b82f6" },
+      { "id": "invest",  "name": "Invest",  "kind": "expense", "group": "investment", "color": "#10b981" }
+    ],
+    "settings": {
+      "useCorsProxy": true,
+      "corsProxy": "https://corsproxy.io/?",
+      "displayCurrency": "EUR",
+      "privacyMode": false
+    }
+  },
+  "userPreferences": { "language": "en" }
+}
+```
+
+Field notes:
+
+- `id` is any unique string you choose; reuse it to update an item
+  on re-import.
+- `holdings.type`: `crypto` | `stock` | `etf` | `metal` | `other`.
+- `holdings.color` / `categories.color`: 3- or 6-digit hex.
+- `holdings.coinGeckoId` is required for live crypto pricing
+  (e.g. `bitcoin`, `ethereum`, `solana`).
+- `cashflows.kind`: `income` | `expense`. Use a **transfer category**
+  to model account-to-account moves (configure in the UI).
+- `cashflows.date` is `YYYY-MM-DD`.
+- `cashflows.recurrence.frequency`: `weekly` | `monthly` | `yearly`;
+  omit `recurrence` for one-off entries.
+- `cashflows.amountKind`: `fixed` (default) or `percent`; when
+  `percent`, set `percentOf` to another cashflow `id`.
+- `categories.group`: `income` | `expense` | `savings` | `investment`
+  (drives default colour grouping).
+- `settings.corsProxy` must be one of the two allow-listed values
+  shown above.
+- `version` and `exportedAt` are optional but recommended; a legacy
+  file containing only the `state` object is also accepted.
+
 
 ### Finnhub API key (optional, recommended)
 
