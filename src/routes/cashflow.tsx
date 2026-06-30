@@ -32,7 +32,18 @@ import {
 } from "@/components/ui/dialog";
 import { Trash2, Plus, Palette, RotateCcw, Settings as SettingsIcon, Pencil, Download } from "lucide-react";
 import { toast } from "sonner";
-import { format, startOfWeek, startOfMonth, startOfYear, endOfWeek, endOfMonth, endOfYear, isWithinInterval, parseISO, eachDayOfInterval, addWeeks, addMonths, addYears } from "date-fns";
+import { format, startOfWeek, startOfMonth, startOfYear, endOfWeek, endOfMonth, endOfYear, isWithinInterval, parseISO, eachDayOfInterval, addWeeks, addMonths, addYears, subMonths } from "date-fns";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import {
   LineChart,
   Line,
