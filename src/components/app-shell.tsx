@@ -104,7 +104,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </aside>
 
         {/* Mobile top bar */}
-        <header className="md:hidden flex items-center justify-between px-4 py-3 border-b border-border/60 bg-sidebar/95 backdrop-blur sticky top-0 z-20">
+        <header className="lg:hidden flex items-center justify-between px-4 py-3 border-b border-border/60 bg-sidebar/95 backdrop-blur sticky top-0 z-20">
           <Link to="/dashboard" className="flex items-center gap-2 min-w-0">
             <img src={logoAsset.url} alt="Logo" className="h-8 w-8 shrink-0 rounded-lg object-contain" />
             <div className="truncate font-semibold text-sm">{t("shell.brand")} {t("shell.brandTagline")}</div>
@@ -117,9 +117,9 @@ export function AppShell({ children }: { children: ReactNode }) {
         </header>
 
         {/* Main */}
-        <main className="flex-1 min-w-0 pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-12 flex flex-col">
+        <main className="flex-1 min-w-0 pb-[calc(5.5rem+env(safe-area-inset-bottom))] lg:pb-12 flex flex-col">
           <div className="flex-1 px-4 sm:px-8 2xl:px-12 3xl:px-16 py-6 sm:py-10">{ready ? children : <PageLoader />}</div>
-          <footer className="hidden md:flex mt-8 border-t border-border/60 px-4 sm:px-8 py-4 flex-wrap items-center justify-between gap-3 text-[11px] text-muted-foreground/80">
+          <footer className="hidden lg:flex mt-8 border-t border-border/60 px-4 sm:px-8 py-4 flex-wrap items-center justify-between gap-3 text-[11px] text-muted-foreground/80">
             <span>{t("shell.footerNote")}</span>
             <SponsorBanner variant="inline" />
           </footer>
