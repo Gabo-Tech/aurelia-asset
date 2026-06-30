@@ -1,6 +1,6 @@
 import { fetchWithFallback } from "./client";
 import { getCache, setCache } from "./cache";
-import type { PricePoint } from "../types";
+import type { PricePoint, SearchResult } from "../types";
 
 // Stooq serves daily OHLCV as CSV. It generally requires US tickers to be
 // suffixed with `.us` (e.g. AAPL.US). We try the user's symbol first, then
@@ -65,4 +65,43 @@ export async function getStooqHistory(symbol: string): Promise<PricePoint[]> {
 export async function getStooqQuote(symbol: string): Promise<number | null> {
   const h = await getStooqHistory(symbol);
   return h.length ? h[h.length - 1].price : null;
+}
+
+function parseQuoteCsv(csv: string): { symbol: string; price: number } | null {
+  const lines = csv.trim().split(/\r?\n/);
+  if (lines.length < 2 || /^no data/i.test(csv.trim())) return null;
+  const header = lines[0].toLowerCase().split(",");
+  const values = lines[1].split(",");
+  const symbolIdx = header.indexOf("symbol");
+  const closeIdx = header.indexOf("close");
+  const symbol = values[symbolIdx] || "";
+  const price = parseFloat(values[closeIdx] || "");
+  if (!symbol || !isFinite(price) || price <= 0) return null;
+  return { symbol: symbol.toUpperCase(), price };
+}
+
+/** Lightweight exact-ticker fallback for search when Yahoo is blocked. */
+export async function searchStooq(query: string): Promise<SearchResult[]> {
+  const q = query.trim();
+  if (q.length < 2) return [];
+  const key = `st:search:${q.toLowerCase()}`;
+  const cached = getCache<SearchResult[]>(key);
+  if (cached) return cached;
+
+  for (const v of variants(q)) {
+    try {
+      const url = `https://stooq.com/q/l/?s=${encodeURIComponent(v)}&f=sc&h&e=csv`;
+      const csv = await fetchWithFallback<string>(url, { as: "text", preferDirect: true });
+      const parsed = parseQuoteCsv(csv);
+      if (!parsed) continue;
+      const symbol = parsed.symbol.replace(/\.US$/i, "");
+      const result: SearchResult[] = [
+        { symbol, name: `${symbol} market quote`, type: "stock" },
+      ];
+      setCache(key, result, 10 * 60 * 1000);
+      return result;
+    } catch {}
+  }
+
+  return [];
 }

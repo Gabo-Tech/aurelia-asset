@@ -2,7 +2,7 @@ import type { Holding, PricePoint, SearchResult } from "../types";
 import { searchCrypto, getCryptoPrice, getCryptoHistory } from "./coingecko";
 import { searchYahoo, getYahooQuote, getYahooHistory } from "./yahoo";
 import { finnhubQuote, finnhubHistory } from "./finnhub";
-import { getStooqHistory, getStooqQuote } from "./stooq";
+import { getStooqHistory, getStooqQuote, searchStooq } from "./stooq";
 import { getBinanceHistory, getBinanceQuote } from "./binance";
 import { getCache, getCacheStale, setCache, bustCache } from "./cache";
 
@@ -11,7 +11,11 @@ export async function searchAssets(
   mode: "crypto" | "stock"
 ): Promise<SearchResult[]> {
   if (mode === "crypto") return searchCrypto(query);
-  return searchYahoo(query);
+  try {
+    const yahoo = await searchYahoo(query);
+    if (yahoo.length) return yahoo;
+  } catch {}
+  return searchStooq(query);
 }
 
 export type FetchedQuote = { price: number; currency?: string };
