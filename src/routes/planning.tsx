@@ -15,6 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Trash2, Plus, Pencil } from "lucide-react";
 import { expandCashflows, liquidityImpact, valuesByEntry } from "./cashflow";
 import { amortize } from "@/lib/finance/amortization";
+import { CURRENCIES } from "@/lib/currency";
 import {
   Area,
   AreaChart,
