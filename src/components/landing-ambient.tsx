@@ -48,10 +48,10 @@ export function MouseGlow() {
     >
       <div
         ref={ref}
-        className="absolute h-[600px] w-[600px] rounded-full opacity-[0.10] blur-3xl will-change-transform"
+        className="absolute h-[700px] w-[700px] rounded-full opacity-[0.28] blur-3xl will-change-transform"
         style={{
           background:
-            "radial-gradient(closest-side, hsl(var(--primary)/0.55), transparent 70%)",
+            "radial-gradient(closest-side, hsl(var(--primary)/0.9), transparent 70%)",
         }}
       />
     </div>
