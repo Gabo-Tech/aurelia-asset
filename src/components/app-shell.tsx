@@ -63,9 +63,9 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <div className="mx-auto flex max-w-[1400px] flex-col md:flex-row 2xl:max-w-[1600px] 3xl:max-w-[1840px] 4xl:max-w-[2200px]">
+      <div className="mx-auto flex max-w-[1400px] flex-col lg:flex-row 2xl:max-w-[1600px] 3xl:max-w-[1840px] 4xl:max-w-[2200px]">
         {/* Sidebar (desktop) */}
-        <aside className="hidden md:flex md:w-64 md:flex-col 2xl:w-72 3xl:w-80 border-r border-border/60 bg-sidebar min-h-screen sticky top-0">
+        <aside className="hidden lg:flex lg:w-64 lg:flex-col 2xl:w-72 3xl:w-80 border-r border-border/60 bg-sidebar min-h-screen sticky top-0">
           <div className="flex items-center gap-2 px-6 py-7">
             <img src={logoAsset.url} alt="Logo" className="h-9 w-9 rounded-xl object-contain" />
             <div className="min-w-0 flex-1">
