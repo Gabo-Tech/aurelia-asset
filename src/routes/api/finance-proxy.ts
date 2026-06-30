@@ -53,6 +53,7 @@ export const Route = createFileRoute("/api/finance-proxy")({
 
         const upstream = await fetch(target.toString(), {
           signal: AbortSignal.timeout(12_000),
+          redirect: "manual",
           headers: {
             Accept: request.headers.get("accept") || "application/json, text/plain, */*",
             "User-Agent":
