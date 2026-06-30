@@ -10,16 +10,16 @@ import {
 } from "@/lib/tour/driver";
 import { buildTourSteps } from "@/lib/tour/steps";
 
-function useIsMobile() {
+function detectMobile() {
   if (typeof window === "undefined") return false;
-  return window.matchMedia("(max-width: 767px)").matches;
+  return window.matchMedia("(max-width: 1023px)").matches;
 }
 
 async function startTour(
   t: ReturnType<typeof useTranslation>["t"],
   navigate: (path: string) => void,
 ) {
-  const isMobile = useIsMobile();
+  const isMobile = detectMobile();
   const steps = buildTourSteps(t, isMobile);
   const tour = createTour({
     steps,

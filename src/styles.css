@@ -166,7 +166,22 @@
   border: 1px solid var(--border) !important;
   border-radius: 12px !important;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.35) !important;
-  max-width: 360px;
+  max-width: min(360px, calc(100vw - 24px)) !important;
+}
+@media (max-width: 640px) {
+  .driver-popover {
+    max-width: calc(100vw - 16px) !important;
+    width: calc(100vw - 16px) !important;
+  }
+  .driver-popover-footer {
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+  }
+  .driver-popover-footer button,
+  .driver-popover-footer .driver-skip-btn {
+    padding: 8px 12px !important;
+    font-size: 13px !important;
+  }
 }
 .driver-popover-title {
   font-weight: 600 !important;
