@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 
 /**
- * MouseGlow: a very subtle radial glow that follows the cursor.
- * Pointer-events disabled, fixed to viewport, dimmed for elegance.
+ * MouseGlow: a soft radial glow that follows the cursor.
+ * Pointer-events disabled, fixed to viewport, behind content.
  */
 export function MouseGlow() {
   const ref = useRef<HTMLDivElement | null>(null);
@@ -29,7 +29,7 @@ export function MouseGlow() {
       // ease toward target for smooth, slow motion
       curX += (targetX - curX) * 0.06;
       curY += (targetY - curY) * 0.06;
-      el.style.transform = `translate3d(${curX - 300}px, ${curY - 300}px, 0)`;
+      el.style.transform = `translate3d(${curX - 380}px, ${curY - 380}px, 0)`;
       raf = requestAnimationFrame(tick);
     };
 
@@ -44,14 +44,14 @@ export function MouseGlow() {
   return (
     <div
       aria-hidden
-      className="pointer-events-none fixed inset-0 z-[1] overflow-hidden mix-blend-screen"
+      className="pointer-events-none fixed inset-0 z-[2] overflow-hidden"
     >
       <div
         ref={ref}
-        className="absolute h-[800px] w-[800px] rounded-full opacity-70 blur-3xl will-change-transform"
+        className="absolute h-[760px] w-[760px] rounded-full opacity-75 blur-3xl will-change-transform"
         style={{
           background:
-            "radial-gradient(closest-side, hsl(var(--primary)/1), transparent 70%)",
+            "radial-gradient(circle, color-mix(in srgb, var(--primary) 80%, white 20%) 0%, color-mix(in srgb, var(--primary) 55%, transparent) 34%, transparent 72%)",
         }}
       />
     </div>
@@ -59,8 +59,8 @@ export function MouseGlow() {
 }
 
 /**
- * ScrollAurora: two slow drifting blobs whose vertical position
- * subtly reacts to scroll. Extremely low opacity, behind content.
+ * ScrollAurora: slow drifting color fields whose vertical position
+ * reacts to scroll. Visible enough to read as ambient motion.
  */
 export function ScrollAurora() {
   const aRef = useRef<HTMLDivElement | null>(null);
@@ -94,22 +94,29 @@ export function ScrollAurora() {
   return (
     <div
       aria-hidden
-      className="pointer-events-none fixed inset-0 z-[1] overflow-hidden mix-blend-screen"
+      className="pointer-events-none fixed inset-0 z-[2] overflow-hidden"
     >
       <div
         ref={aRef}
-        className="absolute -top-40 left-0 h-[75vh] w-[75vh] rounded-full opacity-80 blur-3xl animate-aurora-drift-slow"
+        className="absolute -top-36 -left-24 h-[82vh] w-[82vh] rounded-full opacity-80 blur-3xl animate-aurora-drift-slow"
         style={{
           background:
-            "radial-gradient(closest-side, hsl(var(--primary)/1), transparent 70%)",
+            "radial-gradient(circle, color-mix(in srgb, var(--primary) 85%, white 15%) 0%, color-mix(in srgb, var(--primary) 42%, transparent) 42%, transparent 74%)",
         }}
       />
       <div
         ref={bRef}
-        className="absolute top-[40vh] right-0 h-[80vh] w-[80vh] rounded-full opacity-70 blur-3xl animate-aurora-drift-slower"
+        className="absolute top-[32vh] -right-28 h-[86vh] w-[86vh] rounded-full opacity-75 blur-3xl animate-aurora-drift-slower"
         style={{
           background:
-            "radial-gradient(closest-side, hsl(var(--accent, var(--primary))/1), transparent 70%)",
+            "radial-gradient(circle, color-mix(in srgb, var(--chart-2) 78%, white 22%) 0%, color-mix(in srgb, var(--chart-4) 46%, transparent) 44%, transparent 76%)",
+        }}
+      />
+      <div
+        className="absolute left-1/2 top-1/4 h-[65vh] w-[65vh] -translate-x-1/2 rounded-full opacity-50 blur-3xl"
+        style={{
+          background:
+            "radial-gradient(circle, color-mix(in srgb, var(--chart-3) 50%, transparent) 0%, transparent 68%)",
         }}
       />
     </div>
