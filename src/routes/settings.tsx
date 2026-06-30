@@ -26,7 +26,8 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { PageHeader } from "@/components/app-shell";
-import { Download, Upload, RotateCcw, FileJson, FileSpreadsheet, Languages } from "lucide-react";
+import { Download, Upload, RotateCcw, FileJson, FileSpreadsheet, Languages, RefreshCw } from "lucide-react";
+import { clearPriceHistoryCache } from "@/lib/finance";
 import { toast } from "sonner";
 import { z } from "zod";
 import type { AppState } from "@/lib/types";
@@ -355,6 +356,26 @@ function SettingsPage() {
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground mt-2">{t("settings.api.finnhubFootnote")}</p>
+            </div>
+
+            <div className="flex items-start justify-between gap-4 pt-2 border-t border-border/40">
+              <div>
+                <Label className="text-sm">{t("settings.api.clearPriceCache", { defaultValue: "Refresh price history" })}</Label>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {t("settings.api.clearPriceCacheHelp", { defaultValue: "Drop cached price data so the next chart load re-fetches from the providers." })}
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  clearPriceHistoryCache();
+                  toast.success(t("settings.api.priceCacheCleared", { defaultValue: "Price cache cleared" }));
+                }}
+              >
+                <RefreshCw className="mr-2 h-4 w-4" />
+                {t("common.refresh", { defaultValue: "Refresh" })}
+              </Button>
             </div>
           </CardContent>
         </Card>
