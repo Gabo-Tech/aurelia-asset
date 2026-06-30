@@ -98,18 +98,18 @@ export function ScrollAurora() {
     >
       <div
         ref={aRef}
-        className="absolute -top-40 left-0 h-[55vh] w-[55vh] rounded-full opacity-[0.07] blur-3xl animate-aurora-drift-slow"
+        className="absolute -top-40 left-0 h-[65vh] w-[65vh] rounded-full opacity-[0.22] blur-3xl animate-aurora-drift-slow"
         style={{
           background:
-            "radial-gradient(closest-side, hsl(var(--primary)/0.7), transparent 70%)",
+            "radial-gradient(closest-side, hsl(var(--primary)/0.95), transparent 70%)",
         }}
       />
       <div
         ref={bRef}
-        className="absolute top-[40vh] right-0 h-[60vh] w-[60vh] rounded-full opacity-[0.06] blur-3xl animate-aurora-drift-slower"
+        className="absolute top-[40vh] right-0 h-[70vh] w-[70vh] rounded-full opacity-[0.20] blur-3xl animate-aurora-drift-slower"
         style={{
           background:
-            "radial-gradient(closest-side, hsl(var(--accent, var(--primary))/0.6), transparent 70%)",
+            "radial-gradient(closest-side, hsl(var(--accent, var(--primary))/0.85), transparent 70%)",
         }}
       />
     </div>
