@@ -1,6 +1,5 @@
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
-import LanguageDetector from "i18next-browser-languagedetector";
 import en from "./locales/en";
 import es from "./locales/es";
 import pt from "./locales/pt";
@@ -21,9 +20,10 @@ export type LanguageCode = (typeof SUPPORTED_LANGUAGES)[number]["code"];
 
 export const LANG_STORAGE_KEY = "ept_lang";
 
+const SUPPORTED_CODES = ["en", "es", "pt", "nl", "de", "ca-valencia", "ca"];
+
 if (!i18n.isInitialized) {
   i18n
-    .use(LanguageDetector)
     .use(initReactI18next)
     .init({
       resources: {
@@ -35,17 +35,31 @@ if (!i18n.isInitialized) {
         "ca-valencia": { translation: ca },
         ca: { translation: ca },
       },
+      // Always boot in English so SSR HTML matches the first client render.
+      // We swap to the user's preferred language right after hydration.
+      lng: "en",
       fallbackLng: "en",
-      supportedLngs: ["en", "es", "pt", "nl", "de", "ca-valencia", "ca"],
+      supportedLngs: SUPPORTED_CODES,
       nonExplicitSupportedLngs: true,
       interpolation: { escapeValue: false },
-      detection: {
-        order: ["localStorage", "navigator"],
-        lookupLocalStorage: LANG_STORAGE_KEY,
-        caches: ["localStorage"],
-      },
       react: { useSuspense: false },
     });
+
+  if (typeof window !== "undefined") {
+    setTimeout(() => {
+      try {
+        const stored = window.localStorage.getItem(LANG_STORAGE_KEY);
+        const navLang = window.navigator.language;
+        const pick =
+          (stored && SUPPORTED_CODES.find((c) => stored.startsWith(c))) ||
+          (navLang && SUPPORTED_CODES.find((c) => navLang.startsWith(c))) ||
+          "en";
+        if (pick && pick !== i18n.language) {
+          i18n.changeLanguage(pick);
+        }
+      } catch {}
+    }, 0);
+  }
 }
 
 export default i18n;
