@@ -128,7 +128,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       {/* Mobile bottom nav */}
       <nav
-        className="md:hidden fixed bottom-0 inset-x-0 z-30 border-t border-border/60 bg-sidebar/95 backdrop-blur pb-[env(safe-area-inset-bottom)]"
+        className="lg:hidden fixed bottom-0 inset-x-0 z-30 border-t border-border/60 bg-sidebar/95 backdrop-blur pb-[env(safe-area-inset-bottom)]"
         aria-label="Primary"
         data-tour="bottom-nav"
       >
