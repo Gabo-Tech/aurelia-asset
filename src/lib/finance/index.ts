@@ -2,6 +2,9 @@ import type { Holding, PricePoint, SearchResult } from "../types";
 import { searchCrypto, getCryptoPrice, getCryptoHistory } from "./coingecko";
 import { searchYahoo, getYahooQuote, getYahooHistory } from "./yahoo";
 import { finnhubQuote, finnhubHistory } from "./finnhub";
+import { getStooqHistory, getStooqQuote } from "./stooq";
+import { getBinanceHistory, getBinanceQuote } from "./binance";
+import { getCache, getCacheStale, setCache, bustCache } from "./cache";
 
 export async function searchAssets(
   query: string,
@@ -13,28 +16,64 @@ export async function searchAssets(
 
 export type FetchedQuote = { price: number; currency?: string };
 
+/** Run providers in order, return the first one that yields a finite price. */
+async function firstQuote(
+  chain: Array<() => Promise<FetchedQuote | null>>,
+  fallback: FetchedQuote,
+): Promise<FetchedQuote> {
+  for (const fn of chain) {
+    try {
+      const q = await fn();
+      if (q && isFinite(q.price) && q.price > 0) return q;
+    } catch {}
+  }
+  return fallback;
+}
+
 export async function fetchCurrentQuote(h: Holding): Promise<FetchedQuote> {
   if (h.manualPrice != null) return { price: h.manualPrice, currency: h.priceCurrency };
-  if (h.type === "crypto" && h.coinGeckoId) {
-    try {
-      return { price: await getCryptoPrice(h.coinGeckoId), currency: "USD" };
-    } catch {
-      return { price: h.currentPrice ?? 0, currency: h.priceCurrency ?? "USD" };
-    }
-  }
   if (h.type === "other") {
     const last = h.customHistory?.length
       ? h.customHistory[h.customHistory.length - 1].p
       : undefined;
     return { price: last ?? h.currentPrice ?? 0, currency: h.priceCurrency };
   }
-  try {
-    const q = await getYahooQuote(h.symbol);
-    if (q.price) return { price: q.price, currency: q.currency ?? h.priceCurrency };
-  } catch {}
-  const fb = await finnhubQuote(h.symbol);
-  if (fb != null) return { price: fb, currency: "USD" };
-  return { price: h.currentPrice ?? 0, currency: h.priceCurrency };
+  const fallback: FetchedQuote = {
+    price: h.currentPrice ?? 0,
+    currency: h.priceCurrency,
+  };
+  if (h.type === "crypto") {
+    return firstQuote(
+      [
+        async () =>
+          h.coinGeckoId
+            ? { price: await getCryptoPrice(h.coinGeckoId), currency: "USD" }
+            : null,
+        async () => {
+          const p = await getBinanceQuote(h.symbol);
+          return p != null ? { price: p, currency: "USD" } : null;
+        },
+      ],
+      fallback,
+    );
+  }
+  return firstQuote(
+    [
+      async () => {
+        const q = await getYahooQuote(h.symbol);
+        return q.price ? { price: q.price, currency: q.currency ?? h.priceCurrency } : null;
+      },
+      async () => {
+        const p = await getStooqQuote(h.symbol);
+        return p != null ? { price: p, currency: h.priceCurrency ?? "USD" } : null;
+      },
+      async () => {
+        const p = await finnhubQuote(h.symbol);
+        return p != null ? { price: p, currency: "USD" } : null;
+      },
+    ],
+    fallback,
+  );
 }
 
 /** Back-compat: price only. */
@@ -42,7 +81,6 @@ export async function fetchCurrentPrice(h: Holding): Promise<number> {
   return (await fetchCurrentQuote(h)).price;
 }
 
-// Map UI period -> {cryptoDays, yahooRange, approxDays}
 export const PERIODS = [
   { id: "1D", label: "1D", cgDays: 1, yhRange: "1d", days: 1 },
   { id: "7D", label: "7D", cgDays: 7, yhRange: "5d", days: 7 },
@@ -58,31 +96,153 @@ export const PERIODS = [
 
 export type PeriodId = (typeof PERIODS)[number]["id"];
 
-export async function fetchHistorical(h: Holding, period: PeriodId): Promise<PricePoint[]> {
-  const p = PERIODS.find((x) => x.id === period)!;
-  if (h.type === "crypto" && h.coinGeckoId) {
+// --- max-history caching ---------------------------------------------------
+// Daily history rarely changes for past dates, so we fetch the full series
+// once per asset and slice it in memory for every period switch. This makes
+// the short ranges (1M / 3M / 6M) reliable even when the upstream APIs are
+// rate-limiting us, because they're served from cache.
+
+const MAX_HIST_KEY = (h: Holding) => `mh:${h.type}:${h.coinGeckoId || h.symbol}`;
+const MAX_HIST_TTL = 24 * 60 * 60 * 1000;
+const intraDay = new Map<string, Promise<PricePoint[]>>();
+const maxHistInflight = new Map<string, Promise<PricePoint[]>>();
+
+async function fetchFromChain(
+  chain: Array<() => Promise<PricePoint[]>>,
+): Promise<PricePoint[]> {
+  for (const fn of chain) {
     try {
-      return await getCryptoHistory(h.coinGeckoId, p.cgDays);
-    } catch {
-      return [];
+      const data = await fn();
+      if (data.length) return data;
+    } catch {}
+  }
+  return [];
+}
+
+async function fetchMaxHistory(h: Holding): Promise<PricePoint[]> {
+  const key = MAX_HIST_KEY(h);
+  const fresh = getCache<{ t: number; p: number }[]>(key);
+  if (fresh) return fresh.map((x) => ({ date: new Date(x.t), price: x.p }));
+  const existing = maxHistInflight.get(key);
+  if (existing) return existing;
+
+  const job = (async (): Promise<PricePoint[]> => {
+    if (h.type === "other") {
+      return (h.customHistory ?? []).map((x) => ({
+        date: new Date(x.t),
+        price: x.p,
+      }));
     }
-  }
+    const chain: Array<() => Promise<PricePoint[]>> =
+      h.type === "crypto"
+        ? [
+            async () =>
+              h.coinGeckoId ? await getCryptoHistory(h.coinGeckoId, "max") : [],
+            async () => await getBinanceHistory(h.symbol),
+          ]
+        : [
+            async () => await getYahooHistory(h.symbol, "max"),
+            async () => await getStooqHistory(h.symbol),
+            async () => {
+              const to = Math.floor(Date.now() / 1000);
+              const from = to - 10 * 365 * 86400;
+              return (await finnhubHistory(h.symbol, from, to)) ?? [];
+            },
+          ];
+    const data = await fetchFromChain(chain);
+    if (data.length) {
+      setCache(
+        key,
+        data.map((x) => ({ t: x.date.getTime(), p: x.price })),
+        MAX_HIST_TTL,
+      );
+    } else {
+      // Fall back to whatever we previously had (even if expired) so the UI
+      // isn't empty just because the API is currently rate-limited.
+      const stale = getCacheStale<{ t: number; p: number }[]>(key);
+      if (stale) return stale.map((x) => ({ date: new Date(x.t), price: x.p }));
+    }
+    return data;
+  })().finally(() => {
+    maxHistInflight.delete(key);
+  });
+
+  maxHistInflight.set(key, job);
+  return job;
+}
+
+function sliceByDays(points: PricePoint[], days: number): PricePoint[] {
+  if (!points.length || days >= 36500) return points;
+  const cutoff = Date.now() - days * 86400000;
+  return points.filter((p) => p.date.getTime() >= cutoff);
+}
+
+function sliceYtd(points: PricePoint[]): PricePoint[] {
+  const start = new Date(new Date().getFullYear(), 0, 1).getTime();
+  return points.filter((p) => p.date.getTime() >= start);
+}
+
+async function fetchIntraday(h: Holding): Promise<PricePoint[]> {
+  const key = `intra:${h.type}:${h.coinGeckoId || h.symbol}`;
+  const existing = intraDay.get(key);
+  if (existing) return existing;
+  const cached = getCache<{ t: number; p: number }[]>(key);
+  if (cached) return cached.map((x) => ({ date: new Date(x.t), price: x.p }));
+  const job = (async (): Promise<PricePoint[]> => {
+    let data: PricePoint[] = [];
+    try {
+      if (h.type === "crypto" && h.coinGeckoId) {
+        data = await getCryptoHistory(h.coinGeckoId, 1);
+      } else if (h.type !== "crypto" && h.type !== "other") {
+        data = await getYahooHistory(h.symbol, "1d");
+      }
+    } catch {}
+    if (data.length) {
+      setCache(
+        key,
+        data.map((x) => ({ t: x.date.getTime(), p: x.price })),
+        5 * 60 * 1000,
+      );
+    }
+    return data;
+  })().finally(() => {
+    intraDay.delete(key);
+  });
+  intraDay.set(key, job);
+  return job;
+}
+
+export async function fetchHistorical(h: Holding, period: PeriodId): Promise<PricePoint[]> {
   if (h.type === "other") {
-    const hist = h.customHistory ?? [];
-    if (!hist.length) return [];
-    const cutoff = period === "Max" ? 0 : Date.now() - p.days * 86400000;
-    return hist
-      .filter((x) => x.t >= cutoff)
-      .map((x) => ({ date: new Date(x.t), price: x.p }));
+    const hist = (h.customHistory ?? []).map((x) => ({
+      date: new Date(x.t),
+      price: x.p,
+    }));
+    if (period === "Max") return hist;
+    if (period === "YTD") return sliceYtd(hist);
+    const p = PERIODS.find((x) => x.id === period)!;
+    return sliceByDays(hist, p.days);
   }
-  try {
-    const data = await getYahooHistory(h.symbol, p.yhRange);
-    if (data.length) return data;
-  } catch {}
-  const to = Math.floor(Date.now() / 1000);
-  const from = to - p.days * 86400;
-  const fb = await finnhubHistory(h.symbol, from, to);
-  return fb ?? [];
+  if (period === "1D") {
+    const intra = await fetchIntraday(h);
+    if (intra.length) return intra;
+  }
+  const full = await fetchMaxHistory(h);
+  if (!full.length) return [];
+  if (period === "Max") return full;
+  if (period === "YTD") return sliceYtd(full);
+  const p = PERIODS.find((x) => x.id === period)!;
+  return sliceByDays(full, p.days);
+}
+
+/** Drop every cached price history (max + intraday + per-provider). */
+export function clearPriceHistoryCache() {
+  bustCache("mh:");
+  bustCache("intra:");
+  bustCache("yh:hist:");
+  bustCache("cg:hist:");
+  bustCache("st:hist:");
+  bustCache("bn:hist:");
 }
 
 export type PortfolioHistoryPoint = {
@@ -100,7 +260,6 @@ export async function fetchPortfolioHistory(
   const series = await Promise.all(
     holdings.map(async (h) => ({ h, points: await fetchHistorical(h, period) }))
   );
-  // Build date union (day-bucket)
   const dayKeys = new Set<number>();
   for (const s of series) {
     for (const pt of s.points) {
@@ -112,7 +271,6 @@ export async function fetchPortfolioHistory(
   if (!dayKeys.size) return [];
   const days = Array.from(dayKeys).sort((a, b) => a - b);
 
-  // For each holding, build sorted points and forward-fill
   const filled = series.map(({ h, points }) => {
     const sorted = [...points].sort((a, b) => a.date.getTime() - b.date.getTime());
     const map = new Map<number, number>();
