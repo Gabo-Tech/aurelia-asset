@@ -159,10 +159,9 @@ export function createTour(opts: {
             }
           }
         } else if (needsNav) {
-          // Center popover on a new route: wait a beat for the page to swap.
           await new Promise((r) => window.setTimeout(r, 120));
           try {
-            d.highlight({ popover: def.popover });
+            (d as unknown as { refresh?: () => void }).refresh?.();
           } catch {
             /* noop */
           }
