@@ -30,6 +30,12 @@ export function buildTourSteps(t: TFunction, isMobile: boolean): TourStepDef[] {
     },
   });
 
+  // On mobile the sticky header sits at top and the bottom nav sits at bottom,
+  // so top-bar controls read best with a "bottom" popover, and page content
+  // reads best with "top" (popover above the element, away from bottom nav).
+  const pageSide: "top" | "bottom" = isMobile ? "top" : "bottom";
+  const contentTopSide: "top" | "bottom" = "top";
+
   const steps: TourStepDef[] = [
     center("welcome", "/dashboard"),
     // Shell
@@ -40,37 +46,36 @@ export function buildTourSteps(t: TFunction, isMobile: boolean): TourStepDef[] {
     step("privacy", '[data-tour="privacy-toggle"]', "/dashboard", "bottom"),
 
     // Dashboard
-    step("dashStats", '[data-tour="dash-stats"]', "/dashboard", "bottom"),
-    step("dashAllocation", '[data-tour="dash-allocation"]', "/dashboard", "top"),
-    step("dashBreakdown", '[data-tour="dash-breakdown"]', "/dashboard", "top"),
+    step("dashStats", '[data-tour="dash-stats"]', "/dashboard", pageSide),
+    step("dashAllocation", '[data-tour="dash-allocation"]', "/dashboard", contentTopSide),
+    step("dashBreakdown", '[data-tour="dash-breakdown"]', "/dashboard", contentTopSide),
 
     // Holdings
-    step("holdingsAdd", '[data-tour="holdings-add"]', "/holdings", "bottom"),
-    step("holdingsFilters", '[data-tour="holdings-filters"]', "/holdings", "bottom"),
-    step("holdingsTable", '[data-tour="holdings-table"]', "/holdings", "top"),
-    step("holdingsCharts", '[data-tour="holdings-charts"]', "/holdings", "top"),
-    step("holdingsTx", '[data-tour="holdings-tx"]', "/holdings", "top"),
+    step("holdingsAdd", '[data-tour="holdings-add"]', "/holdings", pageSide),
+    step("holdingsFilters", '[data-tour="holdings-filters"]', "/holdings", pageSide),
+    step("holdingsTable", '[data-tour="holdings-table"]', "/holdings", contentTopSide),
+    step("holdingsCharts", '[data-tour="holdings-charts"]', "/holdings", contentTopSide),
+    step("holdingsTx", '[data-tour="holdings-tx"]', "/holdings", contentTopSide),
 
     // Performance
-    step("perfPeriod", '[data-tour="perf-period"]', "/performance", "bottom"),
-    step("perfAssets", '[data-tour="perf-assets"]', "/performance", "bottom"),
-    step("perfChart", '[data-tour="perf-chart"]', "/performance", "top"),
-    step("perfReturns", '[data-tour="perf-returns"]', "/performance", "top"),
+    step("perfPeriod", '[data-tour="perf-period"]', "/performance", pageSide),
+    step("perfAssets", '[data-tour="perf-assets"]', "/performance", pageSide),
+    step("perfChart", '[data-tour="perf-chart"]', "/performance", contentTopSide),
+    step("perfReturns", '[data-tour="perf-returns"]', "/performance", contentTopSide),
 
     // Cashflow
-    step("cfAdd", '[data-tour="cf-add"]', "/cashflow", "bottom"),
-    step("cfSankey", '[data-tour="cf-sankey"]', "/cashflow", "top"),
-    step("cfEntries", '[data-tour="cf-entries"]', "/cashflow", "top"),
-    step("cfCards", '[data-tour="cf-cards"]', "/cashflow", "top"),
+    step("cfAdd", '[data-tour="cf-add"]', "/cashflow", pageSide),
+    step("cfSankey", '[data-tour="cf-sankey"]', "/cashflow", contentTopSide),
+    step("cfEntries", '[data-tour="cf-entries"]', "/cashflow", contentTopSide),
+    step("cfCards", '[data-tour="cf-cards"]', "/cashflow", contentTopSide),
 
     // Settings
-    step("setApi", '[data-tour="settings-api"]', "/settings", "bottom"),
-    step("setLanguage", '[data-tour="settings-language"]', "/settings", "bottom"),
-    step("setData", '[data-tour="settings-data"]', "/settings", "top"),
+    step("setApi", '[data-tour="settings-api"]', "/settings", pageSide),
+    step("setLanguage", '[data-tour="settings-language"]', "/settings", pageSide),
+    step("setData", '[data-tour="settings-data"]', "/settings", contentTopSide),
 
     center("finish", "/dashboard"),
   ];
 
-  // Filter out steps whose selector is missing on mobile (where some are hidden)
   return steps;
 }

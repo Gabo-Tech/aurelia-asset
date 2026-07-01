@@ -32,6 +32,38 @@ export function resetTourCompleted(): void {
 
 export const resetTourCompletion = resetTourCompleted;
 
+function isMobileViewport() {
+  if (typeof window === "undefined") return false;
+  return window.matchMedia("(max-width: 1023px)").matches;
+}
+
+function hasStickyOrFixedAncestor(el: Element | null): boolean {
+  let cur: Element | null = el;
+  while (cur && cur !== document.body) {
+    const pos = getComputedStyle(cur as HTMLElement).position;
+    if (pos === "fixed" || pos === "sticky") return true;
+    cur = cur.parentElement;
+  }
+  return false;
+}
+
+/** Scroll respecting sticky mobile header (top) and bottom nav. */
+function scrollElementIntoSafeView(el: HTMLElement) {
+  if (hasStickyOrFixedAncestor(el)) return; // already pinned - don't scroll
+  const rect = el.getBoundingClientRect();
+  const mobile = isMobileViewport();
+  const topInset = mobile ? 72 : 24; // sticky header
+  const bottomInset = mobile ? 96 : 24; // bottom nav
+  const viewportH = window.innerHeight;
+  const safeTop = topInset;
+  const safeBottom = viewportH - bottomInset;
+  const inView = rect.top >= safeTop && rect.bottom <= safeBottom;
+  if (inView) return;
+  const targetY =
+    window.scrollY + rect.top - Math.max(topInset + 16, (viewportH - rect.height) / 2);
+  window.scrollTo({ top: Math.max(0, targetY), behavior: "smooth" });
+}
+
 export async function waitForEl(
   selector: string,
   timeoutMs = 2500,
@@ -69,14 +101,17 @@ export function createTour(opts: {
 }): Driver {
   const { steps, navigate, labels, onClose } = opts;
 
+  const mobile = isMobileViewport();
+
   const d = driver({
     showProgress: true,
     allowClose: true,
-    overlayOpacity: 0.6,
-    stagePadding: 6,
-    stageRadius: 10,
-    smoothScroll: true,
-    popoverOffset: 12,
+    overlayOpacity: mobile ? 0.55 : 0.6,
+    stagePadding: mobile ? 10 : 6,
+    stageRadius: 12,
+    smoothScroll: false, // we handle scrolling ourselves with safe insets
+    popoverOffset: mobile ? 16 : 12,
+    disableActiveInteraction: true,
     nextBtnText: labels.next,
     prevBtnText: labels.prev,
     doneBtnText: labels.done,
@@ -109,13 +144,11 @@ export function createTour(opts: {
             else d.moveNext();
             return;
           }
-          // Give the router a tick to finish layout, then reposition the
-          // popover against the freshly mounted element.
           await new Promise((r) => window.setTimeout(r, 60));
           const fresh = document.querySelector(def.selector) as HTMLElement | null;
           if (fresh) {
-            fresh.scrollIntoView({ block: "center", behavior: "smooth" });
-            await new Promise((r) => window.setTimeout(r, 120));
+            scrollElementIntoSafeView(fresh);
+            await new Promise((r) => window.setTimeout(r, 200));
             try {
               d.highlight({ element: fresh, popover: def.popover });
             } catch {
