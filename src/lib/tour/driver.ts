@@ -97,16 +97,38 @@ export function createTour(opts: {
         const idx = ctx.state.activeIndex ?? 0;
         const def = steps[idx] as TourStepDef | undefined;
         if (!def) return;
-        if (def.route && window.location.pathname !== def.route) {
-          navigate(def.route);
+        const needsNav = def.route && window.location.pathname !== def.route;
+        if (needsNav) {
+          navigate(def.route!);
         }
         if (def.selector) {
-          const el = await waitForEl(def.selector);
+          const el = await waitForEl(def.selector, needsNav ? 4000 : 2500);
           if (!el) {
-            // Skip steps whose element isn't available (hidden on this viewport)
             const isLast = idx >= steps.length - 1;
             if (isLast) d.destroy();
             else d.moveNext();
+            return;
+          }
+          // Give the router a tick to finish layout, then reposition the
+          // popover against the freshly mounted element.
+          await new Promise((r) => window.setTimeout(r, 60));
+          const fresh = document.querySelector(def.selector) as HTMLElement | null;
+          if (fresh) {
+            fresh.scrollIntoView({ block: "center", behavior: "smooth" });
+            await new Promise((r) => window.setTimeout(r, 120));
+            try {
+              d.highlight({ element: fresh, popover: def.popover });
+            } catch {
+              /* noop */
+            }
+          }
+        } else if (needsNav) {
+          // Center popover on a new route: wait a beat for the page to swap.
+          await new Promise((r) => window.setTimeout(r, 120));
+          try {
+            d.highlight({ popover: def.popover });
+          } catch {
+            /* noop */
           }
         }
       },
