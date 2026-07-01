@@ -48,7 +48,7 @@ function hasStickyOrFixedAncestor(el: Element | null): boolean {
 }
 
 const RESERVED_POPOVER = 200; // px reserved so popover never overlaps target
-const TARGET_WAIT_MS = 2500;
+const TARGET_WAIT_MS = 1200;
 
 function getInsets() {
   const mobile = isMobileViewport();
@@ -60,13 +60,32 @@ function getInsets() {
 }
 
 /** Scroll respecting sticky mobile header (top) and bottom nav. */
-function scrollElementIntoSafeView(el: HTMLElement) {
+function scrollElementIntoSafeView(
+  el: HTMLElement,
+  preferredSide: "top" | "bottom" | "left" | "right" = "bottom",
+) {
   if (hasStickyOrFixedAncestor(el)) return;
   const rect = el.getBoundingClientRect();
   const { top: topInset, bottom: bottomInset } = getInsets();
   const viewportH = window.innerHeight;
   const safeTop = topInset + RESERVED_POPOVER / 2;
   const safeBottom = viewportH - bottomInset - RESERVED_POPOVER / 2;
+  const preferredTop = topInset + RESERVED_POPOVER + 16;
+  const preferredBottom = viewportH - bottomInset - RESERVED_POPOVER - 16;
+  const hasPreferredRoom =
+    preferredSide === "top"
+      ? rect.top >= preferredTop
+      : preferredSide === "bottom"
+        ? rect.bottom <= preferredBottom
+        : true;
+  if (!hasPreferredRoom && (preferredSide === "top" || preferredSide === "bottom")) {
+    const targetY =
+      preferredSide === "top"
+        ? window.scrollY + rect.top - preferredTop
+        : window.scrollY + rect.bottom - preferredBottom;
+    window.scrollTo({ top: Math.max(0, targetY), behavior: "smooth" });
+    return;
+  }
   const inView = rect.top >= safeTop && rect.bottom <= safeBottom;
   if (inView) return;
   const targetY =
@@ -262,6 +281,22 @@ export function createTour(opts: {
     }
   };
 
+  const syncPopoverContent = (idx: number) => {
+    const popover = driverSteps[idx]?.popover;
+    const title = document.querySelector(".driver-popover-title");
+    const description = document.querySelector(".driver-popover-description");
+    const progress = document.querySelector(".driver-popover-progress-text");
+    if (title && popover?.title) title.textContent = popover.title;
+    if (description && popover?.description) {
+      description.textContent = popover.description;
+    }
+    if (progress) {
+      progress.textContent = labels.progress
+        .replace("{{current}}", String(idx + 1))
+        .replace("{{total}}", String(steps.length));
+    }
+  };
+
   const prepareStep = async (idx: number): Promise<boolean> => {
     const def = steps[idx];
     if (!def) return false;
@@ -281,7 +316,10 @@ export function createTour(opts: {
     const el = await waitForVisibleEl(def.selector, navigated ? TARGET_WAIT_MS : 700);
     if (!el) return false;
     await waitForStableRect(el);
-    scrollElementIntoSafeView(el);
+    const preferredSide =
+      (def.popover?.side as "top" | "bottom" | "left" | "right" | undefined) ??
+      "bottom";
+    scrollElementIntoSafeView(el, preferredSide);
     await waitForScrollSettled();
     updateStepPlacement(idx);
 
@@ -334,7 +372,10 @@ export function createTour(opts: {
           else if (idx === current + 1) d.moveNext();
           else if (idx === current - 1) d.movePrevious();
           else d.moveTo(idx);
-          requestAnimationFrame(() => d.refresh());
+          requestAnimationFrame(() => {
+            d.refresh();
+            syncPopoverContent(idx);
+          });
           return;
         }
         idx += direction;
