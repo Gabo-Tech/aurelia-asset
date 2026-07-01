@@ -101,14 +101,17 @@ export function createTour(opts: {
 }): Driver {
   const { steps, navigate, labels, onClose } = opts;
 
+  const mobile = isMobileViewport();
+
   const d = driver({
     showProgress: true,
     allowClose: true,
-    overlayOpacity: 0.6,
-    stagePadding: 6,
-    stageRadius: 10,
-    smoothScroll: true,
-    popoverOffset: 12,
+    overlayOpacity: mobile ? 0.55 : 0.6,
+    stagePadding: mobile ? 10 : 6,
+    stageRadius: 12,
+    smoothScroll: false, // we handle scrolling ourselves with safe insets
+    popoverOffset: mobile ? 16 : 12,
+    disableActiveInteraction: true,
     nextBtnText: labels.next,
     prevBtnText: labels.prev,
     doneBtnText: labels.done,
@@ -141,13 +144,11 @@ export function createTour(opts: {
             else d.moveNext();
             return;
           }
-          // Give the router a tick to finish layout, then reposition the
-          // popover against the freshly mounted element.
           await new Promise((r) => window.setTimeout(r, 60));
           const fresh = document.querySelector(def.selector) as HTMLElement | null;
           if (fresh) {
-            fresh.scrollIntoView({ block: "center", behavior: "smooth" });
-            await new Promise((r) => window.setTimeout(r, 120));
+            scrollElementIntoSafeView(fresh);
+            await new Promise((r) => window.setTimeout(r, 200));
             try {
               d.highlight({ element: fresh, popover: def.popover });
             } catch {
