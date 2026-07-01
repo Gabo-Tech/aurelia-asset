@@ -48,7 +48,7 @@ function hasStickyOrFixedAncestor(el: Element | null): boolean {
 }
 
 const RESERVED_POPOVER = 200; // px reserved so popover never overlaps target
-const TARGET_WAIT_MS = 650;
+const TARGET_WAIT_MS = 2000;
 
 function getInsets() {
   const mobile = isMobileViewport();
@@ -110,6 +110,16 @@ function pickBestSide(
     left: rect.left - si,
     right: vw - si - rect.right,
   };
+  if (rect.width > vw * 0.55) {
+    if (preferred === "top" || preferred === "bottom") {
+      return space[preferred] >= RESERVED_POPOVER
+        ? preferred
+        : space.top > space.bottom
+          ? "top"
+          : "bottom";
+    }
+    return space.top > space.bottom ? "top" : "bottom";
+  }
   if (space[preferred] >= RESERVED_POPOVER) return preferred;
   const ordered = (Object.keys(space) as Array<keyof typeof space>).sort(
     (a, b) => space[b] - space[a],
@@ -375,6 +385,8 @@ export function createTour(opts: {
         if (ready) {
           const current = d.getActiveIndex();
           if (!d.isActive() || current === undefined) originalDrive(idx);
+          else if (idx === current + 1) d.moveNext();
+          else if (idx === current - 1) d.movePrevious();
           else d.moveTo(idx);
           syncPopoverContent(idx);
           const revealAndSync = () => {
