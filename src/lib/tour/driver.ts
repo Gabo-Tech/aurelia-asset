@@ -313,7 +313,9 @@ export function createTour(opts: {
       return true;
     }
 
-    const el = await waitForVisibleEl(def.selector, navigated ? TARGET_WAIT_MS : 150);
+    const el = navigated
+      ? await waitForVisibleEl(def.selector, TARGET_WAIT_MS)
+      : getVisibleElement(def.selector);
     if (!el) return false;
     await waitForStableRect(el);
     const preferredSide =
