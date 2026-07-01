@@ -1,34 +1,35 @@
-## Plan
+## Goal
+Fix tour popovers so on desktop, tablet, and phone they consistently anchor to the correct element after the page finishes rendering, controls (Prev/Next) never disappear, and the popover never overlaps the highlighted element.
 
-1. **Add a same-origin finance proxy route**
-   - Create a server route such as `/api/finance-proxy` that fetches allowed finance API URLs from the app backend.
-   - This avoids browser CORS completely because the frontend only calls our own app origin.
+## Root causes
+1. `refresh()` is called once ~200 ms after navigation, but many target pages (Holdings, Performance, Cashflow) render data in later frames (query hydration, sankey/chart mount). The popover positions against the old layout and looks misplaced.
+2. Some steps use `contentTopSide = "top"` unconditionally; on desktop tall elements (charts, tables) get covered because there's no room above. Popovers can also cover the target when the safe scroll leaves the element flush against the viewport edge.
+3. `refresh()` in the current driver.js build has cases where it re-renders as a standalone highlight, dropping footer buttons when the element reference changes between calls.
+4. Sticky/fixed ancestors skip scrolling entirely, so header-anchored steps sometimes leave the popover off-screen on mobile.
 
-2. **Lock it down with an allowlist**
-   - Only allow the finance providers the app already uses: Yahoo Finance, CoinGecko, Binance, Stooq, Finnhub, and FX providers.
-   - Reject unknown hosts, non-HTTPS URLs, oversized responses, and unsupported methods.
-   - Keep it read-only with `GET` only.
+## Fix plan (single file: `src/lib/tour/driver.ts`, plus small tweak in `src/lib/tour/steps.ts`)
 
-3. **Update the finance client fallback chain**
-   - Try direct requests first for CORS-friendly APIs like CoinGecko, Binance, and FX.
-   - If direct fails, use the same-origin proxy.
-   - Public CORS proxies become optional legacy fallbacks only when the user explicitly enables them in Settings.
+### `driver.ts`
+- Keep the same selectors (no changes to `steps.ts` selectors).
+- Replace the single delayed `refresh()` with a **stabilization loop**:
+  - After `waitForEl`, poll the element's `getBoundingClientRect()` every 100 ms until it's stable for 2 consecutive frames or 1.5 s elapses (covers late chart/table mount).
+  - Then `scrollElementIntoSafeView` and wait for scroll to settle (poll `window.scrollY` similarly).
+  - Then call `d.refresh()` once. If `refresh` is unavailable at runtime, fall back to `d.moveTo(idx)` which preserves multi-step context (keeps Prev/Next).
+- Guarantee controls stay: never call `d.highlight()` mid-step. Use only `refresh()` / `moveTo(activeIndex)`.
+- Add a `ResizeObserver` + `window` `resize`/`orientationchange` listener bound to the active element for the lifetime of the step; each change triggers a debounced `refresh()`. Disconnect on `onDeselected`.
+- Safe-view scrolling:
+  - Remove the "skip if sticky ancestor" early-return; instead, if sticky, just skip scrolling but still run refresh (so popover positions correctly).
+  - Ensure `safeBottom - safeTop` accounts for popover height (~ 180 px reserved) so the popover never overlaps the element.
+- Auto side selection: compute available space around the element (top/bottom/left/right minus insets and reserved popover height). Override `popover.side` at runtime when the requested side has < 200 px of space; pick the side with the most space. This prevents the popover from covering the highlighted element on any viewport.
+- Alignment: on mobile force `align: "start"` when the element is wider than 80% of viewport, so popover doesn't overhang.
 
-4. **Fix the 403 loop behavior**
-   - Treat proxy 403/429/5xx as a failed attempt and continue to the next provider instead of repeatedly retrying the same broken proxy.
-   - Keep per-provider cooldowns so a failing provider does not spam requests while typing or refreshing prices.
+### `steps.ts`
+- No selector changes.
+- Change `contentTopSide` from hardcoded `"top"` to `"auto"` sentinel (`"bottom"` default), and let the driver's auto-side logic pick the best side per viewport. Keep `pageSide` as a hint but treated as preferred, not forced.
 
-5. **Improve search reliability**
-   - For stock/ETF search, Yahoo will go through the same-origin proxy when direct access fails.
-   - Add a lightweight Stooq symbol search fallback where possible, so manual ticker discovery still works if Yahoo blocks.
+## Verification
+- Run Playwright headless at 3 viewports (390×844 phone, 820×1180 tablet, 1440×900 desktop). Start the tour, step through every step, screenshot each. Assert popover bounding rect does not intersect the highlighted element rect, and that Prev/Next buttons exist in the DOM at every step.
 
-6. **Keep history cache behavior**
-   - Preserve the new max-history local cache so period switches slice cached data instead of repeatedly calling APIs.
-   - Add stale-cache fallback when live refresh fails, so charts do not go empty just because providers are down.
-
-## Technical details
-
-- New route will use TanStack Start server route handlers, not external CORS services.
-- The route will validate the target URL before fetching to avoid turning it into an open proxy.
-- `src/lib/finance/client.ts` will route failed browser requests through `/api/finance-proxy?url=...`.
-- Existing provider modules can stay mostly unchanged because they already call `fetchWithFallback`.
+## Out of scope
+- No changes to selectors, translations, or step order.
+- No visual redesign of the popover.
