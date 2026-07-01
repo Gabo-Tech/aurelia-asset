@@ -150,7 +150,10 @@ export function createTour(opts: {
             scrollElementIntoSafeView(fresh);
             await new Promise((r) => window.setTimeout(r, 200));
             try {
-              d.highlight({ element: fresh, popover: def.popover });
+              // Re-position the active step's popover against the freshly
+              // mounted element without turning it into a one-off highlight
+              // (which would drop the prev/next controls).
+              (d as unknown as { refresh?: () => void }).refresh?.();
             } catch {
               /* noop */
             }
