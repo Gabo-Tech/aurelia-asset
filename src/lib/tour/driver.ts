@@ -48,7 +48,7 @@ function hasStickyOrFixedAncestor(el: Element | null): boolean {
 }
 
 const RESERVED_POPOVER = 200; // px reserved so popover never overlaps target
-const TARGET_WAIT_MS = 1200;
+const TARGET_WAIT_MS = 650;
 
 function getInsets() {
   const mobile = isMobileViewport();
@@ -372,10 +372,12 @@ export function createTour(opts: {
           else if (idx === current + 1) d.moveNext();
           else if (idx === current - 1) d.movePrevious();
           else d.moveTo(idx);
+          syncPopoverContent(idx);
           requestAnimationFrame(() => {
             d.refresh();
             syncPopoverContent(idx);
           });
+          window.setTimeout(() => syncPopoverContent(idx), 120);
           return;
         }
         idx += direction;
