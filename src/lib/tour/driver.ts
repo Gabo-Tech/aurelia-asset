@@ -150,16 +150,18 @@ export function createTour(opts: {
             scrollElementIntoSafeView(fresh);
             await new Promise((r) => window.setTimeout(r, 200));
             try {
-              d.highlight({ element: fresh, popover: def.popover });
+              // Re-position the active step's popover against the freshly
+              // mounted element without turning it into a one-off highlight
+              // (which would drop the prev/next controls).
+              (d as unknown as { refresh?: () => void }).refresh?.();
             } catch {
               /* noop */
             }
           }
         } else if (needsNav) {
-          // Center popover on a new route: wait a beat for the page to swap.
           await new Promise((r) => window.setTimeout(r, 120));
           try {
-            d.highlight({ popover: def.popover });
+            (d as unknown as { refresh?: () => void }).refresh?.();
           } catch {
             /* noop */
           }
