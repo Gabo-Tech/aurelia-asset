@@ -374,10 +374,6 @@ export function createTour(opts: {
   const showStep = async (requestedIdx: number, direction: 1 | -1 = 1) => {
     if (moving) return;
     moving = true;
-    if (d.isActive() && requestedIdx !== d.getActiveIndex()) {
-      const activePopover = document.querySelector<HTMLElement>(".driver-popover");
-      if (activePopover) activePopover.style.visibility = "hidden";
-    }
     try {
       let idx = requestedIdx;
       while (idx >= 0 && idx < steps.length) {
@@ -392,8 +388,6 @@ export function createTour(opts: {
           const revealAndSync = () => {
             d.refresh();
             syncPopoverContent(idx);
-            const popover = document.querySelector<HTMLElement>(".driver-popover");
-            if (popover) popover.style.visibility = "visible";
           };
           requestAnimationFrame(revealAndSync);
           window.setTimeout(revealAndSync, 80);
@@ -404,8 +398,6 @@ export function createTour(opts: {
       }
       if (direction > 0) d.destroy();
     } finally {
-      const popover = document.querySelector<HTMLElement>(".driver-popover");
-      if (popover) popover.style.visibility = "visible";
       moving = false;
     }
   };
