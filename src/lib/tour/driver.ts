@@ -238,9 +238,19 @@ export function createTour(opts: {
 
   const mobile = isMobileViewport();
 
-  const materializeStep = (def: TourStepDef): DriveStep => {
-    const el = def.selector ? getVisibleElement(def.selector) : null;
-    const popover = def.popover ? { ...def.popover } : undefined;
+  const driverSteps: DriveStep[] = steps.map((def) => ({
+    ...def,
+    element: def.selector
+      ? (() => getVisibleElement(def.selector!) ?? document.body)
+      : undefined,
+    popover: def.popover ? { ...def.popover } : undefined,
+  }));
+
+  const updateStepPlacement = (idx: number) => {
+    const def = steps[idx];
+    const step = driverSteps[idx];
+    const el = def?.selector ? getVisibleElement(def.selector) : null;
+    const popover = step?.popover;
     if (el && popover) {
       const requested =
         (popover.side as "top" | "bottom" | "left" | "right" | undefined) ??
@@ -250,14 +260,7 @@ export function createTour(opts: {
       const shouldStartAlign = mobile && rect.width > window.innerWidth * 0.8;
       popover.align = shouldStartAlign ? "start" : (popover.align ?? "center");
     }
-    return {
-      ...def,
-      element: el ?? undefined,
-      popover,
-    };
   };
-
-  const materializeSteps = () => steps.map(materializeStep);
 
   const prepareStep = async (idx: number): Promise<boolean> => {
     const def = steps[idx];
@@ -278,6 +281,7 @@ export function createTour(opts: {
     await waitForStableRect(el);
     scrollElementIntoSafeView(el);
     await waitForScrollSettled();
+    updateStepPlacement(idx);
 
     return Boolean(getVisibleElement(def.selector));
   };
@@ -309,7 +313,7 @@ export function createTour(opts: {
     },
     onCloseClick: () => d.destroy(),
     onDoneClick: () => d.destroy(),
-    steps: materializeSteps(),
+    steps: driverSteps,
   });
 
   const originalDrive = d.drive.bind(d);
@@ -323,7 +327,6 @@ export function createTour(opts: {
       while (idx >= 0 && idx < steps.length) {
         const ready = await prepareStep(idx);
         if (ready) {
-          d.setSteps(materializeSteps());
           const current = d.getActiveIndex();
           if (!d.isActive() || current === undefined) originalDrive(idx);
           else if (idx === current + 1) d.moveNext();
