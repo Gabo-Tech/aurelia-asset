@@ -33,8 +33,11 @@ export function buildTourSteps(t: TFunction, isMobile: boolean): TourStepDef[] {
   // On mobile the sticky header sits at top and the bottom nav sits at bottom,
   // so top-bar controls read best with a "bottom" popover, and page content
   // reads best with "top" (popover above the element, away from bottom nav).
+  // These are hints only - driver.ts picks the best side dynamically per
+  // viewport based on available space, and never lets the popover overlap
+  // the highlighted element.
   const pageSide: "top" | "bottom" = isMobile ? "top" : "bottom";
-  const contentTopSide: "top" | "bottom" = "top";
+  const contentTopSide: "top" | "bottom" = "bottom";
 
   const steps: TourStepDef[] = [
     center("welcome", "/dashboard"),
