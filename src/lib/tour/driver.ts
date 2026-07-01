@@ -48,7 +48,7 @@ function hasStickyOrFixedAncestor(el: Element | null): boolean {
 }
 
 const RESERVED_POPOVER = 200; // px reserved so popover never overlaps target
-const TARGET_WAIT_MS = 4500;
+const TARGET_WAIT_MS = 2500;
 
 function getInsets() {
   const mobile = isMobileViewport();
@@ -265,10 +265,12 @@ export function createTour(opts: {
   const prepareStep = async (idx: number): Promise<boolean> => {
     const def = steps[idx];
     if (!def) return false;
+    let navigated = false;
     if (def.route && window.location.pathname !== def.route) {
       await Promise.resolve(navigate(def.route));
       await waitForPath(def.route);
       await new Promise((resolve) => window.setTimeout(resolve, 120));
+      navigated = true;
     }
 
     if (!def.selector) {
@@ -276,7 +278,7 @@ export function createTour(opts: {
       return true;
     }
 
-    const el = await waitForVisibleEl(def.selector);
+    const el = await waitForVisibleEl(def.selector, navigated ? TARGET_WAIT_MS : 700);
     if (!el) return false;
     await waitForStableRect(el);
     scrollElementIntoSafeView(el);
