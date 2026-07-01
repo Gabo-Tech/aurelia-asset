@@ -375,8 +375,6 @@ export function createTour(opts: {
         if (ready) {
           const current = d.getActiveIndex();
           if (!d.isActive() || current === undefined) originalDrive(idx);
-          else if (idx === current + 1) d.moveNext();
-          else if (idx === current - 1) d.movePrevious();
           else d.moveTo(idx);
           syncPopoverContent(idx);
           const revealAndSync = () => {
