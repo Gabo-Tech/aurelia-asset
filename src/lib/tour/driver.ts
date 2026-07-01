@@ -394,6 +394,8 @@ export function createTour(opts: {
       }
       if (direction > 0) d.destroy();
     } finally {
+      const popover = document.querySelector<HTMLElement>(".driver-popover");
+      if (popover) popover.style.visibility = "visible";
       moving = false;
     }
   };
