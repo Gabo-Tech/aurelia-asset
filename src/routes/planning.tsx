@@ -25,7 +25,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import type { Budget, Loan, SavingsGoal } from "@/lib/types";
+import type { Budget, Loan } from "@/lib/types";
 
 export const Route = createFileRoute("/planning")({
   head: () => ({
@@ -42,15 +42,15 @@ function PlanningPage() {
   return (
     <div>
       <PageHeader
-        title={t("planning.title", "Planning")}
-        description={t("planning.description", "Budgets, goals, forecasts and loans - all derived from your existing cashflow.")}
+        title={t("planning.title")}
+        description={t("planning.description")}
       />
       <Tabs defaultValue="budgets" className="w-full">
         <TabsList className="flex flex-wrap h-auto">
-          <TabsTrigger value="budgets">{t("planning.tabs.budgets", "Budgets")}</TabsTrigger>
-          <TabsTrigger value="goals">{t("planning.tabs.goals", "Savings goals")}</TabsTrigger>
-          <TabsTrigger value="forecast">{t("planning.tabs.forecast", "Forecast")}</TabsTrigger>
-          <TabsTrigger value="loans">{t("planning.tabs.loans", "Loans")}</TabsTrigger>
+          <TabsTrigger value="budgets">{t("planning.tabs.budgets")}</TabsTrigger>
+          <TabsTrigger value="goals">{t("planning.tabs.goals")}</TabsTrigger>
+          <TabsTrigger value="forecast">{t("planning.tabs.forecast")}</TabsTrigger>
+          <TabsTrigger value="loans">{t("planning.tabs.loans")}</TabsTrigger>
         </TabsList>
         <TabsContent value="budgets" className="mt-6">
           <BudgetsPanel />
@@ -85,6 +85,7 @@ function CurrencyPicker({ value, onChange, className }: { value: string; onChang
 }
 
 function BudgetsPanel() {
+  const { t } = useTranslation();
   const { state, addBudget, updateBudget, removeBudget } = useStore();
   const { fmt, toDisplay, currency: displayCurrency } = useMoney();
   const expenseCats = state.categories.filter((c) => c.kind === "expense");
@@ -92,7 +93,6 @@ function BudgetsPanel() {
   const [amount, setAmount] = useState<string>("");
   const [entryCurrency, setEntryCurrency] = useState<string>(displayCurrency);
 
-  // Compute this month's spent per category
   const monthSpent = useMemo(() => {
     const now = new Date();
     const start = startOfMonth(now);
@@ -121,13 +121,13 @@ function BudgetsPanel() {
     <div className="grid lg:grid-cols-3 gap-6">
       <Card className="lg:col-span-1">
         <CardHeader>
-          <CardTitle className="text-base">Add monthly budget</CardTitle>
+          <CardTitle className="text-base">{t("planning.budgets.addTitle")}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <div>
-            <Label>Category</Label>
+            <Label>{t("planning.budgets.category")}</Label>
             <Select value={categoryId} onValueChange={setCategoryId}>
-              <SelectTrigger><SelectValue placeholder="Pick a category" /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder={t("planning.budgets.pickCategory")} /></SelectTrigger>
               <SelectContent>
                 {expenseCats.map((c) => (
                   <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
@@ -137,25 +137,25 @@ function BudgetsPanel() {
           </div>
           <div className="grid grid-cols-[1fr_auto] gap-2">
             <div>
-              <Label>Monthly limit</Label>
-              <Input inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="e.g. 500" />
+              <Label>{t("planning.budgets.monthlyLimit")}</Label>
+              <Input inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder={t("planning.budgets.limitPlaceholder")} />
             </div>
             <div>
-              <Label>Currency</Label>
+              <Label>{t("planning.budgets.currency")}</Label>
               <CurrencyPicker value={entryCurrency} onChange={setEntryCurrency} className="w-28" />
             </div>
           </div>
-          <Button onClick={submit} className="w-full"><Plus className="h-4 w-4 mr-1" />Add budget</Button>
+          <Button onClick={submit} className="w-full"><Plus className="h-4 w-4 mr-1" />{t("planning.budgets.addBudget")}</Button>
         </CardContent>
       </Card>
 
       <Card className="lg:col-span-2">
         <CardHeader>
-          <CardTitle className="text-base">This month</CardTitle>
+          <CardTitle className="text-base">{t("planning.budgets.thisMonth")}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {state.budgets.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No budgets yet. Add a monthly limit to a category to start tracking.</p>
+            <p className="text-sm text-muted-foreground">{t("planning.budgets.empty")}</p>
           ) : null}
           {state.budgets.map((b) => {
             const cat = state.categories.find((c) => c.id === b.categoryId);
@@ -168,7 +168,7 @@ function BudgetsPanel() {
                 <div className="flex items-center justify-between gap-2 text-sm">
                   <span className="font-medium flex items-center gap-2">
                     <span className="h-2 w-2 rounded-full" style={{ background: cat?.color || "#888" }} />
-                    {cat?.name || "Unknown"}
+                    {cat?.name || t("planning.budgets.unknown")}
                   </span>
                   <span className={over ? "text-destructive font-medium" : "text-muted-foreground"}>
                     {fmt(spent)} / {fmt(b.amount, b.currency)}
@@ -177,7 +177,9 @@ function BudgetsPanel() {
                 <Progress value={pct} className={over ? "[&>div]:bg-destructive" : ""} />
                 <div className="flex items-center justify-between text-xs">
                   <span className={over ? "text-destructive" : "text-muted-foreground"}>
-                    {over ? `Over by ${fmt(spent - budgetDisp)}` : `${fmt(budgetDisp - spent)} left`}
+                    {over
+                      ? t("planning.budgets.overBy", { amount: fmt(spent - budgetDisp) })
+                      : t("planning.budgets.left", { amount: fmt(budgetDisp - spent) })}
                   </span>
                   <div className="flex items-center gap-1">
                     <EditBudgetButton budget={b} onSave={(patch) => updateBudget(b.id, patch)} />
@@ -218,6 +220,7 @@ function EditBudgetButton({ budget, onSave }: { budget: Budget; onSave: (p: Part
 const GOAL_COLORS = ["#0ea5e9", "#10b981", "#f59e0b", "#a78bfa", "#f472b6", "#22c55e"];
 
 function GoalsPanel() {
+  const { t } = useTranslation();
   const { state, addGoal, updateGoal, removeGoal } = useStore();
   const { fmt, currency: displayCurrency } = useMoney();
   const [form, setForm] = useState({ name: "", target: "", current: "", date: "", currency: displayCurrency });
@@ -240,38 +243,38 @@ function GoalsPanel() {
   return (
     <div className="grid lg:grid-cols-3 gap-6">
       <Card className="lg:col-span-1">
-        <CardHeader><CardTitle className="text-base">New savings goal</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-base">{t("planning.goals.newTitle")}</CardTitle></CardHeader>
         <CardContent className="space-y-3">
           <div>
-            <Label>Name</Label>
-            <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Emergency fund" />
+            <Label>{t("planning.goals.name")}</Label>
+            <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder={t("planning.goals.namePlaceholder")} />
           </div>
           <div className="grid grid-cols-[1fr_auto] gap-2">
             <div>
-              <Label>Target amount</Label>
-              <Input inputMode="decimal" value={form.target} onChange={(e) => setForm({ ...form, target: e.target.value })} placeholder="10000" />
+              <Label>{t("planning.goals.targetAmount")}</Label>
+              <Input inputMode="decimal" value={form.target} onChange={(e) => setForm({ ...form, target: e.target.value })} placeholder={t("planning.goals.targetPlaceholder")} />
             </div>
             <div>
-              <Label>Currency</Label>
+              <Label>{t("planning.goals.currency")}</Label>
               <CurrencyPicker value={form.currency} onChange={(v) => setForm({ ...form, currency: v })} className="w-28" />
             </div>
           </div>
           <div>
-            <Label>Already saved</Label>
+            <Label>{t("planning.goals.alreadySaved")}</Label>
             <Input inputMode="decimal" value={form.current} onChange={(e) => setForm({ ...form, current: e.target.value })} placeholder="0" />
           </div>
           <div>
-            <Label>Target date (optional)</Label>
+            <Label>{t("planning.goals.targetDate")}</Label>
             <Input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
           </div>
-          <Button onClick={submit} className="w-full"><Plus className="h-4 w-4 mr-1" />Add goal</Button>
+          <Button onClick={submit} className="w-full"><Plus className="h-4 w-4 mr-1" />{t("planning.goals.addGoal")}</Button>
         </CardContent>
       </Card>
 
       <div className="lg:col-span-2 grid sm:grid-cols-2 gap-4">
         {state.goals.length === 0 ? (
           <Card className="sm:col-span-2">
-            <CardContent className="py-10 text-center text-sm text-muted-foreground">No goals yet.</CardContent>
+            <CardContent className="py-10 text-center text-sm text-muted-foreground">{t("planning.goals.empty")}</CardContent>
           </Card>
         ) : null}
         {state.goals.map((g) => {
@@ -291,7 +294,9 @@ function GoalsPanel() {
                     {g.name}
                   </CardTitle>
                   {g.targetDate ? (
-                    <div className="text-xs text-muted-foreground mt-0.5">by {format(new Date(g.targetDate), "MMM d, yyyy")}</div>
+                    <div className="text-xs text-muted-foreground mt-0.5">
+                      {t("planning.goals.by", { date: format(new Date(g.targetDate), "MMM d, yyyy") })}
+                    </div>
                   ) : null}
                 </div>
                 <Button size="icon" variant="ghost" onClick={() => removeGoal(g.id)}>
@@ -306,13 +311,13 @@ function GoalsPanel() {
                 </div>
                 {monthly != null ? (
                   <div className="text-xs text-muted-foreground">
-                    Save ~{fmt(monthly, g.currency)}/mo to hit your goal.
+                    {t("planning.goals.saveHint", { amount: fmt(monthly, g.currency) })}
                   </div>
                 ) : null}
                 <div className="flex items-center gap-2 pt-1">
                   <Input
                     inputMode="decimal"
-                    placeholder={`Add contribution (${(g.currency || displayCurrency).toUpperCase()})`}
+                    placeholder={t("planning.goals.addContribution", { currency: (g.currency || displayCurrency).toUpperCase() })}
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
                         const v = Number((e.target as HTMLInputElement).value);
@@ -336,6 +341,7 @@ function GoalsPanel() {
 /* -------------------- Forecast -------------------- */
 
 function ForecastPanel() {
+  const { t } = useTranslation();
   const { state } = useStore();
   const { fmt, toDisplay } = useMoney();
   const [months, setMonths] = useState(6);
@@ -343,7 +349,6 @@ function ForecastPanel() {
   const data = useMemo(() => {
     const now = new Date();
     const horizon = addMonths(now, months);
-    // Start from current liquidity = expanded-to-today sum
     const past = expandCashflows(state.cashflows, now);
     const pastVals = valuesByEntry(past, toDisplay);
     let balance = 0;
@@ -353,7 +358,6 @@ function ForecastPanel() {
     }
     const future = expandCashflows(state.cashflows, horizon).filter((e) => new Date(e.date) > now);
     const futVals = valuesByEntry(future, toDisplay);
-    // Group by month
     const buckets = new Map<string, { income: number; expense: number }>();
     for (const e of future) {
       const key = format(new Date(e.date), "yyyy-MM");
@@ -377,7 +381,6 @@ function ForecastPanel() {
     return rows;
   }, [state.cashflows, toDisplay, months]);
 
-  // Subscription / recurring summary
   const recurring = useMemo(() => {
     const list = state.cashflows.filter((c) => c.recurrence);
     const monthlyTotals = list.map((c) => {
@@ -399,24 +402,24 @@ function ForecastPanel() {
     <div className="space-y-6">
       <div className="grid sm:grid-cols-3 gap-4">
         <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm">Monthly income (recurring)</CardTitle></CardHeader>
+          <CardHeader className="pb-2"><CardTitle className="text-sm">{t("planning.forecast.incomeMo")}</CardTitle></CardHeader>
           <CardContent className="text-2xl font-semibold text-emerald-500">{fmt(recurring.incomeMo)}</CardContent>
         </Card>
         <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm">Monthly expenses (recurring)</CardTitle></CardHeader>
+          <CardHeader className="pb-2"><CardTitle className="text-sm">{t("planning.forecast.expenseMo")}</CardTitle></CardHeader>
           <CardContent className="text-2xl font-semibold text-rose-500">{fmt(recurring.expenseMo)}</CardContent>
         </Card>
         <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm">Savings rate</CardTitle></CardHeader>
+          <CardHeader className="pb-2"><CardTitle className="text-sm">{t("planning.forecast.savingsRate")}</CardTitle></CardHeader>
           <CardContent className="text-2xl font-semibold">{(recurring.savingsRate * 100).toFixed(0)}%</CardContent>
         </Card>
       </div>
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-3">
-          <CardTitle className="text-base">Liquidity forecast</CardTitle>
+          <CardTitle className="text-base">{t("planning.forecast.liquidityForecast")}</CardTitle>
           <div className="flex items-center gap-2 text-sm">
-            <Label className="text-xs">Months</Label>
+            <Label className="text-xs">{t("planning.forecast.months")}</Label>
             <Select value={String(months)} onValueChange={(v) => setMonths(Number(v))}>
               <SelectTrigger className="h-8 w-20"><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -442,23 +445,23 @@ function ForecastPanel() {
                   contentStyle={{ background: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }}
                   formatter={(v: number, name: string) => [fmt(v), name]}
                 />
-                <Area type="monotone" dataKey="balance" stroke="hsl(var(--primary))" fill="url(#forecastFill)" strokeWidth={2} name="Projected balance" />
+                <Area type="monotone" dataKey="balance" stroke="hsl(var(--primary))" fill="url(#forecastFill)" strokeWidth={2} name={t("planning.forecast.projectedBalance")} />
               </AreaChart>
             </ResponsiveContainer>
           </div>
           {runwayMonths !== Infinity ? (
             <div className="text-xs text-muted-foreground mt-2">
-              At your current recurring spend you have ~{Number.isFinite(runwayMonths) ? runwayMonths.toFixed(1) : "∞"} months of runway from today's liquidity.
+              {t("planning.forecast.runway", { months: Number.isFinite(runwayMonths) ? runwayMonths.toFixed(1) : "∞" })}
             </div>
           ) : null}
         </CardContent>
       </Card>
 
       <Card>
-        <CardHeader><CardTitle className="text-base">Recurring subscriptions & income</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-base">{t("planning.forecast.recurringTitle")}</CardTitle></CardHeader>
         <CardContent>
           {recurring.items.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No recurring entries detected. Mark income/expenses as recurring on the Cashflow page.</p>
+            <p className="text-sm text-muted-foreground">{t("planning.forecast.recurringEmpty")}</p>
           ) : (
             <ul className="divide-y divide-border/60">
               {recurring.items
@@ -469,7 +472,7 @@ function ForecastPanel() {
                       <span className={`mr-2 inline-block h-2 w-2 rounded-full ${r.kind === "income" ? "bg-emerald-500" : "bg-rose-500"}`} />
                       {r.name}
                     </span>
-                    <span className="tabular-nums">{fmt(r.perMonth)}/mo</span>
+                    <span className="tabular-nums">{t("planning.forecast.perMo", { amount: fmt(r.perMonth) })}</span>
                   </li>
                 ))}
             </ul>
@@ -485,6 +488,7 @@ function ForecastPanel() {
 const LOAN_COLORS = ["#ef4444", "#f59e0b", "#a78bfa", "#0ea5e9", "#10b981"];
 
 function LoansPanel() {
+  const { t } = useTranslation();
   const { state, addLoan, updateLoan, removeLoan } = useStore();
   const { fmt, currency: displayCurrency } = useMoney();
   const [form, setForm] = useState({
@@ -521,29 +525,29 @@ function LoansPanel() {
   return (
     <div className="grid lg:grid-cols-3 gap-6">
       <Card className="lg:col-span-1">
-        <CardHeader><CardTitle className="text-base">New loan</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-base">{t("planning.loans.newTitle")}</CardTitle></CardHeader>
         <CardContent className="space-y-3">
-          <div><Label>Name</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Mortgage" /></div>
+          <div><Label>{t("planning.loans.name")}</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder={t("planning.loans.namePlaceholder")} /></div>
           <div className="grid grid-cols-2 gap-2">
-            <div><Label>Principal</Label><Input inputMode="decimal" value={form.principal} onChange={(e) => setForm({ ...form, principal: e.target.value })} /></div>
-            <div><Label>APR %</Label><Input inputMode="decimal" value={form.apr} onChange={(e) => setForm({ ...form, apr: e.target.value })} /></div>
+            <div><Label>{t("planning.loans.principal")}</Label><Input inputMode="decimal" value={form.principal} onChange={(e) => setForm({ ...form, principal: e.target.value })} /></div>
+            <div><Label>{t("planning.loans.apr")}</Label><Input inputMode="decimal" value={form.apr} onChange={(e) => setForm({ ...form, apr: e.target.value })} /></div>
           </div>
           <div className="grid grid-cols-2 gap-2">
-            <div><Label>Term (months)</Label><Input inputMode="numeric" value={form.term} onChange={(e) => setForm({ ...form, term: e.target.value })} /></div>
-            <div><Label>Start</Label><Input type="date" value={form.start} onChange={(e) => setForm({ ...form, start: e.target.value })} /></div>
+            <div><Label>{t("planning.loans.termMonths")}</Label><Input inputMode="numeric" value={form.term} onChange={(e) => setForm({ ...form, term: e.target.value })} /></div>
+            <div><Label>{t("planning.loans.start")}</Label><Input type="date" value={form.start} onChange={(e) => setForm({ ...form, start: e.target.value })} /></div>
           </div>
           <div className="grid grid-cols-2 gap-2">
-            <div><Label>Extra monthly (optional)</Label><Input inputMode="decimal" value={form.extra} onChange={(e) => setForm({ ...form, extra: e.target.value })} /></div>
-            <div><Label>Currency</Label><CurrencyPicker value={form.currency} onChange={(v) => setForm({ ...form, currency: v })} /></div>
+            <div><Label>{t("planning.loans.extraOpt")}</Label><Input inputMode="decimal" value={form.extra} onChange={(e) => setForm({ ...form, extra: e.target.value })} /></div>
+            <div><Label>{t("planning.loans.currency")}</Label><CurrencyPicker value={form.currency} onChange={(v) => setForm({ ...form, currency: v })} /></div>
           </div>
-          <div><Label>Notes</Label><Textarea rows={2} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
-          <Button onClick={submit} className="w-full"><Plus className="h-4 w-4 mr-1" />Add loan</Button>
+          <div><Label>{t("planning.loans.notes")}</Label><Textarea rows={2} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
+          <Button onClick={submit} className="w-full"><Plus className="h-4 w-4 mr-1" />{t("planning.loans.addLoan")}</Button>
         </CardContent>
       </Card>
 
       <div className="lg:col-span-2 space-y-4">
         {state.loans.length === 0 ? (
-          <Card><CardContent className="py-10 text-center text-sm text-muted-foreground">No loans tracked yet.</CardContent></Card>
+          <Card><CardContent className="py-10 text-center text-sm text-muted-foreground">{t("planning.loans.empty")}</CardContent></Card>
         ) : null}
         {state.loans.map((loan) => (
           <LoanCard
@@ -569,6 +573,7 @@ function LoanCard({ loan, open, onToggle, onRemove, onPatch, fmt }: {
   onPatch: (p: Partial<Loan>) => void;
   fmt: (n: number, from?: string) => string;
 }) {
+  const { t } = useTranslation();
   const schedule = useMemo(() => amortize(loan), [loan]);
   const paidMonths = Math.max(0, Math.floor((Date.now() - new Date(loan.startDate).getTime()) / (30 * 24 * 3600 * 1000)));
   const upto = Math.min(paidMonths, schedule.rows.length);
@@ -587,28 +592,33 @@ function LoanCard({ loan, open, onToggle, onRemove, onPatch, fmt }: {
             {loan.name}
           </CardTitle>
           <div className="text-xs text-muted-foreground mt-0.5">
-            {f(loan.principal)} @ {loan.apr}% APR · {loan.termMonths} mo · starts {format(new Date(loan.startDate), "MMM yyyy")}
+            {t("planning.loans.meta", {
+              principal: f(loan.principal),
+              apr: loan.apr,
+              months: loan.termMonths,
+              date: format(new Date(loan.startDate), "MMM yyyy"),
+            })}
           </div>
         </div>
         <div className="flex items-center gap-1">
-          <Button size="sm" variant="secondary" onClick={onToggle}>{open ? "Hide" : "Schedule"}</Button>
+          <Button size="sm" variant="secondary" onClick={onToggle}>{open ? t("planning.loans.hide") : t("planning.loans.schedule")}</Button>
           <Button size="icon" variant="ghost" onClick={onRemove}><Trash2 className="h-3.5 w-3.5" /></Button>
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
-          <Stat label="Monthly payment" value={f(schedule.monthlyPayment)} />
-          <Stat label="Total interest" value={f(schedule.totalInterest)} />
-          <Stat label="Remaining" value={f(remaining)} />
-          <Stat label="Payoff" value={format(new Date(schedule.payoffDate), "MMM yyyy")} />
+          <Stat label={t("planning.loans.monthlyPayment")} value={f(schedule.monthlyPayment)} />
+          <Stat label={t("planning.loans.totalInterest")} value={f(schedule.totalInterest)} />
+          <Stat label={t("planning.loans.remaining")} value={f(remaining)} />
+          <Stat label={t("planning.loans.payoff")} value={format(new Date(schedule.payoffDate), "MMM yyyy")} />
         </div>
         <Progress value={pct} />
         <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <span>{pct.toFixed(1)}% paid down</span>
-          <span>Extra: {f(loan.extraMonthly || 0)}/mo</span>
+          <span>{t("planning.loans.paidDown", { pct: pct.toFixed(1) })}</span>
+          <span>{t("planning.loans.extraShort", { amount: f(loan.extraMonthly || 0) })}</span>
         </div>
         <div className="flex items-center gap-2">
-          <Label className="text-xs whitespace-nowrap">Extra/mo</Label>
+          <Label className="text-xs whitespace-nowrap">{t("planning.loans.extraLabel")}</Label>
           <Input
             className="h-7 w-28"
             inputMode="decimal"
@@ -625,12 +635,12 @@ function LoanCard({ loan, open, onToggle, onRemove, onPatch, fmt }: {
             <table className="w-full text-xs">
               <thead className="bg-muted/40 sticky top-0">
                 <tr>
-                  <th className="text-left p-2">#</th>
-                  <th className="text-left p-2">Date</th>
-                  <th className="text-right p-2">Payment</th>
-                  <th className="text-right p-2">Interest</th>
-                  <th className="text-right p-2">Principal</th>
-                  <th className="text-right p-2">Balance</th>
+                  <th className="text-left p-2">{t("planning.loans.tbl.n")}</th>
+                  <th className="text-left p-2">{t("planning.loans.tbl.date")}</th>
+                  <th className="text-right p-2">{t("planning.loans.tbl.payment")}</th>
+                  <th className="text-right p-2">{t("planning.loans.tbl.interest")}</th>
+                  <th className="text-right p-2">{t("planning.loans.tbl.principal")}</th>
+                  <th className="text-right p-2">{t("planning.loans.tbl.balance")}</th>
                 </tr>
               </thead>
               <tbody>
