@@ -8,7 +8,11 @@ import {
   isTourCompleted,
   markTourCompleted,
 } from "@/lib/tour/driver";
+import type { Driver } from "driver.js";
 import { buildTourSteps } from "@/lib/tour/steps";
+
+let activeTour: Driver | null = null;
+let activeTourPending = false;
 
 function detectMobile() {
   if (typeof window === "undefined") return false;
@@ -19,6 +23,8 @@ async function startTour(
   t: ReturnType<typeof useTranslation>["t"],
   navigate: (path: string) => void,
 ) {
+  if (activeTourPending || activeTour?.isActive()) return;
+  activeTourPending = true;
   const isMobile = detectMobile();
   const steps = buildTourSteps(t, isMobile);
   const tour = createTour({
@@ -31,9 +37,17 @@ async function startTour(
       skip: t("tour.skip"),
       progress: t("tour.progress"),
     },
-    onClose: () => markTourCompleted(),
+    onClose: () => {
+      activeTour = null;
+      activeTourPending = false;
+      markTourCompleted();
+    },
   });
+  activeTour = tour;
   tour.drive();
+  window.setTimeout(() => {
+    activeTourPending = false;
+  }, 800);
 }
 
 export function TourLauncher({ className }: { className?: string }) {

@@ -48,6 +48,7 @@ function hasStickyOrFixedAncestor(el: Element | null): boolean {
 }
 
 const RESERVED_POPOVER = 200; // px reserved so popover never overlaps target
+const TARGET_WAIT_MS = 2000;
 
 function getInsets() {
   const mobile = isMobileViewport();
@@ -59,13 +60,32 @@ function getInsets() {
 }
 
 /** Scroll respecting sticky mobile header (top) and bottom nav. */
-function scrollElementIntoSafeView(el: HTMLElement) {
+function scrollElementIntoSafeView(
+  el: HTMLElement,
+  preferredSide: "top" | "bottom" | "left" | "right" = "bottom",
+) {
   if (hasStickyOrFixedAncestor(el)) return;
   const rect = el.getBoundingClientRect();
   const { top: topInset, bottom: bottomInset } = getInsets();
   const viewportH = window.innerHeight;
   const safeTop = topInset + RESERVED_POPOVER / 2;
   const safeBottom = viewportH - bottomInset - RESERVED_POPOVER / 2;
+  const preferredTop = topInset + RESERVED_POPOVER + 16;
+  const preferredBottom = viewportH - bottomInset - RESERVED_POPOVER - 16;
+  const hasPreferredRoom =
+    preferredSide === "top"
+      ? rect.top >= preferredTop
+      : preferredSide === "bottom"
+        ? rect.bottom <= preferredBottom
+        : true;
+  if (!hasPreferredRoom && (preferredSide === "top" || preferredSide === "bottom")) {
+    const targetY =
+      preferredSide === "top"
+        ? window.scrollY + rect.top - preferredTop
+        : window.scrollY + rect.bottom - preferredBottom;
+    window.scrollTo({ top: Math.max(0, targetY), behavior: "smooth" });
+    return;
+  }
   const inView = rect.top >= safeTop && rect.bottom <= safeBottom;
   if (inView) return;
   const targetY =
@@ -90,11 +110,37 @@ function pickBestSide(
     left: rect.left - si,
     right: vw - si - rect.right,
   };
+  if (rect.width > vw * 0.55) {
+    if (preferred === "top" || preferred === "bottom") {
+      return space[preferred] >= RESERVED_POPOVER
+        ? preferred
+        : space.top > space.bottom
+          ? "top"
+          : "bottom";
+    }
+    return space.top > space.bottom ? "top" : "bottom";
+  }
   if (space[preferred] >= RESERVED_POPOVER) return preferred;
   const ordered = (Object.keys(space) as Array<keyof typeof space>).sort(
     (a, b) => space[b] - space[a],
   );
   return ordered[0];
+}
+
+function isVisibleElement(el: Element | null): el is HTMLElement {
+  if (!(el instanceof HTMLElement)) return false;
+  const rect = el.getBoundingClientRect();
+  if (rect.width < 1 || rect.height < 1) return false;
+  const style = getComputedStyle(el);
+  if (style.display === "none" || style.visibility === "hidden") return false;
+  if (Number(style.opacity) === 0) return false;
+  return el.getClientRects().length > 0;
+}
+
+function getVisibleElement(selector: string): HTMLElement | null {
+  return (
+    Array.from(document.querySelectorAll(selector)).find(isVisibleElement) ?? null
+  );
 }
 
 export async function waitForEl(
@@ -119,6 +165,50 @@ export async function waitForEl(
     });
     observer.observe(document.body, { childList: true, subtree: true });
   });
+}
+
+async function waitForVisibleEl(
+  selector: string,
+  timeoutMs = TARGET_WAIT_MS,
+): Promise<HTMLElement | null> {
+  if (typeof document === "undefined") return null;
+  const started = performance.now();
+  return new Promise((resolve) => {
+    let raf = 0;
+    const done = (el: HTMLElement | null) => {
+      if (raf) cancelAnimationFrame(raf);
+      window.clearTimeout(timeout);
+      observer.disconnect();
+      resolve(el);
+    };
+    const check = () => {
+      const el = getVisibleElement(selector);
+      if (el) {
+        done(el);
+        return;
+      }
+      if (performance.now() - started >= timeoutMs) {
+        done(null);
+        return;
+      }
+      raf = requestAnimationFrame(check);
+    };
+    const timeout = window.setTimeout(() => done(null), timeoutMs);
+    const observer = new MutationObserver(check);
+    observer.observe(document.body, {
+      attributes: true,
+      childList: true,
+      subtree: true,
+    });
+    check();
+  });
+}
+
+async function waitForPath(path: string, timeoutMs = 2500) {
+  const started = performance.now();
+  while (window.location.pathname !== path && performance.now() - started < timeoutMs) {
+    await new Promise((resolve) => window.setTimeout(resolve, 50));
+  }
 }
 
 /** Wait until the element's rect stops changing (layout has settled). */
@@ -169,7 +259,7 @@ export type TourStepDef = DriveStep & {
 
 export function createTour(opts: {
   steps: TourStepDef[];
-  navigate: (path: string) => void;
+  navigate: (path: string) => void | Promise<unknown>;
   labels: { next: string; prev: string; done: string; skip: string; progress: string };
   onClose?: () => void;
 }): Driver {
@@ -177,57 +267,81 @@ export function createTour(opts: {
 
   const mobile = isMobileViewport();
 
-  // Track per-step listeners so we can clean them up.
-  let cleanupCurrent: (() => void) | null = null;
-  const runCleanup = () => {
-    try {
-      cleanupCurrent?.();
-    } catch {
-      /* noop */
+  const driverSteps: DriveStep[] = steps.map((def) => ({
+    ...def,
+    element: def.selector
+      ? (() => getVisibleElement(def.selector!) ?? document.body)
+      : undefined,
+    popover: def.popover ? { ...def.popover } : undefined,
+  }));
+
+  const updateStepPlacement = (idx: number) => {
+    const def = steps[idx];
+    const step = driverSteps[idx];
+    const el = def?.selector ? getVisibleElement(def.selector) : null;
+    const popover = step?.popover;
+    if (el && popover) {
+      const requested =
+        (popover.side as "top" | "bottom" | "left" | "right" | undefined) ??
+        "bottom";
+      popover.side = pickBestSide(el, requested);
+      const rect = el.getBoundingClientRect();
+      const shouldStartAlign = mobile && rect.width > window.innerWidth * 0.8;
+      popover.align = shouldStartAlign ? "start" : (popover.align ?? "center");
     }
-    cleanupCurrent = null;
   };
 
-  const safeRefresh = (d: Driver, idx: number) => {
-    try {
-      const anyD = d as unknown as {
-        refresh?: () => void;
-        moveTo?: (i: number) => void;
-      };
-      if (typeof anyD.refresh === "function") anyD.refresh();
-      else if (typeof anyD.moveTo === "function") anyD.moveTo(idx);
-    } catch {
-      /* noop */
+  const syncPopoverContent = (idx: number) => {
+    const popover = driverSteps[idx]?.popover;
+    const title = document.querySelector(".driver-popover-title");
+    const description = document.querySelector(".driver-popover-description");
+    const progress = document.querySelector(".driver-popover-progress-text");
+    if (title && popover?.title) title.textContent = popover.title;
+    if (description && popover?.description) {
+      description.textContent = popover.description;
+    }
+    if (progress) {
+      progress.textContent = labels.progress
+        .replace("{{current}}", String(idx + 1))
+        .replace("{{total}}", String(steps.length));
     }
   };
 
-  const applyDynamicPlacement = (
-    d: Driver,
-    idx: number,
-    el: HTMLElement,
-    def: TourStepDef,
-  ) => {
-    const requested =
+  const prepareStep = async (idx: number): Promise<boolean> => {
+    const def = steps[idx];
+    if (!def) return false;
+    let navigated = false;
+    if (def.route && window.location.pathname !== def.route) {
+      await Promise.resolve(navigate(def.route));
+      await waitForPath(def.route);
+      await new Promise((resolve) => window.setTimeout(resolve, 120));
+      navigated = true;
+    }
+
+    if (!def.selector) {
+      window.scrollTo({ top: 0, behavior: "auto" });
+      return true;
+    }
+
+    const el = navigated
+      ? await waitForVisibleEl(def.selector, TARGET_WAIT_MS)
+      : getVisibleElement(def.selector);
+    if (!el) return false;
+    await waitForStableRect(el);
+    const preferredSide =
       (def.popover?.side as "top" | "bottom" | "left" | "right" | undefined) ??
       "bottom";
-    const best = pickBestSide(el, requested);
-    const rect = el.getBoundingClientRect();
-    const vw = window.innerWidth;
-    const shouldStartAlign = mobile && rect.width > vw * 0.8;
-    const nextAlign = shouldStartAlign ? "start" : (def.popover?.align ?? "center");
+    scrollElementIntoSafeView(el, preferredSide);
+    await waitForScrollSettled();
+    updateStepPlacement(idx);
 
-    // Mutate the step's popover in-place so refresh() picks it up.
-    const s = steps[idx];
-    if (s?.popover) {
-      s.popover.side = best;
-      s.popover.align = nextAlign as "start" | "center" | "end";
-    }
-    safeRefresh(d, idx);
+    return Boolean(getVisibleElement(def.selector));
   };
 
   const d = driver({
     showProgress: true,
     allowClose: true,
+    allowKeyboardControl: false,
     overlayOpacity: mobile ? 0.55 : 0.6,
     stagePadding: mobile ? 10 : 6,
     stageRadius: 12,
@@ -239,84 +353,73 @@ export function createTour(opts: {
     doneBtnText: labels.done,
     progressText: labels.progress,
     onPopoverRender: (popover) => {
+      if (popover.footerButtons.querySelector(".driver-skip-btn")) return;
       const skip = document.createElement("button");
       skip.innerText = labels.skip;
       skip.className = "driver-skip-btn";
       skip.onclick = () => d.destroy();
       popover.footerButtons.appendChild(skip);
     },
-    onDeselected: () => {
-      runCleanup();
-    },
     onDestroyed: () => {
-      runCleanup();
       onClose?.();
     },
-    steps: steps.map((s) => ({
-      ...s,
-      onHighlightStarted: async (_el, _step, ctx) => {
-        runCleanup();
-        const idx = ctx.state.activeIndex ?? 0;
-        const def = steps[idx] as TourStepDef | undefined;
-        if (!def) return;
-        const needsNav = def.route && window.location.pathname !== def.route;
-        if (needsNav) navigate(def.route!);
-
-        if (!def.selector) {
-          if (needsNav) {
-            await new Promise((r) => window.setTimeout(r, 120));
-            safeRefresh(d, idx);
-          }
-          return;
-        }
-
-        const el = (await waitForEl(
-          def.selector,
-          needsNav ? 4000 : 2500,
-        )) as HTMLElement | null;
-        if (!el) {
-          const isLast = idx >= steps.length - 1;
-          if (isLast) d.destroy();
-          else d.moveNext();
-          return;
-        }
-
-        // Wait for layout to stabilize (charts/tables mount late).
-        await waitForStableRect(el);
-        scrollElementIntoSafeView(el);
-        await waitForScrollSettled();
-
-        applyDynamicPlacement(d, idx, el, def);
-
-        // Keep popover attached while element resizes or viewport changes.
-        let raf = 0;
-        const debounced = () => {
-          if (raf) cancelAnimationFrame(raf);
-          raf = requestAnimationFrame(() => {
-            const fresh = document.querySelector(def.selector!) as HTMLElement | null;
-            if (fresh) applyDynamicPlacement(d, idx, fresh, def);
-            else safeRefresh(d, idx);
-          });
-        };
-        const ro = new ResizeObserver(debounced);
-        try {
-          ro.observe(el);
-        } catch {
-          /* noop */
-        }
-        window.addEventListener("resize", debounced);
-        window.addEventListener("orientationchange", debounced);
-        window.addEventListener("scroll", debounced, { passive: true });
-        cleanupCurrent = () => {
-          if (raf) cancelAnimationFrame(raf);
-          ro.disconnect();
-          window.removeEventListener("resize", debounced);
-          window.removeEventListener("orientationchange", debounced);
-          window.removeEventListener("scroll", debounced);
-        };
-      },
-    })),
+    onCloseClick: () => d.destroy(),
+    onDoneClick: () => d.destroy(),
+    steps: driverSteps,
   });
+
+  const originalDrive = d.drive.bind(d);
+  let moving = false;
+
+  const showStep = async (requestedIdx: number, direction: 1 | -1 = 1) => {
+    if (moving) return;
+    moving = true;
+    try {
+      let idx = requestedIdx;
+      while (idx >= 0 && idx < steps.length) {
+        const ready = await prepareStep(idx);
+        if (ready) {
+          const current = d.getActiveIndex();
+          if (!d.isActive() || current === undefined) originalDrive(idx);
+          else if (idx === current + 1) d.moveNext();
+          else if (idx === current - 1) d.movePrevious();
+          else d.moveTo(idx);
+          syncPopoverContent(idx);
+          const revealAndSync = () => {
+            d.refresh();
+            syncPopoverContent(idx);
+          };
+          requestAnimationFrame(revealAndSync);
+          window.setTimeout(revealAndSync, 80);
+          window.setTimeout(revealAndSync, 220);
+          return;
+        }
+        idx += direction;
+      }
+      if (direction > 0) d.destroy();
+    } finally {
+      moving = false;
+    }
+  };
+
+  d.setConfig({
+    ...d.getConfig(),
+    onNextClick: (_el, _step, ctx) => {
+      const idx = ctx.state.activeIndex ?? 0;
+      if (idx >= steps.length - 1) d.destroy();
+      else void showStep(idx + 1, 1);
+    },
+    onPrevClick: (_el, _step, ctx) => {
+      const idx = ctx.state.activeIndex ?? 0;
+      if (idx <= 0) return;
+      void showStep(idx - 1, -1);
+    },
+  });
+
+  d.drive = (stepIndex = 0) => {
+    void showStep(stepIndex, 1);
+  };
 
   return d;
 }
+

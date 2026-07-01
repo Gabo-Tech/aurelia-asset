@@ -539,7 +539,7 @@ function CashflowPage() {
 
       <div className="mt-5 grid gap-5 lg:grid-cols-2">
         <div className="space-y-5">
-          <div data-tour="cf-add">
+          <div>
           <AddForm
             defaultCurrency={currency}
             categories={categories}
@@ -563,8 +563,8 @@ function CashflowPage() {
         </div>
 
 
-        <Card className="border-border/60 min-w-0" data-tour="cf-sankey">
-          <CardHeader className="px-3 sm:px-6 flex flex-row items-start justify-between gap-3 space-y-0">
+        <Card className="border-border/60 min-w-0">
+          <CardHeader className="px-3 sm:px-6 flex flex-row items-start justify-between gap-3 space-y-0" data-tour="cf-sankey">
             <div className="min-w-0">
               <CardTitle>{t("cashflow.flow")}</CardTitle>
               <div className="mt-1 text-xs text-muted-foreground truncate">{sankeyPeriodLabel}</div>
@@ -672,7 +672,7 @@ function CashflowPage() {
         </Card>
       </div>
 
-      <div data-tour="cf-entries">
+      <div>
       <EntriesPanel
         cashflows={cashflows}
         categories={categories}
@@ -1003,7 +1003,7 @@ function EntriesPanel({
 
   return (
     <Card className="border-border/60 mt-5">
-      <CardHeader className="flex-row items-center justify-between space-y-0 gap-2 flex-wrap">
+      <CardHeader className="flex-row items-center justify-between space-y-0 gap-2 flex-wrap" data-tour="cf-entries">
         <CardTitle>{t("cashflow.entries")}</CardTitle>
         <Button size="sm" variant="outline" onClick={exportPdf} className="gap-1.5">
           <Download className="h-3.5 w-3.5" /> {t("cashflow.exportPdf")}
@@ -1793,7 +1793,7 @@ function AddForm({
 
   return (
     <Card className="border-border/60">
-      <CardHeader className="flex-row items-center justify-between space-y-0 gap-2 flex-wrap">
+      <CardHeader className="flex-row items-center justify-between space-y-0 gap-2 flex-wrap" data-tour="cf-add">
         <CardTitle>{t("cashflow.addEntry")}</CardTitle>
         <CategoriesManager
           categories={categories}
