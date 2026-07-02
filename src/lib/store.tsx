@@ -22,19 +22,25 @@ async function loadState(): Promise<AppState> {
     const raw = await secureGet(STORAGE_KEY);
     if (!raw) return DEFAULT_STATE;
     const parsed = JSON.parse(raw);
+    const settings = { ...DEFAULT_STATE.settings, ...(parsed.settings ?? {}) };
+    const defCcy = (settings.displayCurrency || "USD").toUpperCase();
+    const withCcy = <T extends { currency?: string }>(x: T): T =>
+      x && (!x.currency || !String(x.currency).trim()) ? { ...x, currency: defCcy } : x;
     return {
       ...DEFAULT_STATE,
       ...parsed,
-      transactions: Array.isArray(parsed.transactions) ? parsed.transactions : [],
-      creditCards: Array.isArray(parsed.creditCards) ? parsed.creditCards : [],
-      budgets: Array.isArray(parsed.budgets) ? parsed.budgets : [],
-      goals: Array.isArray(parsed.goals) ? parsed.goals : [],
-      loans: Array.isArray(parsed.loans) ? parsed.loans : [],
+      cashflows: Array.isArray(parsed.cashflows) ? parsed.cashflows.map(withCcy) : [],
+      holdings: Array.isArray(parsed.holdings) ? parsed.holdings.map(withCcy) : [],
+      transactions: (Array.isArray(parsed.transactions) ? parsed.transactions : []).map(withCcy),
+      creditCards: (Array.isArray(parsed.creditCards) ? parsed.creditCards : []).map(withCcy),
+      budgets: (Array.isArray(parsed.budgets) ? parsed.budgets : []).map(withCcy),
+      goals: (Array.isArray(parsed.goals) ? parsed.goals : []).map(withCcy),
+      loans: (Array.isArray(parsed.loans) ? parsed.loans : []).map(withCcy),
       categories:
         Array.isArray(parsed.categories) && parsed.categories.length > 0
           ? parsed.categories
           : DEFAULT_CATEGORIES,
-      settings: { ...DEFAULT_STATE.settings, ...(parsed.settings ?? {}) },
+      settings,
     };
   } catch {
     return DEFAULT_STATE;
