@@ -7,17 +7,19 @@ export function formatMoney(
   opts: { compact?: boolean } = {},
 ) {
   if (!isFinite(n)) n = 0;
+  const compact = !!opts.compact && Math.abs(n) >= 1000;
   try {
     return new Intl.NumberFormat(undefined, {
       style: "currency",
       currency,
-      maximumFractionDigits: 2,
-      minimumFractionDigits: 2,
-      notation: opts.compact && Math.abs(n) >= 10000 ? "compact" : "standard",
+      maximumFractionDigits: compact ? 1 : 2,
+      minimumFractionDigits: compact ? 0 : 2,
+      notation: compact ? "compact" : "standard",
     }).format(n);
   } catch {
     return `${currency} ${n.toFixed(2)}`;
   }
+
 }
 
 export function maskMoney(
