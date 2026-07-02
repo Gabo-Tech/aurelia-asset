@@ -5,9 +5,9 @@ import { HelpCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   createTour,
-  isTourCompleted,
   markTourCompleted,
 } from "@/lib/tour/driver";
+
 import type { Driver } from "driver.js";
 import { buildTourSteps } from "@/lib/tour/steps";
 
