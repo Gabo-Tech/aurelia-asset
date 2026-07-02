@@ -543,6 +543,9 @@ function SettingsPage() {
               <Button variant="outline" className="w-full justify-start" onClick={exportJson}>
                 <FileJson className="mr-2 h-4 w-4" /> {t("settings.data.exportJson")}
               </Button>
+              <Button variant="outline" className="w-full justify-start" onClick={copyJsonToClipboard}>
+                <Copy className="mr-2 h-4 w-4" /> {t("settings.data.copyJson", { defaultValue: "Copy JSON to clipboard" })}
+              </Button>
               <Button variant="outline" className="w-full justify-start" onClick={exportCsv}>
                 <FileSpreadsheet className="mr-2 h-4 w-4" /> {t("settings.data.exportCsv")}
               </Button>
@@ -552,6 +555,16 @@ function SettingsPage() {
                 onClick={() => fileRef.current?.click()}
               >
                 <Upload className="mr-2 h-4 w-4" /> {t("settings.data.importJson")}
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                onClick={() => {
+                  setPasteValue("");
+                  setPasteOpen(true);
+                }}
+              >
+                <ClipboardPaste className="mr-2 h-4 w-4" /> {t("settings.data.pasteJson", { defaultValue: "Paste JSON to import" })}
               </Button>
               <input
                 ref={fileRef}
@@ -564,6 +577,57 @@ function SettingsPage() {
                   e.target.value = "";
                 }}
               />
+
+              <Dialog open={pasteOpen} onOpenChange={setPasteOpen}>
+                <DialogContent className="max-w-2xl">
+                  <DialogHeader>
+                    <DialogTitle>{t("settings.data.pasteJson", { defaultValue: "Paste JSON to import" })}</DialogTitle>
+                    <DialogDescription>
+                      {t("settings.data.pasteJsonDesc", {
+                        defaultValue: "Paste a previously exported JSON below. This will replace your current data.",
+                      })}
+                    </DialogDescription>
+                  </DialogHeader>
+                  <Textarea
+                    value={pasteValue}
+                    onChange={(e) => setPasteValue(e.target.value)}
+                    placeholder='{ "version": 1, "state": { ... } }'
+                    className="font-mono text-xs min-h-[240px]"
+                  />
+                  <DialogFooter className="gap-2 sm:gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={async () => {
+                        try {
+                          const txt = await navigator.clipboard?.readText?.();
+                          if (txt) setPasteValue(txt);
+                        } catch {
+                          toast.error(t("settings.data.clipboardReadFailed", { defaultValue: "Could not read clipboard" }));
+                        }
+                      }}
+                    >
+                      <ClipboardPaste className="mr-2 h-4 w-4" />
+                      {t("settings.data.pasteFromClipboard", { defaultValue: "Paste from clipboard" })}
+                    </Button>
+                    <Button variant="ghost" onClick={() => setPasteOpen(false)}>
+                      {t("common.cancel")}
+                    </Button>
+                    <Button
+                      disabled={!pasteValue.trim()}
+                      onClick={async () => {
+                        const ok = await importFromText(pasteValue.trim());
+                        if (ok) {
+                          setPasteOpen(false);
+                          setPasteValue("");
+                        }
+                      }}
+                    >
+                      {t("settings.data.importJson")}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+
 
               <AlertDialog>
                 <AlertDialogTrigger asChild>
