@@ -380,12 +380,15 @@ function ForecastPanel() {
       const v = pastVals.get(e.id) ?? 0;
       balance += liquidityImpact(e, v);
     }
+    const recurringParentIds = new Set(state.cashflows.filter((c) => c.recurrence).map((c) => c.id));
+    const isRecurring = (e: CashflowEntry & { parentId?: string }) =>
+      recurringParentIds.has(e.parentId ?? e.id);
     const rows: { month: string; balance: number; income: number; expense: number; net: number }[] = [];
     for (let i = 0; i < months; i++) {
       const m = startOfMonth(addMonths(now, i + 1));
       const end = endOfMonth(m);
       const monthEntries = expandCashflows(state.cashflows, end).filter((e) =>
-        isWithinInterval(new Date(e.date), { start: m, end }),
+        isWithinInterval(new Date(e.date), { start: m, end }) && isRecurring(e),
       );
       const vals = valuesByEntry(monthEntries, toDisplay);
       let income = 0;
@@ -401,6 +404,7 @@ function ForecastPanel() {
       rows.push({ month: format(m, "MMM yy"), balance, income, expense, net });
     }
     return rows;
+
   }, [state.cashflows, toDisplay, months]);
 
   // Single source of truth for the visible monthly snapshot: use the same
@@ -443,11 +447,12 @@ function ForecastPanel() {
       expenseMo: expense,
       recurringIncomeMo: recurringIncome,
       recurringExpenseMo: recurringExpense,
-      netMo: income - expense,
-      savingsRate: income > 0 ? Math.max(0, (income - expense) / income) : 0,
+      netMo: recurringIncome - recurringExpense,
+      savingsRate: recurringIncome > 0 ? Math.max(0, (recurringIncome - recurringExpense) / recurringIncome) : 0,
       perParent,
     };
   }, [state.cashflows, toDisplay]);
+
 
   // Recurring items list: only entries that actually occur in the current
   // month, with each /mo value resolved from the same current-month values.
@@ -467,11 +472,12 @@ function ForecastPanel() {
   }, [state.cashflows, monthly.perParent]);
 
   const runwayMonths =
-    monthly.expenseMo > 0 && (data[0]?.balance ?? 0) > 0
-      ? (data[0]?.balance ?? 0) / monthly.expenseMo
-      : monthly.expenseMo <= 0
+    monthly.recurringExpenseMo > 0 && (data[0]?.balance ?? 0) > 0
+      ? (data[0]?.balance ?? 0) / monthly.recurringExpenseMo
+      : monthly.recurringExpenseMo <= 0
         ? Infinity
         : 0;
+
 
   const incomeItems = recurringItems.filter((r) => r.kind === "income").sort((a, b) => b.perMonth - a.perMonth);
   const expenseItems = recurringItems.filter((r) => r.kind === "expense").sort((a, b) => b.perMonth - a.perMonth);
@@ -494,14 +500,14 @@ function ForecastPanel() {
               <CardTitle className="text-sm text-muted-foreground font-normal">{t("planning.forecast.incomeMo")}</CardTitle>
               <TrendingUp className="h-4 w-4 text-emerald-500" />
             </CardHeader>
-            <CardContent className="text-2xl font-semibold text-emerald-500">{fmt(monthly.incomeMo)}</CardContent>
+            <CardContent className="text-2xl font-semibold text-emerald-500">{fmt(monthly.recurringIncomeMo)}</CardContent>
           </Card>
           <Card className="border-l-4 border-l-rose-500/70">
             <CardHeader className="pb-2 flex flex-row items-center justify-between">
               <CardTitle className="text-sm text-muted-foreground font-normal">{t("planning.forecast.expenseMo")}</CardTitle>
               <TrendingDown className="h-4 w-4 text-rose-500" />
             </CardHeader>
-            <CardContent className="text-2xl font-semibold text-rose-500">{fmt(monthly.expenseMo)}</CardContent>
+            <CardContent className="text-2xl font-semibold text-rose-500">{fmt(monthly.recurringExpenseMo)}</CardContent>
           </Card>
           <Card className="border-l-4" style={{ borderLeftColor: "var(--primary)" }}>
             <CardHeader className="pb-2 flex flex-row items-center justify-between">
@@ -509,6 +515,7 @@ function ForecastPanel() {
               <span className="text-xs tabular-nums text-muted-foreground">{fmt(netMo)}/mo</span>
             </CardHeader>
             <CardContent className="text-2xl font-semibold">{(monthly.savingsRate * 100).toFixed(0)}%</CardContent>
+
           </Card>
         </div>
       </section>
