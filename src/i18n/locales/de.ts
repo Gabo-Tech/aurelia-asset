@@ -134,7 +134,7 @@ const de: Translation = {
     },
     footer: { brand: "Eleganter Portfolio-Tracker", madeBy: "Gemacht von" },
     meta: {
-      title: "Eleganter Portfolio-Tracker - Sieh, plane und besitze dein Geld",
+      title: "Privater Portfolio-Tracker - Aktien, Krypto & ETFs",
       description: "Verfolge jede Aktie, ETF, Krypto, jedes Metall und jeden Euro, den du besitzt, in einem privaten Tracker. Sieh Allokation, Cashflow, Prognose und Vermögen - ohne Anmeldung, ohne Cloud, für immer kostenlos.",
       keywords: "Portfolio Tracker, Vermögens-Tracker, private Finanz-App, Aktien-Tracker, Krypto-Portfolio, ETF-Tracker, Sankey Cashflow, Budgetplaner, Sparziele, Offline-Portfolio",
     },

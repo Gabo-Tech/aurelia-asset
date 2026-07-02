@@ -21,12 +21,21 @@ import { useTranslation } from "react-i18next";
 import i18n from "@/i18n";
 
 export const Route = createFileRoute("/dashboard")({
-  head: () => ({
-    meta: [
-      { title: i18n.t("dashboard.metaTitle") },
-      { name: "description", content: i18n.t("dashboard.metaDesc") },
-    ],
-  }),
+  head: () => {
+    const title = i18n.t("dashboard.metaTitle");
+    const desc = i18n.t("dashboard.metaDesc");
+    const url = "https://financetracker.putopulse.org/dashboard";
+    return {
+      meta: [
+        { title },
+        { name: "description", content: desc },
+        { property: "og:title", content: title },
+        { property: "og:description", content: desc },
+        { property: "og:url", content: url },
+      ],
+      links: [{ rel: "canonical", href: url }],
+    };
+  },
   component: Dashboard,
 });
 

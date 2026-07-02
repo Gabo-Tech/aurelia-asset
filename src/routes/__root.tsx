@@ -80,11 +80,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
-      { title: "Portfolio Tracker" },
       { property: "og:site_name", content: "Portfolio Tracker" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "theme-color", content: "#0B0B0C" },
+      { name: "author", content: "GABO Solutions" },
+      { name: "application-name", content: "Portfolio Tracker" },
+      { name: "format-detection", content: "telephone=no" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
@@ -97,7 +99,19 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         href: "https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap",
       },
     ],
-
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "Organization",
+          name: "Portfolio Tracker",
+          url: "https://financetracker.putopulse.org",
+          logo: "https://financetracker.putopulse.org/favicon.ico",
+          sameAs: ["https://solutions.gabo.rocks"],
+        }),
+      },
+    ],
   }),
   shellComponent: RootShell,
   component: RootComponent,

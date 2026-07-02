@@ -102,6 +102,45 @@ export const Route = createFileRoute("/")({
             },
           }),
         },
+        {
+          type: "application/ld+json",
+          children: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            mainEntity: [
+              {
+                "@type": "Question",
+                name: i18n.t("landing.faq.items.free.q"),
+                acceptedAnswer: { "@type": "Answer", text: i18n.t("landing.faq.items.free.a") },
+              },
+              {
+                "@type": "Question",
+                name: i18n.t("landing.faq.items.storage.q"),
+                acceptedAnswer: { "@type": "Answer", text: i18n.t("landing.faq.items.storage.a") },
+              },
+              {
+                "@type": "Question",
+                name: i18n.t("landing.faq.items.assets.q"),
+                acceptedAnswer: { "@type": "Answer", text: i18n.t("landing.faq.items.assets.a") },
+              },
+              {
+                "@type": "Question",
+                name: i18n.t("landing.faq.items.account.q"),
+                acceptedAnswer: { "@type": "Answer", text: i18n.t("landing.faq.items.account.a") },
+              },
+            ],
+          }),
+        },
+        {
+          type: "application/ld+json",
+          children: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            name: "Portfolio Tracker",
+            url: SITE_URL + "/",
+            inLanguage: LOCALES as unknown as string[],
+          }),
+        },
       ],
     };
   },

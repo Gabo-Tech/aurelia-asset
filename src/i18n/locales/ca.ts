@@ -135,7 +135,7 @@ const ca: Translation = {
     },
     footer: { brand: "Gestor de cartera elegant", madeBy: "Fet per" },
     meta: {
-      title: "Gestor de cartera elegant - Veges, planifica i posseeix els teus diners",
+      title: "Gestor de cartera privat - Accions, Cripto i ETFs",
       description: "Segueix cada acció, ETF, cripto, metall i euro que tens en un gestor privat. Veges assignació, flux de caixa, previsió i patrimoni - sense registre, sense núvol, gratis per sempre.",
       keywords: "gestor de cartera, patrimoni net, app privada de finances, seguiment d'accions, cartera cripto, seguiment ETF, sankey de flux de caixa, pressupostos, objectius d'estalvi, cartera offline",
     },

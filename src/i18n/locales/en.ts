@@ -176,7 +176,7 @@ const en = {
       madeBy: "Made by",
     },
     meta: {
-      title: "Elegant Portfolio Tracker - See, Plan, Own Your Money",
+      title: "Private Portfolio Tracker - Stocks, Crypto & ETFs",
       description:
         "Track every stock, ETF, crypto, metal and euro you own in one private tracker. See allocation, cashflow, forecast and net worth - no signup, no cloud, forever free.",
       keywords:

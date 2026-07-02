@@ -134,7 +134,7 @@ const nl: Translation = {
     },
     footer: { brand: "Elegante Portfolio Tracker", madeBy: "Gemaakt door" },
     meta: {
-      title: "Elegante Portfolio Tracker - Zie, plan en bezit je geld",
+      title: "Privé Portfolio Tracker - Aandelen, Crypto & ETFs",
       description: "Volg elk aandeel, elke ETF, crypto, metaal en euro die je bezit in één privé-tracker. Zie allocatie, kasstroom, prognose en vermogen - zonder registratie, zonder cloud, voor altijd gratis.",
       keywords: "portfolio tracker, vermogenstracker, privé financiële app, aandelen tracker, crypto portfolio, ETF tracker, sankey kasstroom, budgetplanner, spaardoelen, offline portefeuille",
     },

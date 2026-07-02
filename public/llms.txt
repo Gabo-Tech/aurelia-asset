@@ -1,0 +1,25 @@
+# Portfolio Tracker
+
+> A private, local-first personal finance and portfolio tracker. Track stocks, ETFs, crypto, precious metals, cash, custom assets, income, expenses, budgets, savings goals, credit-card debt and loans — all encrypted on your own device. No account, no cloud, no telemetry. Free and open source (AGPL-3.0). Available as a web app and as native apps for Windows, macOS, Linux, Android and iOS.
+
+## What makes it different
+
+- **Local-first & encrypted**: All data is stored on your device using AES-GCM 256-bit encryption. Nothing is uploaded, synced or shared.
+- **Unified net worth**: Holdings (stocks, ETFs, crypto, metals, custom) plus liquidity (cash, cards) in a single view, converted into your display currency.
+- **Live market data**: Prices via Finnhub or public sources through a same-origin proxy, with local price-history caching to avoid rate limits.
+- **Cashflow Sankey**: Income, expenses, savings, investments and transfers animated through a customizable Sankey diagram.
+- **Planning suite**: Monthly budgets, savings goals, 24-month forecast and loan amortization tables.
+- **Multi-currency & i18n**: 6 languages (English, Spanish, Portuguese, German, Dutch, Valencià) and every ISO currency.
+
+## Pages
+
+- [Home](/): Landing page — overview, features, comparison, FAQ and native app downloads.
+- [Dashboard](/dashboard): Net worth, allocation pie chart, portfolio value and recent activity.
+- [Holdings](/holdings): Manage stocks, ETFs, crypto, metals and custom assets. Buy/sell transactions and per-asset quantity history.
+- [Performance](/performance): Time-weighted returns and historical price charts across selectable periods.
+- [Cashflow](/cashflow): Income, expenses, categories, credit cards, installment plans, transfers, recurring items and Sankey diagram.
+- [Planning](/planning): Budgets, savings goals, cashflow forecast and loan amortization.
+
+## Optional
+
+- [Made by GABO](https://solutions.gabo.rocks): Independent solutions studio behind the project.

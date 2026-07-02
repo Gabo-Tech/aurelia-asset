@@ -1,9 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
     <loc>https://financetracker.putopulse.org/</loc>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://financetracker.putopulse.org/?lang=en"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://financetracker.putopulse.org/?lang=es"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://financetracker.putopulse.org/?lang=pt"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://financetracker.putopulse.org/?lang=de"/>
+    <xhtml:link rel="alternate" hreflang="nl" href="https://financetracker.putopulse.org/?lang=nl"/>
+    <xhtml:link rel="alternate" hreflang="ca" href="https://financetracker.putopulse.org/?lang=ca"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://financetracker.putopulse.org/"/>
   </url>
   <url>
     <loc>https://financetracker.putopulse.org/dashboard</loc>
@@ -22,6 +30,11 @@
   </url>
   <url>
     <loc>https://financetracker.putopulse.org/cashflow</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://financetracker.putopulse.org/planning</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
