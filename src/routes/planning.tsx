@@ -489,21 +489,21 @@ function ForecastPanel() {
               <CardTitle className="text-sm text-muted-foreground font-normal">{t("planning.forecast.incomeMo")}</CardTitle>
               <TrendingUp className="h-4 w-4 text-emerald-500" />
             </CardHeader>
-            <CardContent className="text-2xl font-semibold text-emerald-500">{fmt(recurring.incomeMo)}</CardContent>
+            <CardContent className="text-2xl font-semibold text-emerald-500">{fmt(monthly.incomeMo)}</CardContent>
           </Card>
           <Card className="border-l-4 border-l-rose-500/70">
             <CardHeader className="pb-2 flex flex-row items-center justify-between">
               <CardTitle className="text-sm text-muted-foreground font-normal">{t("planning.forecast.expenseMo")}</CardTitle>
               <TrendingDown className="h-4 w-4 text-rose-500" />
             </CardHeader>
-            <CardContent className="text-2xl font-semibold text-rose-500">{fmt(recurring.expenseMo)}</CardContent>
+            <CardContent className="text-2xl font-semibold text-rose-500">{fmt(monthly.expenseMo)}</CardContent>
           </Card>
           <Card className="border-l-4" style={{ borderLeftColor: "var(--primary)" }}>
             <CardHeader className="pb-2 flex flex-row items-center justify-between">
               <CardTitle className="text-sm text-muted-foreground font-normal">{t("planning.forecast.savingsRate")}</CardTitle>
               <span className="text-xs tabular-nums text-muted-foreground">{fmt(netMo)}/mo</span>
             </CardHeader>
-            <CardContent className="text-2xl font-semibold">{(recurring.savingsRate * 100).toFixed(0)}%</CardContent>
+            <CardContent className="text-2xl font-semibold">{(monthly.savingsRate * 100).toFixed(0)}%</CardContent>
           </Card>
         </div>
       </section>
@@ -567,7 +567,7 @@ function ForecastPanel() {
             {t("planning.forecast.recurringTitle")}
           </h3>
         </div>
-        {recurring.items.length === 0 ? (
+        {recurringItems.length === 0 ? (
           <Card><CardContent className="py-6 text-sm text-muted-foreground">{t("planning.forecast.recurringEmpty")}</CardContent></Card>
         ) : (
           <div className="grid md:grid-cols-2 gap-4">
@@ -578,7 +578,7 @@ function ForecastPanel() {
                   {t("planning.forecast.recurringIncome", { defaultValue: "Recurring income" })}
                   <span className="text-xs text-muted-foreground font-normal">({incomeItems.length})</span>
                 </CardTitle>
-                <span className="text-sm font-semibold text-emerald-500 tabular-nums">{fmt(recurring.incomeMo)}/mo</span>
+                <span className="text-sm font-semibold text-emerald-500 tabular-nums">{fmt(monthly.incomeMo)}/mo</span>
               </CardHeader>
               <CardContent>
                 {incomeItems.length === 0 ? (
@@ -606,7 +606,7 @@ function ForecastPanel() {
                   {t("planning.forecast.subscriptions", { defaultValue: "Subscriptions & recurring expenses" })}
                   <span className="text-xs text-muted-foreground font-normal">({expenseItems.length})</span>
                 </CardTitle>
-                <span className="text-sm font-semibold text-rose-500 tabular-nums">{fmt(recurring.expenseMo)}/mo</span>
+                <span className="text-sm font-semibold text-rose-500 tabular-nums">{fmt(monthly.expenseMo)}/mo</span>
               </CardHeader>
               <CardContent>
                 {expenseItems.length === 0 ? (
