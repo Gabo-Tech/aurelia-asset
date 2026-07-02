@@ -414,7 +414,8 @@ function ForecastPanel() {
         c.recurrence!.frequency === "monthly" ? v :
         c.recurrence!.frequency === "weekly" ? v * 4.345 :
         v / 12;
-      return { id: c.id, name: c.source, kind: c.kind, perMonth, category: c.category };
+      const name = (c.source && c.source.trim()) || (c.description && c.description.trim()) || c.category || "—";
+      return { id: c.id, name, kind: c.kind, perMonth, category: c.category };
     });
     const inc = monthlyTotals.filter((x) => x.kind === "income").reduce((s, x) => s + x.perMonth, 0);
     const exp = monthlyTotals.filter((x) => x.kind === "expense").reduce((s, x) => s + x.perMonth, 0);
