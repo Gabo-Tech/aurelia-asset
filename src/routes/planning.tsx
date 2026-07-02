@@ -537,7 +537,7 @@ function ForecastPanel() {
           <CardContent>
             <div className="h-72 w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={data} margin={{ left: 8, right: 8, top: 8 }}>
+                <AreaChart data={data} margin={{ left: 4, right: 12, top: 8 }}>
                   <defs>
                     <linearGradient id="forecastFill" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="0%" stopColor="var(--primary)" stopOpacity={0.5} />
@@ -546,7 +546,8 @@ function ForecastPanel() {
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                   <XAxis dataKey="month" stroke="var(--muted-foreground)" fontSize={12} />
-                  <YAxis stroke="var(--muted-foreground)" fontSize={12} tickFormatter={(v) => fmt(v, undefined, { compact: true })} />
+                  <YAxis stroke="var(--muted-foreground)" fontSize={11} width={64} tickFormatter={(v) => fmt(v, undefined, { compact: true })} />
+
                   <Tooltip
                     contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12, color: "var(--popover-foreground)" }}
                     formatter={(v: number, name: string) => [fmt(v), name]}
