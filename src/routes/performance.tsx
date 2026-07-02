@@ -69,16 +69,7 @@ function PerformancePage() {
     return m;
   }, [state.holdings, currency, rates]);
 
-  const holdingsKey = state.holdings
-    .map((h) => `${h.id}:${h.symbol}:${h.coinGeckoId ?? ""}:${h.quantity}`)
-    .join("|");
-
-  const { data, isLoading, isError } = useQuery({
-    queryKey: ["portfolio-history", period, holdingsKey],
-    queryFn: () => fetchPortfolioHistory(state.holdings, period),
-    enabled: state.holdings.length > 0,
-    staleTime: 5 * 60 * 1000,
-  });
+  const { data, isLoading, isError } = usePortfolioHistory(state.holdings, period);
 
   const chartData = useMemo(() => {
     if (!data) return [];
