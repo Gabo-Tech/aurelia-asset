@@ -25,7 +25,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import type { Budget, Loan } from "@/lib/types";
+import type { Budget, Loan, CashflowEntry } from "@/lib/types";
 
 export const Route = createFileRoute("/planning")({
   head: () => {
