@@ -202,6 +202,24 @@ function PerformancePage() {
             {p.label}
           </Button>
         ))}
+        <div className="ml-auto flex items-center gap-1">
+          <Button
+            size="sm"
+            variant={scaleMode === "value" ? "default" : "outline"}
+            onClick={() => setScaleMode("value")}
+            title="Absolute value"
+          >
+            {currency}
+          </Button>
+          <Button
+            size="sm"
+            variant={scaleMode === "indexed" ? "default" : "outline"}
+            onClick={() => setScaleMode("indexed")}
+            title="Percent change from start of period"
+          >
+            %
+          </Button>
+        </div>
       </div>
 
       <div className="mb-4 flex flex-wrap items-center gap-2" data-tour="perf-assets">
