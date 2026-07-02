@@ -25,8 +25,17 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 import { PageHeader } from "@/components/app-shell";
-import { Download, Upload, RotateCcw, FileJson, FileSpreadsheet, Languages, RefreshCw } from "lucide-react";
+import { Download, Upload, RotateCcw, FileJson, FileSpreadsheet, Languages, RefreshCw, Copy, ClipboardPaste } from "lucide-react";
 import { clearPriceHistoryCache } from "@/lib/finance";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -257,18 +266,37 @@ function SettingsPage() {
   const { language, setLanguage, languages } = useLanguage();
   const [finnhub, setFinnhub] = useState(state.settings.finnhubKey ?? "");
   const fileRef = useRef<HTMLInputElement>(null);
+  const [pasteOpen, setPasteOpen] = useState(false);
+  const [pasteValue, setPasteValue] = useState("");
+
+  async function buildExportJson() {
+    const envelope = {
+      version: 1 as const,
+      exportedAt: new Date().toISOString(),
+      state,
+      preferences: await collectPreferences(),
+      userPreferences: { language },
+    };
+    return JSON.stringify(envelope, null, 2);
+  }
+
+  async function copyJsonToClipboard() {
+    try {
+      const json = await buildExportJson();
+      if (!navigator.clipboard?.writeText) throw new Error("Clipboard not available");
+      await navigator.clipboard.writeText(json);
+      toast.success(t("settings.data.copied", { defaultValue: "JSON copied to clipboard" }));
+    } catch (e) {
+      toast.error(
+        `${t("settings.data.copyFailed", { defaultValue: "Copy failed" })}: ${(e as Error).message}`,
+      );
+    }
+  }
 
   async function exportJson() {
     try {
-      const envelope = {
-        version: 1 as const,
-        exportedAt: new Date().toISOString(),
-        state,
-        preferences: await collectPreferences(),
-        userPreferences: { language },
-      };
       const filename = `portfolio-${new Date().toISOString().slice(0, 10)}.json`;
-      const json = JSON.stringify(envelope, null, 2);
+      const json = await buildExportJson();
       const blob = new Blob([json], { type: "application/json" });
       const method = await saveOrShare(blob, filename, json);
       toast.success(
@@ -319,44 +347,47 @@ function SettingsPage() {
     }
   }
 
-  function handleImport(file: File) {
-    file.text().then(async (txt) => {
-      try {
-        const raw = JSON.parse(txt);
-        const envelope = exportEnvelopeSchema.safeParse(raw);
-        let parsedState: AppState;
-        let prefs: Record<string, string> | undefined;
-        let userPrefs: { language?: string } | undefined;
-        if (envelope.success) {
-          parsedState = envelope.data.state as AppState;
-          prefs = envelope.data.preferences;
-          userPrefs = envelope.data.userPreferences;
-        } else {
-          const legacy = appStateSchema.safeParse(raw);
-          if (!legacy.success) {
-            const first = (envelope.error.issues[0] ?? legacy.error.issues[0]);
-            throw new Error(
-              first ? `${first.path.join(".") || "root"}: ${first.message}` : "Invalid file format"
-            );
-          }
-          parsedState = legacy.data as AppState;
+  async function importFromText(txt: string) {
+    try {
+      const raw = JSON.parse(txt);
+      const envelope = exportEnvelopeSchema.safeParse(raw);
+      let parsedState: AppState;
+      let prefs: Record<string, string> | undefined;
+      let userPrefs: { language?: string } | undefined;
+      if (envelope.success) {
+        parsedState = envelope.data.state as AppState;
+        prefs = envelope.data.preferences;
+        userPrefs = envelope.data.userPreferences;
+      } else {
+        const legacy = appStateSchema.safeParse(raw);
+        if (!legacy.success) {
+          const first = envelope.error.issues[0] ?? legacy.error.issues[0];
+          throw new Error(
+            first ? `${first.path.join(".") || "root"}: ${first.message}` : "Invalid file format",
+          );
         }
-        importState(parsedState);
-        if (prefs) await applyPreferences(prefs);
-        if (userPrefs?.language && SUPPORTED_LANG_CODES.includes(userPrefs.language)) {
-          setLanguage(userPrefs.language as LanguageCode);
-        } else {
-          // Backwards compat: also check the persisted language key inside `prefs`
-          const fromPrefs = prefs?.[LANG_STORAGE_KEY];
-          if (fromPrefs && SUPPORTED_LANG_CODES.includes(fromPrefs)) {
-            setLanguage(fromPrefs as LanguageCode);
-          }
-        }
-        toast.success(t("settings.data.imported"));
-      } catch (e) {
-        toast.error(`${t("settings.data.importFailed")}: ${(e as Error).message}`);
+        parsedState = legacy.data as AppState;
       }
-    });
+      importState(parsedState);
+      if (prefs) await applyPreferences(prefs);
+      if (userPrefs?.language && SUPPORTED_LANG_CODES.includes(userPrefs.language)) {
+        setLanguage(userPrefs.language as LanguageCode);
+      } else {
+        const fromPrefs = prefs?.[LANG_STORAGE_KEY];
+        if (fromPrefs && SUPPORTED_LANG_CODES.includes(fromPrefs)) {
+          setLanguage(fromPrefs as LanguageCode);
+        }
+      }
+      toast.success(t("settings.data.imported"));
+      return true;
+    } catch (e) {
+      toast.error(`${t("settings.data.importFailed")}: ${(e as Error).message}`);
+      return false;
+    }
+  }
+
+  function handleImport(file: File) {
+    file.text().then((txt) => importFromText(txt));
   }
 
   return (
@@ -512,6 +543,9 @@ function SettingsPage() {
               <Button variant="outline" className="w-full justify-start" onClick={exportJson}>
                 <FileJson className="mr-2 h-4 w-4" /> {t("settings.data.exportJson")}
               </Button>
+              <Button variant="outline" className="w-full justify-start" onClick={copyJsonToClipboard}>
+                <Copy className="mr-2 h-4 w-4" /> {t("settings.data.copyJson", { defaultValue: "Copy JSON to clipboard" })}
+              </Button>
               <Button variant="outline" className="w-full justify-start" onClick={exportCsv}>
                 <FileSpreadsheet className="mr-2 h-4 w-4" /> {t("settings.data.exportCsv")}
               </Button>
@@ -521,6 +555,16 @@ function SettingsPage() {
                 onClick={() => fileRef.current?.click()}
               >
                 <Upload className="mr-2 h-4 w-4" /> {t("settings.data.importJson")}
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                onClick={() => {
+                  setPasteValue("");
+                  setPasteOpen(true);
+                }}
+              >
+                <ClipboardPaste className="mr-2 h-4 w-4" /> {t("settings.data.pasteJson", { defaultValue: "Paste JSON to import" })}
               </Button>
               <input
                 ref={fileRef}
@@ -533,6 +577,57 @@ function SettingsPage() {
                   e.target.value = "";
                 }}
               />
+
+              <Dialog open={pasteOpen} onOpenChange={setPasteOpen}>
+                <DialogContent className="max-w-2xl">
+                  <DialogHeader>
+                    <DialogTitle>{t("settings.data.pasteJson", { defaultValue: "Paste JSON to import" })}</DialogTitle>
+                    <DialogDescription>
+                      {t("settings.data.pasteJsonDesc", {
+                        defaultValue: "Paste a previously exported JSON below. This will replace your current data.",
+                      })}
+                    </DialogDescription>
+                  </DialogHeader>
+                  <Textarea
+                    value={pasteValue}
+                    onChange={(e) => setPasteValue(e.target.value)}
+                    placeholder='{ "version": 1, "state": { ... } }'
+                    className="font-mono text-xs min-h-[240px]"
+                  />
+                  <DialogFooter className="gap-2 sm:gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={async () => {
+                        try {
+                          const txt = await navigator.clipboard?.readText?.();
+                          if (txt) setPasteValue(txt);
+                        } catch {
+                          toast.error(t("settings.data.clipboardReadFailed", { defaultValue: "Could not read clipboard" }));
+                        }
+                      }}
+                    >
+                      <ClipboardPaste className="mr-2 h-4 w-4" />
+                      {t("settings.data.pasteFromClipboard", { defaultValue: "Paste from clipboard" })}
+                    </Button>
+                    <Button variant="ghost" onClick={() => setPasteOpen(false)}>
+                      {t("common.cancel")}
+                    </Button>
+                    <Button
+                      disabled={!pasteValue.trim()}
+                      onClick={async () => {
+                        const ok = await importFromText(pasteValue.trim());
+                        if (ok) {
+                          setPasteOpen(false);
+                          setPasteValue("");
+                        }
+                      }}
+                    >
+                      {t("settings.data.importJson")}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+
 
               <AlertDialog>
                 <AlertDialogTrigger asChild>
