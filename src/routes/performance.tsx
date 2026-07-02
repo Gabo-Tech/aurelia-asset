@@ -51,6 +51,7 @@ function PerformancePage() {
   const [period, setPeriod] = useState<PeriodId>("1M");
   const [hidden, setHidden] = useState<Set<string>>(new Set());
   const [hideTotal, setHideTotal] = useState(false);
+  const [scaleMode, setScaleMode] = useState<"value" | "indexed">("value");
 
   const visibleKeys = useMemo(() => {
     const keys: string[] = [];
@@ -81,6 +82,24 @@ function PerformancePage() {
 
   const chartData = useMemo(() => {
     if (!data) return [];
+    // Baselines for indexed mode: first non-zero value per key.
+    const baselines: Record<string, number> = {};
+    if (scaleMode === "indexed") {
+      for (const d of data) {
+        let total = 0;
+        for (const h of state.holdings) {
+          const v = (d.perAsset[h.id] ?? 0) * (fxByHolding[h.id] ?? 1);
+          total += v;
+          if (baselines[h.symbol] == null && v > 0) baselines[h.symbol] = v;
+        }
+        if (baselines.Total == null && total > 0) baselines.Total = total;
+        if (
+          baselines.Total != null &&
+          state.holdings.every((h) => baselines[h.symbol] != null)
+        )
+          break;
+      }
+    }
     return data.map((d) => {
       let total = 0;
       const row: Record<string, number | string> = {
@@ -90,13 +109,23 @@ function PerformancePage() {
       };
       for (const h of state.holdings) {
         const v = (d.perAsset[h.id] ?? 0) * (fxByHolding[h.id] ?? 1);
-        row[h.symbol] = Math.round(v * 100) / 100;
         total += v;
+        if (scaleMode === "indexed") {
+          const base = baselines[h.symbol];
+          row[h.symbol] = base ? Math.round(((v / base) * 100 - 100) * 100) / 100 : 0;
+        } else {
+          row[h.symbol] = Math.round(v * 100) / 100;
+        }
       }
-      row.Total = Math.round(total * 100) / 100;
+      if (scaleMode === "indexed") {
+        const base = baselines.Total;
+        row.Total = base ? Math.round(((total / base) * 100 - 100) * 100) / 100 : 0;
+      } else {
+        row.Total = Math.round(total * 100) / 100;
+      }
       return row;
     });
-  }, [data, period, state.holdings, fxByHolding]);
+  }, [data, period, state.holdings, fxByHolding, scaleMode]);
 
   const yDomain = useMemo<[number, number]>(() => {
     if (!chartData.length || !visibleKeys.length) return [0, 0];
@@ -116,7 +145,8 @@ function PerformancePage() {
       return [min - pad, max + pad];
     }
     const pad = (max - min) * 0.08;
-    return [Math.max(0, min - pad), max + pad];
+    // Don't clamp to 0 — that squashes small variations against a giant Total.
+    return [min - pad, max + pad];
   }, [chartData, visibleKeys]);
 
   const metrics = useMemo(() => {
@@ -172,6 +202,24 @@ function PerformancePage() {
             {p.label}
           </Button>
         ))}
+        <div className="ml-auto flex items-center gap-1">
+          <Button
+            size="sm"
+            variant={scaleMode === "value" ? "default" : "outline"}
+            onClick={() => setScaleMode("value")}
+            title="Absolute value"
+          >
+            {currency}
+          </Button>
+          <Button
+            size="sm"
+            variant={scaleMode === "indexed" ? "default" : "outline"}
+            onClick={() => setScaleMode("indexed")}
+            title="Percent change from start of period"
+          >
+            %
+          </Button>
+        </div>
       </div>
 
       <div className="mb-4 flex flex-wrap items-center gap-2" data-tour="perf-assets">
@@ -285,7 +333,13 @@ function PerformancePage() {
                     <YAxis
                       stroke="var(--muted-foreground)"
                       tick={{ fontSize: 11 }}
-                      tickFormatter={(v) => (privacy ? MASK : formatMoney(v as number, currency, { compact: true }))}
+                      tickFormatter={(v) =>
+                        privacy
+                          ? MASK
+                          : scaleMode === "indexed"
+                          ? `${(v as number) >= 0 ? "+" : ""}${(v as number).toFixed(1)}%`
+                          : formatMoney(v as number, currency, { compact: true })
+                      }
                       width={60}
                       domain={yDomain}
                       allowDataOverflow
@@ -297,7 +351,11 @@ function PerformancePage() {
                         borderRadius: 10,
                         fontSize: 12,
                       }}
-                      formatter={(value: number) => mask(value)}
+                      formatter={(value: number) =>
+                        scaleMode === "indexed"
+                          ? `${value >= 0 ? "+" : ""}${value.toFixed(2)}%`
+                          : mask(value)
+                      }
                     />
                     <Legend
                       wrapperStyle={{ fontSize: 11 }}
