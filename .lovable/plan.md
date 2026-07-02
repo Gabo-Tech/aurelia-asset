@@ -1,30 +1,33 @@
-## Why Performance and Holdings disagree
+## Root cause
 
-- Holdings header uses the store's `toDisplay(..., h.priceCurrency)`, which (after the earlier consistency fix) treats a missing `priceCurrency` as the display currency and applies no FX.
-- Performance (`src/routes/performance.tsx`) builds its own FX map with `h.priceCurrency || "USD"`, so any holding without a stored currency gets an unwanted USD→CHF conversion (~×0.81). That accounts for the 3,795 vs 4,939 gap (ratio ≈ 0.77 ≈ USD→CHF).
-- Secondary effect: the header number equals the last historical price point, not the live `currentPrice`, so even after the FX fix it can be a bit behind on volatile days.
+`ForecastPanel` in `src/routes/planning.tsx` computes two independent monthly aggregates that must agree but don't:
 
-## Fix
+1. The chart's future buckets use `expandCashflows` + `valuesByEntry`, which:
+   - Resolves `amountKind: "percent"` entries against their base (e.g. `25%` of income = a real currency amount).
+   - Expands `installmentPlan` entries into their scheduled monthly (or weekly) charges.
+2. The "Monthly income / expenses / savings rate" cards and the recurring lists just do `toDisplay(c.amount, c.currency)` per recurring entry. Percent entries get treated as raw currency (a "25%" tax reads as €25/mo), and installments are ignored.
 
-1. `src/routes/performance.tsx` — align currency fallback with the store:
-   - Replace `h.priceCurrency || "USD"` in `fxByHolding` with a fallback to the user's display `currency` (same rule as `toDisplay`). Holdings with no stored currency are treated as already in display currency (no conversion), matching the Holdings page.
+With any percent expense or installment plan, the two views diverge: the summary can show a positive savings rate while the projected balance visibly drops.
 
-2. `src/lib/finance/index.ts` — make the last historical point reflect live prices:
-   - In `fetchPortfolioHistory`, after building the day series, ensure the final point uses each holding's current live price (`h.currentPrice`) when it's newer than the last historical sample. Concretely: if `today` isn't already in `days`, append a `today` point priced with `h.currentPrice`; if the last day is today, overwrite each `perAssetPrice[h.id]` / `perAsset[h.id]` with `h.currentPrice` when available. This keeps the "last" value equal to `quantity * currentPrice`, which is exactly what Holdings shows.
-   - Keep `perAssetPrice` populated so tooltips and the indexed/% mode continue to work.
+Also: `runwayMonths = data[0].balance / recurring.expenseMo` mixes the chart's balance with the summary's (understated) expense number, giving nonsense runway ("-0.4 months") when balance is negative or expenses are wrong.
 
-3. Sanity check the header:
-   - After the two fixes, `metrics.last.total` in `performance.tsx` should equal `Σ toDisplay(h.quantity * h.currentPrice, h.priceCurrency)` — same as the Holdings header. No changes needed to the Holdings page.
+## Fix (all in `src/routes/planning.tsx`)
 
-## Non-goals
+1. **Single source of truth for monthly income / expense / net.**
+   - Compute `monthlyIncome`, `monthlyExpense`, `monthlyNet` from the same 12-month forward window used by the chart: run `expandCashflows(state.cashflows, addMonths(now, 12))`, filter to entries strictly in the future, resolve with `valuesByEntry`, split by `kind` (skipping credit-financed expenses via the existing `paymentMethod?.startsWith("credit:")` rule), sum, and divide by 12.
+   - This automatically handles percent entries, installments, one-offs falling in the horizon, and recurrence expansions consistently.
 
-- No change to how history is fetched, cached, or merged.
-- No change to the chart's period selector, indexed/% mode, or PDF export.
-- No change to the Holdings page total or to `toDisplay`.
+2. **Rewire the three summary cards** ("Monthly income (recurring)", "Monthly expenses (recurring)", "Savings rate") to read from these new values. Update the labels to just "Monthly income" / "Monthly expenses" so they honestly represent the 12-month average (they already include recurring; now they also include percent/installments/one-offs).
+
+3. **Recurring lists** (income & subscriptions) keep listing only entries with `c.recurrence` (that's what "recurring" means), but their `perMonth` now uses `valuesByEntry` for that single entry against the same monthly base, so a `25%` tax shows its real per-month currency figure, not `€25`.
+
+4. **Runway** becomes `data[0].balance / monthlyExpense` using the new `monthlyExpense`. Keep the `Infinity` / `Number.isFinite` guards. If `data[0].balance <= 0`, render "no runway" copy instead of a negative months figure.
+
+5. No changes to `expandCashflows`, `valuesByEntry`, `liquidityImpact`, chart shape, or i18n keys. Add a `defaultValue` fallback where a key label shifts (e.g. dropping "(recurring)").
 
 ## Verification
 
-- Reload the app on `/performance` and `/holdings` with the same display currency; the two "Portfolio value" numbers must match to the cent.
-- Toggle period (1D → Max): the header stays equal to the live Holdings total; historical points before today are unchanged.
-- Switch display currency (CHF ↔ EUR ↔ USD): both pages update in lockstep.
-- Add a new holding with no explicit currency: it contributes 1:1 to both totals (no phantom USD→display conversion).
+- With no percent entries and no installments: summary numbers and slope match today's behavior (regression-safe).
+- Add a `25%` percent tax expense against income: summary "Monthly expenses" jumps to include the real tax; savings rate drops; chart slope now matches the summary's net.
+- Add an installment plan (e.g. €1,200 over 4 months): during those 4 months the chart's slope reflects €300/mo and the summary shows that contribution too.
+- Runway: with positive balance and positive expenses, `data[0].balance / monthlyExpense` matches the point where the chart crosses zero (±rounding). With `balance <= 0`, UI shows "no runway" copy instead of negative months.
