@@ -371,21 +371,16 @@ function ForecastPanel() {
   const { fmt, toDisplay } = useMoney();
   const [months, setMonths] = useState(6);
 
-  // Chart data: real starting liquidity + monthly net over horizon.
-  const startingBalance = useMemo(() => {
-    const past = expandCashflows(state.cashflows, new Date());
+  const data = useMemo(() => {
+    const now = new Date();
+    const horizon = addMonths(now, months);
+    const past = expandCashflows(state.cashflows, now);
     const pastVals = valuesByEntry(past, toDisplay);
     let balance = 0;
     for (const e of past) {
       const v = pastVals.get(e.id) ?? 0;
       balance += liquidityImpact(e, v);
     }
-    return balance;
-  }, [state.cashflows, toDisplay]);
-
-  const data = useMemo(() => {
-    const now = new Date();
-    const horizon = addMonths(now, months);
     const future = expandCashflows(state.cashflows, horizon).filter((e) => new Date(e.date) > now);
     const futVals = valuesByEntry(future, toDisplay);
     const buckets = new Map<string, { income: number; expense: number }>();
@@ -399,7 +394,6 @@ function ForecastPanel() {
       }
       buckets.set(key, cur);
     }
-    let balance = startingBalance;
     const rows: { month: string; balance: number; income: number; expense: number; net: number }[] = [];
     for (let i = 0; i < months; i++) {
       const m = startOfMonth(addMonths(now, i + 1));
@@ -410,81 +404,29 @@ function ForecastPanel() {
       rows.push({ month: format(m, "MMM yy"), balance, income: b.income, expense: b.expense, net });
     }
     return rows;
-  }, [state.cashflows, toDisplay, months, startingBalance]);
+  }, [state.cashflows, toDisplay, months]);
 
-  // Recurring snapshot: use the SAME occurrence-accurate evaluator as the chart
-  // (average of next 12 months). This makes percent entries (e.g. 25% tax)
-  // and weeklies count truthfully.
   const recurring = useMemo(() => {
-    const now = new Date();
-    const horizon = addMonths(now, 12);
-    const future = expandCashflows(state.cashflows, horizon).filter((e) => new Date(e.date) > now);
-    const futVals = valuesByEntry(future, toDisplay);
-
-    // Aggregate 12-month totals per parent entry, ignoring credit-funded expenses
-    // to match the chart's liquidity rule.
-    const byParent = new Map<string, { total: number; kind: "income" | "expense"; sample: (typeof future)[number] }>();
-    let incomeTotal = 0;
-    let expenseTotal = 0;
-    for (const e of future) {
-      const parentId = (e as (typeof future)[number] & { parentId?: string }).parentId ?? e.id;
-      const v = futVals.get(e.id) ?? 0;
-      if (e.kind === "income") {
-        incomeTotal += v;
-      } else if (e.kind === "expense") {
-        if (e.paymentMethod?.startsWith("credit:")) continue;
-        expenseTotal += v;
-      } else {
-        continue;
-      }
-      const cur = byParent.get(parentId);
-      if (cur) cur.total += v;
-      else byParent.set(parentId, { total: v, kind: e.kind, sample: e });
-    }
-
-    // Only surface entries that are actually recurring or percent-derived in
-    // the "Recurring subscriptions & income" list.
-    const recurringOrPercentParentIds = new Set(
-      state.cashflows
-        .filter((c) => c.recurrence || (c.amountKind ?? "fixed") === "percent")
-        .map((c) => c.id),
-    );
-
-    const items = Array.from(byParent.entries())
-      .filter(([pid]) => recurringOrPercentParentIds.has(pid))
-      .map(([pid, agg]) => {
-        const parent = state.cashflows.find((c) => c.id === pid) ?? agg.sample;
-        const name =
-          (parent.source && parent.source.trim()) ||
-          (parent.description && parent.description.trim()) ||
-          parent.category ||
-          "—";
-        return {
-          id: pid,
-          name,
-          kind: agg.kind,
-          perMonth: agg.total / 12,
-          category: parent.category,
-        };
-      });
-
-    const incomeMo = incomeTotal / 12;
-    const expenseMo = expenseTotal / 12;
-    return {
-      items,
-      incomeMo,
-      expenseMo,
-      savingsRate: incomeMo > 0 ? Math.max(0, (incomeMo - expenseMo) / incomeMo) : 0,
-    };
+    const list = state.cashflows.filter((c) => c.recurrence);
+    const monthlyTotals = list.map((c) => {
+      const v = toDisplay(Number(c.amount) || 0, c.currency);
+      const perMonth =
+        c.recurrence!.frequency === "monthly" ? v :
+        c.recurrence!.frequency === "weekly" ? v * 4.345 :
+        v / 12;
+      const name = (c.source && c.source.trim()) || (c.description && c.description.trim()) || c.category || "—";
+      return { id: c.id, name, kind: c.kind, perMonth, category: c.category };
+    });
+    const inc = monthlyTotals.filter((x) => x.kind === "income").reduce((s, x) => s + x.perMonth, 0);
+    const exp = monthlyTotals.filter((x) => x.kind === "expense").reduce((s, x) => s + x.perMonth, 0);
+    return { items: monthlyTotals, incomeMo: inc, expenseMo: exp, savingsRate: inc > 0 ? Math.max(0, (inc - exp) / inc) : 0 };
   }, [state.cashflows, toDisplay]);
 
-  const netMo = recurring.incomeMo - recurring.expenseMo;
-  const runwayMonths =
-    netMo < 0 && startingBalance > 0 ? startingBalance / -netMo : Infinity;
+  const runwayMonths = recurring.expenseMo > 0 ? data[0]?.balance / recurring.expenseMo : Infinity;
 
   const incomeItems = recurring.items.filter((r) => r.kind === "income").sort((a, b) => b.perMonth - a.perMonth);
   const expenseItems = recurring.items.filter((r) => r.kind === "expense").sort((a, b) => b.perMonth - a.perMonth);
-
+  const netMo = recurring.incomeMo - recurring.expenseMo;
 
   return (
     <div className="space-y-8">
