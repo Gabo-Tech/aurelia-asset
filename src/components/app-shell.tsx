@@ -18,6 +18,7 @@ import { SponsorBanner } from "./sponsor-banner";
 import { ThemeToggle } from "./theme-toggle";
 import { PageLoader } from "./page-loader";
 import { TourLauncher } from "./tour-launcher";
+import { usePrefetchPortfolioHistory } from "@/hooks/use-portfolio-history";
 import logoAsset from "@/assets/logo.png.asset.json";
 
 const navItems = [
@@ -57,7 +58,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   const isNavigating = useRouterState({
     select: (s) => s.isLoading || s.isTransitioning || s.status === "pending",
   });
-  const { hydrated } = useStore();
+  const { hydrated, state } = useStore();
+  usePrefetchPortfolioHistory(state.holdings, hydrated);
   const fxReady = useFxReady();
   const ready = hydrated && fxReady && !isNavigating;
   const { t } = useTranslation();

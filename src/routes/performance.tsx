@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { usePortfolioHistory } from "@/hooks/use-portfolio-history";
 import {
   LineChart,
   Line,
@@ -20,7 +20,7 @@ import { PageHeader } from "@/components/app-shell";
 import { useTranslation } from "react-i18next";
 import i18n from "@/i18n";
 import { ChartFrame } from "@/components/chart-frame";
-import { fetchPortfolioHistory, PERIODS, type PeriodId } from "@/lib/finance";
+import { PERIODS, type PeriodId } from "@/lib/finance";
 import { formatPct, formatMoney, MASK } from "@/lib/format";
 import { convert } from "@/lib/finance/fx";
 import { cn } from "@/lib/utils";
@@ -69,16 +69,7 @@ function PerformancePage() {
     return m;
   }, [state.holdings, currency, rates]);
 
-  const holdingsKey = state.holdings
-    .map((h) => `${h.id}:${h.symbol}:${h.coinGeckoId ?? ""}:${h.quantity}`)
-    .join("|");
-
-  const { data, isLoading, isError } = useQuery({
-    queryKey: ["portfolio-history", period, holdingsKey],
-    queryFn: () => fetchPortfolioHistory(state.holdings, period),
-    enabled: state.holdings.length > 0,
-    staleTime: 5 * 60 * 1000,
-  });
+  const { data, isLoading, isError } = usePortfolioHistory(state.holdings, period);
 
   const chartData = useMemo(() => {
     if (!data) return [];

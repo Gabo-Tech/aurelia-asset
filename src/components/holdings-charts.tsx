@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useQuery } from "@tanstack/react-query";
+import { usePortfolioHistory } from "@/hooks/use-portfolio-history";
 import {
   AreaChart,
   Area,
@@ -20,7 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ChartFrame } from "@/components/chart-frame";
-import { fetchPortfolioHistory, PERIODS, type PeriodId } from "@/lib/finance";
+import { PERIODS, type PeriodId } from "@/lib/finance";
 import { formatMoney, formatPct, MASK } from "@/lib/format";
 import { convert } from "@/lib/finance/fx";
 import { cn } from "@/lib/utils";
@@ -94,16 +94,7 @@ export function HoldingsCharts() {
     return m;
   }, [state.holdings, currency, rates]);
 
-  const holdingsKey = state.holdings
-    .map((h) => `${h.id}:${h.symbol}:${h.coinGeckoId ?? ""}:${h.quantity}`)
-    .join("|");
-
-  const { data, isLoading, isError } = useQuery({
-    queryKey: ["portfolio-history", period, holdingsKey],
-    queryFn: () => fetchPortfolioHistory(state.holdings, period),
-    enabled: state.holdings.length > 0,
-    staleTime: 5 * 60 * 1000,
-  });
+  const { data, isLoading, isError } = usePortfolioHistory(state.holdings, period);
 
   // Stacked area: value per asset over time
   const stackedData = useMemo(() => {
