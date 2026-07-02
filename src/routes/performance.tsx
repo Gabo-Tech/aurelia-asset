@@ -64,7 +64,7 @@ function PerformancePage() {
   const fxByHolding = useMemo(() => {
     const m: Record<string, number> = {};
     for (const h of state.holdings) {
-      m[h.id] = convert(1, h.priceCurrency || "USD", currency, rates);
+      m[h.id] = convert(1, h.priceCurrency || currency, currency, rates);
     }
     return m;
   }, [state.holdings, currency, rates]);
