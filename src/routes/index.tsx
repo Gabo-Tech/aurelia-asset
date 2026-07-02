@@ -23,6 +23,7 @@ import {
 import { getGithubRepo } from "@/lib/repo.functions";
 import apkAsset from "@/assets/portfolio-tracker-apk.asset.json";
 import logoAsset from "@/assets/logo.png.asset.json";
+import heroAsset from "@/assets/landing-hero.png.asset.json";
 
 import { MouseGlow, ScrollAurora, Reveal } from "@/components/landing-ambient";
 import i18n from "@/i18n";
