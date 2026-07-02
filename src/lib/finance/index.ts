@@ -6,6 +6,26 @@ import { getStooqHistory, getStooqQuote, searchStooq } from "./stooq";
 import { getBinanceHistory, getBinanceQuote } from "./binance";
 import { getCache, getCacheStale, setCache, bustCache } from "./cache";
 
+// Resolve a missing coinGeckoId from the ticker symbol so older holdings
+// (added before we started saving the id) still get proper history + price.
+async function resolveCoinGeckoId(symbol: string): Promise<string | null> {
+  if (!symbol) return null;
+  const key = `cg:resolve:${symbol.toUpperCase()}`;
+  const cached = getCache<string | null>(key);
+  if (cached !== undefined) return cached;
+  try {
+    const results = await searchCrypto(symbol);
+    const upper = symbol.toUpperCase();
+    const hit =
+      results.find((r) => r.symbol.toUpperCase() === upper && r.coinGeckoId)
+        ?.coinGeckoId ?? null;
+    setCache(key, hit, 24 * 60 * 60 * 1000);
+    return hit;
+  } catch {
+    return null;
+  }
+}
+
 export async function searchAssets(
   query: string,
   mode: "crypto" | "stock"
