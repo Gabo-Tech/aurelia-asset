@@ -160,12 +160,28 @@ function BudgetsPanel() {
 
       <Card className="lg:col-span-2">
         <CardHeader>
-          <CardTitle className="text-base">{t("planning.budgets.thisMonth")}</CardTitle>
+          <CardTitle className="text-base flex items-center justify-between gap-2">
+            <span>{t("planning.budgets.thisMonth")}</span>
+            {state.budgets.length > 0 ? (() => {
+              const totalBudget = state.budgets.reduce((sum, b) => sum + toDisplay(b.amount, b.currency), 0);
+              const totalSpent = state.budgets.reduce((sum, b) => sum + (monthSpent.get(b.categoryId) ?? 0), 0);
+              const over = totalSpent > totalBudget;
+              return (
+                <span className="text-xs font-normal text-muted-foreground">
+                  {t("planning.budgets.total", { defaultValue: "Total" })}:{" "}
+                  <span className={over ? "text-destructive font-medium" : "font-medium text-foreground"}>
+                    {fmt(totalSpent)} / {fmt(totalBudget)}
+                  </span>
+                </span>
+              );
+            })() : null}
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {state.budgets.length === 0 ? (
             <p className="text-sm text-muted-foreground">{t("planning.budgets.empty")}</p>
           ) : null}
+
           {state.budgets.map((b) => {
             const cat = state.categories.find((c) => c.id === b.categoryId);
             const spent = monthSpent.get(b.categoryId) ?? 0;
