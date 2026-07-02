@@ -180,7 +180,7 @@ export function valuesByEntry(
   const bucketKey = (e: CashflowEntry) => {
     const d = e.date ? new Date(e.date) : null;
     if (!d || Number.isNaN(d.getTime())) return "_";
-    return `${d.getUTCFullYear()}-${d.getUTCMonth()}`;
+    return `${d.getFullYear()}-${d.getMonth()}`;
   };
   const fixed = new Map<string, number>();
   const baseIncomeByBucket = new Map<string, number>();

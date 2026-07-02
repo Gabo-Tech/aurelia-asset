@@ -373,7 +373,6 @@ function ForecastPanel() {
 
   const data = useMemo(() => {
     const now = new Date();
-    const horizon = addMonths(now, months);
     const past = expandCashflows(state.cashflows, now);
     const pastVals = valuesByEntry(past, toDisplay);
     let balance = 0;
@@ -381,84 +380,90 @@ function ForecastPanel() {
       const v = pastVals.get(e.id) ?? 0;
       balance += liquidityImpact(e, v);
     }
-    const future = expandCashflows(state.cashflows, horizon).filter((e) => new Date(e.date) > now);
-    const futVals = valuesByEntry(future, toDisplay);
-    const buckets = new Map<string, { income: number; expense: number }>();
-    for (const e of future) {
-      const key = format(new Date(e.date), "yyyy-MM");
-      const cur = buckets.get(key) ?? { income: 0, expense: 0 };
-      const v = futVals.get(e.id) ?? 0;
-      if (e.kind === "income") cur.income += v;
-      else if (e.kind === "expense") {
-        if (!e.paymentMethod?.startsWith("credit:")) cur.expense += v;
-      }
-      buckets.set(key, cur);
-    }
     const rows: { month: string; balance: number; income: number; expense: number; net: number }[] = [];
     for (let i = 0; i < months; i++) {
       const m = startOfMonth(addMonths(now, i + 1));
-      const key = format(m, "yyyy-MM");
-      const b = buckets.get(key) ?? { income: 0, expense: 0 };
-      const net = b.income - b.expense;
+      const end = endOfMonth(m);
+      const monthEntries = expandCashflows(state.cashflows, end).filter((e) =>
+        isWithinInterval(new Date(e.date), { start: m, end }),
+      );
+      const vals = valuesByEntry(monthEntries, toDisplay);
+      let income = 0;
+      let expense = 0;
+      let net = 0;
+      for (const e of monthEntries) {
+        const v = vals.get(e.id) ?? 0;
+        if (e.kind === "income") income += v;
+        if (e.kind === "expense") expense += v;
+        net += liquidityImpact(e, v);
+      }
       balance += net;
-      rows.push({ month: format(m, "MMM yy"), balance, income: b.income, expense: b.expense, net });
+      rows.push({ month: format(m, "MMM yy"), balance, income, expense, net });
     }
     return rows;
   }, [state.cashflows, toDisplay, months]);
 
-  // Single source of truth: aggregate a 12-month forward window using the
-  // same expansion + percent resolution the chart uses, so the summary
-  // cards, per-item /mo values, savings rate and runway all agree with
-  // the projected balance line.
+  // Single source of truth for the visible monthly snapshot: use the same
+  // current-month expansion as Cashflow, so fixed, percent, card-paid and
+  // installment expenses are resolved with the exact same rules.
   const monthly = useMemo(() => {
     const now = new Date();
-    const horizon = addMonths(now, 12);
-    const expanded = expandCashflows(state.cashflows, horizon).filter(
-      (e) => new Date(e.date) > now,
+    const start = startOfMonth(now);
+    const end = endOfMonth(now);
+    const expanded = expandCashflows(state.cashflows, end).filter((e) =>
+      isWithinInterval(new Date(e.date), { start, end }),
     );
     const vals = valuesByEntry(expanded, toDisplay);
     let income = 0;
     let expense = 0;
-    // parentId -> total contribution across the 12mo window (in display ccy).
+    let recurringIncome = 0;
+    let recurringExpense = 0;
+    // parentId -> current-month recurring contribution (in display ccy).
     const perParent = new Map<string, number>();
+    const recurringParentIds = new Set(state.cashflows.filter((c) => c.recurrence).map((c) => c.id));
     for (const e of expanded) {
       const v = vals.get(e.id) ?? 0;
       const parentId = (e as CashflowEntry & { parentId?: string }).parentId ?? e.id;
       if (e.kind === "income") {
         income += v;
-        perParent.set(parentId, (perParent.get(parentId) ?? 0) + v);
+        if (recurringParentIds.has(parentId)) {
+          recurringIncome += v;
+          perParent.set(parentId, (perParent.get(parentId) ?? 0) + v);
+        }
       } else if (e.kind === "expense") {
-        if (e.paymentMethod?.startsWith("credit:")) continue;
         expense += v;
-        perParent.set(parentId, (perParent.get(parentId) ?? 0) + v);
+        if (recurringParentIds.has(parentId)) {
+          recurringExpense += v;
+          perParent.set(parentId, (perParent.get(parentId) ?? 0) + v);
+        }
       }
     }
-    const incomeMo = income / 12;
-    const expenseMo = expense / 12;
     return {
-      incomeMo,
-      expenseMo,
-      netMo: incomeMo - expenseMo,
-      savingsRate: incomeMo > 0 ? Math.max(0, (incomeMo - expenseMo) / incomeMo) : 0,
+      incomeMo: income,
+      expenseMo: expense,
+      recurringIncomeMo: recurringIncome,
+      recurringExpenseMo: recurringExpense,
+      netMo: income - expense,
+      savingsRate: income > 0 ? Math.max(0, (income - expense) / income) : 0,
       perParent,
     };
   }, [state.cashflows, toDisplay]);
 
-  // Recurring items list: same set as before (entries with a recurrence),
-  // but each item's /mo value is derived from the 12mo expansion above so
-  // percent entries and other resolutions match the chart exactly.
+  // Recurring items list: only entries that actually occur in the current
+  // month, with each /mo value resolved from the same current-month values.
   const recurringItems = useMemo(() => {
     return state.cashflows
       .filter((c) => c.recurrence)
       .map((c) => {
-        const perMonth = (monthly.perParent.get(c.id) ?? 0) / 12;
+        const perMonth = monthly.perParent.get(c.id) ?? 0;
         const name =
           (c.source && c.source.trim()) ||
           (c.description && c.description.trim()) ||
           c.category ||
           "—";
         return { id: c.id, name, kind: c.kind, perMonth, category: c.category };
-      });
+      })
+      .filter((c) => c.perMonth > 0);
   }, [state.cashflows, monthly.perParent]);
 
   const runwayMonths =
@@ -578,7 +583,7 @@ function ForecastPanel() {
                   {t("planning.forecast.recurringIncome", { defaultValue: "Recurring income" })}
                   <span className="text-xs text-muted-foreground font-normal">({incomeItems.length})</span>
                 </CardTitle>
-                <span className="text-sm font-semibold text-emerald-500 tabular-nums">{fmt(monthly.incomeMo)}/mo</span>
+                <span className="text-sm font-semibold text-emerald-500 tabular-nums">{fmt(monthly.recurringIncomeMo)}/mo</span>
               </CardHeader>
               <CardContent>
                 {incomeItems.length === 0 ? (
@@ -606,7 +611,7 @@ function ForecastPanel() {
                   {t("planning.forecast.subscriptions", { defaultValue: "Subscriptions & recurring expenses" })}
                   <span className="text-xs text-muted-foreground font-normal">({expenseItems.length})</span>
                 </CardTitle>
-                <span className="text-sm font-semibold text-rose-500 tabular-nums">{fmt(monthly.expenseMo)}/mo</span>
+                <span className="text-sm font-semibold text-rose-500 tabular-nums">{fmt(monthly.recurringExpenseMo)}/mo</span>
               </CardHeader>
               <CardContent>
                 {expenseItems.length === 0 ? (
