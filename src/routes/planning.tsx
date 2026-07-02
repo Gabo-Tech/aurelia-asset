@@ -448,7 +448,7 @@ function ForecastPanel() {
       recurringIncomeMo: recurringIncome,
       recurringExpenseMo: recurringExpense,
       netMo: recurringIncome - recurringExpense,
-      savingsRate: recurringIncome > 0 ? Math.max(0, (recurringIncome - recurringExpense) / recurringIncome) : 0,
+      savingsRate: recurringIncome > 0 ? (recurringIncome - recurringExpense) / recurringIncome : 0,
       perParent,
     };
   }, [state.cashflows, toDisplay]);
@@ -471,12 +471,14 @@ function ForecastPanel() {
       .filter((c) => c.perMonth > 0);
   }, [state.cashflows, monthly.perParent]);
 
+  // Runway: only meaningful when the recurring cashflow is net-negative.
+  // Use the recurring net (income − expenses) rather than gross expenses so
+  // it reflects the actual liquidity drain per month.
+  const netBurn = monthly.recurringExpenseMo - monthly.recurringIncomeMo;
   const runwayMonths =
-    monthly.recurringExpenseMo > 0 && (data[0]?.balance ?? 0) > 0
-      ? (data[0]?.balance ?? 0) / monthly.recurringExpenseMo
-      : monthly.recurringExpenseMo <= 0
-        ? Infinity
-        : 0;
+    netBurn > 0 && (data[0]?.balance ?? 0) > 0
+      ? (data[0]?.balance ?? 0) / netBurn
+      : Infinity;
 
 
   const incomeItems = recurringItems.filter((r) => r.kind === "income").sort((a, b) => b.perMonth - a.perMonth);
