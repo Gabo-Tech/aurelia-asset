@@ -174,32 +174,43 @@ export function valuesByEntry(
   entries: CashflowEntry[],
   toDisplay: (amount: number, from?: string) => number,
 ): Map<string, number> {
+  // Group entries by month bucket so percent entries resolve against the
+  // income/expense of the SAME month, not the entire expansion window
+  // (otherwise a 12-month expansion inflates percents 12x).
+  const bucketKey = (e: CashflowEntry) => {
+    const d = e.date ? new Date(e.date) : null;
+    if (!d || Number.isNaN(d.getTime())) return "_";
+    return `${d.getUTCFullYear()}-${d.getUTCMonth()}`;
+  };
   const fixed = new Map<string, number>();
-  let baseIncome = 0;
-  let baseExpense = 0;
+  const baseIncomeByBucket = new Map<string, number>();
+  const baseExpenseByBucket = new Map<string, number>();
+  const fixedByParentByBucket = new Map<string, Map<string, number>>();
   for (const e of entries) {
     if ((e.amountKind ?? "fixed") !== "fixed") continue;
     const v = toDisplay(e.amount, e.currency);
     fixed.set(e.id, v);
-    if (e.kind === "income") baseIncome += v;
-    else if (e.kind === "expense") baseExpense += v;
-  }
-  // Map fixed parent id back to its origin id (recurring occurrences carry parentId).
-  const fixedByParent = new Map<string, number>();
-  for (const e of entries) {
-    if ((e.amountKind ?? "fixed") !== "fixed") continue;
+    const bk = bucketKey(e);
+    if (e.kind === "income") baseIncomeByBucket.set(bk, (baseIncomeByBucket.get(bk) ?? 0) + v);
+    else if (e.kind === "expense") baseExpenseByBucket.set(bk, (baseExpenseByBucket.get(bk) ?? 0) + v);
     const parentId = (e as CashflowEntry & { parentId?: string }).parentId ?? e.id;
-    fixedByParent.set(parentId, (fixedByParent.get(parentId) ?? 0) + (fixed.get(e.id) ?? 0));
+    let bm = fixedByParentByBucket.get(bk);
+    if (!bm) { bm = new Map(); fixedByParentByBucket.set(bk, bm); }
+    bm.set(parentId, (bm.get(parentId) ?? 0) + v);
   }
   const out = new Map<string, number>();
   for (const e of entries) {
     if ((e.amountKind ?? "fixed") === "percent") {
       const pct = Number(e.amount) / 100;
       const target = e.percentOf ?? "all-income";
+      const bk = bucketKey(e);
       let base = 0;
-      if (target === "all-income") base = baseIncome;
-      else if (target === "all-expense") base = baseExpense;
-      else base = fixed.get(target) ?? fixedByParent.get(target) ?? 0;
+      if (target === "all-income") base = baseIncomeByBucket.get(bk) ?? 0;
+      else if (target === "all-expense") base = baseExpenseByBucket.get(bk) ?? 0;
+      else {
+        const bm = fixedByParentByBucket.get(bk);
+        base = bm?.get(target) ?? fixed.get(target) ?? 0;
+      }
       out.set(e.id, pct * base);
     } else {
       out.set(e.id, fixed.get(e.id) ?? toDisplay(e.amount, e.currency));
