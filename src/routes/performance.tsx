@@ -20,7 +20,7 @@ import { PageHeader } from "@/components/app-shell";
 import { useTranslation } from "react-i18next";
 import i18n from "@/i18n";
 import { ChartFrame } from "@/components/chart-frame";
-import { fetchPortfolioHistory, PERIODS, type PeriodId } from "@/lib/finance";
+import { PERIODS, type PeriodId } from "@/lib/finance";
 import { formatPct, formatMoney, MASK } from "@/lib/format";
 import { convert } from "@/lib/finance/fx";
 import { cn } from "@/lib/utils";
