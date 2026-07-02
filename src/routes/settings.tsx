@@ -266,6 +266,32 @@ function SettingsPage() {
   const { language, setLanguage, languages } = useLanguage();
   const [finnhub, setFinnhub] = useState(state.settings.finnhubKey ?? "");
   const fileRef = useRef<HTMLInputElement>(null);
+  const [pasteOpen, setPasteOpen] = useState(false);
+  const [pasteValue, setPasteValue] = useState("");
+
+  async function buildExportJson() {
+    const envelope = {
+      version: 1 as const,
+      exportedAt: new Date().toISOString(),
+      state,
+      preferences: await collectPreferences(),
+      userPreferences: { language },
+    };
+    return JSON.stringify(envelope, null, 2);
+  }
+
+  async function copyJsonToClipboard() {
+    try {
+      const json = await buildExportJson();
+      if (!navigator.clipboard?.writeText) throw new Error("Clipboard not available");
+      await navigator.clipboard.writeText(json);
+      toast.success(t("settings.data.copied", { defaultValue: "JSON copied to clipboard" }));
+    } catch (e) {
+      toast.error(
+        `${t("settings.data.copyFailed", { defaultValue: "Copy failed" })}: ${(e as Error).message}`,
+      );
+    }
+  }
 
   async function exportJson() {
     try {
