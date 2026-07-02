@@ -1,72 +1,62 @@
-# Premium Dual-Mode Design System
+## Goal
 
-Overhaul the theme tokens, typography, spacing, and icon defaults to deliver an editorial, high-end feel in both dark and light modes. Purely presentational changes - no business logic touched.
+Rewrite the landing page copy as a professional copywriter would: speak directly to the visitor ("Your…", "You get…", "See where your money…"), lead every feature with the user benefit (not the mechanic), and highlight the tracker's most differentiating capabilities. Keep the current page structure and components intact — this is a pure copy pass through the i18n strings.
 
-## 1. Fonts (`src/routes/__root.tsx`)
+## Voice & rules
 
-Replace the current Inter-only Google Fonts link with:
-- **Playfair Display** (weights 400, 500) - headings
-- **Plus Jakarta Sans** (weights 400, 500, 600, 700) - body/UI
+- Second person, present tense, active verbs. Warm, confident, minimal.
+- Every feature bullet: benefit-first sentence, then a short "how" clause.
+- No jargon dumps, no exclamation points, no emoji.
+- Keep headings short enough to fit current layout (H1 ≤ 60 chars, feature titles ≤ ~34 chars).
+- Preserve all i18n keys — only values change. No component or route edits.
 
-(Satoshi and Cormorant Garamond are not free on Google Fonts; Playfair Display + Plus Jakarta Sans are the closest premium free equivalents from the pair mentioned in the brief. Confirm if you'd prefer self-hosted Satoshi/Cormorant via @fontsource - I can wire that instead.)
+## Sections rewritten (English source of truth)
 
-## 2. Theme tokens (`src/styles.css`)
+1. **Hero** — sharpen the promise, keep the "Your …" pattern.
+   - `hero.titleStart`: "Your money,"
+   - `hero.titleHighlight`: "finally in one calm place"
+   - `hero.subtitle`: benefit-led — see everything you own, understand where your cash goes, and plan what's next, all without an account.
+   - `hero.badge`, CTAs tightened.
 
-Rewrite `:root` (Warm Editorial / light) and `.dark` (Dark Luxury) with the exact hex values from the brief:
+2. **Social proof strip** — swap the four chips for outcome-oriented phrases (e.g. "You keep your data", "Works on any device", "Every currency you use", "Open source you can audit").
 
-```text
-LIGHT (Warm Editorial)              DARK (Dark Luxury)
-background      #FDFBF9              #0B0B0C
-card/popover    #FFFFFF              #121214
-border/input    #EAE8E4              #1F1F23
-foreground      #1A1A1A              #E4E4E7
-muted-fg        #71717A              #A1A1AA
-primary         #121212 (espresso)   #C5A880 (champagne)
-primary-fg      #FDFBF9              #0B0B0C
-accent          #4A5243 (olive)      #F3F3F3 (off-white)
-ring            = primary            = primary
-```
+3. **Features (6 cards)** — reframe each around a benefit the visitor gets. Cover the tracker's strongest capabilities beyond what's currently listed:
+   - All holdings unified (stocks, ETFs, crypto, metals, cash, custom).
+   - Live prices with your own Finnhub key optional.
+   - Sankey cashflow with drag-to-reorder, monthly reset, period selector.
+   - Planning suite: budgets, savings goals, 24-month forecast, loan amortization.
+   - Credit cards & installments tied to cashflow.
+   - Recurring + one-off, percentage entries (taxes), multi-currency conversion.
+   - Private by design: local, AES-GCM encrypted storage, export anytime.
+   - Native apps for every platform + PWA in the browser.
+   - Six languages incl. Valencià.
+   Because there are only 6 card slots, pick the 6 highest-value benefits and fold the rest into the subheading and the FAQ.
 
-- Secondary/muted surfaces derive from background with a hair of contrast.
-- Chart palette retuned to muted editorial tones (olive, champagne, taupe, ink, terracotta) instead of the current bright blues/greens.
-- Sidebar tokens follow card/border/foreground.
-- Destructive/success/warning/info desaturated to fit the editorial palette (no neon).
+4. **How it works (3 steps)** — rewrite as visitor actions with the payoff: "Open it", "Add what you own and what you spend", "See the full picture update in real time".
 
-## 3. Radius & shadows
+5. **Comparison table** — keep rows, rewrite labels so each row reads as a benefit the visitor gets ("You keep your data", "You pay nothing, ever", …). Column headers stay.
 
-- `--radius: 4px` (drives sm/md/lg/xl derivatives, all sharp).
-- Remove `--shadow-elevated` heavy drop shadow; replace with an almost-invisible `0 1px 0 0 <border>` hairline used only where lift is needed.
+6. **FAQ** — rewrite the 4 existing Q&As in the same voice and add coverage of the newer features via the answers (encryption, native apps, live prices, planning) without adding new keys.
 
-## 4. Typography & spacing base styles
+7. **Final CTA + footer tagline + meta** — tighten to a single promise: "Take control of your money in 60 seconds." Update `meta.title` / `meta.description` / `meta.keywords` for SEO with the new positioning while staying within Google's length limits.
 
-In `@layer base` of `src/styles.css`:
-- `body` → `font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;` with tightened default line-height.
-- `h1,h2,h3,h4` → `font-family: "Playfair Display", serif; font-weight: 400; letter-spacing: 0.06em;`
-- Set `--font-sans` (Plus Jakarta) and add `--font-serif` (Playfair) tokens in `@theme inline` so `font-serif` utility works.
-- Add a global utility bump: default form controls, cards, and buttons pick up the 4px radius; no changes to component APIs.
+8. **Downloads section** — keep as-is (already benefit-clear); only refresh `heading` / `subheading` to match the new voice.
 
-Breathing room: rather than editing every component, add a base rule that doubles default vertical rhythm on prose containers, and bump `AppShell` main content padding tokens (single edit) so the whole app inherits generous negative space.
+## Localization
 
-## 5. Icons
+Apply the same rewrite, faithfully translated and equally benefit-led, to all six locale files so the site stays consistent:
 
-- Add a global CSS rule targeting `svg.lucide` to set `stroke-width: 1.25` in dark mode and `1.5` in light mode (via `.dark svg.lucide { stroke-width: 1.25 }` and default `svg.lucide { stroke-width: 1.5 }`).
-- Icon color inherits `currentColor` which resolves to the deep charcoal (light) or soft off-white (dark) foregrounds.
+- `src/i18n/locales/en.ts` (source)
+- `src/i18n/locales/es.ts`
+- `src/i18n/locales/pt.ts`
+- `src/i18n/locales/de.ts`
+- `src/i18n/locales/nl.ts`
+- `src/i18n/locales/ca.ts` (Valencià)
 
-## 6. Driver.js / Toaster / misc overlays
-
-Retune the existing Driver.js popover block and add matching Sonner toast overrides to use the new tokens, sharp 4px radius, and remove heavy shadows (replace with hairline border + `0 8px 24px -16px rgba(0,0,0,0.4)` in dark, none in light).
-
-## 7. Root shell
-
-- Update `<meta name="theme-color">` to switch per mode (`#0B0B0C` dark, `#FDFBF9` light) via a small script tweak alongside the existing theme init.
-
-## Files touched
-
-- `src/styles.css` (majority of the change)
-- `src/routes/__root.tsx` (fonts link + theme-color)
-- `src/components/app-shell.tsx` (padding rhythm only, if needed for breathing room)
+Only the `landing.*` subtree is touched in each file. No key additions or removals, so no component changes are needed and existing translations for the rest of the app stay intact.
 
 ## Out of scope
 
-- No component refactors, no copy changes, no logic changes.
-- Chart libraries (Recharts / d3-sankey) inherit via CSS vars already.
+- No layout, component, or route changes.
+- No new images or assets.
+- No changes to dashboard/holdings/cashflow/planning/settings copy.
