@@ -140,7 +140,7 @@ const es: Translation = {
     },
     footer: { brand: "Gestor de cartera elegante", madeBy: "Hecho por" },
     meta: {
-      title: "Gestor de cartera elegante - Ve, planifica y posee tu dinero",
+      title: "Gestor de cartera privado - Acciones, Cripto y ETFs",
       description: "Sigue cada acción, ETF, cripto, metal y euro que posees en un gestor privado. Ve asignación, flujo de caja, previsión y patrimonio - sin registro, sin nube, gratis para siempre.",
       keywords: "gestor de cartera, patrimonio neto, app privada de finanzas, seguimiento de acciones, cartera cripto, seguimiento ETF, sankey de flujo de caja, presupuestos, objetivos de ahorro, cartera offline",
     },
