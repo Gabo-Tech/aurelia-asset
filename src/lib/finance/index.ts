@@ -6,6 +6,26 @@ import { getStooqHistory, getStooqQuote, searchStooq } from "./stooq";
 import { getBinanceHistory, getBinanceQuote } from "./binance";
 import { getCache, getCacheStale, setCache, bustCache } from "./cache";
 
+// Resolve a missing coinGeckoId from the ticker symbol so older holdings
+// (added before we started saving the id) still get proper history + price.
+async function resolveCoinGeckoId(symbol: string): Promise<string | null> {
+  if (!symbol) return null;
+  const key = `cg:resolve:${symbol.toUpperCase()}`;
+  const cached = getCache<string | null>(key);
+  if (cached !== undefined) return cached;
+  try {
+    const results = await searchCrypto(symbol);
+    const upper = symbol.toUpperCase();
+    const hit =
+      results.find((r) => r.symbol.toUpperCase() === upper && r.coinGeckoId)
+        ?.coinGeckoId ?? null;
+    setCache(key, hit, 24 * 60 * 60 * 1000);
+    return hit;
+  } catch {
+    return null;
+  }
+}
+
 export async function searchAssets(
   query: string,
   mode: "crypto" | "stock"
@@ -49,10 +69,10 @@ export async function fetchCurrentQuote(h: Holding): Promise<FetchedQuote> {
   if (h.type === "crypto") {
     return firstQuote(
       [
-        async () =>
-          h.coinGeckoId
-            ? { price: await getCryptoPrice(h.coinGeckoId), currency: "USD" }
-            : null,
+        async () => {
+          const id = h.coinGeckoId || (await resolveCoinGeckoId(h.symbol));
+          return id ? { price: await getCryptoPrice(id), currency: "USD" } : null;
+        },
         async () => {
           const p = await getBinanceQuote(h.symbol);
           return p != null ? { price: p, currency: "USD" } : null;
@@ -140,8 +160,10 @@ async function fetchMaxHistory(h: Holding): Promise<PricePoint[]> {
     const chain: Array<() => Promise<PricePoint[]>> =
       h.type === "crypto"
         ? [
-            async () =>
-              h.coinGeckoId ? await getCryptoHistory(h.coinGeckoId, "max") : [],
+            async () => {
+              const id = h.coinGeckoId || (await resolveCoinGeckoId(h.symbol));
+              return id ? await getCryptoHistory(id, "max") : [];
+            },
             async () => await getBinanceHistory(h.symbol),
           ]
         : [
@@ -195,9 +217,10 @@ async function fetchIntraday(h: Holding): Promise<PricePoint[]> {
   const job = (async (): Promise<PricePoint[]> => {
     let data: PricePoint[] = [];
     try {
-      if (h.type === "crypto" && h.coinGeckoId) {
-        data = await getCryptoHistory(h.coinGeckoId, 1);
-      } else if (h.type !== "crypto" && h.type !== "other") {
+      if (h.type === "crypto") {
+        const id = h.coinGeckoId || (await resolveCoinGeckoId(h.symbol));
+        if (id) data = await getCryptoHistory(id, 1);
+      } else if (h.type !== "other") {
         data = await getYahooHistory(h.symbol, "1d");
       }
     } catch {}
