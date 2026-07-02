@@ -259,32 +259,64 @@ function SettingsPage() {
   const fileRef = useRef<HTMLInputElement>(null);
 
   async function exportJson() {
-    const envelope = {
-      version: 1 as const,
-      exportedAt: new Date().toISOString(),
-      state,
-      preferences: await collectPreferences(),
-      userPreferences: { language },
-    };
-    const blob = new Blob([JSON.stringify(envelope, null, 2)], { type: "application/json" });
-    download(blob, `portfolio-${new Date().toISOString().slice(0, 10)}.json`);
+    try {
+      const envelope = {
+        version: 1 as const,
+        exportedAt: new Date().toISOString(),
+        state,
+        preferences: await collectPreferences(),
+        userPreferences: { language },
+      };
+      const filename = `portfolio-${new Date().toISOString().slice(0, 10)}.json`;
+      const json = JSON.stringify(envelope, null, 2);
+      const blob = new Blob([json], { type: "application/json" });
+      const method = await saveOrShare(blob, filename, json);
+      toast.success(
+        t("settings.data.exported", { defaultValue: "Export completed" }),
+        {
+          description:
+            method === "share"
+              ? t("settings.data.exportedShare", { defaultValue: `Shared ${filename}` })
+              : method === "clipboard"
+                ? t("settings.data.exportedClipboard", {
+                    defaultValue: "Copied JSON to clipboard (download unavailable on this device)",
+                  })
+                : t("settings.data.exportedFile", { defaultValue: `Saved ${filename}` }),
+        },
+      );
+    } catch (e) {
+      toast.error(
+        `${t("settings.data.exportFailed", { defaultValue: "Export failed" })}: ${(e as Error).message}`,
+      );
+    }
   }
 
-  function exportCsv() {
-    const rows = [
-      ["symbol", "name", "type", "quantity", "currentPrice", "marketValue", "color"],
-      ...state.holdings.map((h) => [
-        h.symbol,
-        h.name.replaceAll(",", " "),
-        h.type,
-        h.quantity,
-        h.currentPrice,
-        h.quantity * h.currentPrice,
-        h.color,
-      ]),
-    ];
-    const csv = rows.map((r) => r.join(",")).join("\n");
-    download(new Blob([csv], { type: "text/csv" }), `holdings-${new Date().toISOString().slice(0, 10)}.csv`);
+  async function exportCsv() {
+    try {
+      const rows = [
+        ["symbol", "name", "type", "quantity", "currentPrice", "marketValue", "color"],
+        ...state.holdings.map((h) => [
+          h.symbol,
+          h.name.replaceAll(",", " "),
+          h.type,
+          h.quantity,
+          h.currentPrice,
+          h.quantity * h.currentPrice,
+          h.color,
+        ]),
+      ];
+      const csv = rows.map((r) => r.join(",")).join("\n");
+      const filename = `holdings-${new Date().toISOString().slice(0, 10)}.csv`;
+      const blob = new Blob([csv], { type: "text/csv" });
+      await saveOrShare(blob, filename, csv);
+      toast.success(t("settings.data.exported", { defaultValue: "Export completed" }), {
+        description: t("settings.data.exportedFile", { defaultValue: `Saved ${filename}` }),
+      });
+    } catch (e) {
+      toast.error(
+        `${t("settings.data.exportFailed", { defaultValue: "Export failed" })}: ${(e as Error).message}`,
+      );
+    }
   }
 
   function handleImport(file: File) {
