@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Trash2, Plus, Pencil } from "lucide-react";
+import { Trash2, Plus, Pencil, TrendingUp, TrendingDown, LineChart as LineChartIcon, Repeat, Wallet } from "lucide-react";
 import { expandCashflows, liquidityImpact, valuesByEntry } from "./cashflow";
 import { amortize } from "@/lib/finance/amortization";
 import { CURRENCIES } from "@/lib/currency";
@@ -423,87 +423,166 @@ function ForecastPanel() {
 
   const runwayMonths = recurring.expenseMo > 0 ? data[0]?.balance / recurring.expenseMo : Infinity;
 
+  const incomeItems = recurring.items.filter((r) => r.kind === "income").sort((a, b) => b.perMonth - a.perMonth);
+  const expenseItems = recurring.items.filter((r) => r.kind === "expense").sort((a, b) => b.perMonth - a.perMonth);
+  const netMo = recurring.incomeMo - recurring.expenseMo;
+
   return (
-    <div className="space-y-6">
-      <div className="grid sm:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm">{t("planning.forecast.incomeMo")}</CardTitle></CardHeader>
-          <CardContent className="text-2xl font-semibold text-emerald-500">{fmt(recurring.incomeMo)}</CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm">{t("planning.forecast.expenseMo")}</CardTitle></CardHeader>
-          <CardContent className="text-2xl font-semibold text-rose-500">{fmt(recurring.expenseMo)}</CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm">{t("planning.forecast.savingsRate")}</CardTitle></CardHeader>
-          <CardContent className="text-2xl font-semibold">{(recurring.savingsRate * 100).toFixed(0)}%</CardContent>
-        </Card>
-      </div>
+    <div className="space-y-8">
+      {/* --- Snapshot --- */}
+      <section className="space-y-3">
+        <div className="flex items-center gap-2 border-b border-border/60 pb-2">
+          <Wallet className="h-4 w-4 text-muted-foreground" />
+          <h3 className="text-xs uppercase tracking-[0.14em] text-muted-foreground font-semibold">
+            {t("planning.forecast.monthlySnapshot", { defaultValue: "Monthly snapshot" })}
+          </h3>
+        </div>
+        <div className="grid sm:grid-cols-3 gap-4">
+          <Card className="border-l-4 border-l-emerald-500/70">
+            <CardHeader className="pb-2 flex flex-row items-center justify-between">
+              <CardTitle className="text-sm text-muted-foreground font-normal">{t("planning.forecast.incomeMo")}</CardTitle>
+              <TrendingUp className="h-4 w-4 text-emerald-500" />
+            </CardHeader>
+            <CardContent className="text-2xl font-semibold text-emerald-500">{fmt(recurring.incomeMo)}</CardContent>
+          </Card>
+          <Card className="border-l-4 border-l-rose-500/70">
+            <CardHeader className="pb-2 flex flex-row items-center justify-between">
+              <CardTitle className="text-sm text-muted-foreground font-normal">{t("planning.forecast.expenseMo")}</CardTitle>
+              <TrendingDown className="h-4 w-4 text-rose-500" />
+            </CardHeader>
+            <CardContent className="text-2xl font-semibold text-rose-500">{fmt(recurring.expenseMo)}</CardContent>
+          </Card>
+          <Card className="border-l-4" style={{ borderLeftColor: "var(--primary)" }}>
+            <CardHeader className="pb-2 flex flex-row items-center justify-between">
+              <CardTitle className="text-sm text-muted-foreground font-normal">{t("planning.forecast.savingsRate")}</CardTitle>
+              <span className="text-xs tabular-nums text-muted-foreground">{fmt(netMo)}/mo</span>
+            </CardHeader>
+            <CardContent className="text-2xl font-semibold">{(recurring.savingsRate * 100).toFixed(0)}%</CardContent>
+          </Card>
+        </div>
+      </section>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between gap-3">
-          <CardTitle className="text-base">{t("planning.forecast.liquidityForecast")}</CardTitle>
-          <div className="flex items-center gap-2 text-sm">
-            <Label className="text-xs">{t("planning.forecast.months")}</Label>
-            <Select value={String(months)} onValueChange={(v) => setMonths(Number(v))}>
-              <SelectTrigger className="h-8 w-20"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {[3, 6, 12, 24].map((n) => <SelectItem key={n} value={String(n)}>{n}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="h-72 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={data} margin={{ left: 8, right: 8, top: 8 }}>
-                <defs>
-                  <linearGradient id="forecastFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.5} />
-                    <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickFormatter={(v) => fmt(v, undefined, { compact: true })} />
-                <Tooltip
-                  contentStyle={{ background: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }}
-                  formatter={(v: number, name: string) => [fmt(v), name]}
-                />
-                <Area type="monotone" dataKey="balance" stroke="hsl(var(--primary))" fill="url(#forecastFill)" strokeWidth={2} name={t("planning.forecast.projectedBalance")} />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-          {runwayMonths !== Infinity ? (
-            <div className="text-xs text-muted-foreground mt-2">
-              {t("planning.forecast.runway", { months: Number.isFinite(runwayMonths) ? runwayMonths.toFixed(1) : "∞" })}
+      {/* --- Liquidity forecast --- */}
+      <section className="space-y-3">
+        <div className="flex items-center gap-2 border-b border-border/60 pb-2">
+          <LineChartIcon className="h-4 w-4 text-muted-foreground" />
+          <h3 className="text-xs uppercase tracking-[0.14em] text-muted-foreground font-semibold">
+            {t("planning.forecast.liquidityForecast")}
+          </h3>
+        </div>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between gap-3">
+            <CardTitle className="text-base">{t("planning.forecast.projectedBalance")}</CardTitle>
+            <div className="flex items-center gap-2 text-sm">
+              <Label className="text-xs">{t("planning.forecast.months")}</Label>
+              <Select value={String(months)} onValueChange={(v) => setMonths(Number(v))}>
+                <SelectTrigger className="h-8 w-20"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {[3, 6, 12, 24].map((n) => <SelectItem key={n} value={String(n)}>{n}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </div>
-          ) : null}
-        </CardContent>
-      </Card>
+          </CardHeader>
+          <CardContent>
+            <div className="h-72 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={data} margin={{ left: 8, right: 8, top: 8 }}>
+                  <defs>
+                    <linearGradient id="forecastFill" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="var(--primary)" stopOpacity={0.5} />
+                      <stop offset="100%" stopColor="var(--primary)" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                  <XAxis dataKey="month" stroke="var(--muted-foreground)" fontSize={12} />
+                  <YAxis stroke="var(--muted-foreground)" fontSize={12} tickFormatter={(v) => fmt(v, undefined, { compact: true })} />
+                  <Tooltip
+                    contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12, color: "var(--popover-foreground)" }}
+                    formatter={(v: number, name: string) => [fmt(v), name]}
+                  />
+                  <Area type="monotone" dataKey="balance" stroke="var(--primary)" fill="url(#forecastFill)" strokeWidth={2} name={t("planning.forecast.projectedBalance")} />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+            {runwayMonths !== Infinity ? (
+              <div className="text-xs text-muted-foreground mt-2">
+                {t("planning.forecast.runway", { months: Number.isFinite(runwayMonths) ? runwayMonths.toFixed(1) : "∞" })}
+              </div>
+            ) : null}
+          </CardContent>
+        </Card>
+      </section>
 
-      <Card>
-        <CardHeader><CardTitle className="text-base">{t("planning.forecast.recurringTitle")}</CardTitle></CardHeader>
-        <CardContent>
-          {recurring.items.length === 0 ? (
-            <p className="text-sm text-muted-foreground">{t("planning.forecast.recurringEmpty")}</p>
-          ) : (
-            <ul className="divide-y divide-border/60">
-              {recurring.items
-                .sort((a, b) => b.perMonth - a.perMonth)
-                .map((r) => (
-                  <li key={r.id} className="flex items-center justify-between py-2 text-sm">
-                    <span className="truncate">
-                      <span className={`mr-2 inline-block h-2 w-2 rounded-full ${r.kind === "income" ? "bg-emerald-500" : "bg-rose-500"}`} />
-                      {r.name}
-                    </span>
-                    <span className="tabular-nums">{t("planning.forecast.perMo", { amount: fmt(r.perMonth) })}</span>
-                  </li>
-                ))}
-            </ul>
-          )}
-        </CardContent>
-      </Card>
+      {/* --- Recurring income & subscriptions --- */}
+      <section className="space-y-3">
+        <div className="flex items-center gap-2 border-b border-border/60 pb-2">
+          <Repeat className="h-4 w-4 text-muted-foreground" />
+          <h3 className="text-xs uppercase tracking-[0.14em] text-muted-foreground font-semibold">
+            {t("planning.forecast.recurringTitle")}
+          </h3>
+        </div>
+        {recurring.items.length === 0 ? (
+          <Card><CardContent className="py-6 text-sm text-muted-foreground">{t("planning.forecast.recurringEmpty")}</CardContent></Card>
+        ) : (
+          <div className="grid md:grid-cols-2 gap-4">
+            <Card className="border-t-2 border-t-emerald-500/60">
+              <CardHeader className="pb-3 flex flex-row items-center justify-between">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4 text-emerald-500" />
+                  {t("planning.forecast.recurringIncome", { defaultValue: "Recurring income" })}
+                  <span className="text-xs text-muted-foreground font-normal">({incomeItems.length})</span>
+                </CardTitle>
+                <span className="text-sm font-semibold text-emerald-500 tabular-nums">{fmt(recurring.incomeMo)}/mo</span>
+              </CardHeader>
+              <CardContent>
+                {incomeItems.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">{t("planning.forecast.recurringEmpty")}</p>
+                ) : (
+                  <ul className="divide-y divide-border/60">
+                    {incomeItems.map((r) => (
+                      <li key={r.id} className="flex items-center justify-between py-2 text-sm">
+                        <span className="truncate flex items-center gap-2">
+                          <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" />
+                          {r.name}
+                        </span>
+                        <span className="tabular-nums text-emerald-500">{t("planning.forecast.perMo", { amount: fmt(r.perMonth) })}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card className="border-t-2 border-t-rose-500/60">
+              <CardHeader className="pb-3 flex flex-row items-center justify-between">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <TrendingDown className="h-4 w-4 text-rose-500" />
+                  {t("planning.forecast.subscriptions", { defaultValue: "Subscriptions & recurring expenses" })}
+                  <span className="text-xs text-muted-foreground font-normal">({expenseItems.length})</span>
+                </CardTitle>
+                <span className="text-sm font-semibold text-rose-500 tabular-nums">{fmt(recurring.expenseMo)}/mo</span>
+              </CardHeader>
+              <CardContent>
+                {expenseItems.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">{t("planning.forecast.recurringEmpty")}</p>
+                ) : (
+                  <ul className="divide-y divide-border/60">
+                    {expenseItems.map((r) => (
+                      <li key={r.id} className="flex items-center justify-between py-2 text-sm">
+                        <span className="truncate flex items-center gap-2">
+                          <span className="inline-block h-2 w-2 rounded-full bg-rose-500" />
+                          {r.name}
+                        </span>
+                        <span className="tabular-nums text-rose-500">{t("planning.forecast.perMo", { amount: fmt(r.perMonth) })}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
+      </section>
     </div>
   );
 }
