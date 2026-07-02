@@ -108,16 +108,25 @@ function BudgetsPanel() {
     const end = endOfMonth(now);
     const expanded = expandCashflows(state.cashflows, end);
     const values = valuesByEntry(expanded, toDisplay);
+    // Cashflow entries store the category NAME in `e.category`; budgets target
+    // category IDs. Build a name→id map (case-insensitive) so spending rolls up
+    // into the matching budget.
+    const nameToId = new Map<string, string>();
+    for (const c of state.categories) {
+      if (c.kind === "expense") nameToId.set(c.name.trim().toLowerCase(), c.id);
+    }
     const byCat = new Map<string, number>();
     for (const e of expanded) {
       if (e.kind !== "expense") continue;
       const d = new Date(e.date);
       if (!isWithinInterval(d, { start, end })) continue;
       const v = values.get(e.id) ?? 0;
-      byCat.set(e.category, (byCat.get(e.category) ?? 0) + v);
+      const catId = nameToId.get((e.category || "").trim().toLowerCase());
+      if (!catId) continue;
+      byCat.set(catId, (byCat.get(catId) ?? 0) + v);
     }
     return byCat;
-  }, [state.cashflows, toDisplay]);
+  }, [state.cashflows, state.categories, toDisplay]);
 
   const submit = () => {
     const a = Number(amount);
