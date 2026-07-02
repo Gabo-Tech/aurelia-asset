@@ -217,8 +217,9 @@ async function fetchIntraday(h: Holding): Promise<PricePoint[]> {
   const job = (async (): Promise<PricePoint[]> => {
     let data: PricePoint[] = [];
     try {
-      if (h.type === "crypto" && h.coinGeckoId) {
-        data = await getCryptoHistory(h.coinGeckoId, 1);
+      if (h.type === "crypto") {
+        const id = h.coinGeckoId || (await resolveCoinGeckoId(h.symbol));
+        if (id) data = await getCryptoHistory(id, 1);
       } else if (h.type !== "crypto" && h.type !== "other") {
         data = await getYahooHistory(h.symbol, "1d");
       }
