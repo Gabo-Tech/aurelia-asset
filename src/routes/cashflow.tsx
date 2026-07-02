@@ -2429,6 +2429,7 @@ function CategoryList({
               variant="ghost"
               size="icon"
               className="h-7 w-7"
+              aria-label={`Rename category ${c.name}`}
               onClick={() => {
                 setEditingId(c.id);
                 setDraftName(c.name);
@@ -2440,6 +2441,7 @@ function CategoryList({
               variant="ghost"
               size="icon"
               className="h-7 w-7"
+              aria-label={`Delete category ${c.name}`}
               onClick={() => onRemove(c.id)}
             >
               <Trash2 className="h-3.5 w-3.5" />
