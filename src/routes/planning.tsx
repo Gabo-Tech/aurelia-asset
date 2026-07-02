@@ -371,15 +371,19 @@ function ForecastPanel() {
   const { fmt, toDisplay } = useMoney();
   const [months, setMonths] = useState(6);
 
-  const data = useMemo(() => {
+  const currentBalance = useMemo(() => {
     const now = new Date();
     const past = expandCashflows(state.cashflows, now);
     const pastVals = valuesByEntry(past, toDisplay);
-    let balance = 0;
-    for (const e of past) {
+    return past.reduce((balance, e) => {
       const v = pastVals.get(e.id) ?? 0;
-      balance += liquidityImpact(e, v);
-    }
+      return balance + liquidityImpact(e, v);
+    }, 0);
+  }, [state.cashflows, toDisplay]);
+
+  const data = useMemo(() => {
+    const now = new Date();
+    let balance = currentBalance;
     const recurringParentIds = new Set(state.cashflows.filter((c) => c.recurrence).map((c) => c.id));
     const isRecurring = (e: CashflowEntry & { parentId?: string }) =>
       recurringParentIds.has(e.parentId ?? e.id);
@@ -393,19 +397,18 @@ function ForecastPanel() {
       const vals = valuesByEntry(monthEntries, toDisplay);
       let income = 0;
       let expense = 0;
-      let net = 0;
       for (const e of monthEntries) {
         const v = vals.get(e.id) ?? 0;
         if (e.kind === "income") income += v;
         if (e.kind === "expense") expense += v;
-        net += liquidityImpact(e, v);
       }
+      const net = income - expense;
       balance += net;
       rows.push({ month: format(m, "MMM yy"), balance, income, expense, net });
     }
     return rows;
 
-  }, [state.cashflows, toDisplay, months]);
+  }, [state.cashflows, toDisplay, months, currentBalance]);
 
   // Single source of truth for the visible monthly snapshot: use the same
   // current-month expansion as Cashflow, so fixed, percent, card-paid and
@@ -476,8 +479,8 @@ function ForecastPanel() {
   // it reflects the actual liquidity drain per month.
   const netBurn = monthly.recurringExpenseMo - monthly.recurringIncomeMo;
   const runwayMonths =
-    netBurn > 0 && (data[0]?.balance ?? 0) > 0
-      ? (data[0]?.balance ?? 0) / netBurn
+    netBurn > 0 && currentBalance > 0
+      ? currentBalance / netBurn
       : Infinity;
 
 
