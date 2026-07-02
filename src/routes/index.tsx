@@ -30,8 +30,8 @@ import i18n from "@/i18n";
 
 
 const SITE_URL = "https://financetracker.putopulse.org";
-const OG_IMAGE =
-  "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/1d9991ee-e308-44b0-ad20-1eb489a2da74/id-preview-4950e4f3--c8e820b7-6ae8-4377-943a-0e5181cbbc73.lovable.app-1781927384080.png";
+import ogImageAsset from "@/assets/og-image.png.asset.json";
+const OG_IMAGE = SITE_URL_PLACEHOLDER;
 
 const LOCALES = ["en", "es", "pt", "de", "nl", "ca"] as const;
 const OG_LOCALE_MAP: Record<(typeof LOCALES)[number], string> = {
