@@ -20,7 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ChartFrame } from "@/components/chart-frame";
-import { fetchPortfolioHistory, PERIODS, type PeriodId } from "@/lib/finance";
+import { PERIODS, type PeriodId } from "@/lib/finance";
 import { formatMoney, formatPct, MASK } from "@/lib/format";
 import { convert } from "@/lib/finance/fx";
 import { cn } from "@/lib/utils";
