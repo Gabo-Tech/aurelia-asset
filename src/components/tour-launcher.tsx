@@ -5,9 +5,9 @@ import { HelpCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   createTour,
-  isTourCompleted,
   markTourCompleted,
 } from "@/lib/tour/driver";
+
 import type { Driver } from "driver.js";
 import { buildTourSteps } from "@/lib/tour/steps";
 
@@ -58,15 +58,9 @@ export function TourLauncher({ className }: { className?: string }) {
   useEffect(() => {
     if (autoStarted.current) return;
     autoStarted.current = true;
-    if (typeof window === "undefined") return;
-    if (isTourCompleted()) return;
-    // Delay to let the first page render
-    const id = window.setTimeout(() => {
-      startTour(t, (path) => navigate({ to: path as never }));
-    }, 900);
-    return () => window.clearTimeout(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Tour only starts when the user clicks the tour button.
   }, []);
+
 
   useEffect(() => {
     function onStart() {
