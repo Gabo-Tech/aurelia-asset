@@ -58,7 +58,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   const isNavigating = useRouterState({
     select: (s) => s.isLoading || s.isTransitioning || s.status === "pending",
   });
-  const { hydrated } = useStore();
+  const { hydrated, state } = useStore();
+  usePrefetchPortfolioHistory(state.holdings, hydrated);
   const fxReady = useFxReady();
   const ready = hydrated && fxReady && !isNavigating;
   const { t } = useTranslation();
