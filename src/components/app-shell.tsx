@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import {
   LayoutDashboard,
@@ -63,7 +63,11 @@ export function AppShell({ children }: { children: ReactNode }) {
   const fxReady = useFxReady();
   const ready = hydrated && fxReady && !isNavigating;
   const { t } = useTranslation();
-  const nav = navItems.map((n) => ({ ...n, label: t(`nav.${n.key}`) }));
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  const nav = navItems.map((n) => ({ ...n, label: mounted ? t(`nav.${n.key}`) : "" }));
+  const brand = mounted ? t("shell.brand") : "";
+  const brandTagline = mounted ? t("shell.brandTagline") : "";
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -73,8 +77,8 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="flex items-center gap-2 px-6 py-7">
             <img src={logoAsset.url} alt="Logo" className="h-9 w-9 rounded-xl object-contain" />
             <div className="min-w-0 flex-1">
-              <div className="text-sm font-semibold tracking-tight">{t("shell.brand")}</div>
-              <div className="text-xs text-muted-foreground">{t("shell.brandTagline")}</div>
+              <div className="text-sm font-semibold tracking-tight">{brand}</div>
+              <div className="text-xs text-muted-foreground">{brandTagline}</div>
             </div>
             <ThemeToggle />
             <TourLauncher />
@@ -111,7 +115,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <header className="lg:hidden flex items-center justify-between px-4 py-3 border-b border-border/60 bg-sidebar/95 backdrop-blur sticky top-0 z-20">
           <Link to="/dashboard" className="flex items-center gap-2 min-w-0">
             <img src={logoAsset.url} alt="Logo" className="h-8 w-8 shrink-0 rounded-lg object-contain" />
-            <div className="truncate font-semibold text-sm">{t("shell.brand")} {t("shell.brandTagline")}</div>
+            <div className="truncate font-semibold text-sm">{brand} {brandTagline}</div>
           </Link>
           <div className="flex items-center gap-1">
             <ThemeToggle />
@@ -124,7 +128,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <main className="flex-1 min-w-0 pb-[calc(5.5rem+env(safe-area-inset-bottom))] lg:pb-12 flex flex-col">
           <div className="flex-1 px-4 sm:px-8 2xl:px-12 3xl:px-16 py-6 sm:py-10">{ready ? children : <PageLoader />}</div>
           <footer className="hidden lg:flex mt-8 border-t border-border/60 px-4 sm:px-8 py-4 flex-wrap items-center justify-between gap-3 text-[11px] text-muted-foreground/80">
-            <span>{t("shell.footerNote")}</span>
+            <span>{mounted ? t("shell.footerNote") : ""}</span>
             <SponsorBanner variant="inline" />
           </footer>
         </main>
