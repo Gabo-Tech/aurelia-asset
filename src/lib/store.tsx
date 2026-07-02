@@ -413,7 +413,7 @@ export function useMoney() {
   const displayCurrency = (state.settings.displayCurrency || "USD").toUpperCase();
 
   const toDisplay = useCallback(
-    (amount: number, from?: string) => convert(amount, from || "USD", displayCurrency, rates),
+    (amount: number, from?: string) => convert(amount, (from && from.trim()) || displayCurrency, displayCurrency, rates),
     [displayCurrency, rates],
   );
 

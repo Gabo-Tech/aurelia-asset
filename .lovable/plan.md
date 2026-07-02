@@ -1,34 +1,28 @@
-## Goal
+## Root cause
 
-Fetch each holding's full ("Max") price history a single time per session, cache it, and derive every chart/period locally — no refetch when switching periods or navigating between Dashboard / Holdings / Performance.
+The Salary entry in your screenshot shows "CHF 3,000" in the Cashflow list but "CHF 2,428.67" in Planning → Forecast (Monthly income recurring). Same happens with expenses.
 
-## Current state
+3,000 × 0.8095 ≈ 2,428.67 — that's the USD→CHF conversion. So the app is converting a value that should not be converted.
 
-`src/lib/finance/index.ts` already implements `fetchMaxHistory` (24 h localStorage cache, stale fallback, in-flight dedupe) and `fetchHistorical` slices from that full series. So the data layer is fine.
+Why: some cashflow entries have no `currency` field stored (older entries, or entries added before the currency picker was wired). The two places disagree on what "no currency" means:
 
-The waste is at the React layer: `performance.tsx` and `holdings-charts.tsx` each own a separate `useQuery` keyed by `["portfolioHistory", period]`. Switching period or route re-runs `fetchPortfolioHistory`, which re-walks every holding (cache hits, but still async work + re-render churn), and `fetchCurrentQuote` fires again per mount.
+- `src/routes/cashflow.tsx` entry list (line 1282) renders `formatMoney(c.amount, (c.currency || currency))` — falls back to the user's display currency, so it shows the raw number labelled "CHF".
+- `src/lib/store.tsx` `toDisplay` (line 416) does `convert(amount, from || "USD", displayCurrency, rates)` — falls back to **USD** and converts to CHF, shrinking 3,000 to 2,428.67.
 
-## Plan
+Planning (recurring totals, forecast chart, savings rate, runway), Budgets ("spent"), Holdings/Transactions, and the credit-cards manager all go through `toDisplay`, so any entry missing `currency` is silently mis-converted everywhere those totals appear.
 
-1. **New shared hook `src/hooks/use-price-history.ts`**
-   - `usePortfolioMaxHistory(holdings)` — one `useQuery` keyed by a stable hash of `holdings.map(h => h.id + qty + symbol + customHistory-length)`, `staleTime: 24h`, `gcTime: 24h`, returns `PortfolioHistoryPoint[]` at **Max** granularity.
-   - `usePortfolioHistory(holdings, period)` — wraps the above and returns `useMemo`-sliced points for the requested `PeriodId` (reusing `sliceByDays` / `sliceYtd` logic exported from `finance/index.ts`).
-   - `useCurrentQuotes(holdings)` — one `useQuery` batching `fetchCurrentQuote` per holding, `staleTime: 5 min`.
+## Fix
 
-2. **Export slicing helpers** from `src/lib/finance/index.ts` (`sliceByDays`, `sliceYtd`) so the hook can filter locally without another async call.
+1. **Change the fallback in `useMoney().toDisplay`** (`src/lib/store.tsx`) from `from || "USD"` to `from || displayCurrency`. Same change for `fmt` / `mask` derivations (they already flow through `toDisplay`, so a single edit fixes all callers). This makes "unspecified currency" mean "already in the user's currency" — matching what the Cashflow entry row shows.
 
-3. **Prefetch on app boot** in `src/components/app-shell.tsx` (runs on every authenticated page): call `queryClient.prefetchQuery` for `usePortfolioMaxHistory` and `useCurrentQuotes` once holdings are hydrated. This warms the cache before the user opens Performance/Holdings.
+2. **Backfill on read** in the store hydration: when loading persisted state, for any `cashflow`, `budget`, `holding`, `transaction`, or `transfer` whose `currency` is missing/empty, set it to `state.settings.displayCurrency`. This keeps future edits/exports explicit and prevents the ambiguity from resurfacing if the user later changes display currency.
 
-4. **Refactor call sites** to consume the shared hook:
-   - `src/routes/performance.tsx` → replace its `useQuery` with `usePortfolioHistory(holdings, period)`. Period switches become pure `useMemo`, no network.
-   - `src/components/holdings-charts.tsx` → same swap.
-   - `src/components/holding-dialog.tsx` and `src/routes/holdings.tsx` → use `useCurrentQuotes` instead of ad-hoc `fetchCurrentQuote` on mount (keep the manual "refresh" button that force-invalidates).
+3. **Guarantee `currency` on create** in the add/edit forms (`src/routes/cashflow.tsx` add + `EditEntryDialog`, plus the equivalent forms in Planning/Budgets and Holdings) by defaulting the state to `displayCurrency` when the user doesn't pick one. Most already do; verify and patch any that don't.
 
-5. **Cache invalidation**
-   - Expose `invalidatePriceHistory()` that calls `clearPriceHistoryCache()` + `queryClient.invalidateQueries({ queryKey: ["price-history"] })`. Wire it to the existing manual refresh buttons and to `addHoldingTransaction` so a new holding triggers one fetch.
+No visual/UX changes — only the numbers reconcile. After the fix, the Salary entry will read CHF 3,000 in both Cashflow and Planning, and the same reconciliation applies to expenses and any other affected totals (budgets spent, savings rate, forecast balances, holdings valuations).
 
-## Result
+## Verification
 
-- First page after login: one background fetch per holding (Max series) + one quote batch.
-- Every subsequent chart / period toggle / route change: zero network, instant render from React Query cache + local slice.
-- Existing 24 h localStorage cache still survives full reloads.
+- Reload → the "Monthly income (recurring)" card should read CHF 3,000.00.
+- The Forecast liquidity chart, savings-rate, runway, and Budgets "spent" values should shift accordingly.
+- Export → re-import JSON round-trips with explicit `currency` on every record.
