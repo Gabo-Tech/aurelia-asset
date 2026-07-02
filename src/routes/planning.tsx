@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Trash2, Plus, Pencil } from "lucide-react";
+import { Trash2, Plus, Pencil, TrendingUp, TrendingDown, LineChart as LineChartIcon, Repeat, Wallet } from "lucide-react";
 import { expandCashflows, liquidityImpact, valuesByEntry } from "./cashflow";
 import { amortize } from "@/lib/finance/amortization";
 import { CURRENCIES } from "@/lib/currency";
