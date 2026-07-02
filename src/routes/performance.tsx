@@ -333,7 +333,13 @@ function PerformancePage() {
                     <YAxis
                       stroke="var(--muted-foreground)"
                       tick={{ fontSize: 11 }}
-                      tickFormatter={(v) => (privacy ? MASK : formatMoney(v as number, currency, { compact: true }))}
+                      tickFormatter={(v) =>
+                        privacy
+                          ? MASK
+                          : scaleMode === "indexed"
+                          ? `${(v as number) >= 0 ? "+" : ""}${(v as number).toFixed(1)}%`
+                          : formatMoney(v as number, currency, { compact: true })
+                      }
                       width={60}
                       domain={yDomain}
                       allowDataOverflow
@@ -345,7 +351,11 @@ function PerformancePage() {
                         borderRadius: 10,
                         fontSize: 12,
                       }}
-                      formatter={(value: number) => mask(value)}
+                      formatter={(value: number) =>
+                        scaleMode === "indexed"
+                          ? `${value >= 0 ? "+" : ""}${value.toFixed(2)}%`
+                          : mask(value)
+                      }
                     />
                     <Legend
                       wrapperStyle={{ fontSize: 11 }}
