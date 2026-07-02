@@ -1,30 +1,43 @@
-## Why Performance and Holdings disagree
+## Why the projected balance slopes down despite a "+CHF 39/mo" snapshot
 
-- Holdings header uses the store's `toDisplay(..., h.priceCurrency)`, which (after the earlier consistency fix) treats a missing `priceCurrency` as the display currency and applies no FX.
-- Performance (`src/routes/performance.tsx`) builds its own FX map with `h.priceCurrency || "USD"`, so any holding without a stored currency gets an unwanted USD→CHF conversion (~×0.81). That accounts for the 3,795 vs 4,939 gap (ratio ≈ 0.77 ≈ USD→CHF).
-- Secondary effect: the header number equals the last historical price point, not the live `currentPrice`, so even after the FX fix it can be a bit behind on volatile days.
+The two views compute recurring flows differently and disagree:
+
+- **Snapshot cards** (`recurring` memo, `src/routes/planning.tsx` ~L409): each recurring entry is summed as `toDisplay(c.amount, c.currency)`. A percent entry like a 25% tax (stored as `amount: 25, amountKind: "percent"`) is counted as CHF 25/mo instead of 25% × income (CHF 750/mo). Weekly entries use a `×4.345` approximation.
+- **Forecast chart** uses `expandCashflows` + `valuesByEntry`, which correctly resolves percent entries against `all-income` / `all-expense` / the target entry and expands weeklies to their actual per-month occurrences. This is the accurate number.
+
+Net effect for the user: expenses look like CHF 2,961 in the cards but are really ~CHF 3,700/mo once taxes/percent items are evaluated, so the line slopes down ~CHF 700/mo — consistent with the chart.
+
+A secondary issue is the chart's starting balance: `expandCashflows(state.cashflows, now)` sums every historical occurrence of every recurring entry back to its `date`, so a long-running recurrence added retroactively can push the starting point deep negative.
 
 ## Fix
 
-1. `src/routes/performance.tsx` — align currency fallback with the store:
-   - Replace `h.priceCurrency || "USD"` in `fxByHolding` with a fallback to the user's display `currency` (same rule as `toDisplay`). Holdings with no stored currency are treated as already in display currency (no conversion), matching the Holdings page.
+1. `src/routes/planning.tsx` — replace the ad-hoc `recurring` computation with the same evaluator the chart uses, so both agree:
+   - Build the next 12 months of occurrences with `expandCashflows(state.cashflows, addMonths(now, 12)).filter(e => new Date(e.date) > now)`.
+   - Resolve values with `valuesByEntry(...)` so percent entries evaluate against real income/expense bases and installments/weeklies count their actual occurrences.
+   - Aggregate to a monthly average: `sum(next 12 months) / 12` for both income and expense. Exclude credit-card-funded expenses to match the chart's `paymentMethod?.startsWith("credit:")` rule.
+   - Derive `savingsRate = max(0, (incomeMo - expenseMo) / incomeMo)` from these consistent numbers.
 
-2. `src/lib/finance/index.ts` — make the last historical point reflect live prices:
-   - In `fetchPortfolioHistory`, after building the day series, ensure the final point uses each holding's current live price (`h.currentPrice`) when it's newer than the last historical sample. Concretely: if `today` isn't already in `days`, append a `today` point priced with `h.currentPrice`; if the last day is today, overwrite each `perAssetPrice[h.id]` / `perAsset[h.id]` with `h.currentPrice` when available. This keeps the "last" value equal to `quantity * currentPrice`, which is exactly what Holdings shows.
-   - Keep `perAssetPrice` populated so tooltips and the indexed/% mode continue to work.
+2. Recurring list rows (Income vs Subscriptions cards):
+   - Show a truthful per-month number per entry using the same expansion: for each recurring parent, average its next-12-month occurrences' resolved values. This makes a "25% tax" line read CHF 750/mo and a weekly grocery line read its true monthly cost.
+   - Keep existing name/category/sort logic.
 
-3. Sanity check the header:
-   - After the two fixes, `metrics.last.total` in `performance.tsx` should equal `Σ toDisplay(h.quantity * h.currentPrice, h.priceCurrency)` — same as the Holdings header. No changes needed to the Holdings page.
+3. Anchor the chart to today's real liquidity, not a synthetic past sum:
+   - Replace the "sum all past occurrences from entry.date" starting balance with the same value the Dashboard already computes for "Liquidity" (running liquidity across all past cashflows and transfers as of today). If a shared helper doesn't already exist, add one small pure function in `src/routes/cashflow.tsx` (`currentLiquidity(state, asOf)`) and reuse it here and on the Dashboard.
+   - This removes the "starts at -CHF 900" surprise and makes the chart reflect what the user actually has on hand.
+
+4. Runway math becomes consistent:
+   - `runwayMonths = currentLiquidity / max(0, expenseMo - incomeMo)` when net is negative; otherwise `Infinity` (no runway concept when saving).
+   - Update the caption copy so it doesn't say "-0.4 months of runway" when net cashflow is positive.
 
 ## Non-goals
 
-- No change to how history is fetched, cached, or merged.
-- No change to the chart's period selector, indexed/% mode, or PDF export.
-- No change to the Holdings page total or to `toDisplay`.
+- No change to how cashflows are entered, edited, or stored.
+- No change to the chart's visual style, gradient, or period selector.
+- No change to how installments or credit-card debt are tracked.
 
 ## Verification
 
-- Reload the app on `/performance` and `/holdings` with the same display currency; the two "Portfolio value" numbers must match to the cent.
-- Toggle period (1D → Max): the header stays equal to the live Holdings total; historical points before today are unchanged.
-- Switch display currency (CHF ↔ EUR ↔ USD): both pages update in lockstep.
-- Add a new holding with no explicit currency: it contributes 1:1 to both totals (no phantom USD→display conversion).
+- With income CHF 3,000/mo and a 25% recurring tax expense, the snapshot must read expenses ≈ CHF 750 higher than before and net near 0 (or negative), matching the chart's slope.
+- Chart start point equals the Dashboard's "Liquidity" figure to the cent.
+- Toggling months 3 / 6 / 12 / 24 keeps the same monthly slope; only the horizon length changes.
+- Adding a new weekly expense updates both the snapshot and the chart by the same per-month amount.
