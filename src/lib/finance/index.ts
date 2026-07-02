@@ -389,12 +389,25 @@ export async function fetchPortfolioHistory(
     return { h, map };
   });
 
-  return days.map((day) => {
+  const today = (() => {
+    const d = new Date();
+    d.setUTCHours(0, 0, 0, 0);
+    return d.getTime();
+  })();
+  if (days[days.length - 1] !== today) days.push(today);
+
+  return days.map((day, idx) => {
+    const isLast = idx === days.length - 1;
     const perAsset: Record<string, number> = {};
     const perAssetPrice: Record<string, number> = {};
     let total = 0;
     for (const { h, map } of filled) {
-      const price = map.get(day) ?? 0;
+      const historical = map.get(day);
+      // For today's (last) point, prefer the live currentPrice so the header
+      // matches the Holdings total to the cent.
+      const price = isLast && h.currentPrice
+        ? h.currentPrice
+        : (historical ?? h.currentPrice ?? 0);
       const v = price * h.quantity;
       perAssetPrice[h.id] = price;
       perAsset[h.id] = v;
