@@ -406,27 +406,72 @@ function ForecastPanel() {
     return rows;
   }, [state.cashflows, toDisplay, months]);
 
-  const recurring = useMemo(() => {
-    const list = state.cashflows.filter((c) => c.recurrence);
-    const monthlyTotals = list.map((c) => {
-      const v = toDisplay(Number(c.amount) || 0, c.currency);
-      const perMonth =
-        c.recurrence!.frequency === "monthly" ? v :
-        c.recurrence!.frequency === "weekly" ? v * 4.345 :
-        v / 12;
-      const name = (c.source && c.source.trim()) || (c.description && c.description.trim()) || c.category || "—";
-      return { id: c.id, name, kind: c.kind, perMonth, category: c.category };
-    });
-    const inc = monthlyTotals.filter((x) => x.kind === "income").reduce((s, x) => s + x.perMonth, 0);
-    const exp = monthlyTotals.filter((x) => x.kind === "expense").reduce((s, x) => s + x.perMonth, 0);
-    return { items: monthlyTotals, incomeMo: inc, expenseMo: exp, savingsRate: inc > 0 ? Math.max(0, (inc - exp) / inc) : 0 };
+  // Single source of truth: aggregate a 12-month forward window using the
+  // same expansion + percent resolution the chart uses, so the summary
+  // cards, per-item /mo values, savings rate and runway all agree with
+  // the projected balance line.
+  const monthly = useMemo(() => {
+    const now = new Date();
+    const horizon = addMonths(now, 12);
+    const expanded = expandCashflows(state.cashflows, horizon).filter(
+      (e) => new Date(e.date) > now,
+    );
+    const vals = valuesByEntry(expanded, toDisplay);
+    let income = 0;
+    let expense = 0;
+    // parentId -> total contribution across the 12mo window (in display ccy).
+    const perParent = new Map<string, number>();
+    for (const e of expanded) {
+      const v = vals.get(e.id) ?? 0;
+      const parentId = (e as CashflowEntry & { parentId?: string }).parentId ?? e.id;
+      if (e.kind === "income") {
+        income += v;
+        perParent.set(parentId, (perParent.get(parentId) ?? 0) + v);
+      } else if (e.kind === "expense") {
+        if (e.paymentMethod?.startsWith("credit:")) continue;
+        expense += v;
+        perParent.set(parentId, (perParent.get(parentId) ?? 0) + v);
+      }
+    }
+    const incomeMo = income / 12;
+    const expenseMo = expense / 12;
+    return {
+      incomeMo,
+      expenseMo,
+      netMo: incomeMo - expenseMo,
+      savingsRate: incomeMo > 0 ? Math.max(0, (incomeMo - expenseMo) / incomeMo) : 0,
+      perParent,
+    };
   }, [state.cashflows, toDisplay]);
 
-  const runwayMonths = recurring.expenseMo > 0 ? data[0]?.balance / recurring.expenseMo : Infinity;
+  // Recurring items list: same set as before (entries with a recurrence),
+  // but each item's /mo value is derived from the 12mo expansion above so
+  // percent entries and other resolutions match the chart exactly.
+  const recurringItems = useMemo(() => {
+    return state.cashflows
+      .filter((c) => c.recurrence)
+      .map((c) => {
+        const perMonth = (monthly.perParent.get(c.id) ?? 0) / 12;
+        const name =
+          (c.source && c.source.trim()) ||
+          (c.description && c.description.trim()) ||
+          c.category ||
+          "—";
+        return { id: c.id, name, kind: c.kind, perMonth, category: c.category };
+      });
+  }, [state.cashflows, monthly.perParent]);
 
-  const incomeItems = recurring.items.filter((r) => r.kind === "income").sort((a, b) => b.perMonth - a.perMonth);
-  const expenseItems = recurring.items.filter((r) => r.kind === "expense").sort((a, b) => b.perMonth - a.perMonth);
-  const netMo = recurring.incomeMo - recurring.expenseMo;
+  const runwayMonths =
+    monthly.expenseMo > 0 && (data[0]?.balance ?? 0) > 0
+      ? (data[0]?.balance ?? 0) / monthly.expenseMo
+      : monthly.expenseMo <= 0
+        ? Infinity
+        : 0;
+
+  const incomeItems = recurringItems.filter((r) => r.kind === "income").sort((a, b) => b.perMonth - a.perMonth);
+  const expenseItems = recurringItems.filter((r) => r.kind === "expense").sort((a, b) => b.perMonth - a.perMonth);
+  const netMo = monthly.netMo;
+
 
   return (
     <div className="space-y-8">
