@@ -220,7 +220,7 @@ async function fetchIntraday(h: Holding): Promise<PricePoint[]> {
       if (h.type === "crypto") {
         const id = h.coinGeckoId || (await resolveCoinGeckoId(h.symbol));
         if (id) data = await getCryptoHistory(id, 1);
-      } else if (h.type !== "crypto" && h.type !== "other") {
+      } else if (h.type !== "other") {
         data = await getYahooHistory(h.symbol, "1d");
       }
     } catch {}
