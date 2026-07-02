@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useQuery } from "@tanstack/react-query";
+import { usePortfolioHistory } from "@/hooks/use-portfolio-history";
 import {
   AreaChart,
   Area,
