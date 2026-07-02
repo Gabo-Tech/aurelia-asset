@@ -54,21 +54,21 @@ function PlanningPage() {
         title={t("planning.title")}
         description={t("planning.description")}
       />
-      <Tabs defaultValue="budgets" className="w-full">
+      <Tabs defaultValue="forecast" className="w-full">
         <TabsList className="flex flex-wrap h-auto">
+          <TabsTrigger value="forecast">{t("planning.tabs.forecast")}</TabsTrigger>
           <TabsTrigger value="budgets">{t("planning.tabs.budgets")}</TabsTrigger>
           <TabsTrigger value="goals">{t("planning.tabs.goals")}</TabsTrigger>
-          <TabsTrigger value="forecast">{t("planning.tabs.forecast")}</TabsTrigger>
           <TabsTrigger value="loans">{t("planning.tabs.loans")}</TabsTrigger>
         </TabsList>
+        <TabsContent value="forecast" className="mt-6">
+          <ForecastPanel />
+        </TabsContent>
         <TabsContent value="budgets" className="mt-6">
           <BudgetsPanel />
         </TabsContent>
         <TabsContent value="goals" className="mt-6">
           <GoalsPanel />
-        </TabsContent>
-        <TabsContent value="forecast" className="mt-6">
-          <ForecastPanel />
         </TabsContent>
         <TabsContent value="loans" className="mt-6">
           <LoansPanel />
