@@ -25,8 +25,17 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 import { PageHeader } from "@/components/app-shell";
-import { Download, Upload, RotateCcw, FileJson, FileSpreadsheet, Languages, RefreshCw } from "lucide-react";
+import { Download, Upload, RotateCcw, FileJson, FileSpreadsheet, Languages, RefreshCw, Copy, ClipboardPaste } from "lucide-react";
 import { clearPriceHistoryCache } from "@/lib/finance";
 import { toast } from "sonner";
 import { z } from "zod";
