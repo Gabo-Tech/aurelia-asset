@@ -140,8 +140,10 @@ async function fetchMaxHistory(h: Holding): Promise<PricePoint[]> {
     const chain: Array<() => Promise<PricePoint[]>> =
       h.type === "crypto"
         ? [
-            async () =>
-              h.coinGeckoId ? await getCryptoHistory(h.coinGeckoId, "max") : [],
+            async () => {
+              const id = h.coinGeckoId || (await resolveCoinGeckoId(h.symbol));
+              return id ? await getCryptoHistory(id, "max") : [];
+            },
             async () => await getBinanceHistory(h.symbol),
           ]
         : [
