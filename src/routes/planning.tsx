@@ -443,11 +443,12 @@ function ForecastPanel() {
       expenseMo: expense,
       recurringIncomeMo: recurringIncome,
       recurringExpenseMo: recurringExpense,
-      netMo: income - expense,
-      savingsRate: income > 0 ? Math.max(0, (income - expense) / income) : 0,
+      netMo: recurringIncome - recurringExpense,
+      savingsRate: recurringIncome > 0 ? Math.max(0, (recurringIncome - recurringExpense) / recurringIncome) : 0,
       perParent,
     };
   }, [state.cashflows, toDisplay]);
+
 
   // Recurring items list: only entries that actually occur in the current
   // month, with each /mo value resolved from the same current-month values.
