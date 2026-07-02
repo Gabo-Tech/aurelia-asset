@@ -230,16 +230,20 @@ function Hero() {
           {t("landing.hero.subtitle")}
         </p>
 
-        <div className="mt-8 flex animate-fade-in flex-wrap items-center justify-center gap-3" style={{ animationDelay: "360ms", animationDuration: "700ms", animationFillMode: "both" }}>
+        <div className="mt-10 flex animate-fade-in flex-col items-center justify-center gap-4 sm:flex-row sm:flex-wrap" style={{ animationDelay: "360ms", animationDuration: "700ms", animationFillMode: "both" }}>
           <Link
             to="/dashboard"
-            className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-medium text-primary-foreground shadow-lg shadow-primary/20 transition-transform hover:bg-primary/90 hover:-translate-y-0.5"
+            aria-label={t("landing.hero.ctaPrimary")}
+            className="group relative inline-flex items-center gap-2.5 overflow-hidden rounded-2xl bg-primary px-8 py-4 text-base font-semibold text-primary-foreground shadow-2xl shadow-primary/30 ring-1 ring-primary/40 transition-all hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-primary/40 sm:text-lg"
           >
-            {t("landing.hero.ctaPrimary")} <ArrowRight className="h-4 w-4" />
+            <span aria-hidden className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
+            <span className="pointer-events-none absolute -inset-1 -z-10 rounded-2xl bg-primary/40 opacity-70 blur-xl animate-pulse" aria-hidden />
+            {t("landing.hero.ctaPrimary")}
+            <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
           </Link>
           <a
             href="#features"
-            className="inline-flex items-center gap-2 rounded-xl border border-border bg-card/60 px-5 py-3 text-sm font-medium text-foreground transition-colors hover:bg-card"
+            className="inline-flex items-center gap-2 rounded-2xl border border-border bg-card/60 px-6 py-4 text-base font-medium text-foreground transition-colors hover:bg-card"
           >
             {t("landing.hero.ctaSecondary")}
           </a>
