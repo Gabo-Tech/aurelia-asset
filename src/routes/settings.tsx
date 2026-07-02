@@ -295,15 +295,8 @@ function SettingsPage() {
 
   async function exportJson() {
     try {
-      const envelope = {
-        version: 1 as const,
-        exportedAt: new Date().toISOString(),
-        state,
-        preferences: await collectPreferences(),
-        userPreferences: { language },
-      };
       const filename = `portfolio-${new Date().toISOString().slice(0, 10)}.json`;
-      const json = JSON.stringify(envelope, null, 2);
+      const json = await buildExportJson();
       const blob = new Blob([json], { type: "application/json" });
       const method = await saveOrShare(blob, filename, json);
       toast.success(
