@@ -546,7 +546,7 @@ function ForecastPanel() {
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                   <XAxis dataKey="month" stroke="var(--muted-foreground)" fontSize={12} />
-                  <YAxis stroke="var(--muted-foreground)" fontSize={11} width={64} tickFormatter={(v) => fmt(v, undefined, { compact: true, maximumFractionDigits: 1 })} />
+                  <YAxis stroke="var(--muted-foreground)" fontSize={11} width={64} tickFormatter={(v) => fmt(v, undefined, { compact: true })} />
 
                   <Tooltip
                     contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12, color: "var(--popover-foreground)" }}
