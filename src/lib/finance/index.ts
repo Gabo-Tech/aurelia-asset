@@ -143,6 +143,84 @@ async function fetchFromChain(
   return [];
 }
 
+function mergePoints(base: PricePoint[], extra: PricePoint[]): PricePoint[] {
+  if (!extra.length) return base;
+  const byDay = new Map<number, PricePoint>();
+  const dayKey = (d: Date) => {
+    const x = new Date(d);
+    x.setUTCHours(0, 0, 0, 0);
+    return x.getTime();
+  };
+  for (const p of base) byDay.set(dayKey(p.date), p);
+  for (const p of extra) byDay.set(dayKey(p.date), p); // extra overwrites (fresher)
+  return Array.from(byDay.values()).sort(
+    (a, b) => a.date.getTime() - b.date.getTime(),
+  );
+}
+
+function persistMaxHistory(key: string, points: PricePoint[]) {
+  setCache(
+    key,
+    points.map((x) => ({ t: x.date.getTime(), p: x.price })),
+    MAX_HIST_TTL,
+  );
+}
+
+async function fetchRecentChain(h: Holding, days: number): Promise<PricePoint[]> {
+  // Small buffer so we always overlap the previously stored last point.
+  const spanDays = Math.max(2, Math.ceil(days) + 1);
+  const chain: Array<() => Promise<PricePoint[]>> =
+    h.type === "crypto"
+      ? [
+          async () => {
+            const id = h.coinGeckoId || (await resolveCoinGeckoId(h.symbol));
+            return id ? await getCryptoHistory(id, spanDays) : [];
+          },
+          async () => await getBinanceHistory(h.symbol),
+        ]
+      : [
+          async () => {
+            const to = Math.floor(Date.now() / 1000);
+            const from = to - spanDays * 86400;
+            return (await finnhubHistory(h.symbol, from, to)) ?? [];
+          },
+          async () => {
+            const range =
+              spanDays <= 5 ? "5d"
+              : spanDays <= 30 ? "1mo"
+              : spanDays <= 90 ? "3mo"
+              : spanDays <= 180 ? "6mo"
+              : spanDays <= 365 ? "1y"
+              : "max";
+            return await getYahooHistory(h.symbol, range);
+          },
+          async () => await getStooqHistory(h.symbol),
+        ];
+  return fetchFromChain(chain);
+}
+
+async function fetchFullChain(h: Holding): Promise<PricePoint[]> {
+  const chain: Array<() => Promise<PricePoint[]>> =
+    h.type === "crypto"
+      ? [
+          async () => {
+            const id = h.coinGeckoId || (await resolveCoinGeckoId(h.symbol));
+            return id ? await getCryptoHistory(id, "max") : [];
+          },
+          async () => await getBinanceHistory(h.symbol),
+        ]
+      : [
+          async () => {
+            const to = Math.floor(Date.now() / 1000);
+            const from = to - 10 * 365 * 86400;
+            return (await finnhubHistory(h.symbol, from, to)) ?? [];
+          },
+          async () => await getYahooHistory(h.symbol, "max"),
+          async () => await getStooqHistory(h.symbol),
+        ];
+  return fetchFromChain(chain);
+}
+
 async function fetchMaxHistory(h: Holding): Promise<PricePoint[]> {
   const key = MAX_HIST_KEY(h);
   const fresh = getCache<{ t: number; p: number }[]>(key);
@@ -157,37 +235,35 @@ async function fetchMaxHistory(h: Holding): Promise<PricePoint[]> {
         price: x.p,
       }));
     }
-    const chain: Array<() => Promise<PricePoint[]>> =
-      h.type === "crypto"
-        ? [
-            async () => {
-              const id = h.coinGeckoId || (await resolveCoinGeckoId(h.symbol));
-              return id ? await getCryptoHistory(id, "max") : [];
-            },
-            async () => await getBinanceHistory(h.symbol),
-          ]
-        : [
-            async () => {
-              const to = Math.floor(Date.now() / 1000);
-              const from = to - 10 * 365 * 86400;
-              return (await finnhubHistory(h.symbol, from, to)) ?? [];
-            },
-            async () => await getYahooHistory(h.symbol, "max"),
-            async () => await getStooqHistory(h.symbol),
-          ];
-    const data = await fetchFromChain(chain);
-    if (data.length) {
-      setCache(
-        key,
-        data.map((x) => ({ t: x.date.getTime(), p: x.price })),
-        MAX_HIST_TTL,
-      );
-    } else {
-      // Fall back to whatever we previously had (even if expired) so the UI
-      // isn't empty just because the API is currently rate-limited.
-      const stale = getCacheStale<{ t: number; p: number }[]>(key);
-      if (stale) return stale.map((x) => ({ date: new Date(x.t), price: x.p }));
+
+    // Incremental path: if we already have stored history, only fetch the
+    // gap between the last stored day and today, then merge.
+    const stale = getCacheStale<{ t: number; p: number }[]>(key);
+    if (stale && stale.length) {
+      const staleSeries: PricePoint[] = stale.map((x) => ({
+        date: new Date(x.t),
+        price: x.p,
+      }));
+      const lastTs = staleSeries[staleSeries.length - 1].date.getTime();
+      const gapDays = (Date.now() - lastTs) / 86400000;
+      if (gapDays < 1) {
+        // Nothing meaningful to add; refresh TTL and serve stored series.
+        persistMaxHistory(key, staleSeries);
+        return staleSeries;
+      }
+      const recent = await fetchRecentChain(h, gapDays);
+      if (recent.length) {
+        const merged = mergePoints(staleSeries, recent);
+        persistMaxHistory(key, merged);
+        return merged;
+      }
+      // Recent fetch failed (rate-limited) — keep what we had.
+      return staleSeries;
     }
+
+    // Cold start: no stored data at all, pull the full history once.
+    const data = await fetchFullChain(h);
+    if (data.length) persistMaxHistory(key, data);
     return data;
   })().finally(() => {
     maxHistInflight.delete(key);
