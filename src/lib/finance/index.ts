@@ -69,10 +69,10 @@ export async function fetchCurrentQuote(h: Holding): Promise<FetchedQuote> {
   if (h.type === "crypto") {
     return firstQuote(
       [
-        async () =>
-          h.coinGeckoId
-            ? { price: await getCryptoPrice(h.coinGeckoId), currency: "USD" }
-            : null,
+        async () => {
+          const id = h.coinGeckoId || (await resolveCoinGeckoId(h.symbol));
+          return id ? { price: await getCryptoPrice(id), currency: "USD" } : null;
+        },
         async () => {
           const p = await getBinanceQuote(h.symbol);
           return p != null ? { price: p, currency: "USD" } : null;
