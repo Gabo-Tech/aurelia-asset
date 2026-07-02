@@ -347,44 +347,47 @@ function SettingsPage() {
     }
   }
 
-  function handleImport(file: File) {
-    file.text().then(async (txt) => {
-      try {
-        const raw = JSON.parse(txt);
-        const envelope = exportEnvelopeSchema.safeParse(raw);
-        let parsedState: AppState;
-        let prefs: Record<string, string> | undefined;
-        let userPrefs: { language?: string } | undefined;
-        if (envelope.success) {
-          parsedState = envelope.data.state as AppState;
-          prefs = envelope.data.preferences;
-          userPrefs = envelope.data.userPreferences;
-        } else {
-          const legacy = appStateSchema.safeParse(raw);
-          if (!legacy.success) {
-            const first = (envelope.error.issues[0] ?? legacy.error.issues[0]);
-            throw new Error(
-              first ? `${first.path.join(".") || "root"}: ${first.message}` : "Invalid file format"
-            );
-          }
-          parsedState = legacy.data as AppState;
+  async function importFromText(txt: string) {
+    try {
+      const raw = JSON.parse(txt);
+      const envelope = exportEnvelopeSchema.safeParse(raw);
+      let parsedState: AppState;
+      let prefs: Record<string, string> | undefined;
+      let userPrefs: { language?: string } | undefined;
+      if (envelope.success) {
+        parsedState = envelope.data.state as AppState;
+        prefs = envelope.data.preferences;
+        userPrefs = envelope.data.userPreferences;
+      } else {
+        const legacy = appStateSchema.safeParse(raw);
+        if (!legacy.success) {
+          const first = envelope.error.issues[0] ?? legacy.error.issues[0];
+          throw new Error(
+            first ? `${first.path.join(".") || "root"}: ${first.message}` : "Invalid file format",
+          );
         }
-        importState(parsedState);
-        if (prefs) await applyPreferences(prefs);
-        if (userPrefs?.language && SUPPORTED_LANG_CODES.includes(userPrefs.language)) {
-          setLanguage(userPrefs.language as LanguageCode);
-        } else {
-          // Backwards compat: also check the persisted language key inside `prefs`
-          const fromPrefs = prefs?.[LANG_STORAGE_KEY];
-          if (fromPrefs && SUPPORTED_LANG_CODES.includes(fromPrefs)) {
-            setLanguage(fromPrefs as LanguageCode);
-          }
-        }
-        toast.success(t("settings.data.imported"));
-      } catch (e) {
-        toast.error(`${t("settings.data.importFailed")}: ${(e as Error).message}`);
+        parsedState = legacy.data as AppState;
       }
-    });
+      importState(parsedState);
+      if (prefs) await applyPreferences(prefs);
+      if (userPrefs?.language && SUPPORTED_LANG_CODES.includes(userPrefs.language)) {
+        setLanguage(userPrefs.language as LanguageCode);
+      } else {
+        const fromPrefs = prefs?.[LANG_STORAGE_KEY];
+        if (fromPrefs && SUPPORTED_LANG_CODES.includes(fromPrefs)) {
+          setLanguage(fromPrefs as LanguageCode);
+        }
+      }
+      toast.success(t("settings.data.imported"));
+      return true;
+    } catch (e) {
+      toast.error(`${t("settings.data.importFailed")}: ${(e as Error).message}`);
+      return false;
+    }
+  }
+
+  function handleImport(file: File) {
+    file.text().then((txt) => importFromText(txt));
   }
 
   return (
