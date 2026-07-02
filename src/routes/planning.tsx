@@ -196,7 +196,7 @@ function BudgetsPanel() {
                     {cat?.name || t("planning.budgets.unknown")}
                   </span>
                   <span className={over ? "text-destructive font-medium" : "text-muted-foreground"}>
-                    {fmt(spent)} / {fmt(b.amount, b.currency)}
+                    {fmt(spent)} / {fmt(budgetDisp)}
                   </span>
                 </div>
                 <Progress value={pct} className={over ? "[&>div]:bg-destructive" : ""} />
