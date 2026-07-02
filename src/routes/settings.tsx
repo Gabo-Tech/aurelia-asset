@@ -603,13 +603,48 @@ function SettingsPage() {
   );
 }
 
-function download(blob: Blob, filename: string) {
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
+async function saveOrShare(
+  blob: Blob,
+  filename: string,
+  textContent?: string,
+): Promise<"download" | "share" | "clipboard"> {
+  // 1) Try Web Share API with a File (works on iOS/Android WebViews when https)
+  try {
+    const nav = typeof navigator !== "undefined" ? (navigator as Navigator & { canShare?: (d: ShareData) => boolean }) : undefined;
+    if (nav && typeof File !== "undefined" && nav.canShare) {
+      const file = new File([blob], filename, { type: blob.type });
+      const data: ShareData & { files?: File[] } = { files: [file], title: filename };
+      if (nav.canShare(data)) {
+        await nav.share(data);
+        return "share";
+      }
+    }
+  } catch {
+    // fall through
+  }
+
+  // 2) Try classic anchor download
+  try {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const supportsDownload = "download" in a;
+    a.href = url;
+    a.download = filename;
+    a.rel = "noopener";
+    a.target = "_blank";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+    if (supportsDownload) return "download";
+  } catch {
+    // fall through
+  }
+
+  // 3) Last-resort clipboard fallback (mobile WebViews without download support)
+  if (textContent && typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(textContent);
+    return "clipboard";
+  }
+  throw new Error("No available way to save the file on this device");
 }
