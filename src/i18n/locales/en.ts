@@ -150,7 +150,6 @@ const en = {
       subheading: "The same private tracker, packaged as a native app for every device you use.",
       web: "Or just open it in your browser",
       soon: "Coming soon",
-      comingSoon: "Coming soon",
       unsignedNotice: "All builds are unsigned and distributed directly. Your OS may show a first-run warning - this is expected.",
       platforms: {
         windows: "Windows",
