@@ -259,32 +259,64 @@ function SettingsPage() {
   const fileRef = useRef<HTMLInputElement>(null);
 
   async function exportJson() {
-    const envelope = {
-      version: 1 as const,
-      exportedAt: new Date().toISOString(),
-      state,
-      preferences: await collectPreferences(),
-      userPreferences: { language },
-    };
-    const blob = new Blob([JSON.stringify(envelope, null, 2)], { type: "application/json" });
-    download(blob, `portfolio-${new Date().toISOString().slice(0, 10)}.json`);
+    try {
+      const envelope = {
+        version: 1 as const,
+        exportedAt: new Date().toISOString(),
+        state,
+        preferences: await collectPreferences(),
+        userPreferences: { language },
+      };
+      const filename = `portfolio-${new Date().toISOString().slice(0, 10)}.json`;
+      const json = JSON.stringify(envelope, null, 2);
+      const blob = new Blob([json], { type: "application/json" });
+      const method = await saveOrShare(blob, filename, json);
+      toast.success(
+        t("settings.data.exported", { defaultValue: "Export completed" }),
+        {
+          description:
+            method === "share"
+              ? t("settings.data.exportedShare", { defaultValue: `Shared ${filename}` })
+              : method === "clipboard"
+                ? t("settings.data.exportedClipboard", {
+                    defaultValue: "Copied JSON to clipboard (download unavailable on this device)",
+                  })
+                : t("settings.data.exportedFile", { defaultValue: `Saved ${filename}` }),
+        },
+      );
+    } catch (e) {
+      toast.error(
+        `${t("settings.data.exportFailed", { defaultValue: "Export failed" })}: ${(e as Error).message}`,
+      );
+    }
   }
 
-  function exportCsv() {
-    const rows = [
-      ["symbol", "name", "type", "quantity", "currentPrice", "marketValue", "color"],
-      ...state.holdings.map((h) => [
-        h.symbol,
-        h.name.replaceAll(",", " "),
-        h.type,
-        h.quantity,
-        h.currentPrice,
-        h.quantity * h.currentPrice,
-        h.color,
-      ]),
-    ];
-    const csv = rows.map((r) => r.join(",")).join("\n");
-    download(new Blob([csv], { type: "text/csv" }), `holdings-${new Date().toISOString().slice(0, 10)}.csv`);
+  async function exportCsv() {
+    try {
+      const rows = [
+        ["symbol", "name", "type", "quantity", "currentPrice", "marketValue", "color"],
+        ...state.holdings.map((h) => [
+          h.symbol,
+          h.name.replaceAll(",", " "),
+          h.type,
+          h.quantity,
+          h.currentPrice,
+          h.quantity * h.currentPrice,
+          h.color,
+        ]),
+      ];
+      const csv = rows.map((r) => r.join(",")).join("\n");
+      const filename = `holdings-${new Date().toISOString().slice(0, 10)}.csv`;
+      const blob = new Blob([csv], { type: "text/csv" });
+      await saveOrShare(blob, filename, csv);
+      toast.success(t("settings.data.exported", { defaultValue: "Export completed" }), {
+        description: t("settings.data.exportedFile", { defaultValue: `Saved ${filename}` }),
+      });
+    } catch (e) {
+      toast.error(
+        `${t("settings.data.exportFailed", { defaultValue: "Export failed" })}: ${(e as Error).message}`,
+      );
+    }
   }
 
   function handleImport(file: File) {
@@ -571,13 +603,48 @@ function SettingsPage() {
   );
 }
 
-function download(blob: Blob, filename: string) {
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
+async function saveOrShare(
+  blob: Blob,
+  filename: string,
+  textContent?: string,
+): Promise<"download" | "share" | "clipboard"> {
+  // 1) Try Web Share API with a File (works on iOS/Android WebViews when https)
+  try {
+    const nav = typeof navigator !== "undefined" ? (navigator as Navigator & { canShare?: (d: ShareData) => boolean }) : undefined;
+    if (nav && typeof File !== "undefined" && nav.canShare) {
+      const file = new File([blob], filename, { type: blob.type });
+      const data: ShareData & { files?: File[] } = { files: [file], title: filename };
+      if (nav.canShare(data)) {
+        await nav.share(data);
+        return "share";
+      }
+    }
+  } catch {
+    // fall through
+  }
+
+  // 2) Try classic anchor download
+  try {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const supportsDownload = "download" in a;
+    a.href = url;
+    a.download = filename;
+    a.rel = "noopener";
+    a.target = "_blank";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+    if (supportsDownload) return "download";
+  } catch {
+    // fall through
+  }
+
+  // 3) Last-resort clipboard fallback (mobile WebViews without download support)
+  if (textContent && typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(textContent);
+    return "clipboard";
+  }
+  throw new Error("No available way to save the file on this device");
 }
