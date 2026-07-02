@@ -51,6 +51,7 @@ function PerformancePage() {
   const [period, setPeriod] = useState<PeriodId>("1M");
   const [hidden, setHidden] = useState<Set<string>>(new Set());
   const [hideTotal, setHideTotal] = useState(false);
+  const [scaleMode, setScaleMode] = useState<"value" | "indexed">("value");
 
   const visibleKeys = useMemo(() => {
     const keys: string[] = [];
