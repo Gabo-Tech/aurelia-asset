@@ -31,7 +31,7 @@ import i18n from "@/i18n";
 
 const SITE_URL = "https://financetracker.putopulse.org";
 import ogImageAsset from "@/assets/og-image.png.asset.json";
-const OG_IMAGE = SITE_URL_PLACEHOLDER;
+const OG_IMAGE = SITE_URL + ogImageAsset.url;
 
 const LOCALES = ["en", "es", "pt", "de", "nl", "ca"] as const;
 const OG_LOCALE_MAP: Record<(typeof LOCALES)[number], string> = {
