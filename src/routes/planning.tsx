@@ -28,12 +28,21 @@ import {
 import type { Budget, Loan } from "@/lib/types";
 
 export const Route = createFileRoute("/planning")({
-  head: () => ({
-    meta: [
-      { title: "Planning · Budgets, Goals, Forecast, Loans" },
-      { name: "description", content: "Plan your finances: monthly budgets, savings goals, cashflow forecasts and loan amortization." },
-    ],
-  }),
+  head: () => {
+    const title = "Planning - Budgets, Goals & Forecast";
+    const desc = "Plan your finances: monthly budgets, savings goals, 24-month cashflow forecasts and loan amortization tables.";
+    const url = "https://financetracker.putopulse.org/planning";
+    return {
+      meta: [
+        { title },
+        { name: "description", content: desc },
+        { property: "og:title", content: title },
+        { property: "og:description", content: desc },
+        { property: "og:url", content: url },
+      ],
+      links: [{ rel: "canonical", href: url }],
+    };
+  },
   component: PlanningPage,
 });
 

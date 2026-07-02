@@ -58,12 +58,21 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
 export const Route = createFileRoute("/cashflow")({
-  head: () => ({
-    meta: [
-      { title: i18n.t("cashflow.metaTitle") },
-      { name: "description", content: i18n.t("cashflow.metaDesc") },
-    ],
-  }),
+  head: () => {
+    const title = i18n.t("cashflow.metaTitle");
+    const desc = i18n.t("cashflow.metaDesc");
+    const url = "https://financetracker.putopulse.org/cashflow";
+    return {
+      meta: [
+        { title },
+        { name: "description", content: desc },
+        { property: "og:title", content: title },
+        { property: "og:description", content: desc },
+        { property: "og:url", content: url },
+      ],
+      links: [{ rel: "canonical", href: url }],
+    };
+  },
   component: CashflowPage,
 });
 

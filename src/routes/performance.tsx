@@ -26,12 +26,21 @@ import { convert } from "@/lib/finance/fx";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/performance")({
-  head: () => ({
-    meta: [
-      { title: i18n.t("performance.metaTitle") },
-      { name: "description", content: i18n.t("performance.metaDesc") },
-    ],
-  }),
+  head: () => {
+    const title = i18n.t("performance.metaTitle");
+    const desc = i18n.t("performance.metaDesc");
+    const url = "https://financetracker.putopulse.org/performance";
+    return {
+      meta: [
+        { title },
+        { name: "description", content: desc },
+        { property: "og:title", content: title },
+        { property: "og:description", content: desc },
+        { property: "og:url", content: url },
+      ],
+      links: [{ rel: "canonical", href: url }],
+    };
+  },
   component: PerformancePage,
 });
 

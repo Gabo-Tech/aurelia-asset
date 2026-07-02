@@ -245,6 +245,7 @@ export const Route = createFileRoute("/settings")({
     meta: [
       { title: i18n.t("settings.metaTitle") },
       { name: "description", content: i18n.t("settings.metaDesc") },
+      { name: "robots", content: "noindex, nofollow" },
     ],
   }),
   component: SettingsPage,

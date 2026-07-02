@@ -40,12 +40,21 @@ import { cn } from "@/lib/utils";
 import type { Holding } from "@/lib/types";
 
 export const Route = createFileRoute("/holdings")({
-  head: () => ({
-    meta: [
-      { title: i18n.t("holdings.metaTitle") },
-      { name: "description", content: i18n.t("holdings.metaDesc") },
-    ],
-  }),
+  head: () => {
+    const title = i18n.t("holdings.metaTitle");
+    const desc = i18n.t("holdings.metaDesc");
+    const url = "https://financetracker.putopulse.org/holdings";
+    return {
+      meta: [
+        { title },
+        { name: "description", content: desc },
+        { property: "og:title", content: title },
+        { property: "og:description", content: desc },
+        { property: "og:url", content: url },
+      ],
+      links: [{ rel: "canonical", href: url }],
+    };
+  },
   component: HoldingsPage,
 });
 
