@@ -511,13 +511,19 @@ function ForecastPanel() {
             </CardHeader>
             <CardContent className="text-2xl font-semibold text-rose-500">{fmt(monthly.recurringExpenseMo)}</CardContent>
           </Card>
-          <Card className="border-l-4" style={{ borderLeftColor: "var(--primary)" }}>
+          <Card
+            className="border-l-4"
+            style={{ borderLeftColor: monthly.savingsRate < 0 ? "var(--destructive, #ef4444)" : "var(--primary)" }}
+          >
             <CardHeader className="pb-2 flex flex-row items-center justify-between">
               <CardTitle className="text-sm text-muted-foreground font-normal">{t("planning.forecast.savingsRate")}</CardTitle>
-              <span className="text-xs tabular-nums text-muted-foreground">{fmt(netMo)}/mo</span>
+              <span className={`text-xs tabular-nums ${netMo < 0 ? "text-rose-500" : "text-muted-foreground"}`}>
+                {netMo >= 0 ? "+" : ""}{fmt(netMo)}/mo
+              </span>
             </CardHeader>
-            <CardContent className="text-2xl font-semibold">{(monthly.savingsRate * 100).toFixed(0)}%</CardContent>
-
+            <CardContent className={`text-2xl font-semibold ${monthly.savingsRate < 0 ? "text-rose-500" : ""}`}>
+              {monthly.savingsRate >= 0 ? "" : ""}{(monthly.savingsRate * 100).toFixed(0)}%
+            </CardContent>
           </Card>
         </div>
       </section>
