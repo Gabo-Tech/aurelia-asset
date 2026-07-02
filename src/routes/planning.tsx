@@ -472,11 +472,12 @@ function ForecastPanel() {
   }, [state.cashflows, monthly.perParent]);
 
   const runwayMonths =
-    monthly.expenseMo > 0 && (data[0]?.balance ?? 0) > 0
-      ? (data[0]?.balance ?? 0) / monthly.expenseMo
-      : monthly.expenseMo <= 0
+    monthly.recurringExpenseMo > 0 && (data[0]?.balance ?? 0) > 0
+      ? (data[0]?.balance ?? 0) / monthly.recurringExpenseMo
+      : monthly.recurringExpenseMo <= 0
         ? Infinity
         : 0;
+
 
   const incomeItems = recurringItems.filter((r) => r.kind === "income").sort((a, b) => b.perMonth - a.perMonth);
   const expenseItems = recurringItems.filter((r) => r.kind === "expense").sort((a, b) => b.perMonth - a.perMonth);
