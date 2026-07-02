@@ -380,12 +380,15 @@ function ForecastPanel() {
       const v = pastVals.get(e.id) ?? 0;
       balance += liquidityImpact(e, v);
     }
+    const recurringParentIds = new Set(state.cashflows.filter((c) => c.recurrence).map((c) => c.id));
+    const isRecurring = (e: CashflowEntry & { parentId?: string }) =>
+      recurringParentIds.has(e.parentId ?? e.id);
     const rows: { month: string; balance: number; income: number; expense: number; net: number }[] = [];
     for (let i = 0; i < months; i++) {
       const m = startOfMonth(addMonths(now, i + 1));
       const end = endOfMonth(m);
       const monthEntries = expandCashflows(state.cashflows, end).filter((e) =>
-        isWithinInterval(new Date(e.date), { start: m, end }),
+        isWithinInterval(new Date(e.date), { start: m, end }) && isRecurring(e),
       );
       const vals = valuesByEntry(monthEntries, toDisplay);
       let income = 0;
@@ -401,6 +404,7 @@ function ForecastPanel() {
       rows.push({ month: format(m, "MMM yy"), balance, income, expense, net });
     }
     return rows;
+
   }, [state.cashflows, toDisplay, months]);
 
   // Single source of truth for the visible monthly snapshot: use the same
