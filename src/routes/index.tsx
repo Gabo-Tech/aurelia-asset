@@ -23,6 +23,7 @@ import {
 import { getGithubRepo } from "@/lib/repo.functions";
 import apkAsset from "@/assets/portfolio-tracker-apk.asset.json";
 import logoAsset from "@/assets/logo.png.asset.json";
+import heroAsset from "@/assets/landing-hero.png.asset.json";
 
 import { MouseGlow, ScrollAurora, Reveal } from "@/components/landing-ambient";
 import i18n from "@/i18n";
@@ -208,7 +209,7 @@ function Hero() {
         <div className="mx-auto mt-14 max-w-5xl animate-fade-in" style={{ animationDelay: "480ms", animationDuration: "900ms", animationFillMode: "both" }}>
           <div className="rounded-2xl border border-border/60 bg-card/40 p-2 shadow-2xl shadow-primary/5">
             <img
-              src={OG_IMAGE}
+              src={heroAsset.url}
               alt={t("landing.hero.screenshotAlt")}
               loading="lazy"
               className="w-full rounded-xl"
