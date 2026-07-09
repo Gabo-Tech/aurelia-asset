@@ -429,6 +429,21 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         }),
       setMainBudgetPlan: (id) =>
         setState((s) => ({ ...s, mainBudgetPlanId: id })),
+      duplicateBudgetPlan: (id) => {
+        let created: BudgetPlan | undefined;
+        setState((s) => {
+          const src = (s.budgetPlans ?? []).find((p) => p.id === id);
+          if (!src) return s;
+          created = {
+            ...src,
+            id: uid(),
+            name: `${src.name} (copy)`,
+            items: src.items.map((it) => ({ ...it, id: uid() })),
+          };
+          return { ...s, budgetPlans: [...(s.budgetPlans ?? []), created] };
+        });
+        return created;
+      },
       addBudgetItem: (planId, item) =>
         setState((s) => ({
           ...s,
