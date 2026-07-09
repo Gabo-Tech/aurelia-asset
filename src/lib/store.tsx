@@ -16,16 +16,76 @@ import { setSettingsSnapshot } from "./finance/client";
 
 const STORAGE_KEY = "ept_state_v1";
 
+function migrateBudgets(parsed: any, defCcy: string): { plans: BudgetPlan[]; mainId?: string } {
+  const rawPlans = Array.isArray(parsed?.budgetPlans) ? parsed.budgetPlans : [];
+  const plans: BudgetPlan[] = rawPlans.map((p: any) => ({
+    id: String(p.id),
+    name: String(p.name ?? "Plan"),
+    items: (Array.isArray(p.items) ? p.items : []).map((it: any) => ({
+      id: String(it.id),
+      label: String(it.label ?? ""),
+      amount: Number(it.amount) || 0,
+      currency: it.currency || defCcy,
+      categoryId: it.categoryId || undefined,
+    })),
+  }));
+  let mainId: string | undefined = parsed?.mainBudgetPlanId;
+  if (plans.length === 0 && Array.isArray(parsed?.budgets) && parsed.budgets.length > 0) {
+    // Wrap legacy flat budgets into a "Default" plan.
+    const id = "plan-default";
+    plans.push({
+      id,
+      name: "Default",
+      items: parsed.budgets.map((b: any, i: number) => ({
+        id: `bi-${b.id ?? i}`,
+        label: "",
+        amount: Number(b.amount) || 0,
+        currency: b.currency || defCcy,
+        categoryId: b.categoryId,
+      })),
+    });
+    mainId = mainId ?? id;
+  }
+  if (!mainId && plans[0]) mainId = plans[0].id;
+  return { plans, mainId };
+}
+
+function migrateScenarios(parsed: any): { scenarios: ForecastScenario[]; mainId?: string } {
+  const raw = Array.isArray(parsed?.forecastScenarios) ? parsed.forecastScenarios : [];
+  const scenarios: ForecastScenario[] = raw.map((s: any) => ({
+    id: String(s.id),
+    name: String(s.name ?? "Scenario"),
+    months: Math.max(1, Math.min(60, Number(s.months) || 6)),
+    monthlyIncomeAdjust: Number(s.monthlyIncomeAdjust) || 0,
+    monthlyExpenseAdjust: Number(s.monthlyExpenseAdjust) || 0,
+    currency: s.currency,
+    notes: s.notes,
+  }));
+  let mainId: string | undefined = parsed?.mainForecastScenarioId;
+  if (scenarios.length === 0) {
+    scenarios.push({ id: "scn-default", name: "Baseline", months: 6 });
+    mainId = "scn-default";
+  }
+  if (!mainId) mainId = scenarios[0].id;
+  return { scenarios, mainId };
+}
+
 async function loadState(): Promise<AppState> {
   if (typeof window === "undefined") return DEFAULT_STATE;
   try {
     const raw = await secureGet(STORAGE_KEY);
-    if (!raw) return DEFAULT_STATE;
+    if (!raw) {
+      // Fresh install: seed a default forecast scenario so the UI has something to show.
+      const { scenarios, mainId } = migrateScenarios({});
+      return { ...DEFAULT_STATE, forecastScenarios: scenarios, mainForecastScenarioId: mainId };
+    }
     const parsed = JSON.parse(raw);
     const settings = { ...DEFAULT_STATE.settings, ...(parsed.settings ?? {}) };
     const defCcy = (settings.displayCurrency || "USD").toUpperCase();
     const withCcy = <T extends { currency?: string }>(x: T): T =>
       x && (!x.currency || !String(x.currency).trim()) ? { ...x, currency: defCcy } : x;
+    const { plans, mainId: mainBudgetPlanId } = migrateBudgets(parsed, defCcy);
+    const { scenarios, mainId: mainForecastScenarioId } = migrateScenarios(parsed);
     return {
       ...DEFAULT_STATE,
       ...parsed,
@@ -34,6 +94,10 @@ async function loadState(): Promise<AppState> {
       transactions: (Array.isArray(parsed.transactions) ? parsed.transactions : []).map(withCcy),
       creditCards: (Array.isArray(parsed.creditCards) ? parsed.creditCards : []).map(withCcy),
       budgets: (Array.isArray(parsed.budgets) ? parsed.budgets : []).map(withCcy),
+      budgetPlans: plans,
+      mainBudgetPlanId,
+      forecastScenarios: scenarios,
+      mainForecastScenarioId,
       goals: (Array.isArray(parsed.goals) ? parsed.goals : []).map(withCcy),
       loans: (Array.isArray(parsed.loans) ? parsed.loans : []).map(withCcy),
       categories:
