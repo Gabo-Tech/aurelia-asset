@@ -1079,15 +1079,6 @@ function ForecastPanel() {
       ) : null}
 
 
-      {(incomeAdj !== 0 || expenseAdj !== 0) ? (
-        <div className="text-xs text-muted-foreground -mt-4">
-          {t("planning.forecast.adjustments", {
-            defaultValue: "Applying adjustments: {{i}}/mo income, {{e}}/mo expense",
-            i: (incomeAdj >= 0 ? "+" : "") + fmt(incomeAdj),
-            e: (expenseAdj >= 0 ? "+" : "") + fmt(expenseAdj),
-          })}
-        </div>
-      ) : null}
 
 
       {/* --- Snapshot --- */}
