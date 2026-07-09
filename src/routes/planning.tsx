@@ -808,7 +808,7 @@ function ForecastPanel() {
             <CardTitle className="text-base">{t("planning.forecast.projectedBalance")}</CardTitle>
             <div className="flex items-center gap-2 text-sm">
               <Label className="text-xs">{t("planning.forecast.months")}</Label>
-              <Select value={String(months)} onValueChange={(v) => setMonths(Number(v))}>
+              <Select value={String(months)} onValueChange={(v) => activeScenario && updateForecastScenario(activeScenario.id, { months: Number(v) })}>
                 <SelectTrigger className="h-8 w-20"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {[3, 6, 12, 24].map((n) => <SelectItem key={n} value={String(n)}>{n}</SelectItem>)}
