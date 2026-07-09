@@ -1243,39 +1243,220 @@ function ForecastPanel() {
           </div>
         )}
       </section>
+
+      {/* --- Recurring income/expense pies (collapsible, hidden by default) --- */}
+      <RecurringPiesSection
+        title={t("planning.forecast.piesTitle", { defaultValue: "Recurring income & expenses breakdown" })}
+        incomeSlices={buildForecastSlices(
+          incomeItems,
+          state.categories,
+          incomeAdj,
+          t("planning.forecast.scenarioAdjustment", { defaultValue: "Scenario adjustment" }),
+        )}
+        expenseSlices={buildForecastSlices(
+          expenseItems,
+          state.categories,
+          expenseAdj,
+          t("planning.forecast.scenarioAdjustment", { defaultValue: "Scenario adjustment" }),
+        )}
+        incomeTitle={t("planning.forecast.recurringIncome", { defaultValue: "Recurring income" })}
+        expenseTitle={t("planning.forecast.recurringExpenses", { defaultValue: "Recurring expenses" })}
+        format={(v) => fmt(v)}
+      />
     </div>
   );
 }
 
-function EditScenarioButton({ scenario, onSave }: { scenario: ForecastScenario; onSave: (p: Partial<ForecastScenario>) => void }) {
-  const { t } = useTranslation();
-  const [editing, setEditing] = useState(false);
-  const [name, setName] = useState(scenario.name);
-  const [inc, setInc] = useState(String(scenario.monthlyIncomeAdjust ?? 0));
-  const [exp, setExp] = useState(String(scenario.monthlyExpenseAdjust ?? 0));
-  if (!editing) {
-    return (
-      <Button size="sm" variant="ghost" onClick={() => { setName(scenario.name); setInc(String(scenario.monthlyIncomeAdjust ?? 0)); setExp(String(scenario.monthlyExpenseAdjust ?? 0)); setEditing(true); }}>
-        <Pencil className="h-3.5 w-3.5 mr-1" /> {t("planning.forecast.edit", { defaultValue: "Edit" })}
-      </Button>
-    );
+/** Build pie slices from recurring items, tagging each with its category color
+ *  when we can find one, and appending a synthetic "Scenario adjustment" slice
+ *  when the scenario has non-zero adjustments. */
+function buildForecastSlices(
+  items: { id: string; name: string; perMonth: number; category?: string }[],
+  categories: { name: string; color: string }[],
+  adjustment: number,
+  adjustmentLabel: string,
+): PieSlice[] {
+  const catByName = new Map(categories.map((c) => [c.name, c.color]));
+  const slices: PieSlice[] = items.map((r) => ({
+    id: r.id,
+    label: r.name,
+    value: r.perMonth,
+    color: r.category ? catByName.get(r.category) : undefined,
+  }));
+  if (adjustment && Math.abs(adjustment) > 0.0001) {
+    slices.push({
+      id: "__adjustment",
+      label: adjustmentLabel,
+      value: Math.abs(adjustment),
+      color: adjustment > 0 ? "#22c55e" : "#ef4444",
+    });
   }
+  return slices;
+}
+
+function RecurringPiesSection({
+  title,
+  incomeSlices,
+  expenseSlices,
+  incomeTitle,
+  expenseTitle,
+  format,
+}: {
+  title: string;
+  incomeSlices: PieSlice[];
+  expenseSlices: PieSlice[];
+  incomeTitle: string;
+  expenseTitle: string;
+  format: (v: number) => string;
+}) {
+  const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
   return (
-    <div className="flex flex-wrap items-center gap-1">
-      <Input className="h-8 w-36" value={name} onChange={(e) => setName(e.target.value)} placeholder={t("planning.forecast.scenarioName", { defaultValue: "Name" })} />
-      <Input className="h-8 w-24" value={inc} onChange={(e) => setInc(e.target.value)} placeholder="+ income" title={t("planning.forecast.incomeAdjust", { defaultValue: "Monthly income adjustment" })} />
-      <Input className="h-8 w-24" value={exp} onChange={(e) => setExp(e.target.value)} placeholder="+ expense" title={t("planning.forecast.expenseAdjust", { defaultValue: "Monthly expense adjustment" })} />
-      <Button size="sm" variant="secondary" onClick={() => {
-        onSave({
-          name: name.trim() || scenario.name,
-          monthlyIncomeAdjust: Number(inc) || 0,
-          monthlyExpenseAdjust: Number(exp) || 0,
-        });
-        setEditing(false);
-      }}>OK</Button>
-    </div>
+    <Collapsible open={open} onOpenChange={setOpen}>
+      <CollapsibleTrigger asChild>
+        <Button variant="outline" className="w-full justify-between">
+          <span>{title}</span>
+          <ChevronDown className={`h-4 w-4 transition-transform ${open ? "rotate-180" : ""}`} />
+        </Button>
+      </CollapsibleTrigger>
+      <CollapsibleContent className="mt-3">
+        <div className="grid gap-4 md:grid-cols-2">
+          <BudgetPieCard
+            title={incomeTitle}
+            slices={incomeSlices}
+            format={format}
+            centerLabel={t("planning.forecast.perMonthShort", { defaultValue: "Per month" })}
+            emptyLabel={t("planning.forecast.recurringEmpty")}
+          />
+          <BudgetPieCard
+            title={expenseTitle}
+            slices={expenseSlices}
+            format={format}
+            centerLabel={t("planning.forecast.perMonthShort", { defaultValue: "Per month" })}
+            emptyLabel={t("planning.forecast.recurringEmpty")}
+          />
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
   );
 }
+
+/** Create / edit dialog for a forecast scenario. */
+function ScenarioDialog({
+  trigger,
+  onSubmit,
+  initial,
+  mode = "create",
+}: {
+  trigger: React.ReactNode;
+  onSubmit: (vals: Partial<Omit<ForecastScenario, "id">>) => void;
+  initial?: Partial<Omit<ForecastScenario, "id">>;
+  mode?: "create" | "edit";
+}) {
+  const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState(initial?.name ?? "");
+  const [description, setDescription] = useState(initial?.description ?? "");
+  const [color, setColor] = useState<string | undefined>(initial?.color);
+  const [monthsStr, setMonthsStr] = useState(String(initial?.months ?? 6));
+  const [inc, setInc] = useState(String(initial?.monthlyIncomeAdjust ?? 0));
+  const [exp, setExp] = useState(String(initial?.monthlyExpenseAdjust ?? 0));
+  const [notes, setNotes] = useState(initial?.notes ?? "");
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(v) => {
+        setOpen(v);
+        if (v) {
+          setName(initial?.name ?? "");
+          setDescription(initial?.description ?? "");
+          setColor(initial?.color);
+          setMonthsStr(String(initial?.months ?? 6));
+          setInc(String(initial?.monthlyIncomeAdjust ?? 0));
+          setExp(String(initial?.monthlyExpenseAdjust ?? 0));
+          setNotes(initial?.notes ?? "");
+        }
+      }}
+    >
+      <DialogTrigger asChild>{trigger}</DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>
+            {mode === "edit"
+              ? t("planning.forecast.editScenario", { defaultValue: "Edit scenario" })
+              : t("planning.forecast.newScenario", { defaultValue: "New scenario" })}
+          </DialogTitle>
+          <DialogDescription>
+            {t("planning.forecast.scenarioDialogDesc", {
+              defaultValue: "Give this scenario a name so you can compare it against others.",
+            })}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div>
+            <Label>{t("planning.forecast.scenarioName", { defaultValue: "Name" })}</Label>
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder={t("planning.forecast.scenarioNamePlaceholder", { defaultValue: "e.g. Small business" })}
+            />
+          </div>
+          <div>
+            <Label>{t("planning.budgets.planDescription", { defaultValue: "Description (optional)" })}</Label>
+            <Textarea rows={2} value={description} onChange={(e) => setDescription(e.target.value)} />
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            <div>
+              <Label>{t("planning.forecast.months", { defaultValue: "Months" })}</Label>
+              <Input inputMode="numeric" value={monthsStr} onChange={(e) => setMonthsStr(e.target.value)} />
+            </div>
+            <div>
+              <Label className="text-xs">± income /mo</Label>
+              <Input inputMode="decimal" value={inc} onChange={(e) => setInc(e.target.value)} />
+            </div>
+            <div>
+              <Label className="text-xs">± expense /mo</Label>
+              <Input inputMode="decimal" value={exp} onChange={(e) => setExp(e.target.value)} />
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Label className="text-xs">{t("planning.budgets.color", { defaultValue: "Color" })}</Label>
+            <ColorSwatchPicker value={color} onChange={setColor} />
+          </div>
+          <div>
+            <Label>{t("planning.forecast.notes", { defaultValue: "Notes" })}</Label>
+            <Textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => setOpen(false)}>
+            {t("common.cancel", { defaultValue: "Cancel" })}
+          </Button>
+          <Button
+            onClick={() => {
+              const n = name.trim();
+              if (!n) return;
+              const m = Math.max(1, Math.min(60, Math.floor(Number(monthsStr) || 6)));
+              onSubmit({
+                name: n,
+                description: description.trim() || undefined,
+                color,
+                months: m,
+                monthlyIncomeAdjust: Number(inc) || 0,
+                monthlyExpenseAdjust: Number(exp) || 0,
+                notes: notes.trim() || undefined,
+              });
+              setOpen(false);
+            }}
+          >
+            {mode === "edit" ? t("common.save", { defaultValue: "Save" }) : t("common.create", { defaultValue: "Create" })}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 
 /* -------------------- Loans -------------------- */
 
