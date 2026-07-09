@@ -25,7 +25,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import type { Budget, BudgetPlan, BudgetItem, ForecastScenario, Loan, CashflowEntry } from "@/lib/types";
+import type { Budget, BudgetPlan, BudgetItem, BudgetPeriodType, ForecastScenario, Loan, CashflowEntry } from "@/lib/types";
 import { Star, StarOff, Copy } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
