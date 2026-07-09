@@ -160,13 +160,17 @@ export function CategoryPieCard({
                       `${format(v)} (${((v / (displayTotal || 1)) * 100).toFixed(1)}%)`,
                       "",
                     ]}
+                    allowEscapeViewBox={{ x: true, y: true }}
+                    wrapperStyle={{ zIndex: 50, pointerEvents: "none" }}
                     contentStyle={{
                       background: "var(--popover)",
                       border: "1px solid var(--border)",
                       borderRadius: 8,
                       fontSize: 12,
+                      whiteSpace: "nowrap",
                     }}
                   />
+
                 </PieChart>
               </ResponsiveContainer>
             </div>
