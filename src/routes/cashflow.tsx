@@ -545,6 +545,37 @@ function CashflowPage() {
     [cashflows],
   );
 
+  // Pie breakdown datasets (share the sankey period filter)
+  const pieFormat = (v: number) => (privacy ? MASK : formatMoney(v, currency));
+  const breakdownData = useMemo(() => {
+    const incomes: PieEntry[] = [];
+    const expenses: PieEntry[] = [];
+    const investments: PieEntry[] = [];
+    for (const c of expandedToToday) {
+      const v = valuesTop.get(c.id) ?? 0;
+      if (v <= 0) continue;
+      const cat = catByName.get(c.category);
+      const catName = c.category || t("cashflow.unnamed", { defaultValue: "(unnamed)" });
+      const entry: PieEntry = {
+        id: c.id,
+        label: c.description || c.source || catName,
+        category: catName,
+        amount: v,
+        color: cat?.color,
+      };
+      if (c.kind === "income") {
+        incomes.push({ ...entry, category: c.source || catName });
+      } else if (c.kind === "expense") {
+        const group = cat?.group ?? "expense";
+        if (group === "investment" || group === "savings") investments.push(entry);
+        else expenses.push(entry);
+      }
+    }
+    return { incomes, expenses, investments };
+  }, [expandedToToday, valuesTop, catByName, t]);
+  const [breakdownOpen, setBreakdownOpen] = useState(false);
+
+
   return (
     <>
       <PageHeader title={t("cashflow.title")} description={t("cashflow.description")} />
