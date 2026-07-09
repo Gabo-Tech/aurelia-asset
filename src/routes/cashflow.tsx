@@ -30,7 +30,9 @@ import {
   DialogTrigger,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { Trash2, Plus, Palette, RotateCcw, Settings as SettingsIcon, Pencil, Download } from "lucide-react";
+import { Trash2, Plus, Palette, RotateCcw, Settings as SettingsIcon, Pencil, Download, ChevronDown } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { CategoryPieCard, type PieEntry } from "@/components/category-pie-card";
 import { toast } from "sonner";
 import { format, startOfWeek, startOfMonth, startOfYear, endOfWeek, endOfMonth, endOfYear, isWithinInterval, parseISO, eachDayOfInterval, addWeeks, addMonths, addYears, subMonths } from "date-fns";
 import {
@@ -543,6 +545,37 @@ function CashflowPage() {
     [cashflows],
   );
 
+  // Pie breakdown datasets (share the sankey period filter)
+  const pieFormat = (v: number) => (privacy ? MASK : formatMoney(v, currency));
+  const breakdownData = useMemo(() => {
+    const incomes: PieEntry[] = [];
+    const expenses: PieEntry[] = [];
+    const investments: PieEntry[] = [];
+    for (const c of expandedToToday) {
+      const v = valuesTop.get(c.id) ?? 0;
+      if (v <= 0) continue;
+      const cat = catByName.get(c.category);
+      const catName = c.category || t("cashflow.unnamed", { defaultValue: "(unnamed)" });
+      const entry: PieEntry = {
+        id: c.id,
+        label: c.description || c.source || catName,
+        category: catName,
+        amount: v,
+        color: cat?.color,
+      };
+      if (c.kind === "income") {
+        incomes.push({ ...entry, category: c.source || catName });
+      } else if (c.kind === "expense") {
+        const group = cat?.group ?? "expense";
+        if (group === "investment" || group === "savings") investments.push(entry);
+        else expenses.push(entry);
+      }
+    }
+    return { incomes, expenses, investments };
+  }, [expandedToToday, valuesTop, catByName, t]);
+  const [breakdownOpen, setBreakdownOpen] = useState(false);
+
+
   return (
     <>
       <PageHeader title={t("cashflow.title")} description={t("cashflow.description")} />
@@ -691,7 +724,38 @@ function CashflowPage() {
         </Card>
       </div>
 
+      <Collapsible open={breakdownOpen} onOpenChange={setBreakdownOpen}>
+        <CollapsibleTrigger asChild>
+          <Button variant="outline" className="w-full justify-between">
+            <span>{t("cashflow.breakdown.title", { defaultValue: "Breakdown by category" })}</span>
+            <ChevronDown
+              className={`h-4 w-4 transition-transform ${breakdownOpen ? "rotate-180" : ""}`}
+            />
+          </Button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="mt-3">
+          <div className="grid gap-3 md:grid-cols-3">
+            <CategoryPieCard
+              title={t("cashflow.breakdown.incomes", { defaultValue: "Incomes" })}
+              entries={breakdownData.incomes}
+              format={pieFormat}
+            />
+            <CategoryPieCard
+              title={t("cashflow.breakdown.expenses", { defaultValue: "Expenses" })}
+              entries={breakdownData.expenses}
+              format={pieFormat}
+            />
+            <CategoryPieCard
+              title={t("cashflow.breakdown.investments", { defaultValue: "Investments & Savings" })}
+              entries={breakdownData.investments}
+              format={pieFormat}
+            />
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
+
       <div>
+
       <EntriesPanel
         cashflows={cashflows}
         categories={categories}
