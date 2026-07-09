@@ -583,13 +583,15 @@ function ForecastPanel() {
         if (e.kind === "income") income += v;
         if (e.kind === "expense") expense += v;
       }
+      income += incomeAdj;
+      expense += expenseAdj;
       const net = income - expense;
       balance += net;
       rows.push({ month: format(m, "MMM yy"), balance, income, expense, net });
     }
     return rows;
 
-  }, [state.cashflows, toDisplay, months, currentBalance]);
+  }, [state.cashflows, toDisplay, months, currentBalance, incomeAdj, expenseAdj]);
 
   // Single source of truth for the visible monthly snapshot: use the same
   // current-month expansion as Cashflow, so fixed, percent, card-paid and
