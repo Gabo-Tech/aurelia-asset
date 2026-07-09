@@ -228,12 +228,16 @@ export function SankeyChart({
               const displayName = truncate(n.name, nameMaxLen);
               const amountText = pct != null ? `${format(n.value)} (${pct.toFixed(1)}%)` : format(n.value);
 
-              // Labels always flush to the chart's left edge (or right edge for
-              // the rightmost column) — never sitting on top of the node's own
-              // colored bar.
-              const isRightCol = n.x1 > innerW - 40;
-              const labelX = isRightCol ? innerW : 0;
-              const anchor: "start" | "end" = isRightCol ? "end" : "start";
+              // Label alignment: left-anchored at each node's own x0, so labels
+              // in the same column line up regardless of node kind. Right-most
+              // column flips to end-anchored to avoid clipping the SVG edge.
+              const nodeCx = (n.x0 + n.x1) / 2;
+              let labelX = n.x0;
+              let anchor: "start" | "middle" | "end" = "start";
+              if (nodeCx > innerW - 80) {
+                labelX = n.x1;
+                anchor = "end";
+              }
               const labelY = Math.max(edgePad + nameFontSize, n.y0 - 8);
 
               const isActive = activeIdx === i;
