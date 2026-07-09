@@ -578,7 +578,7 @@ function BudgetsPanel() {
   );
 }
 
-/** Create / edit dialog for a budget plan (name + description + color). */
+/** Create / edit dialog for a budget plan (name + description + color + period). */
 function PlanDialog({
   trigger,
   onSubmit,
@@ -586,8 +586,20 @@ function PlanDialog({
   mode = "create",
 }: {
   trigger: React.ReactNode;
-  onSubmit: (vals: { name: string; description?: string; color?: string }) => void;
-  initial?: { name?: string; description?: string; color?: string };
+  onSubmit: (vals: {
+    name: string;
+    description?: string;
+    color?: string;
+    periodType?: BudgetPeriodType;
+    periodDays?: number;
+  }) => void;
+  initial?: {
+    name?: string;
+    description?: string;
+    color?: string;
+    periodType?: BudgetPeriodType;
+    periodDays?: number;
+  };
   mode?: "create" | "edit";
 }) {
   const { t } = useTranslation();
@@ -595,6 +607,8 @@ function PlanDialog({
   const [name, setName] = useState(initial?.name ?? "");
   const [description, setDescription] = useState(initial?.description ?? "");
   const [color, setColor] = useState<string | undefined>(initial?.color);
+  const [periodType, setPeriodType] = useState<BudgetPeriodType>(initial?.periodType ?? "monthly");
+  const [periodDays, setPeriodDays] = useState<string>(String(initial?.periodDays ?? 10));
   return (
     <Dialog open={open} onOpenChange={(v) => {
       setOpen(v);
@@ -602,6 +616,8 @@ function PlanDialog({
         setName(initial?.name ?? "");
         setDescription(initial?.description ?? "");
         setColor(initial?.color);
+        setPeriodType(initial?.periodType ?? "monthly");
+        setPeriodDays(String(initial?.periodDays ?? 10));
       }
     }}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
@@ -636,6 +652,30 @@ function PlanDialog({
               placeholder={t("planning.budgets.planDescriptionPlaceholder", { defaultValue: "What is this budget for?" })}
             />
           </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <Label>{t("planning.budgets.period", { defaultValue: "Period" })}</Label>
+              <Select value={periodType} onValueChange={(v) => setPeriodType(v as BudgetPeriodType)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {PERIOD_OPTIONS.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {periodType === "custom" ? (
+              <div>
+                <Label>{t("planning.budgets.periodDays", { defaultValue: "Days" })}</Label>
+                <Input
+                  inputMode="numeric"
+                  value={periodDays}
+                  onChange={(e) => setPeriodDays(e.target.value)}
+                  placeholder="10"
+                />
+              </div>
+            ) : null}
+          </div>
           <div className="flex items-center gap-2">
             <Label className="text-xs">{t("planning.budgets.color", { defaultValue: "Color" })}</Label>
             <ColorSwatchPicker value={color} onChange={setColor} />
@@ -649,7 +689,17 @@ function PlanDialog({
             onClick={() => {
               const n = name.trim();
               if (!n) return;
-              onSubmit({ name: n, description: description.trim() || undefined, color });
+              const days =
+                periodType === "custom"
+                  ? Math.max(1, Math.min(3650, Math.floor(Number(periodDays) || 10)))
+                  : undefined;
+              onSubmit({
+                name: n,
+                description: description.trim() || undefined,
+                color,
+                periodType,
+                periodDays: days,
+              });
               setOpen(false);
             }}
           >
