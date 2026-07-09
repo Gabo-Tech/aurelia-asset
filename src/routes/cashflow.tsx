@@ -668,7 +668,6 @@ function CashflowPage() {
                 {sankey ? (
                   <SankeyChart
                     data={sankey}
-                    height={420}
                     labelMode={prefs.labelMode}
                     format={(v: number) => (privacy ? MASK : formatMoney(v, currency))}
                     onReorder={(kind, names) =>
