@@ -191,10 +191,16 @@ function BudgetsPanel() {
   const [linkCategoryId, setLinkCategoryId] = useState<string>("none");
   const [itemColor, setItemColor] = useState<string | undefined>(undefined);
 
+  const planWindow = useMemo(
+    () =>
+      activePlan
+        ? computePlanWindow(activePlan)
+        : { start: startOfMonth(new Date()), end: endOfMonth(new Date()), label: "This month" },
+    [activePlan?.periodType, activePlan?.periodDays, activePlan?.id],
+  );
+
   const monthSpent = useMemo(() => {
-    const now = new Date();
-    const start = startOfMonth(now);
-    const end = endOfMonth(now);
+    const { start, end } = planWindow;
     const expanded = expandCashflows(state.cashflows, end);
     const values = valuesByEntry(expanded, toDisplay);
     const nameToId = new Map<string, string>();
@@ -212,16 +218,23 @@ function BudgetsPanel() {
       byCat.set(catId, (byCat.get(catId) ?? 0) + v);
     }
     return byCat;
-  }, [state.cashflows, state.categories, toDisplay]);
+  }, [state.cashflows, state.categories, toDisplay, planWindow]);
 
-  const createPlan = (preset?: { name?: string; description?: string; color?: string }) => {
+  const createPlan = (preset?: {
+    name?: string;
+    description?: string;
+    color?: string;
+    periodType?: BudgetPeriodType;
+    periodDays?: number;
+  }) => {
     const p = addBudgetPlan(preset?.name || t("planning.budgets.newPlanName", { defaultValue: "New plan" }));
-    if (preset?.description || preset?.color) {
-      updateBudgetPlan(p.id, { description: preset.description, color: preset.color });
-    } else if (!p.color) {
-      const idx = plans.length;
-      updateBudgetPlan(p.id, { color: SWATCH_PALETTE[idx % SWATCH_PALETTE.length] });
-    }
+    const patch: Partial<BudgetPlan> = {};
+    if (preset?.description) patch.description = preset.description;
+    if (preset?.color) patch.color = preset.color;
+    else if (!p.color) patch.color = SWATCH_PALETTE[plans.length % SWATCH_PALETTE.length];
+    if (preset?.periodType) patch.periodType = preset.periodType;
+    if (preset?.periodDays) patch.periodDays = preset.periodDays;
+    if (Object.keys(patch).length > 0) updateBudgetPlan(p.id, patch);
     setActiveId(p.id);
   };
 
