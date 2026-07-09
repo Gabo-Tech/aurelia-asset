@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { addMonths, format, startOfMonth, endOfMonth, isWithinInterval } from "date-fns";
+import { addMonths, format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, startOfDay, endOfDay, startOfYear, endOfYear, subDays, isWithinInterval } from "date-fns";
 import { useStore, useMoney } from "@/lib/store";
 import { PageHeader } from "@/components/app-shell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
