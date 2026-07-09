@@ -161,15 +161,20 @@ export function CategoryPieCard({
                       "",
                     ]}
                     allowEscapeViewBox={{ x: true, y: true }}
-                    wrapperStyle={{ zIndex: 50, pointerEvents: "none" }}
+                    wrapperStyle={{ zIndex: 50, pointerEvents: "none", outline: "none" }}
                     contentStyle={{
                       background: "var(--popover)",
+                      color: "var(--popover-foreground)",
                       border: "1px solid var(--border)",
                       borderRadius: 8,
                       fontSize: 12,
                       whiteSpace: "nowrap",
+                      padding: "6px 10px",
                     }}
+                    itemStyle={{ color: "var(--popover-foreground)" }}
+                    labelStyle={{ color: "var(--popover-foreground)" }}
                   />
+
 
                 </PieChart>
               </ResponsiveContainer>
