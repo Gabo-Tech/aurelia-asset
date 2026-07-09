@@ -140,13 +140,24 @@ export function BudgetPieCard({
             <ul className="mt-3 space-y-1 text-xs">
               {displayData.map((d, i) => {
                 const pct = ((d.value / (total || 1)) * 100).toFixed(1);
+                const swatchColor = colorAt(i, d.color);
+                const canEdit = !!onColorChange && d.id !== "__other";
                 return (
                   <li key={d.id} className="flex items-center justify-between gap-2 px-1 py-0.5">
                     <span className="flex min-w-0 items-center gap-2">
-                      <span
-                        className="h-2.5 w-2.5 shrink-0 rounded-sm"
-                        style={{ background: colorAt(i, d.color) }}
-                      />
+                      {canEdit ? (
+                        <ColorSwatchPicker
+                          value={d.color ?? swatchColor}
+                          onChange={(c) => onColorChange!(d.id, c)}
+                          size={12}
+                          ariaLabel={`Color for ${d.label}`}
+                        />
+                      ) : (
+                        <span
+                          className="h-2.5 w-2.5 shrink-0 rounded-sm"
+                          style={{ background: swatchColor }}
+                        />
+                      )}
                       <span className="truncate">{d.label}</span>
                     </span>
                     <span className="shrink-0 tabular-nums text-muted-foreground">
