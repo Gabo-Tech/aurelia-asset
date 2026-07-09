@@ -478,8 +478,11 @@ function BudgetsPanel() {
 
             <Card className="lg:col-span-2">
               <CardHeader>
-                <CardTitle className="text-base">
-                  {t("planning.budgets.thisMonth")}
+                <CardTitle className="text-base flex items-center gap-2">
+                  <span>{planWindow.label}</span>
+                  <span className="text-xs font-normal text-muted-foreground">
+                    {format(planWindow.start, "MMM d")} – {format(planWindow.end, "MMM d, yyyy")}
+                  </span>
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
