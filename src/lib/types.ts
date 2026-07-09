@@ -253,6 +253,8 @@ export const DEFAULT_STATE: AppState = {
   categories: DEFAULT_CATEGORIES,
   creditCards: [],
   budgets: [],
+  budgetPlans: [],
+  forecastScenarios: [],
   goals: [],
   loans: [],
   settings: {
