@@ -921,7 +921,38 @@ function ForecastPanel() {
   );
 }
 
+function EditScenarioButton({ scenario, onSave }: { scenario: ForecastScenario; onSave: (p: Partial<ForecastScenario>) => void }) {
+  const { t } = useTranslation();
+  const [editing, setEditing] = useState(false);
+  const [name, setName] = useState(scenario.name);
+  const [inc, setInc] = useState(String(scenario.monthlyIncomeAdjust ?? 0));
+  const [exp, setExp] = useState(String(scenario.monthlyExpenseAdjust ?? 0));
+  if (!editing) {
+    return (
+      <Button size="sm" variant="ghost" onClick={() => { setName(scenario.name); setInc(String(scenario.monthlyIncomeAdjust ?? 0)); setExp(String(scenario.monthlyExpenseAdjust ?? 0)); setEditing(true); }}>
+        <Pencil className="h-3.5 w-3.5 mr-1" /> {t("planning.forecast.edit", { defaultValue: "Edit" })}
+      </Button>
+    );
+  }
+  return (
+    <div className="flex flex-wrap items-center gap-1">
+      <Input className="h-8 w-36" value={name} onChange={(e) => setName(e.target.value)} placeholder={t("planning.forecast.scenarioName", { defaultValue: "Name" })} />
+      <Input className="h-8 w-24" value={inc} onChange={(e) => setInc(e.target.value)} placeholder="+ income" title={t("planning.forecast.incomeAdjust", { defaultValue: "Monthly income adjustment" })} />
+      <Input className="h-8 w-24" value={exp} onChange={(e) => setExp(e.target.value)} placeholder="+ expense" title={t("planning.forecast.expenseAdjust", { defaultValue: "Monthly expense adjustment" })} />
+      <Button size="sm" variant="secondary" onClick={() => {
+        onSave({
+          name: name.trim() || scenario.name,
+          monthlyIncomeAdjust: Number(inc) || 0,
+          monthlyExpenseAdjust: Number(exp) || 0,
+        });
+        setEditing(false);
+      }}>OK</Button>
+    </div>
+  );
+}
+
 /* -------------------- Loans -------------------- */
+
 
 const LOAN_COLORS = ["#ef4444", "#f59e0b", "#a78bfa", "#0ea5e9", "#10b981"];
 
