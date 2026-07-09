@@ -53,6 +53,7 @@ export function SankeyChart({
   const wrapRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const [width, setWidth] = useState(800);
+  const [activeIdx, setActiveIdx] = useState<number | null>(null);
 
   useEffect(() => {
     if (!wrapRef.current) return;
@@ -63,16 +64,19 @@ export function SankeyChart({
     return () => ro.disconnect();
   }, []);
 
-  const isNarrow = width < 480;
+  const isNarrow = width < 640;
 
-  // Count nodes per side to size the chart dynamically.
+  // Effective label mode: on narrow screens default to hover unless the user
+  // explicitly forced "always" or "off".
+  const effectiveLabelMode: LabelMode =
+    isNarrow && labelMode === "always" ? "hover" : labelMode;
+
   const { incomeCount, expenseCount, incomeTotal, expenseTotal } = useMemo(() => {
     let iC = 0, eC = 0, iT = 0, eT = 0;
     for (const n of data.nodes) {
       if (n.kind === "income") iC++;
       else if (n.kind === "expense") eC++;
     }
-    // Compute totals from links (source-side sum for income, target-side sum for expense).
     for (const l of data.links) {
       const s = data.nodes[l.source as number];
       const t = data.nodes[l.target as number];
@@ -82,39 +86,24 @@ export function SankeyChart({
     return { incomeCount: iC, expenseCount: eC, incomeTotal: iT, expenseTotal: eT };
   }, [data]);
 
-  // Dynamic height so bands stay legible as expenses grow.
-  const rowHeight = isNarrow ? 46 : 58;
+  const rowHeight = isNarrow ? 68 : 78;
   const maxSide = Math.max(incomeCount, expenseCount, 1);
-  const autoHeight = Math.max(isNarrow ? 320 : 380, maxSide * rowHeight + 40);
+  const marginTop = isNarrow ? 40 : 48;
+  const marginBottom = isNarrow ? 24 : 28;
+  const marginX = isNarrow ? 6 : 10;
+  const autoHeight = Math.max(
+    isNarrow ? 380 : 460,
+    maxSide * rowHeight + marginTop + marginBottom,
+  );
   const resolvedHeight = height ?? autoHeight;
 
-  // Adaptive margins: measure longest label so labels never crash into amounts.
-  const { leftMargin, rightMargin } = useMemo(() => {
-    const nameFont = isNarrow ? 12 : 13;
-    const amtFont = isNarrow ? 10 : 11;
-    const approx = (s: string, px: number) => s.length * px * 0.58;
-    let maxLeft = 0;
-    let maxRight = 0;
-    for (const n of data.nodes) {
-      const name = truncate(n.name, isNarrow ? 16 : 24);
-      const label = Math.max(approx(name, nameFont), approx("€999.9K (99.9%)", amtFont));
-      if (n.kind === "income") maxLeft = Math.max(maxLeft, label);
-      else maxRight = Math.max(maxRight, label);
-    }
-    return {
-      leftMargin: Math.min(Math.max(16, maxLeft + 16), isNarrow ? 130 : 200),
-      rightMargin: Math.min(Math.max(60, maxRight + 16), isNarrow ? 140 : 220),
-    };
-  }, [data, isNarrow]);
-
   const resolvedNodeWidth = nodeWidth ?? (isNarrow ? 14 : 20);
-  const margin = { top: 16, right: rightMargin, bottom: 16, left: leftMargin };
-  const innerH = Math.max(100, resolvedHeight - margin.top - margin.bottom);
+  const innerH = Math.max(100, resolvedHeight - marginTop - marginBottom);
   const resolvedNodePadding =
-    nodePadding ?? Math.min(48, Math.max(isNarrow ? 14 : 20, innerH / (maxSide * 2.4)));
+    nodePadding ?? Math.max(isNarrow ? 28 : 36, innerH / (maxSide * 2.2));
 
   const graph = useMemo(() => {
-    const innerW = Math.max(100, width - margin.left - margin.right);
+    const innerW = Math.max(100, width - marginX * 2);
     const gen = d3sankey<any, any>()
       .nodeId((d: any) => d.index)
       .nodeAlign(alignFns[align])
@@ -131,15 +120,14 @@ export function SankeyChart({
     } catch {
       return null;
     }
-  }, [data, width, resolvedHeight, align, resolvedNodeWidth, resolvedNodePadding, margin.left, margin.right, innerH]);
+  }, [data, width, resolvedHeight, align, resolvedNodeWidth, resolvedNodePadding, marginX, innerH]);
 
   const [drag, setDrag] = useState<{ idx: number; dy: number; startY: number } | null>(null);
 
   if (!graph) return null;
 
-  const showAlways = labelMode === "always";
-  const showHover = labelMode === "hover";
   const linkPath = sankeyLinkHorizontal();
+  const innerW = Math.max(100, width - marginX * 2);
 
   const yScale = () => {
     const el = svgRef.current;
@@ -176,9 +164,9 @@ export function SankeyChart({
     setDrag(null);
   };
 
-  const nameFontSize = isNarrow ? 12 : 13;
+  const nameFontSize = isNarrow ? 11 : 13;
   const amtFontSize = isNarrow ? 10 : 11;
-  const nameMaxLen = isNarrow ? 16 : 24;
+  const nameMaxLen = isNarrow ? 12 : 22;
 
   const pctFor = (n: any): number | null => {
     if (n.kind === "income" && incomeTotal > 0) return (n.value / incomeTotal) * 100;
@@ -186,16 +174,19 @@ export function SankeyChart({
     return null;
   };
 
+  const edgePad = 4;
+
   return (
-    <div ref={wrapRef} className="w-full" style={{ height: resolvedHeight }}>
+    <div ref={wrapRef} className="w-full min-w-0" style={{ height: resolvedHeight }}>
       <svg
         ref={svgRef}
         width={width}
         height={resolvedHeight}
         className="block max-w-full"
         style={{ overflow: "visible" }}
+        onPointerLeave={() => setActiveIdx(null)}
       >
-        <g transform={`translate(${margin.left},${margin.top})`}>
+        <g transform={`translate(${marginX},${marginTop})`}>
           <defs>
             {graph.links.map((l: any, i: number) => (
               <linearGradient
@@ -217,7 +208,7 @@ export function SankeyChart({
                 key={i}
                 d={linkPath(l) ?? ""}
                 stroke={`url(#sk-grad-${i})`}
-                strokeWidth={Math.max(1, l.width)}
+                strokeWidth={Math.max(1, Math.min(l.width, 60))}
                 strokeOpacity={0.55}
                 className="transition-[stroke-opacity] duration-150 hover:!stroke-opacity-90"
               >
@@ -229,30 +220,48 @@ export function SankeyChart({
           <g>
             {graph.nodes.map((n: any, i: number) => {
               const bandH = Math.max(1, n.y1 - n.y0);
-              const isLeftSide = n.kind === "income" || (n.kind !== "expense" && n.x0 < (width - margin.left - margin.right) / 2);
               const reorderable = !!onReorder && REORDERABLE.has(n.kind);
               const isDragging = drag?.idx === i;
               const dy = isDragging ? drag!.dy : 0;
               const pct = pctFor(n);
               const displayName = truncate(n.name, nameMaxLen);
               const amountText = pct != null ? `${format(n.value)} (${pct.toFixed(1)}%)` : format(n.value);
-              const compact = bandH < 28;
-              const cy = (n.y0 + n.y1) / 2;
-              const labelX = isLeftSide ? n.x1 + 8 : n.x0 - 8;
-              const anchor = isLeftSide ? "start" : "end";
+
+              // Label positioning: centered on node, above the rect.
+              const nodeCx = (n.x0 + n.x1) / 2;
+              let labelX = nodeCx;
+              let anchor: "start" | "middle" | "end" = "middle";
+              if (nodeCx < 60) {
+                labelX = n.x0;
+                anchor = "start";
+              } else if (nodeCx > innerW - 60) {
+                labelX = n.x1;
+                anchor = "end";
+              }
+              const labelY = Math.max(edgePad + nameFontSize, n.y0 - 8);
+
+              const isActive = activeIdx === i;
+              const showLabel =
+                effectiveLabelMode === "always" ||
+                (effectiveLabelMode === "hover" && isActive);
+
               return (
                 <g
                   key={i}
                   className="group"
                   transform={dy ? `translate(0, ${dy})` : undefined}
                   style={{
-                    cursor: reorderable ? (isDragging ? "grabbing" : "grab") : "default",
+                    cursor: reorderable ? (isDragging ? "grabbing" : "grab") : "pointer",
                     touchAction: reorderable ? "none" : "auto",
                   }}
                   onPointerDown={(e) => handlePointerDown(e, i, n.kind)}
                   onPointerMove={handlePointerMove}
                   onPointerUp={handlePointerUp}
                   onPointerCancel={handlePointerUp}
+                  onPointerEnter={() => setActiveIdx(i)}
+                  onClick={() =>
+                    setActiveIdx((cur) => (cur === i ? null : i))
+                  }
                 >
                   <rect
                     x={n.x0}
@@ -263,55 +272,37 @@ export function SankeyChart({
                     rx={3}
                     opacity={isDragging ? 0.85 : 1}
                   >
-                    <title>{`${n.name}\n${format(n.value)}${pct != null ? ` (${pct.toFixed(1)}%)` : ""}${reorderable ? "\n(drag to reorder)" : ""}`}</title>
+                    <title>{`${n.name}\n${amountText}${reorderable ? "\n(drag to reorder)" : ""}`}</title>
                   </rect>
-                  {(showAlways || showHover) && (
+                  {effectiveLabelMode !== "off" && (
                     <g
-                      className={
-                        showHover
-                          ? "opacity-0 transition-opacity duration-150 group-hover:opacity-100"
-                          : ""
-                      }
-                      style={{ pointerEvents: "none" }}
+                      style={{
+                        pointerEvents: "none",
+                        opacity: showLabel ? 1 : 0,
+                        transition: "opacity 150ms",
+                      }}
                     >
-                      {compact ? (
-                        <text
-                          x={labelX}
-                          y={cy}
-                          dy="0.35em"
-                          textAnchor={anchor}
-                          fontSize={nameFontSize}
-                          fontWeight={600}
-                          fill="var(--foreground)"
-                        >
-                          {displayName}
-                          <tspan dx={6} fontSize={amtFontSize} fontWeight={400} fill="var(--muted-foreground)">
-                            {amountText}
-                          </tspan>
-                        </text>
-                      ) : (
-                        <>
-                          <text
-                            x={labelX}
-                            y={cy - 4}
-                            textAnchor={anchor}
-                            fontSize={nameFontSize}
-                            fontWeight={600}
-                            fill="var(--foreground)"
-                          >
-                            {displayName}
-                          </text>
-                          <text
-                            x={labelX}
-                            y={cy + (isNarrow ? 10 : 12)}
-                            textAnchor={anchor}
-                            fontSize={amtFontSize}
-                            fill="var(--muted-foreground)"
-                          >
-                            {amountText}
-                          </text>
-                        </>
-                      )}
+                      <text
+                        x={labelX}
+                        y={labelY - amtFontSize - 2}
+                        textAnchor={anchor}
+                        fontSize={nameFontSize}
+                        fontWeight={600}
+                        fill="var(--foreground)"
+                        style={{ paintOrder: "stroke", stroke: "var(--background)", strokeWidth: 3 }}
+                      >
+                        {displayName}
+                      </text>
+                      <text
+                        x={labelX}
+                        y={labelY}
+                        textAnchor={anchor}
+                        fontSize={amtFontSize}
+                        fill="var(--muted-foreground)"
+                        style={{ paintOrder: "stroke", stroke: "var(--background)", strokeWidth: 3 }}
+                      >
+                        {amountText}
+                      </text>
                     </g>
                   )}
                 </g>

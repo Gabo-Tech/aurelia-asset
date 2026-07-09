@@ -591,8 +591,7 @@ function CashflowPage() {
       </div>
 
       <div className="mt-5 grid gap-5 lg:grid-cols-2">
-        <div className="space-y-5">
-          <div>
+        <div>
           <AddForm
             defaultCurrency={currency}
             categories={categories}
@@ -611,118 +610,116 @@ function CashflowPage() {
               );
             }}
           />
-          </div>
-          <div data-tour="cf-cards"><CreditCardsManager /></div>
         </div>
+        <div data-tour="cf-cards"><CreditCardsManager /></div>
+      </div>
 
-
-        <Card className="border-border/60 min-w-0">
-          <CardHeader className="px-3 sm:px-6 flex flex-row items-start justify-between gap-3 space-y-0" data-tour="cf-sankey">
-            <div className="min-w-0">
-              <CardTitle>{t("cashflow.flow")}</CardTitle>
-              <div className="mt-1 text-xs text-muted-foreground truncate">{sankeyPeriodLabel}</div>
-            </div>
-            <div className="flex flex-col items-end gap-2 shrink-0">
-              <Select value={sankeyPeriod} onValueChange={(v) => setSankeyPeriod(v as SankeyPeriod)}>
-                <SelectTrigger className="h-8 w-[140px] text-xs"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="week">{t("more.entriesThisWeek")}</SelectItem>
-                  <SelectItem value="month">{t("more.entriesThisMonth")}</SelectItem>
-                  <SelectItem value="year">{t("more.entriesThisYear")}</SelectItem>
-                  <SelectItem value="all">{t("more.entriesAllTime")}</SelectItem>
-                  <SelectItem value="custom">{t("more.entriesCustomRange")}</SelectItem>
-                </SelectContent>
-              </Select>
-              {sankeyPeriod === "custom" && (
-                <div className="flex gap-1">
-                  <Input type="date" className="h-8 w-[130px] text-xs" value={sankeyFrom} onChange={(e) => setSankeyFrom(e.target.value)} />
-                  <Input type="date" className="h-8 w-[130px] text-xs" value={sankeyTo} onChange={(e) => setSankeyTo(e.target.value)} />
+      <Card className="border-border/60 min-w-0 mt-6 sm:mt-8">
+        <CardHeader className="px-3 sm:px-6 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 space-y-0" data-tour="cf-sankey">
+          <div className="min-w-0">
+            <CardTitle>{t("cashflow.flow")}</CardTitle>
+            <div className="mt-1 text-xs text-muted-foreground truncate">{sankeyPeriodLabel}</div>
+          </div>
+          <div className="flex flex-wrap items-center gap-2 sm:flex-col sm:items-end sm:shrink-0">
+            <Select value={sankeyPeriod} onValueChange={(v) => setSankeyPeriod(v as SankeyPeriod)}>
+              <SelectTrigger className="h-8 w-[140px] text-xs"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="week">{t("more.entriesThisWeek")}</SelectItem>
+                <SelectItem value="month">{t("more.entriesThisMonth")}</SelectItem>
+                <SelectItem value="year">{t("more.entriesThisYear")}</SelectItem>
+                <SelectItem value="all">{t("more.entriesAllTime")}</SelectItem>
+                <SelectItem value="custom">{t("more.entriesCustomRange")}</SelectItem>
+              </SelectContent>
+            </Select>
+            {sankeyPeriod === "custom" && (
+              <div className="flex gap-1">
+                <Input type="date" className="h-8 w-[130px] text-xs" value={sankeyFrom} onChange={(e) => setSankeyFrom(e.target.value)} />
+                <Input type="date" className="h-8 w-[130px] text-xs" value={sankeyTo} onChange={(e) => setSankeyTo(e.target.value)} />
+              </div>
+            )}
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5">
+                  <RotateCcw className="h-3.5 w-3.5" />
+                  {t("cashflow.resetLastMonth", { defaultValue: "Reset last month" })}
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>{t("cashflow.resetLastMonthTitle", { defaultValue: "Delete last month's entries?" })}</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    {t("cashflow.resetLastMonthDesc", {
+                      defaultValue: "This permanently removes every cashflow entry dated in {{range}}. Recurring rules are kept.",
+                      range: `${format(startOfMonth(subMonths(new Date(), 1)), "MMM d, yyyy")} – ${format(endOfMonth(subMonths(new Date(), 1)), "MMM d, yyyy")}`,
+                    })}
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => {
+                      const lastMonthStart = startOfMonth(subMonths(new Date(), 1));
+                      const lastMonthEnd = endOfMonth(subMonths(new Date(), 1));
+                      const ids = cashflows
+                        .filter((c) => {
+                          const d = new Date(c.date);
+                          return isWithinInterval(d, { start: lastMonthStart, end: lastMonthEnd });
+                        })
+                        .map((c) => c.id);
+                      ids.forEach((id) => removeCashflow(id));
+                      toast.success(
+                        t("cashflow.resetLastMonthDone", {
+                          defaultValue: "Removed {{count}} entries",
+                          count: ids.length,
+                        }),
+                      );
+                    }}
+                  >
+                    {t("common.delete")}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        </CardHeader>
+        <CardContent className="px-2 sm:px-6">
+          <ChartFrame
+            filename="cashflow"
+            title={t("cashflow.title")}
+            extras={
+              <SankeyControls
+                prefs={prefs}
+                setPrefs={setPrefs}
+                nodes={colorableNodes}
+                resetColors={resetColors}
+              />
+            }
+          >
+            <div className="min-h-80 sm:min-h-96 w-full min-w-0">
+              {sankey ? (
+                <SankeyChart
+                  data={sankey}
+                  labelMode={prefs.labelMode}
+                  format={(v: number) => (privacy ? MASK : formatMoney(v, currency))}
+                  onReorder={(kind, names) =>
+                    setPrefs((p) => ({
+                      ...p,
+                      ...(kind === "income"
+                        ? { incomeOrder: names }
+                        : { expenseOrder: names }),
+                    }))
+                  }
+                />
+              ) : (
+                <div className="grid h-80 place-items-center text-sm text-muted-foreground">
+                  {t("cashflow.emptyFlow")}
                 </div>
               )}
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5">
-                    <RotateCcw className="h-3.5 w-3.5" />
-                    {t("cashflow.resetLastMonth", { defaultValue: "Reset last month" })}
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>{t("cashflow.resetLastMonthTitle", { defaultValue: "Delete last month's entries?" })}</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      {t("cashflow.resetLastMonthDesc", {
-                        defaultValue: "This permanently removes every cashflow entry dated in {{range}}. Recurring rules are kept.",
-                        range: `${format(startOfMonth(subMonths(new Date(), 1)), "MMM d, yyyy")} – ${format(endOfMonth(subMonths(new Date(), 1)), "MMM d, yyyy")}`,
-                      })}
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={() => {
-                        const lastMonthStart = startOfMonth(subMonths(new Date(), 1));
-                        const lastMonthEnd = endOfMonth(subMonths(new Date(), 1));
-                        const ids = cashflows
-                          .filter((c) => {
-                            const d = new Date(c.date);
-                            return isWithinInterval(d, { start: lastMonthStart, end: lastMonthEnd });
-                          })
-                          .map((c) => c.id);
-                        ids.forEach((id) => removeCashflow(id));
-                        toast.success(
-                          t("cashflow.resetLastMonthDone", {
-                            defaultValue: "Removed {{count}} entries",
-                            count: ids.length,
-                          }),
-                        );
-                      }}
-                    >
-                      {t("common.delete")}
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
             </div>
-          </CardHeader>
-          <CardContent className="px-2 sm:px-6">
-            <ChartFrame
-              filename="cashflow"
-              title={t("cashflow.title")}
-              extras={
-                <SankeyControls
-                  prefs={prefs}
-                  setPrefs={setPrefs}
-                  nodes={colorableNodes}
-                  resetColors={resetColors}
-                />
-              }
-            >
-              <div className="min-h-80 sm:min-h-96 w-full overflow-hidden">
-                {sankey ? (
-                  <SankeyChart
-                    data={sankey}
-                    labelMode={prefs.labelMode}
-                    format={(v: number) => (privacy ? MASK : formatMoney(v, currency))}
-                    onReorder={(kind, names) =>
-                      setPrefs((p) => ({
-                        ...p,
-                        ...(kind === "income"
-                          ? { incomeOrder: names }
-                          : { expenseOrder: names }),
-                      }))
-                    }
-                  />
-                ) : (
-                  <div className="grid h-80 place-items-center text-sm text-muted-foreground">
-                    {t("cashflow.emptyFlow")}
-                  </div>
-                )}
-              </div>
+          </ChartFrame>
+        </CardContent>
+      </Card>
 
-            </ChartFrame>
-          </CardContent>
-        </Card>
-      </div>
 
       <Collapsible open={breakdownOpen} onOpenChange={setBreakdownOpen}>
         <CollapsibleTrigger asChild>
