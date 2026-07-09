@@ -7,7 +7,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { AppState, DEFAULT_STATE, DEFAULT_CATEGORIES, Holding, CashflowEntry, Category, Settings, HoldingTransaction, CreditCard, Budget, SavingsGoal, Loan } from "./types";
+import { AppState, DEFAULT_STATE, DEFAULT_CATEGORIES, Holding, CashflowEntry, Category, Settings, HoldingTransaction, CreditCard, Budget, BudgetPlan, BudgetItem, ForecastScenario, SavingsGoal, Loan } from "./types";
 import { getFxRates, convert, type FxRates } from "./finance/fx";
 import { formatMoney, maskMoney, MASK } from "./format";
 import { secureGet, secureSet } from "./secure-storage";
@@ -16,16 +16,76 @@ import { setSettingsSnapshot } from "./finance/client";
 
 const STORAGE_KEY = "ept_state_v1";
 
+function migrateBudgets(parsed: any, defCcy: string): { plans: BudgetPlan[]; mainId?: string } {
+  const rawPlans = Array.isArray(parsed?.budgetPlans) ? parsed.budgetPlans : [];
+  const plans: BudgetPlan[] = rawPlans.map((p: any) => ({
+    id: String(p.id),
+    name: String(p.name ?? "Plan"),
+    items: (Array.isArray(p.items) ? p.items : []).map((it: any) => ({
+      id: String(it.id),
+      label: String(it.label ?? ""),
+      amount: Number(it.amount) || 0,
+      currency: it.currency || defCcy,
+      categoryId: it.categoryId || undefined,
+    })),
+  }));
+  let mainId: string | undefined = parsed?.mainBudgetPlanId;
+  if (plans.length === 0 && Array.isArray(parsed?.budgets) && parsed.budgets.length > 0) {
+    // Wrap legacy flat budgets into a "Default" plan.
+    const id = "plan-default";
+    plans.push({
+      id,
+      name: "Default",
+      items: parsed.budgets.map((b: any, i: number) => ({
+        id: `bi-${b.id ?? i}`,
+        label: "",
+        amount: Number(b.amount) || 0,
+        currency: b.currency || defCcy,
+        categoryId: b.categoryId,
+      })),
+    });
+    mainId = mainId ?? id;
+  }
+  if (!mainId && plans[0]) mainId = plans[0].id;
+  return { plans, mainId };
+}
+
+function migrateScenarios(parsed: any): { scenarios: ForecastScenario[]; mainId?: string } {
+  const raw = Array.isArray(parsed?.forecastScenarios) ? parsed.forecastScenarios : [];
+  const scenarios: ForecastScenario[] = raw.map((s: any) => ({
+    id: String(s.id),
+    name: String(s.name ?? "Scenario"),
+    months: Math.max(1, Math.min(60, Number(s.months) || 6)),
+    monthlyIncomeAdjust: Number(s.monthlyIncomeAdjust) || 0,
+    monthlyExpenseAdjust: Number(s.monthlyExpenseAdjust) || 0,
+    currency: s.currency,
+    notes: s.notes,
+  }));
+  let mainId: string | undefined = parsed?.mainForecastScenarioId;
+  if (scenarios.length === 0) {
+    scenarios.push({ id: "scn-default", name: "Baseline", months: 6 });
+    mainId = "scn-default";
+  }
+  if (!mainId) mainId = scenarios[0].id;
+  return { scenarios, mainId };
+}
+
 async function loadState(): Promise<AppState> {
   if (typeof window === "undefined") return DEFAULT_STATE;
   try {
     const raw = await secureGet(STORAGE_KEY);
-    if (!raw) return DEFAULT_STATE;
+    if (!raw) {
+      // Fresh install: seed a default forecast scenario so the UI has something to show.
+      const { scenarios, mainId } = migrateScenarios({});
+      return { ...DEFAULT_STATE, forecastScenarios: scenarios, mainForecastScenarioId: mainId };
+    }
     const parsed = JSON.parse(raw);
     const settings = { ...DEFAULT_STATE.settings, ...(parsed.settings ?? {}) };
     const defCcy = (settings.displayCurrency || "USD").toUpperCase();
     const withCcy = <T extends { currency?: string }>(x: T): T =>
       x && (!x.currency || !String(x.currency).trim()) ? { ...x, currency: defCcy } : x;
+    const { plans, mainId: mainBudgetPlanId } = migrateBudgets(parsed, defCcy);
+    const { scenarios, mainId: mainForecastScenarioId } = migrateScenarios(parsed);
     return {
       ...DEFAULT_STATE,
       ...parsed,
@@ -34,6 +94,10 @@ async function loadState(): Promise<AppState> {
       transactions: (Array.isArray(parsed.transactions) ? parsed.transactions : []).map(withCcy),
       creditCards: (Array.isArray(parsed.creditCards) ? parsed.creditCards : []).map(withCcy),
       budgets: (Array.isArray(parsed.budgets) ? parsed.budgets : []).map(withCcy),
+      budgetPlans: plans,
+      mainBudgetPlanId,
+      forecastScenarios: scenarios,
+      mainForecastScenarioId,
       goals: (Array.isArray(parsed.goals) ? parsed.goals : []).map(withCcy),
       loans: (Array.isArray(parsed.loans) ? parsed.loans : []).map(withCcy),
       categories:
@@ -70,6 +134,17 @@ type Ctx = {
   addBudget: (b: Omit<Budget, "id">) => Budget;
   updateBudget: (id: string, patch: Partial<Budget>) => void;
   removeBudget: (id: string) => void;
+  addBudgetPlan: (name: string) => BudgetPlan;
+  updateBudgetPlan: (id: string, patch: Partial<Omit<BudgetPlan, "id" | "items">>) => void;
+  removeBudgetPlan: (id: string) => void;
+  setMainBudgetPlan: (id: string | undefined) => void;
+  addBudgetItem: (planId: string, item: Omit<BudgetItem, "id">) => void;
+  updateBudgetItem: (planId: string, itemId: string, patch: Partial<BudgetItem>) => void;
+  removeBudgetItem: (planId: string, itemId: string) => void;
+  addForecastScenario: (s: Omit<ForecastScenario, "id">) => ForecastScenario;
+  updateForecastScenario: (id: string, patch: Partial<ForecastScenario>) => void;
+  removeForecastScenario: (id: string) => void;
+  setMainForecastScenario: (id: string | undefined) => void;
   addGoal: (g: Omit<SavingsGoal, "id">) => SavingsGoal;
   updateGoal: (id: string, patch: Partial<SavingsGoal>) => void;
   removeGoal: (id: string) => void;
@@ -323,6 +398,89 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         })),
       removeBudget: (id) =>
         setState((s) => ({ ...s, budgets: (s.budgets ?? []).filter((b) => b.id !== id) })),
+      addBudgetPlan: (name) => {
+        const created: BudgetPlan = { id: uid(), name: name || "New plan", items: [] };
+        setState((s) => {
+          const plans = [...(s.budgetPlans ?? []), created];
+          return {
+            ...s,
+            budgetPlans: plans,
+            mainBudgetPlanId: s.mainBudgetPlanId ?? created.id,
+          };
+        });
+        return created;
+      },
+      updateBudgetPlan: (id, patch) =>
+        setState((s) => ({
+          ...s,
+          budgetPlans: (s.budgetPlans ?? []).map((p) => (p.id === id ? { ...p, ...patch } : p)),
+        })),
+      removeBudgetPlan: (id) =>
+        setState((s) => {
+          const plans = (s.budgetPlans ?? []).filter((p) => p.id !== id);
+          return {
+            ...s,
+            budgetPlans: plans,
+            mainBudgetPlanId:
+              s.mainBudgetPlanId === id ? plans[0]?.id : s.mainBudgetPlanId,
+          };
+        }),
+      setMainBudgetPlan: (id) =>
+        setState((s) => ({ ...s, mainBudgetPlanId: id })),
+      addBudgetItem: (planId, item) =>
+        setState((s) => ({
+          ...s,
+          budgetPlans: (s.budgetPlans ?? []).map((p) =>
+            p.id === planId ? { ...p, items: [...p.items, { ...item, id: uid() }] } : p,
+          ),
+        })),
+      updateBudgetItem: (planId, itemId, patch) =>
+        setState((s) => ({
+          ...s,
+          budgetPlans: (s.budgetPlans ?? []).map((p) =>
+            p.id === planId
+              ? { ...p, items: p.items.map((it) => (it.id === itemId ? { ...it, ...patch } : it)) }
+              : p,
+          ),
+        })),
+      removeBudgetItem: (planId, itemId) =>
+        setState((s) => ({
+          ...s,
+          budgetPlans: (s.budgetPlans ?? []).map((p) =>
+            p.id === planId ? { ...p, items: p.items.filter((it) => it.id !== itemId) } : p,
+          ),
+        })),
+      addForecastScenario: (sc) => {
+        const created: ForecastScenario = { ...sc, id: uid() };
+        setState((s) => {
+          const scenarios = [...(s.forecastScenarios ?? []), created];
+          return {
+            ...s,
+            forecastScenarios: scenarios,
+            mainForecastScenarioId: s.mainForecastScenarioId ?? created.id,
+          };
+        });
+        return created;
+      },
+      updateForecastScenario: (id, patch) =>
+        setState((s) => ({
+          ...s,
+          forecastScenarios: (s.forecastScenarios ?? []).map((sc) =>
+            sc.id === id ? { ...sc, ...patch } : sc,
+          ),
+        })),
+      removeForecastScenario: (id) =>
+        setState((s) => {
+          const scenarios = (s.forecastScenarios ?? []).filter((sc) => sc.id !== id);
+          return {
+            ...s,
+            forecastScenarios: scenarios,
+            mainForecastScenarioId:
+              s.mainForecastScenarioId === id ? scenarios[0]?.id : s.mainForecastScenarioId,
+          };
+        }),
+      setMainForecastScenario: (id) =>
+        setState((s) => ({ ...s, mainForecastScenarioId: id })),
       addGoal: (g) => {
         const created: SavingsGoal = { ...g, id: uid() };
         setState((s) => ({ ...s, goals: [...(s.goals ?? []), created] }));
