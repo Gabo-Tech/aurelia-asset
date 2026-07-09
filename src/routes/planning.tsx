@@ -104,11 +104,57 @@ const BUDGET_TEMPLATES: {
   name: string;
   description: string;
   color: string;
+  periodType?: BudgetPeriodType;
+  periodDays?: number;
 }[] = [
-  { key: "monthly", name: "Monthly", description: "Your regular monthly plan", color: "#3b82f6" },
-  { key: "vacation", name: "Vacation", description: "Trip or getaway budget", color: "#f59e0b" },
-  { key: "project", name: "Personal project", description: "Side project or one-off", color: "#a78bfa" },
+  { key: "monthly", name: "Monthly", description: "Your regular monthly plan", color: "#3b82f6", periodType: "monthly" },
+  { key: "vacation", name: "Vacation", description: "Trip or getaway budget", color: "#f59e0b", periodType: "custom", periodDays: 10 },
+  { key: "project", name: "Personal project", description: "Side project or one-off", color: "#a78bfa", periodType: "custom", periodDays: 30 },
 ];
+
+const PERIOD_OPTIONS: { value: BudgetPeriodType; label: string }[] = [
+  { value: "daily", label: "Daily" },
+  { value: "weekly", label: "Weekly" },
+  { value: "biweekly", label: "Every 2 weeks" },
+  { value: "monthly", label: "Monthly" },
+  { value: "yearly", label: "Yearly" },
+  { value: "custom", label: "Custom (N days)" },
+];
+
+/** Compute the current window and a short label for a plan's period. */
+function computePlanWindow(plan: Pick<BudgetPlan, "periodType" | "periodDays">): {
+  start: Date;
+  end: Date;
+  label: string;
+} {
+  const now = new Date();
+  const type = plan.periodType ?? "monthly";
+  switch (type) {
+    case "daily":
+      return { start: startOfDay(now), end: endOfDay(now), label: "Today" };
+    case "weekly":
+      return {
+        start: startOfWeek(now, { weekStartsOn: 1 }),
+        end: endOfWeek(now, { weekStartsOn: 1 }),
+        label: "This week",
+      };
+    case "biweekly": {
+      const start = startOfDay(subDays(now, 13));
+      return { start, end: endOfDay(now), label: "Last 14 days" };
+    }
+    case "yearly":
+      return { start: startOfYear(now), end: endOfYear(now), label: "This year" };
+    case "custom": {
+      const n = Math.max(1, Math.min(3650, Math.floor(plan.periodDays || 30)));
+      const start = startOfDay(subDays(now, n - 1));
+      return { start, end: endOfDay(now), label: `Last ${n} days` };
+    }
+    case "monthly":
+    default:
+      return { start: startOfMonth(now), end: endOfMonth(now), label: "This month" };
+  }
+}
+
 
 function BudgetsPanel() {
   const { t } = useTranslation();
