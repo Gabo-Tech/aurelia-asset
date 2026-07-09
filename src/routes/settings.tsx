@@ -153,6 +153,31 @@ const budgetSchema = z.object({
   period: z.literal("monthly"),
 });
 
+const budgetItemSchema = z.object({
+  id: z.string().min(1).max(128),
+  label: z.string().max(200),
+  amount: finiteNumber,
+  currency: z.string().max(16).optional(),
+  categoryId: z.string().max(128).optional(),
+});
+
+const budgetPlanSchema = z.object({
+  id: z.string().min(1).max(128),
+  name: z.string().max(200),
+  items: z.array(budgetItemSchema).max(500),
+});
+
+const forecastScenarioSchema = z.object({
+  id: z.string().min(1).max(128),
+  name: z.string().max(200),
+  months: z.number().int().min(1).max(60),
+  monthlyIncomeAdjust: finiteNumber.optional(),
+  monthlyExpenseAdjust: finiteNumber.optional(),
+  currency: z.string().max(16).optional(),
+  notes: z.string().max(2000).optional(),
+});
+
+
 const goalSchema = z.object({
   id: z.string().min(1).max(128),
   name: z.string().max(200),
@@ -192,6 +217,10 @@ const appStateSchema = z.object({
   categories: z.array(categorySchema).max(1000),
   creditCards: z.array(creditCardSchema).max(500).optional().default([]),
   budgets: z.array(budgetSchema).max(2000).optional().default([]),
+  budgetPlans: z.array(budgetPlanSchema).max(500).optional().default([]),
+  mainBudgetPlanId: z.string().max(128).optional(),
+  forecastScenarios: z.array(forecastScenarioSchema).max(500).optional().default([]),
+  mainForecastScenarioId: z.string().max(128).optional(),
   goals: z.array(goalSchema).max(500).optional().default([]),
   loans: z.array(loanSchema).max(500).optional().default([]),
   settings: settingsSchema,
