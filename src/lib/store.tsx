@@ -498,6 +498,16 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         }),
       setMainForecastScenario: (id) =>
         setState((s) => ({ ...s, mainForecastScenarioId: id })),
+      duplicateForecastScenario: (id) => {
+        let created: ForecastScenario | undefined;
+        setState((s) => {
+          const src = (s.forecastScenarios ?? []).find((sc) => sc.id === id);
+          if (!src) return s;
+          created = { ...src, id: uid(), name: `${src.name} (copy)` };
+          return { ...s, forecastScenarios: [...(s.forecastScenarios ?? []), created] };
+        });
+        return created;
+      },
       addGoal: (g) => {
         const created: SavingsGoal = { ...g, id: uid() };
         setState((s) => ({ ...s, goals: [...(s.goals ?? []), created] }));
