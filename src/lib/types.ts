@@ -194,7 +194,13 @@ export type AppState = {
   transactions: HoldingTransaction[];
   categories: Category[];
   creditCards: CreditCard[];
+  /** Legacy flat budget list. New UI writes to `budgetPlans` instead; this
+   *  is kept for backwards compatibility on load and migrated on first read. */
   budgets: Budget[];
+  budgetPlans: BudgetPlan[];
+  mainBudgetPlanId?: string;
+  forecastScenarios: ForecastScenario[];
+  mainForecastScenarioId?: string;
   goals: SavingsGoal[];
   loans: Loan[];
   settings: Settings;
