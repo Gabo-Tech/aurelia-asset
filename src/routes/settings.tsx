@@ -153,6 +153,31 @@ const budgetSchema = z.object({
   period: z.literal("monthly"),
 });
 
+const budgetItemSchema = z.object({
+  id: z.string().min(1).max(128),
+  label: z.string().max(200),
+  amount: finiteNumber,
+  currency: z.string().max(16).optional(),
+  categoryId: z.string().max(128).optional(),
+});
+
+const budgetPlanSchema = z.object({
+  id: z.string().min(1).max(128),
+  name: z.string().max(200),
+  items: z.array(budgetItemSchema).max(500),
+});
+
+const forecastScenarioSchema = z.object({
+  id: z.string().min(1).max(128),
+  name: z.string().max(200),
+  months: z.number().int().min(1).max(60),
+  monthlyIncomeAdjust: finiteNumber.optional(),
+  monthlyExpenseAdjust: finiteNumber.optional(),
+  currency: z.string().max(16).optional(),
+  notes: z.string().max(2000).optional(),
+});
+
+
 const goalSchema = z.object({
   id: z.string().min(1).max(128),
   name: z.string().max(200),
