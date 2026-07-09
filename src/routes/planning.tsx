@@ -246,9 +246,9 @@ function BudgetsPanel() {
             <Button
               type="button"
               size="sm"
-              className="shrink-0 rounded-full"
+              className="shrink-0 rounded-full font-bold inline-flex items-center justify-center gap-1.5"
             >
-              <Plus className="h-3.5 w-3.5 mr-1" />
+              <Plus className="h-3.5 w-3.5" />
               {t("planning.budgets.newPlan", { defaultValue: "New plan" })}
             </Button>
           }
@@ -964,9 +964,9 @@ function ForecastPanel() {
             <Button
               type="button"
               size="sm"
-              className="shrink-0 rounded-full"
+              className="shrink-0 rounded-full font-bold inline-flex items-center justify-center gap-1.5"
             >
-              <Plus className="h-3.5 w-3.5 mr-1" />
+              <Plus className="h-3.5 w-3.5" />
               {t("planning.forecast.newScenario", { defaultValue: "New scenario" })}
             </Button>
           }
