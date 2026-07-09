@@ -124,6 +124,40 @@ export type Budget = {
   period: "monthly";
 };
 
+/** A single line inside a BudgetPlan. When categoryId is set, actual spending
+ *  from cashflows in that category rolls up against this line. When omitted,
+ *  the line is a free-form budget the user tracks manually. */
+export type BudgetItem = {
+  id: string;
+  label: string;
+  amount: number;
+  currency?: string;
+  categoryId?: string;
+};
+
+/** A named collection of budget lines. Users can maintain multiple plans
+ *  (e.g. "Baseline", "Vacation month") and pick one as the main plan shown
+ *  by default. */
+export type BudgetPlan = {
+  id: string;
+  name: string;
+  items: BudgetItem[];
+};
+
+/** A named forecast scenario. `months` is the projection horizon, and the
+ *  optional adjustments are applied on top of the recurring cashflow-derived
+ *  monthly income/expense so users can model what-if changes. */
+export type ForecastScenario = {
+  id: string;
+  name: string;
+  months: number;
+  monthlyIncomeAdjust?: number;
+  monthlyExpenseAdjust?: number;
+  currency?: string;
+  notes?: string;
+};
+
+
 export type SavingsGoal = {
   id: string;
   name: string;
