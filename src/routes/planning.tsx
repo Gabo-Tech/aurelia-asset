@@ -354,6 +354,11 @@ function BudgetsPanel() {
                   {activePlan.description ? (
                     <div className="mt-1 text-sm text-muted-foreground">{activePlan.description}</div>
                   ) : null}
+                  <div className="mt-1 text-xs text-muted-foreground">
+                    <span className="inline-flex items-center gap-1 rounded-full border border-border/60 px-2 py-0.5">
+                      {planWindow.label}
+                    </span>
+                  </div>
                   {activePlan.items.length > 0
                     ? (() => {
                         const totalBudget = activePlan.items.reduce((sum, it) => sum + toDisplay(it.amount, it.currency), 0);
