@@ -241,6 +241,19 @@ function BudgetsPanel() {
     <div className="space-y-4">
       {/* Plan chip strip */}
       <div className="flex items-stretch gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+        <PlanDialog
+          trigger={
+            <Button
+              type="button"
+              size="sm"
+              className="shrink-0 rounded-full"
+            >
+              <Plus className="h-3.5 w-3.5 mr-1" />
+              {t("planning.budgets.newPlan", { defaultValue: "New plan" })}
+            </Button>
+          }
+          onSubmit={(vals) => createPlan(vals)}
+        />
         {plans.map((p) => {
           const active = p.id === activePlan?.id;
           const c = planAccent(p);
@@ -263,18 +276,6 @@ function BudgetsPanel() {
             </button>
           );
         })}
-        <PlanDialog
-          trigger={
-            <button
-              type="button"
-              className="shrink-0 rounded-full border border-dashed border-border/60 px-3 py-1.5 text-xs flex items-center gap-1 hover:bg-muted/60"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              {t("planning.budgets.newPlan", { defaultValue: "New plan" })}
-            </button>
-          }
-          onSubmit={(vals) => createPlan(vals)}
-        />
       </div>
 
       {activePlan ? (
@@ -958,6 +959,19 @@ function ForecastPanel() {
     <div className="space-y-8">
       {/* Scenario chip strip */}
       <div className="flex items-stretch gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+        <ScenarioDialog
+          trigger={
+            <Button
+              type="button"
+              size="sm"
+              className="shrink-0 rounded-full"
+            >
+              <Plus className="h-3.5 w-3.5 mr-1" />
+              {t("planning.forecast.newScenario", { defaultValue: "New scenario" })}
+            </Button>
+          }
+          onSubmit={(vals) => createScenario(vals)}
+        />
         {scenarios.map((s) => {
           const active = s.id === activeScenario?.id;
           const c = scenarioAccent(s);
@@ -978,18 +992,6 @@ function ForecastPanel() {
             </button>
           );
         })}
-        <ScenarioDialog
-          trigger={
-            <button
-              type="button"
-              className="shrink-0 rounded-full border border-dashed border-border/60 px-3 py-1.5 text-xs flex items-center gap-1 hover:bg-muted/60"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              {t("planning.forecast.newScenario", { defaultValue: "New scenario" })}
-            </button>
-          }
-          onSubmit={(vals) => createScenario(vals)}
-        />
       </div>
 
       {activeScenario ? (
