@@ -724,7 +724,38 @@ function CashflowPage() {
         </Card>
       </div>
 
+      <Collapsible open={breakdownOpen} onOpenChange={setBreakdownOpen}>
+        <CollapsibleTrigger asChild>
+          <Button variant="outline" className="w-full justify-between">
+            <span>{t("cashflow.breakdown.title", { defaultValue: "Breakdown by category" })}</span>
+            <ChevronDown
+              className={`h-4 w-4 transition-transform ${breakdownOpen ? "rotate-180" : ""}`}
+            />
+          </Button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="mt-3">
+          <div className="grid gap-3 md:grid-cols-3">
+            <CategoryPieCard
+              title={t("cashflow.breakdown.incomes", { defaultValue: "Incomes" })}
+              entries={breakdownData.incomes}
+              format={pieFormat}
+            />
+            <CategoryPieCard
+              title={t("cashflow.breakdown.expenses", { defaultValue: "Expenses" })}
+              entries={breakdownData.expenses}
+              format={pieFormat}
+            />
+            <CategoryPieCard
+              title={t("cashflow.breakdown.investments", { defaultValue: "Investments & Savings" })}
+              entries={breakdownData.investments}
+              format={pieFormat}
+            />
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
+
       <div>
+
       <EntriesPanel
         cashflows={cashflows}
         categories={categories}
