@@ -524,9 +524,33 @@ function GoalsPanel() {
 
 function ForecastPanel() {
   const { t } = useTranslation();
-  const { state } = useStore();
+  const {
+    state,
+    addForecastScenario,
+    updateForecastScenario,
+    removeForecastScenario,
+    setMainForecastScenario,
+  } = useStore();
   const { fmt, toDisplay } = useMoney();
-  const [months, setMonths] = useState(6);
+  const scenarios = state.forecastScenarios ?? [];
+  const mainId = state.mainForecastScenarioId;
+  const [activeId, setActiveId] = useState<string | undefined>(mainId ?? scenarios[0]?.id);
+  const activeScenario =
+    scenarios.find((s) => s.id === activeId) ?? scenarios.find((s) => s.id === mainId) ?? scenarios[0];
+  const months = activeScenario?.months ?? 6;
+  const incomeAdj = activeScenario?.monthlyIncomeAdjust ?? 0;
+  const expenseAdj = activeScenario?.monthlyExpenseAdjust ?? 0;
+
+  const createScenario = () => {
+    const s = addForecastScenario({
+      name: t("planning.forecast.newScenarioName", { defaultValue: "New scenario" }),
+      months: 6,
+      monthlyIncomeAdjust: 0,
+      monthlyExpenseAdjust: 0,
+    });
+    setActiveId(s.id);
+  };
+
 
   const currentBalance = useMemo(() => {
     const now = new Date();
