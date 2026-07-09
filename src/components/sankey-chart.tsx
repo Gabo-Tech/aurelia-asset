@@ -228,14 +228,13 @@ export function SankeyChart({
               const displayName = truncate(n.name, nameMaxLen);
               const amountText = pct != null ? `${format(n.value)} (${pct.toFixed(1)}%)` : format(n.value);
 
-              // Label positioning: centered on node, above the rect.
+              // Label alignment: left-anchored at each node's own x0, so labels
+              // in the same column line up regardless of node kind. Right-most
+              // column flips to end-anchored to avoid clipping the SVG edge.
               const nodeCx = (n.x0 + n.x1) / 2;
-              let labelX = nodeCx;
-              let anchor: "start" | "middle" | "end" = "middle";
-              if (nodeCx < 60) {
-                labelX = n.x0;
-                anchor = "start";
-              } else if (nodeCx > innerW - 60) {
+              let labelX = n.x0;
+              let anchor: "start" | "middle" | "end" = "start";
+              if (nodeCx > innerW - 80) {
                 labelX = n.x1;
                 anchor = "end";
               }
