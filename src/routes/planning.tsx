@@ -1406,20 +1406,21 @@ function buildForecastSlices(
   categories: { name: string; color: string }[],
   adjustment: number,
   adjustmentLabel: string,
+  overrides?: Record<string, string>,
 ): PieSlice[] {
   const catByName = new Map(categories.map((c) => [c.name, c.color]));
   const slices: PieSlice[] = items.map((r) => ({
     id: r.id,
     label: r.name,
     value: r.perMonth,
-    color: r.category ? catByName.get(r.category) : undefined,
+    color: overrides?.[r.id] ?? (r.category ? catByName.get(r.category) : undefined),
   }));
   if (adjustment && Math.abs(adjustment) > 0.0001) {
     slices.push({
       id: "__adjustment",
       label: adjustmentLabel,
       value: Math.abs(adjustment),
-      color: adjustment > 0 ? "#22c55e" : "#ef4444",
+      color: overrides?.["__adjustment"] ?? (adjustment > 0 ? "#22c55e" : "#ef4444"),
     });
   }
   return slices;
@@ -1432,6 +1433,7 @@ function RecurringPiesSection({
   incomeTitle,
   expenseTitle,
   format,
+  onColorChange,
 }: {
   title: string;
   incomeSlices: PieSlice[];
@@ -1439,6 +1441,7 @@ function RecurringPiesSection({
   incomeTitle: string;
   expenseTitle: string;
   format: (v: number) => string;
+  onColorChange?: (sliceId: string, color: string | undefined) => void;
 }) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
@@ -1458,6 +1461,7 @@ function RecurringPiesSection({
             format={format}
             centerLabel={t("planning.forecast.perMonthShort", { defaultValue: "Per month" })}
             emptyLabel={t("planning.forecast.recurringEmpty")}
+            onColorChange={onColorChange}
           />
           <BudgetPieCard
             title={expenseTitle}
@@ -1465,6 +1469,7 @@ function RecurringPiesSection({
             format={format}
             centerLabel={t("planning.forecast.perMonthShort", { defaultValue: "Per month" })}
             emptyLabel={t("planning.forecast.recurringEmpty")}
+            onColorChange={onColorChange}
           />
         </div>
       </CollapsibleContent>
