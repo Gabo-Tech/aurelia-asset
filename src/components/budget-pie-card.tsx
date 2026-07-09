@@ -47,6 +47,7 @@ export function BudgetPieCard({
   centerLabel,
   palette = DEFAULT_PALETTE,
   className,
+  onColorChange,
 }: Props) {
   const sorted = useMemo(
     () => slices.filter((s) => s.value > 0).sort((a, b) => b.value - a.value),
