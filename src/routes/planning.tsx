@@ -96,12 +96,29 @@ function CurrencyPicker({ value, onChange, className }: { value: string; onChang
 
 function BudgetsPanel() {
   const { t } = useTranslation();
-  const { state, addBudget, updateBudget, removeBudget } = useStore();
+  const {
+    state,
+    addBudgetPlan,
+    updateBudgetPlan,
+    removeBudgetPlan,
+    setMainBudgetPlan,
+    addBudgetItem,
+    updateBudgetItem,
+    removeBudgetItem,
+  } = useStore();
   const { fmt, toDisplay, currency: displayCurrency } = useMoney();
   const expenseCats = state.categories.filter((c) => c.kind === "expense");
-  const [categoryId, setCategoryId] = useState<string>(expenseCats[0]?.id ?? "");
-  const [amount, setAmount] = useState<string>("");
-  const [entryCurrency, setEntryCurrency] = useState<string>(displayCurrency);
+  const plans = state.budgetPlans ?? [];
+  const mainId = state.mainBudgetPlanId;
+
+  const [activeId, setActiveId] = useState<string | undefined>(mainId ?? plans[0]?.id);
+  const activePlan = plans.find((p) => p.id === activeId) ?? plans.find((p) => p.id === mainId) ?? plans[0];
+
+  // New-item form state
+  const [label, setLabel] = useState("");
+  const [amount, setAmount] = useState("");
+  const [entryCurrency, setEntryCurrency] = useState(displayCurrency);
+  const [linkCategoryId, setLinkCategoryId] = useState<string>("none");
 
   const monthSpent = useMemo(() => {
     const now = new Date();
@@ -109,9 +126,6 @@ function BudgetsPanel() {
     const end = endOfMonth(now);
     const expanded = expandCashflows(state.cashflows, end);
     const values = valuesByEntry(expanded, toDisplay);
-    // Cashflow entries store the category NAME in `e.category`; budgets target
-    // category IDs. Build a name→id map (case-insensitive) so spending rolls up
-    // into the matching budget.
     const nameToId = new Map<string, string>();
     for (const c of state.categories) {
       if (c.kind === "expense") nameToId.set(c.name.trim().toLowerCase(), c.id);
@@ -129,115 +143,247 @@ function BudgetsPanel() {
     return byCat;
   }, [state.cashflows, state.categories, toDisplay]);
 
-  const submit = () => {
-    const a = Number(amount);
-    if (!categoryId || !Number.isFinite(a) || a <= 0) return;
-    addBudget({ categoryId, amount: a, currency: entryCurrency, period: "monthly" });
-    setAmount("");
+  const createPlan = () => {
+    const p = addBudgetPlan(t("planning.budgets.newPlanName", { defaultValue: "New plan" }));
+    setActiveId(p.id);
   };
 
-  return (
-    <div className="grid lg:grid-cols-3 gap-6">
-      <Card className="lg:col-span-1">
-        <CardHeader>
-          <CardTitle className="text-base">{t("planning.budgets.addTitle")}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div>
-            <Label>{t("planning.budgets.category")}</Label>
-            <Select value={categoryId} onValueChange={setCategoryId}>
-              <SelectTrigger><SelectValue placeholder={t("planning.budgets.pickCategory")} /></SelectTrigger>
-              <SelectContent>
-                {expenseCats.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="grid grid-cols-[1fr_auto] gap-2">
-            <div>
-              <Label>{t("planning.budgets.monthlyLimit")}</Label>
-              <Input inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder={t("planning.budgets.limitPlaceholder")} />
-            </div>
-            <div>
-              <Label>{t("planning.budgets.currency")}</Label>
-              <CurrencyPicker value={entryCurrency} onChange={setEntryCurrency} className="w-28" />
-            </div>
-          </div>
-          <Button onClick={submit} className="w-full"><Plus className="h-4 w-4 mr-1" />{t("planning.budgets.addBudget")}</Button>
+  const submitItem = () => {
+    if (!activePlan) return;
+    const a = Number(amount);
+    if (!Number.isFinite(a) || a <= 0) return;
+    const catId = linkCategoryId === "none" ? undefined : linkCategoryId;
+    const cat = catId ? state.categories.find((c) => c.id === catId) : undefined;
+    addBudgetItem(activePlan.id, {
+      label: label.trim() || cat?.name || t("planning.budgets.untitledItem", { defaultValue: "Untitled" }),
+      amount: a,
+      currency: entryCurrency,
+      categoryId: catId,
+    });
+    setLabel("");
+    setAmount("");
+    setLinkCategoryId("none");
+  };
+
+  if (plans.length === 0) {
+    return (
+      <Card>
+        <CardContent className="py-10 text-center space-y-4">
+          <p className="text-sm text-muted-foreground">
+            {t("planning.budgets.noPlans", { defaultValue: "No budget plans yet. Create one to start planning." })}
+          </p>
+          <Button onClick={createPlan}>
+            <Plus className="h-4 w-4 mr-1" />
+            {t("planning.budgets.newPlan", { defaultValue: "New plan" })}
+          </Button>
         </CardContent>
       </Card>
+    );
+  }
 
-      <Card className="lg:col-span-2">
-        <CardHeader>
-          <CardTitle className="text-base flex items-center justify-between gap-2">
-            <span>{t("planning.budgets.thisMonth")}</span>
-            {state.budgets.length > 0 ? (() => {
-              const totalBudget = state.budgets.reduce((sum, b) => sum + toDisplay(b.amount, b.currency), 0);
-              const totalSpent = state.budgets.reduce((sum, b) => sum + (monthSpent.get(b.categoryId) ?? 0), 0);
-              const over = totalSpent > totalBudget;
-              return (
-                <span className="text-xs font-normal text-muted-foreground">
-                  {t("planning.budgets.total", { defaultValue: "Total" })}:{" "}
-                  <span className={over ? "text-destructive font-medium" : "font-medium text-foreground"}>
-                    {fmt(totalSpent)} / {fmt(totalBudget)}
-                  </span>
-                </span>
-              );
-            })() : null}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {state.budgets.length === 0 ? (
-            <p className="text-sm text-muted-foreground">{t("planning.budgets.empty")}</p>
-          ) : null}
+  return (
+    <div className="space-y-4">
+      {/* Plan selector bar */}
+      <div className="flex flex-wrap items-center gap-2">
+        <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+          {t("planning.budgets.plan", { defaultValue: "Plan" })}
+        </Label>
+        <Select value={activePlan?.id} onValueChange={setActiveId}>
+          <SelectTrigger className="h-9 w-56"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            {plans.map((p) => (
+              <SelectItem key={p.id} value={p.id}>
+                {p.name}{p.id === mainId ? " ★" : ""}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {activePlan ? (
+          <>
+            <Button
+              variant={activePlan.id === mainId ? "secondary" : "outline"}
+              size="sm"
+              onClick={() => setMainBudgetPlan(activePlan.id === mainId ? undefined : activePlan.id)}
+              title={t("planning.budgets.setMainHint", { defaultValue: "Shown first on load" })}
+            >
+              {activePlan.id === mainId ? (
+                <><Star className="h-3.5 w-3.5 mr-1 fill-current" /> {t("planning.budgets.isMain", { defaultValue: "Main" })}</>
+              ) : (
+                <><StarOff className="h-3.5 w-3.5 mr-1" /> {t("planning.budgets.setMain", { defaultValue: "Set as main" })}</>
+              )}
+            </Button>
+            <RenamePlanButton plan={activePlan} onSave={(name) => updateBudgetPlan(activePlan.id, { name })} />
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                if (confirm(t("planning.budgets.deletePlanConfirm", { defaultValue: "Delete this plan?" }))) {
+                  removeBudgetPlan(activePlan.id);
+                  setActiveId(undefined);
+                }
+              }}
+            >
+              <Trash2 className="h-3.5 w-3.5 mr-1" />
+              {t("planning.budgets.deletePlan", { defaultValue: "Delete" })}
+            </Button>
+          </>
+        ) : null}
+        <div className="flex-1" />
+        <Button variant="outline" size="sm" onClick={createPlan}>
+          <Plus className="h-4 w-4 mr-1" />
+          {t("planning.budgets.newPlan", { defaultValue: "New plan" })}
+        </Button>
+      </div>
 
-          {state.budgets.map((b) => {
-            const cat = state.categories.find((c) => c.id === b.categoryId);
-            const spent = monthSpent.get(b.categoryId) ?? 0;
-            const budgetDisp = toDisplay(b.amount, b.currency);
-            const pct = Math.min(100, (spent / Math.max(0.0001, budgetDisp)) * 100);
-            const over = spent > budgetDisp;
-            return (
-              <div key={b.id} className="space-y-1">
-                <div className="flex items-center justify-between gap-2 text-sm">
-                  <span className="font-medium flex items-center gap-2">
-                    <span className="h-2 w-2 rounded-full" style={{ background: cat?.color || "#888" }} />
-                    {cat?.name || t("planning.budgets.unknown")}
-                  </span>
-                  <span className={over ? "text-destructive font-medium" : "text-muted-foreground"}>
-                    {fmt(spent)} / {fmt(budgetDisp)}
-                  </span>
+      {activePlan ? (
+        <div className="grid lg:grid-cols-3 gap-6">
+          <Card className="lg:col-span-1">
+            <CardHeader>
+              <CardTitle className="text-base">{t("planning.budgets.addTitle")}</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div>
+                <Label>{t("planning.budgets.itemLabel", { defaultValue: "Label" })}</Label>
+                <Input
+                  value={label}
+                  onChange={(e) => setLabel(e.target.value)}
+                  placeholder={t("planning.budgets.labelPlaceholder", { defaultValue: "e.g. Vacation fund" })}
+                />
+              </div>
+              <div>
+                <Label>{t("planning.budgets.linkCategory", { defaultValue: "Link to category (optional)" })}</Label>
+                <Select value={linkCategoryId} onValueChange={setLinkCategoryId}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">
+                      {t("planning.budgets.noCategory", { defaultValue: "None — track manually" })}
+                    </SelectItem>
+                    {expenseCats.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid grid-cols-[1fr_auto] gap-2">
+                <div>
+                  <Label>{t("planning.budgets.monthlyLimit")}</Label>
+                  <Input inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder={t("planning.budgets.limitPlaceholder")} />
                 </div>
-                <Progress value={pct} className={over ? "[&>div]:bg-destructive" : ""} />
-                <div className="flex items-center justify-between text-xs">
-                  <span className={over ? "text-destructive" : "text-muted-foreground"}>
-                    {over
-                      ? t("planning.budgets.overBy", { amount: fmt(spent - budgetDisp) })
-                      : t("planning.budgets.left", { amount: fmt(budgetDisp - spent) })}
-                  </span>
-                  <div className="flex items-center gap-1">
-                    <EditBudgetButton budget={b} onSave={(patch) => updateBudget(b.id, patch)} />
-                    <Button size="icon" variant="ghost" onClick={() => removeBudget(b.id)}>
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
+                <div>
+                  <Label>{t("planning.budgets.currency")}</Label>
+                  <CurrencyPicker value={entryCurrency} onChange={setEntryCurrency} className="w-28" />
                 </div>
               </div>
-            );
-          })}
-        </CardContent>
-      </Card>
+              <Button onClick={submitItem} className="w-full">
+                <Plus className="h-4 w-4 mr-1" />{t("planning.budgets.addBudget")}
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card className="lg:col-span-2">
+            <CardHeader>
+              <CardTitle className="text-base flex items-center justify-between gap-2">
+                <span>{activePlan.name} — {t("planning.budgets.thisMonth")}</span>
+                {activePlan.items.length > 0 ? (() => {
+                  const totalBudget = activePlan.items.reduce((sum, it) => sum + toDisplay(it.amount, it.currency), 0);
+                  const totalSpent = activePlan.items.reduce((sum, it) => sum + (it.categoryId ? (monthSpent.get(it.categoryId) ?? 0) : 0), 0);
+                  const over = totalSpent > totalBudget;
+                  return (
+                    <span className="text-xs font-normal text-muted-foreground">
+                      {t("planning.budgets.total", { defaultValue: "Total" })}:{" "}
+                      <span className={over ? "text-destructive font-medium" : "font-medium text-foreground"}>
+                        {fmt(totalSpent)} / {fmt(totalBudget)}
+                      </span>
+                    </span>
+                  );
+                })() : null}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {activePlan.items.length === 0 ? (
+                <p className="text-sm text-muted-foreground">{t("planning.budgets.empty")}</p>
+              ) : null}
+
+              {activePlan.items.map((it) => {
+                const cat = it.categoryId ? state.categories.find((c) => c.id === it.categoryId) : undefined;
+                const tracked = !!it.categoryId;
+                const spent = tracked ? (monthSpent.get(it.categoryId!) ?? 0) : 0;
+                const budgetDisp = toDisplay(it.amount, it.currency);
+                const pct = tracked ? Math.min(100, (spent / Math.max(0.0001, budgetDisp)) * 100) : 0;
+                const over = tracked && spent > budgetDisp;
+                const displayName = it.label || cat?.name || t("planning.budgets.unknown");
+                return (
+                  <div key={it.id} className="space-y-1">
+                    <div className="flex items-center justify-between gap-2 text-sm">
+                      <span className="font-medium flex items-center gap-2 min-w-0">
+                        <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: cat?.color || "#888" }} />
+                        <span className="truncate">{displayName}</span>
+                        {!tracked ? (
+                          <span className="text-[10px] uppercase tracking-wide text-muted-foreground/70">
+                            {t("planning.budgets.manual", { defaultValue: "manual" })}
+                          </span>
+                        ) : null}
+                      </span>
+                      <span className={over ? "text-destructive font-medium" : "text-muted-foreground"}>
+                        {tracked ? `${fmt(spent)} / ${fmt(budgetDisp)}` : fmt(budgetDisp)}
+                      </span>
+                    </div>
+                    {tracked ? (
+                      <Progress value={pct} className={over ? "[&>div]:bg-destructive" : ""} />
+                    ) : null}
+                    <div className="flex items-center justify-between text-xs">
+                      <span className={over ? "text-destructive" : "text-muted-foreground"}>
+                        {tracked
+                          ? over
+                            ? t("planning.budgets.overBy", { amount: fmt(spent - budgetDisp) })
+                            : t("planning.budgets.left", { amount: fmt(budgetDisp - spent) })
+                          : t("planning.budgets.notTracked", { defaultValue: "Not tracked from cashflow" })}
+                      </span>
+                      <div className="flex items-center gap-1">
+                        <EditBudgetItemButton
+                          item={it}
+                          onSave={(patch) => updateBudgetItem(activePlan.id, it.id, patch)}
+                        />
+                        <Button size="icon" variant="ghost" onClick={() => removeBudgetItem(activePlan.id, it.id)}>
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </CardContent>
+          </Card>
+        </div>
+      ) : null}
     </div>
   );
 }
 
-function EditBudgetButton({ budget, onSave }: { budget: Budget; onSave: (p: Partial<Budget>) => void }) {
+function RenamePlanButton({ plan, onSave }: { plan: BudgetPlan; onSave: (name: string) => void }) {
   const [editing, setEditing] = useState(false);
-  const [amount, setAmount] = useState(String(budget.amount));
+  const [name, setName] = useState(plan.name);
   if (!editing) {
     return (
-      <Button size="icon" variant="ghost" onClick={() => setEditing(true)}>
+      <Button size="sm" variant="ghost" onClick={() => { setName(plan.name); setEditing(true); }}>
+        <Pencil className="h-3.5 w-3.5 mr-1" /> Rename
+      </Button>
+    );
+  }
+  return (
+    <div className="flex items-center gap-1">
+      <Input className="h-8 w-40" value={name} onChange={(e) => setName(e.target.value)} />
+      <Button size="sm" variant="secondary" onClick={() => { if (name.trim()) onSave(name.trim()); setEditing(false); }}>OK</Button>
+    </div>
+  );
+}
+
+function EditBudgetItemButton({ item, onSave }: { item: BudgetItem; onSave: (p: Partial<BudgetItem>) => void }) {
+  const [editing, setEditing] = useState(false);
+  const [amount, setAmount] = useState(String(item.amount));
+  if (!editing) {
+    return (
+      <Button size="icon" variant="ghost" onClick={() => { setAmount(String(item.amount)); setEditing(true); }}>
         <Pencil className="h-3.5 w-3.5" />
       </Button>
     );
@@ -249,6 +395,7 @@ function EditBudgetButton({ budget, onSave }: { budget: Budget; onSave: (p: Part
     </div>
   );
 }
+
 
 /* -------------------- Goals -------------------- */
 
