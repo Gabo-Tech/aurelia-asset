@@ -26,7 +26,12 @@ import {
   YAxis,
 } from "recharts";
 import type { Budget, BudgetPlan, BudgetItem, ForecastScenario, Loan, CashflowEntry } from "@/lib/types";
-import { Star, StarOff } from "lucide-react";
+import { Star, StarOff, Copy } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ChevronDown } from "lucide-react";
+import { BudgetPieCard, type PieSlice } from "@/components/budget-pie-card";
+import { ColorSwatchPicker, SWATCH_PALETTE } from "@/components/color-swatch-picker";
 
 export const Route = createFileRoute("/planning")({
   head: () => {
