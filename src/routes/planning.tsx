@@ -740,6 +740,22 @@ function GoalsPanel() {
 
 /* -------------------- Forecast -------------------- */
 
+const FORECAST_TEMPLATES: {
+  key: string;
+  name: string;
+  description: string;
+  color: string;
+  months: number;
+  monthlyIncomeAdjust?: number;
+  monthlyExpenseAdjust?: number;
+}[] = [
+  { key: "personal", name: "Personal", description: "Your household baseline", color: "#3b82f6", months: 6 },
+  { key: "business", name: "Small business", description: "Business cash projection", color: "#10b981", months: 12 },
+  { key: "side", name: "Side project", description: "Side hustle runway", color: "#a78bfa", months: 6 },
+  { key: "optimistic", name: "Optimistic", description: "Raise / new income", color: "#22c55e", months: 12, monthlyIncomeAdjust: 500 },
+  { key: "downturn", name: "Downturn", description: "Cost-of-living bump", color: "#ef4444", months: 6, monthlyExpenseAdjust: 300 },
+];
+
 function ForecastPanel() {
   const { t } = useTranslation();
   const {
@@ -748,6 +764,7 @@ function ForecastPanel() {
     updateForecastScenario,
     removeForecastScenario,
     setMainForecastScenario,
+    duplicateForecastScenario,
   } = useStore();
   const { fmt, toDisplay } = useMoney();
   const scenarios = state.forecastScenarios ?? [];
@@ -759,15 +776,30 @@ function ForecastPanel() {
   const incomeAdj = activeScenario?.monthlyIncomeAdjust ?? 0;
   const expenseAdj = activeScenario?.monthlyExpenseAdjust ?? 0;
 
-  const createScenario = () => {
+  const scenarioAccent = (sc: ForecastScenario) => {
+    if (sc.color) return sc.color;
+    const idx = scenarios.findIndex((s) => s.id === sc.id);
+    return SWATCH_PALETTE[(idx < 0 ? 0 : idx) % SWATCH_PALETTE.length];
+  };
+
+  const createScenario = (preset?: Partial<Omit<ForecastScenario, "id">>) => {
     const s = addForecastScenario({
-      name: t("planning.forecast.newScenarioName", { defaultValue: "New scenario" }),
-      months: 6,
-      monthlyIncomeAdjust: 0,
-      monthlyExpenseAdjust: 0,
+      name: preset?.name || t("planning.forecast.newScenarioName", { defaultValue: "New scenario" }),
+      months: preset?.months ?? 6,
+      monthlyIncomeAdjust: preset?.monthlyIncomeAdjust ?? 0,
+      monthlyExpenseAdjust: preset?.monthlyExpenseAdjust ?? 0,
+      description: preset?.description,
+      color: preset?.color,
+      notes: preset?.notes,
     });
+    if (!preset?.color) {
+      updateForecastScenario(s.id, {
+        color: SWATCH_PALETTE[scenarios.length % SWATCH_PALETTE.length],
+      });
+    }
     setActiveId(s.id);
   };
+
 
 
   const currentBalance = useMemo(() => {
