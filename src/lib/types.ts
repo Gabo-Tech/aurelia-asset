@@ -133,15 +133,22 @@ export type BudgetItem = {
   amount: number;
   currency?: string;
   categoryId?: string;
+  /** Optional per-item color used in the budget pie / list swatch. Falls back
+   *  to the linked category color, then to the plan color. */
+  color?: string;
 };
 
 /** A named collection of budget lines. Users can maintain multiple plans
- *  (e.g. "Baseline", "Vacation month") and pick one as the main plan shown
- *  by default. */
+ *  (e.g. "Baseline", "Vacation month", "Side project") and pick one as the
+ *  main plan shown by default. */
 export type BudgetPlan = {
   id: string;
   name: string;
   items: BudgetItem[];
+  /** Free-form description shown in the plan header, e.g. "Summer trip". */
+  description?: string;
+  /** Accent color used in the selector chip and as a fallback for items. */
+  color?: string;
 };
 
 /** A named forecast scenario. `months` is the projection horizon, and the
@@ -155,7 +162,12 @@ export type ForecastScenario = {
   monthlyExpenseAdjust?: number;
   currency?: string;
   notes?: string;
+  /** Short description shown in the selector, e.g. "Small business". */
+  description?: string;
+  /** Accent color for the selector chip. */
+  color?: string;
 };
+
 
 
 export type SavingsGoal = {
