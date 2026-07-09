@@ -1371,16 +1371,28 @@ function ForecastPanel() {
           state.categories,
           incomeAdj,
           t("planning.forecast.scenarioAdjustment", { defaultValue: "Scenario adjustment" }),
+          activeScenario?.sliceColors,
         )}
         expenseSlices={buildForecastSlices(
           expenseItems,
           state.categories,
           expenseAdj,
           t("planning.forecast.scenarioAdjustment", { defaultValue: "Scenario adjustment" }),
+          activeScenario?.sliceColors,
         )}
         incomeTitle={t("planning.forecast.recurringIncome", { defaultValue: "Recurring income" })}
         expenseTitle={t("planning.forecast.recurringExpenses", { defaultValue: "Recurring expenses" })}
         format={(v) => fmt(v)}
+        onColorChange={
+          activeScenario
+            ? (sliceId, color) => {
+                const next = { ...(activeScenario.sliceColors ?? {}) };
+                if (color) next[sliceId] = color;
+                else delete next[sliceId];
+                updateForecastScenario(activeScenario.id, { sliceColors: next });
+              }
+            : undefined
+        }
       />
     </div>
   );
