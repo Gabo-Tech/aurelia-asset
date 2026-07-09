@@ -926,13 +926,29 @@ function ForecastPanel() {
     return (
       <Card>
         <CardContent className="py-10 text-center space-y-4">
-          <p className="text-sm text-muted-foreground">
-            {t("planning.forecast.noScenarios", { defaultValue: "No forecast scenarios yet." })}
+          <p className="text-sm text-muted-foreground max-w-md mx-auto">
+            {t("planning.forecast.noScenariosHint", {
+              defaultValue:
+                "Create as many forecast scenarios as you want — one for your personal life, one for a side project, one for your small business. Compare them side by side.",
+            })}
           </p>
-          <Button onClick={createScenario}>
-            <Plus className="h-4 w-4 mr-1" />
-            {t("planning.forecast.newScenario", { defaultValue: "New scenario" })}
-          </Button>
+          <div className="flex flex-wrap justify-center gap-2">
+            {FORECAST_TEMPLATES.map((tpl) => (
+              <Button
+                key={tpl.key}
+                variant="outline"
+                size="sm"
+                onClick={() => createScenario(tpl)}
+              >
+                <span className="mr-2 inline-block h-2.5 w-2.5 rounded-full" style={{ background: tpl.color }} />
+                {tpl.name}
+              </Button>
+            ))}
+            <Button size="sm" onClick={() => createScenario()}>
+              <Plus className="h-4 w-4 mr-1" />
+              {t("planning.forecast.newScenario", { defaultValue: "New scenario" })}
+            </Button>
+          </div>
         </CardContent>
       </Card>
     );
@@ -940,59 +956,128 @@ function ForecastPanel() {
 
   return (
     <div className="space-y-8">
-      {/* Scenario selector */}
-      <div className="flex flex-wrap items-center gap-2">
-        <Label className="text-xs uppercase tracking-wide text-muted-foreground">
-          {t("planning.forecast.scenario", { defaultValue: "Scenario" })}
-        </Label>
-        <Select value={activeScenario?.id} onValueChange={setActiveId}>
-          <SelectTrigger className="h-9 w-56"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            {scenarios.map((s) => (
-              <SelectItem key={s.id} value={s.id}>
-                {s.name}{s.id === mainId ? " ★" : ""}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {activeScenario ? (
-          <>
-            <Button
-              variant={activeScenario.id === mainId ? "secondary" : "outline"}
-              size="sm"
-              onClick={() => setMainForecastScenario(activeScenario.id === mainId ? undefined : activeScenario.id)}
+      {/* Scenario chip strip */}
+      <div className="flex items-stretch gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+        {scenarios.map((s) => {
+          const active = s.id === activeScenario?.id;
+          const c = scenarioAccent(s);
+          return (
+            <button
+              key={s.id}
+              type="button"
+              onClick={() => setActiveId(s.id)}
+              className={`shrink-0 rounded-full border px-3 py-1.5 text-xs flex items-center gap-1.5 transition-colors ${
+                active ? "border-foreground/30 bg-muted" : "border-border/60 hover:bg-muted/60"
+              }`}
+              style={active ? { boxShadow: `inset 0 0 0 1px ${c}55` } : undefined}
             >
-              {activeScenario.id === mainId ? (
-                <><Star className="h-3.5 w-3.5 mr-1 fill-current" /> {t("planning.forecast.isMain", { defaultValue: "Main" })}</>
-              ) : (
-                <><StarOff className="h-3.5 w-3.5 mr-1" /> {t("planning.forecast.setMain", { defaultValue: "Set as main" })}</>
-              )}
-            </Button>
-            <EditScenarioButton
-              scenario={activeScenario}
-              onSave={(patch) => updateForecastScenario(activeScenario.id, patch)}
-            />
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                if (confirm(t("planning.forecast.deleteConfirm", { defaultValue: "Delete this scenario?" }))) {
-                  removeForecastScenario(activeScenario.id);
-                  setActiveId(undefined);
-                }
-              }}
+              <span className="h-2 w-2 rounded-full" style={{ background: c }} />
+              <span className="font-medium">{s.name}</span>
+              {s.id === mainId ? <Star className="h-3 w-3 fill-current text-amber-400" /> : null}
+              <span className="text-muted-foreground">{s.months}m</span>
+            </button>
+          );
+        })}
+        <ScenarioDialog
+          trigger={
+            <button
+              type="button"
+              className="shrink-0 rounded-full border border-dashed border-border/60 px-3 py-1.5 text-xs flex items-center gap-1 hover:bg-muted/60"
             >
-              <Trash2 className="h-3.5 w-3.5 mr-1" />
-              {t("planning.forecast.delete", { defaultValue: "Delete" })}
-            </Button>
-          </>
-        ) : null}
-        <div className="flex-1" />
-        <Button variant="outline" size="sm" onClick={createScenario}>
-          <Plus className="h-4 w-4 mr-1" />
-          {t("planning.forecast.newScenario", { defaultValue: "New scenario" })}
-        </Button>
+              <Plus className="h-3.5 w-3.5" />
+              {t("planning.forecast.newScenario", { defaultValue: "New scenario" })}
+            </button>
+          }
+          onSubmit={(vals) => createScenario(vals)}
+        />
       </div>
+
+      {activeScenario ? (
+        <Card
+          className="border-l-4"
+          style={{ borderLeftColor: scenarioAccent(activeScenario) }}
+        >
+          <CardHeader className="pb-3">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="min-w-0">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <span className="h-2.5 w-2.5 rounded-full" style={{ background: scenarioAccent(activeScenario) }} />
+                  <span className="truncate">{activeScenario.name}</span>
+                </CardTitle>
+                {activeScenario.description ? (
+                  <div className="mt-1 text-sm text-muted-foreground">{activeScenario.description}</div>
+                ) : null}
+                {(incomeAdj !== 0 || expenseAdj !== 0) ? (
+                  <div className="mt-2 text-xs text-muted-foreground">
+                    {t("planning.forecast.adjustments", {
+                      defaultValue: "Applying adjustments: {{i}}/mo income, {{e}}/mo expense",
+                      i: (incomeAdj >= 0 ? "+" : "") + fmt(incomeAdj),
+                      e: (expenseAdj >= 0 ? "+" : "") + fmt(expenseAdj),
+                    })}
+                  </div>
+                ) : null}
+              </div>
+              <div className="flex flex-wrap items-center gap-1">
+                <Button
+                  variant={activeScenario.id === mainId ? "secondary" : "outline"}
+                  size="sm"
+                  onClick={() => setMainForecastScenario(activeScenario.id === mainId ? undefined : activeScenario.id)}
+                >
+                  {activeScenario.id === mainId ? (
+                    <><Star className="h-3.5 w-3.5 mr-1 fill-current" /> {t("planning.forecast.isMain", { defaultValue: "Main" })}</>
+                  ) : (
+                    <><StarOff className="h-3.5 w-3.5 mr-1" /> {t("planning.forecast.setMain", { defaultValue: "Set as main" })}</>
+                  )}
+                </Button>
+                <ScenarioDialog
+                  mode="edit"
+                  initial={{
+                    name: activeScenario.name,
+                    description: activeScenario.description,
+                    color: scenarioAccent(activeScenario),
+                    months: activeScenario.months,
+                    monthlyIncomeAdjust: activeScenario.monthlyIncomeAdjust,
+                    monthlyExpenseAdjust: activeScenario.monthlyExpenseAdjust,
+                    notes: activeScenario.notes,
+                  }}
+                  trigger={
+                    <Button size="sm" variant="ghost">
+                      <Pencil className="h-3.5 w-3.5 mr-1" />
+                      {t("planning.forecast.edit", { defaultValue: "Edit" })}
+                    </Button>
+                  }
+                  onSubmit={(vals) => updateForecastScenario(activeScenario.id, vals)}
+                />
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => {
+                    const s = duplicateForecastScenario(activeScenario.id);
+                    if (s) setActiveId(s.id);
+                  }}
+                >
+                  <Copy className="h-3.5 w-3.5 mr-1" />
+                  {t("planning.forecast.duplicate", { defaultValue: "Duplicate" })}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    if (confirm(t("planning.forecast.deleteConfirm", { defaultValue: "Delete this scenario?" }))) {
+                      removeForecastScenario(activeScenario.id);
+                      setActiveId(undefined);
+                    }
+                  }}
+                >
+                  <Trash2 className="h-3.5 w-3.5 mr-1" />
+                  {t("planning.forecast.delete", { defaultValue: "Delete" })}
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+        </Card>
+      ) : null}
+
 
       {(incomeAdj !== 0 || expenseAdj !== 0) ? (
         <div className="text-xs text-muted-foreground -mt-4">
