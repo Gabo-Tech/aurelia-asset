@@ -30,7 +30,9 @@ import {
   DialogTrigger,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { Trash2, Plus, Palette, RotateCcw, Settings as SettingsIcon, Pencil, Download } from "lucide-react";
+import { Trash2, Plus, Palette, RotateCcw, Settings as SettingsIcon, Pencil, Download, ChevronDown } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { CategoryPieCard, type PieEntry } from "@/components/category-pie-card";
 import { toast } from "sonner";
 import { format, startOfWeek, startOfMonth, startOfYear, endOfWeek, endOfMonth, endOfYear, isWithinInterval, parseISO, eachDayOfInterval, addWeeks, addMonths, addYears, subMonths } from "date-fns";
 import {
