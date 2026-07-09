@@ -25,7 +25,8 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import type { Budget, Loan, CashflowEntry } from "@/lib/types";
+import type { Budget, BudgetPlan, BudgetItem, ForecastScenario, Loan, CashflowEntry } from "@/lib/types";
+import { Star, StarOff } from "lucide-react";
 
 export const Route = createFileRoute("/planning")({
   head: () => {
