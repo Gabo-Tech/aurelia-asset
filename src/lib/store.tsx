@@ -138,6 +138,7 @@ type Ctx = {
   updateBudgetPlan: (id: string, patch: Partial<Omit<BudgetPlan, "id" | "items">>) => void;
   removeBudgetPlan: (id: string) => void;
   setMainBudgetPlan: (id: string | undefined) => void;
+  duplicateBudgetPlan: (id: string) => BudgetPlan | undefined;
   addBudgetItem: (planId: string, item: Omit<BudgetItem, "id">) => void;
   updateBudgetItem: (planId: string, itemId: string, patch: Partial<BudgetItem>) => void;
   removeBudgetItem: (planId: string, itemId: string) => void;
@@ -145,6 +146,7 @@ type Ctx = {
   updateForecastScenario: (id: string, patch: Partial<ForecastScenario>) => void;
   removeForecastScenario: (id: string) => void;
   setMainForecastScenario: (id: string | undefined) => void;
+  duplicateForecastScenario: (id: string) => ForecastScenario | undefined;
   addGoal: (g: Omit<SavingsGoal, "id">) => SavingsGoal;
   updateGoal: (id: string, patch: Partial<SavingsGoal>) => void;
   removeGoal: (id: string) => void;
@@ -427,6 +429,21 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         }),
       setMainBudgetPlan: (id) =>
         setState((s) => ({ ...s, mainBudgetPlanId: id })),
+      duplicateBudgetPlan: (id) => {
+        let created: BudgetPlan | undefined;
+        setState((s) => {
+          const src = (s.budgetPlans ?? []).find((p) => p.id === id);
+          if (!src) return s;
+          created = {
+            ...src,
+            id: uid(),
+            name: `${src.name} (copy)`,
+            items: src.items.map((it) => ({ ...it, id: uid() })),
+          };
+          return { ...s, budgetPlans: [...(s.budgetPlans ?? []), created] };
+        });
+        return created;
+      },
       addBudgetItem: (planId, item) =>
         setState((s) => ({
           ...s,
@@ -481,6 +498,16 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         }),
       setMainForecastScenario: (id) =>
         setState((s) => ({ ...s, mainForecastScenarioId: id })),
+      duplicateForecastScenario: (id) => {
+        let created: ForecastScenario | undefined;
+        setState((s) => {
+          const src = (s.forecastScenarios ?? []).find((sc) => sc.id === id);
+          if (!src) return s;
+          created = { ...src, id: uid(), name: `${src.name} (copy)` };
+          return { ...s, forecastScenarios: [...(s.forecastScenarios ?? []), created] };
+        });
+        return created;
+      },
       addGoal: (g) => {
         const created: SavingsGoal = { ...g, id: uid() };
         setState((s) => ({ ...s, goals: [...(s.goals ?? []), created] }));
