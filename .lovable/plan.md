@@ -1,69 +1,104 @@
 ## Goal
 
-Fix the Cashflow "Flow" (Sankey) so it is legible on mobile and doesn't collide with the Credit Cards widget. Match the reference: labels sit ABOVE each node with amount + percentage of the type total.
+Make the multi-budget and multi-forecast UX communicate "create as many as you want, for any purpose", and add pie-chart views (with editable colors, labels, and percentages) to both.
 
-## 1. Page layout (`src/routes/cashflow.tsx`)
+## 1. Budget plans (`src/routes/planning.tsx` + types + store)
 
-Today the Sankey lives in the right column of a 2-column `lg:grid-cols-2` next to Add-form + Credit Cards, which caps its width at ~half the viewport on desktop and lets the cards row overlap it on mobile.
+### 1a. Per-plan metadata
+Extend `BudgetPlan` in `src/lib/types.ts`:
 
-Change to three stacked sections (matches the request "its own space, beneath credit cards and above entries"):
-
+```ts
+export type BudgetPlan = {
+  id: string; name: string; items: BudgetItem[];
+  description?: string; // e.g. "Summer vacation to Japan"
+  color?: string;       // accent color, default from palette on create
+};
 ```
-[ StatCards row ]
-[ 2-col on lg: AddForm | CreditCards ]   ← Sankey removed from here
-[ Flow (Sankey) — full width, own Card ] ← new dedicated row
-[ Breakdown by category (collapsible) ]
-[ EntriesPanel ]
+
+- Extend `updateBudgetPlan` in the store — no signature change (already accepts `Partial<BudgetPlan>`).
+- Migration: existing plans get `color` from a rotating palette on first render (no persisted change until user edits).
+- Add the same fields to Zod schemas in `src/routes/settings.tsx` so import/export keeps them.
+
+### 1b. Plan-manager UX (freedom-focused)
+Replace the current single dropdown with a "workspace" strip:
+
+- Sticky top row: horizontal scroll of **plan chips** (color dot + name + item count). Active chip highlighted; "★ Main" badge on the main plan. Tap a chip to switch.
+- Trailing "+ New plan" chip. Clicking it opens a small dialog with: name, optional description, color picker (6-swatch palette + custom hex).
+- Active plan header card shows: color-tinted title, description (editable inline), total budget, spent-this-month, and buttons `Rename`, `Edit`, `Set main`, `Duplicate`, `Delete`.
+- "Duplicate" is new: copies items to a new plan named "{name} (copy)". Useful for building variants (e.g. duplicate baseline, tweak for a trip).
+- Empty state copy: "Create a budget for anything — a vacation, a personal project, a moving month, your regular monthly plan." with 3 quick-start template buttons (`Monthly`, `Vacation`, `Project`) that just prefill the name/description/color.
+
+### 1c. Per-item color override
+Extend `BudgetItem`:
+
+```ts
+export type BudgetItem = { ...; color?: string };
 ```
 
-- Remove the Sankey `<Card>` from the right column and render it as a standalone full-width card between the AddForm/CreditCards grid and the Breakdown collapsible.
-- Add generous vertical spacing (`mt-6 sm:mt-8`) between the CreditCards row and the Sankey card so on mobile the credit-cards manager can never overlap the graph.
-- Keep the period selector + "Reset last month" controls in the Sankey card header; on narrow widths let them wrap under the title instead of squeezing next to it (`flex-col sm:flex-row`).
+- In the item row and edit dialog, add a small color swatch. When empty, fall back to the linked category color, then to the plan color.
+- Persist through existing `updateBudgetItem`.
 
-## 2. SankeyChart rewrite (`src/components/sankey-chart.tsx`)
+### 1d. Budget pie chart (new, always visible under items)
+Add a new `<BudgetPieCard>` (in `src/components/budget-pie-card.tsx`) that renders one donut per active plan:
 
-Rebuild the label + sizing logic to be mobile-first.
+- Data: one slice per budget item, `value = toDisplay(item.amount, item.currency)`, `color = item.color ?? categoryColor ?? planColor`, `label = item.label`.
+- Center label: total budget for the plan.
+- Legend list below: swatch + label + `{amount} · {pct}%` of plan total.
+- Reuses the same visual language as `CategoryPieCard` (tooltip with `popover-foreground`, `allowEscapeViewBox`, "Other" rollup for slices <3%).
+- Renders next to the item list on `lg:` (2/3 items | 1/3 pie) and stacks under it on mobile.
+- Show/hide toggle button (default: shown for budgets — pie is the point) persisted in localStorage per user.
 
-### 2a. Use all available width
-- Drop the current large adaptive `leftMargin` / `rightMargin` (up to 220px) that we needed for side labels. With labels moved above the nodes, side margins can shrink to ~4–8px, so the sankey ribbons take almost the full container width.
-- Container already uses `ResizeObserver` on the wrapper; keep it, but set `min-width: 0` on the wrapper to make sure the parent flex/grid doesn't clip it.
+## 2. Forecast scenarios (`src/routes/planning.tsx` + types + store)
 
-### 2b. Labels above nodes (new default)
-- For each node render a two-line label group centered horizontally on the node's `x0..x1` band, positioned ABOVE the node rectangle (`y = n.y0 - gap`).
-  - Line 1: node name (bold, `--foreground`).
-  - Line 2: `{amount} ({pct}%)` (muted).
-- Anchor: `text-anchor: middle` when there's room; fall back to `start`/`end` for the leftmost/rightmost columns so the label doesn't clip the SVG edge.
-- Reserve extra top space per node so labels don't collide: increase `nodePadding` (bumped floor: mobile ≥28px, desktop ≥36px) and increase per-row baseline height (mobile 68px, desktop 78px).
-- Increase top margin to fit the top row's label (`margin.top = 40` mobile / `48` desktop).
-- Truncate long names with a wider budget than today (labels are no longer cramped side-columns).
+### 2a. Per-scenario metadata
+Extend `ForecastScenario`:
 
-### 2c. Percentages of type total
-Already computed as `pctFor(n)` (income → `n.value/incomeTotal`, expense → `n.value/expenseTotal`). Keep the same formula and always render `{money} ({pct}%)` on both income and expense nodes, matching the reference image. Pool/Saved/account nodes render just the money (no pct — they're not a "type").
+```ts
+export type ForecastScenario = {
+  ...; description?: string; color?: string;
+};
+```
 
-### 2d. Label visibility policy
-- Wide screens (`width >= 640`): show all labels always (ignore `labelMode` "always" default; overrideable via existing SankeyControls).
-- Narrow screens (`width < 640`): default to hover/tap-only labels. Only the tapped/hovered node's label is visible; others fade to 0. Implement with local `activeIdx` state on `SankeyChart`; `onPointerEnter` / `onPointerLeave` for hover, and toggle on `onClick` for tap. Existing `SankeyControls` "Labels" selector still lets the user force "always" or "off".
-- Keep the existing native `<title>` tooltip on each rect so long-press on mobile still surfaces the name + amount.
+Migration + schema update same as budgets.
 
-### 2e. Anti-collision safety
-- Add `overflow: visible` to the SVG (already there) and remove the parent `overflow-hidden` wrapper in `cashflow.tsx` around the SankeyChart so top labels aren't clipped.
-- Cap link stroke width at `max(1, min(l.width, 40))` so a single huge income/expense doesn't create a ribbon that swallows adjacent labels.
+### 2b. Scenario-manager UX
+Same chip strip pattern as budgets:
 
-## 3. Keep working
+- Horizontal chip scroller with color dot + name; trailing `+ New scenario`.
+- New dialog fields: name, description, color, months, income adjust, expense adjust, currency, notes.
+- Header buttons: `Rename`, `Edit`, `Set main`, `Duplicate`, `Delete`.
+- Empty-state templates: `Personal`, `Small business`, `Side project`, `Optimistic (+income)`, `Downturn (+expense)` — each seeds sensible defaults.
 
-- Drag-to-reorder for income/expense nodes: keep the pointer handlers; the drag target is still the node `<rect>`, only label position changed.
-- Color pickers in SankeyControls: unchanged.
-- Screenshot / PDF export via `ChartFrame`: unchanged (SVG structure still renders identically to raster).
-- i18n: no new strings needed; existing labels + percentages are numeric.
+### 2c. Recurring income/expense pies (collapsible, hidden by default)
+Add a `<Collapsible>` section under the forecast chart titled **"Recurring income & expenses"**, hidden by default (persist open/closed per scenario in localStorage).
 
-## Technical notes (for reference)
+Compute from the same recurring cashflows the forecast baseline uses:
+- `recurringIncomeByMonth`: sum of resolved values from `expandCashflows(state.cashflows, oneMonthFromNow)` filtered to `kind === "income"` and grouped by `source` (fallback "Other"), for the next 1 month.
+- `recurringExpenseByMonth`: same for `kind === "expense"` grouped by `category`.
+- Include the scenario's `monthlyIncomeAdjust` / `monthlyExpenseAdjust` as an extra "Scenario adjustment" slice (only when non-zero).
 
-- `pctFor` already exists and is exported implicitly through render logic; no data-model change.
-- Height auto-computation formula becomes: `rowH = isNarrow ? 68 : 78; height = max(isNarrow ? 380 : 460, maxSide * rowH + margin.top + margin.bottom)`.
-- `labelMode` prop stays; new effective default when unset on narrow is `"hover"`. `SankeyControls` in `cashflow.tsx` keeps writing to `prefs.labelMode`, so the user can still force `always`/`off`.
-- No API/schema changes. No new deps.
+Render two pies side by side (stacked on mobile) using the same `BudgetPieCard` component, retitled per pie. Slice colors come from the category color when available; otherwise a stable palette. Each slice shows `{amount} · {pct}%` of the pie's total in the legend and in the tooltip.
 
-## Out of scope
+## 3. Store additions (`src/lib/store.tsx`)
 
-- No changes to CategoryPieCard or breakdown behavior.
-- No changes to entries panel, add form, or credit cards widget internals (only their position in the page grid).
+- `duplicateBudgetPlan(id: string): BudgetPlan` — deep-copies items with new ids.
+- `duplicateForecastScenario(id: string): ForecastScenario`.
+- Everything else uses existing `update*` methods with the new optional fields.
+
+## 4. i18n
+
+Add strings under `planning.budgets.*` and `planning.forecast.*` for: description placeholder, color, duplicate, template names, "Recurring income", "Recurring expenses", "Show/Hide breakdown". Add English defaults inline via `t(key, { defaultValue })` so no locale file needs to ship in this pass.
+
+## 5. Out of scope
+
+- Goals and Loans panels are untouched.
+- No changes to how the forecast projection line is computed — pies only visualize the existing baseline recurring flows plus the scenario adjustment.
+- No new dependencies (recharts + existing pie card cover everything).
+
+## Technical notes
+
+- Reuse `CategoryPieCard` if adaptable; if the per-slice color/label freedom conflicts, factor a smaller `DonutChart` primitive that both `CategoryPieCard` and `BudgetPieCard` consume. Prefer the second (cleaner) approach.
+- Chip strip: `overflow-x-auto` + `snap-x` on mobile; wraps to grid on `sm:`.
+- Color picker: reuse the swatch pattern from `credit-cards-manager.tsx` if present; otherwise a small inline component with 8 palette swatches + native `<input type="color">`.
+- Collapsible: shadcn `Collapsible` already imported elsewhere in the project.
+- Persist per-scenario "breakdown open" state under `planning_forecast_breakdown_open_v1` (map of scenarioId → bool) via `secureSet` (already used for cashflow prefs).
