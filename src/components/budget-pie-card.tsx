@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ColorSwatchPicker } from "@/components/color-swatch-picker";
 
 export type PieSlice = {
   id: string;
@@ -18,6 +19,9 @@ type Props = {
   /** Palette used when a slice has no explicit color. */
   palette?: string[];
   className?: string;
+  /** When provided, each legend row exposes a color picker so users can
+   *  override the slice color. Called with (sliceId, color|undefined). */
+  onColorChange?: (sliceId: string, color: string | undefined) => void;
 };
 
 const DEFAULT_PALETTE = [
