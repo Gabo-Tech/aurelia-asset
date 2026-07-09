@@ -99,6 +99,17 @@ function CurrencyPicker({ value, onChange, className }: { value: string; onChang
   );
 }
 
+const BUDGET_TEMPLATES: {
+  key: "monthly" | "vacation" | "project";
+  name: string;
+  description: string;
+  color: string;
+}[] = [
+  { key: "monthly", name: "Monthly", description: "Your regular monthly plan", color: "#3b82f6" },
+  { key: "vacation", name: "Vacation", description: "Trip or getaway budget", color: "#f59e0b" },
+  { key: "project", name: "Personal project", description: "Side project or one-off", color: "#a78bfa" },
+];
+
 function BudgetsPanel() {
   const { t } = useTranslation();
   const {
@@ -107,6 +118,7 @@ function BudgetsPanel() {
     updateBudgetPlan,
     removeBudgetPlan,
     setMainBudgetPlan,
+    duplicateBudgetPlan,
     addBudgetItem,
     updateBudgetItem,
     removeBudgetItem,
@@ -119,11 +131,19 @@ function BudgetsPanel() {
   const [activeId, setActiveId] = useState<string | undefined>(mainId ?? plans[0]?.id);
   const activePlan = plans.find((p) => p.id === activeId) ?? plans.find((p) => p.id === mainId) ?? plans[0];
 
+  // Assign a stable auto-color to plans without one, indexed by position.
+  const planAccent = (plan: BudgetPlan) => {
+    if (plan.color) return plan.color;
+    const idx = plans.findIndex((p) => p.id === plan.id);
+    return SWATCH_PALETTE[(idx < 0 ? 0 : idx) % SWATCH_PALETTE.length];
+  };
+
   // New-item form state
   const [label, setLabel] = useState("");
   const [amount, setAmount] = useState("");
   const [entryCurrency, setEntryCurrency] = useState(displayCurrency);
   const [linkCategoryId, setLinkCategoryId] = useState<string>("none");
+  const [itemColor, setItemColor] = useState<string | undefined>(undefined);
 
   const monthSpent = useMemo(() => {
     const now = new Date();
@@ -148,8 +168,14 @@ function BudgetsPanel() {
     return byCat;
   }, [state.cashflows, state.categories, toDisplay]);
 
-  const createPlan = () => {
-    const p = addBudgetPlan(t("planning.budgets.newPlanName", { defaultValue: "New plan" }));
+  const createPlan = (preset?: { name?: string; description?: string; color?: string }) => {
+    const p = addBudgetPlan(preset?.name || t("planning.budgets.newPlanName", { defaultValue: "New plan" }));
+    if (preset?.description || preset?.color) {
+      updateBudgetPlan(p.id, { description: preset.description, color: preset.color });
+    } else if (!p.color) {
+      const idx = plans.length;
+      updateBudgetPlan(p.id, { color: SWATCH_PALETTE[idx % SWATCH_PALETTE.length] });
+    }
     setActiveId(p.id);
   };
 
@@ -164,23 +190,48 @@ function BudgetsPanel() {
       amount: a,
       currency: entryCurrency,
       categoryId: catId,
+      color: itemColor,
     });
     setLabel("");
     setAmount("");
     setLinkCategoryId("none");
+    setItemColor(undefined);
+  };
+
+  const itemColorOf = (it: BudgetItem, plan: BudgetPlan) => {
+    if (it.color) return it.color;
+    const cat = it.categoryId ? state.categories.find((c) => c.id === it.categoryId) : undefined;
+    if (cat?.color) return cat.color;
+    return planAccent(plan);
   };
 
   if (plans.length === 0) {
     return (
       <Card>
         <CardContent className="py-10 text-center space-y-4">
-          <p className="text-sm text-muted-foreground">
-            {t("planning.budgets.noPlans", { defaultValue: "No budget plans yet. Create one to start planning." })}
+          <p className="text-sm text-muted-foreground max-w-md mx-auto">
+            {t("planning.budgets.noPlansHint", {
+              defaultValue:
+                "Create a budget for anything — your regular monthly plan, a vacation, a personal project, a moving month. Add as many as you want.",
+            })}
           </p>
-          <Button onClick={createPlan}>
-            <Plus className="h-4 w-4 mr-1" />
-            {t("planning.budgets.newPlan", { defaultValue: "New plan" })}
-          </Button>
+          <div className="flex flex-wrap justify-center gap-2">
+            {BUDGET_TEMPLATES.map((tpl) => (
+              <Button
+                key={tpl.key}
+                variant="outline"
+                size="sm"
+                onClick={() => createPlan(tpl)}
+              >
+                <span className="mr-2 inline-block h-2.5 w-2.5 rounded-full" style={{ background: tpl.color }} />
+                {tpl.name}
+              </Button>
+            ))}
+            <Button size="sm" onClick={() => createPlan()}>
+              <Plus className="h-4 w-4 mr-1" />
+              {t("planning.budgets.newPlan", { defaultValue: "New plan" })}
+            </Button>
+          </div>
         </CardContent>
       </Card>
     );
@@ -188,198 +239,357 @@ function BudgetsPanel() {
 
   return (
     <div className="space-y-4">
-      {/* Plan selector bar */}
-      <div className="flex flex-wrap items-center gap-2">
-        <Label className="text-xs uppercase tracking-wide text-muted-foreground">
-          {t("planning.budgets.plan", { defaultValue: "Plan" })}
-        </Label>
-        <Select value={activePlan?.id} onValueChange={setActiveId}>
-          <SelectTrigger className="h-9 w-56"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            {plans.map((p) => (
-              <SelectItem key={p.id} value={p.id}>
-                {p.name}{p.id === mainId ? " ★" : ""}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {activePlan ? (
-          <>
-            <Button
-              variant={activePlan.id === mainId ? "secondary" : "outline"}
-              size="sm"
-              onClick={() => setMainBudgetPlan(activePlan.id === mainId ? undefined : activePlan.id)}
-              title={t("planning.budgets.setMainHint", { defaultValue: "Shown first on load" })}
+      {/* Plan chip strip */}
+      <div className="flex items-stretch gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+        {plans.map((p) => {
+          const active = p.id === activePlan?.id;
+          const c = planAccent(p);
+          return (
+            <button
+              key={p.id}
+              type="button"
+              onClick={() => setActiveId(p.id)}
+              className={`shrink-0 rounded-full border px-3 py-1.5 text-xs flex items-center gap-1.5 transition-colors ${
+                active
+                  ? "border-foreground/30 bg-muted"
+                  : "border-border/60 hover:bg-muted/60"
+              }`}
+              style={active ? { boxShadow: `inset 0 0 0 1px ${c}55` } : undefined}
             >
-              {activePlan.id === mainId ? (
-                <><Star className="h-3.5 w-3.5 mr-1 fill-current" /> {t("planning.budgets.isMain", { defaultValue: "Main" })}</>
-              ) : (
-                <><StarOff className="h-3.5 w-3.5 mr-1" /> {t("planning.budgets.setMain", { defaultValue: "Set as main" })}</>
-              )}
-            </Button>
-            <RenamePlanButton plan={activePlan} onSave={(name) => updateBudgetPlan(activePlan.id, { name })} />
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                if (confirm(t("planning.budgets.deletePlanConfirm", { defaultValue: "Delete this plan?" }))) {
-                  removeBudgetPlan(activePlan.id);
-                  setActiveId(undefined);
-                }
-              }}
+              <span className="h-2 w-2 rounded-full" style={{ background: c }} />
+              <span className="font-medium">{p.name}</span>
+              {p.id === mainId ? <Star className="h-3 w-3 fill-current text-amber-400" /> : null}
+              <span className="text-muted-foreground">({p.items.length})</span>
+            </button>
+          );
+        })}
+        <PlanDialog
+          trigger={
+            <button
+              type="button"
+              className="shrink-0 rounded-full border border-dashed border-border/60 px-3 py-1.5 text-xs flex items-center gap-1 hover:bg-muted/60"
             >
-              <Trash2 className="h-3.5 w-3.5 mr-1" />
-              {t("planning.budgets.deletePlan", { defaultValue: "Delete" })}
-            </Button>
-          </>
-        ) : null}
-        <div className="flex-1" />
-        <Button variant="outline" size="sm" onClick={createPlan}>
-          <Plus className="h-4 w-4 mr-1" />
-          {t("planning.budgets.newPlan", { defaultValue: "New plan" })}
-        </Button>
+              <Plus className="h-3.5 w-3.5" />
+              {t("planning.budgets.newPlan", { defaultValue: "New plan" })}
+            </button>
+          }
+          onSubmit={(vals) => createPlan(vals)}
+        />
       </div>
 
       {activePlan ? (
-        <div className="grid lg:grid-cols-3 gap-6">
-          <Card className="lg:col-span-1">
-            <CardHeader>
-              <CardTitle className="text-base">{t("planning.budgets.addTitle")}</CardTitle>
+        <>
+          {/* Header card */}
+          <Card
+            className="border-l-4"
+            style={{ borderLeftColor: planAccent(activePlan) }}
+          >
+            <CardHeader className="pb-3">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <span className="h-2.5 w-2.5 rounded-full" style={{ background: planAccent(activePlan) }} />
+                    <span className="truncate">{activePlan.name}</span>
+                  </CardTitle>
+                  {activePlan.description ? (
+                    <div className="mt-1 text-sm text-muted-foreground">{activePlan.description}</div>
+                  ) : null}
+                  {activePlan.items.length > 0
+                    ? (() => {
+                        const totalBudget = activePlan.items.reduce((sum, it) => sum + toDisplay(it.amount, it.currency), 0);
+                        const totalSpent = activePlan.items.reduce(
+                          (sum, it) => sum + (it.categoryId ? monthSpent.get(it.categoryId) ?? 0 : 0),
+                          0,
+                        );
+                        const over = totalSpent > totalBudget;
+                        return (
+                          <div className="mt-2 text-xs text-muted-foreground">
+                            {t("planning.budgets.total", { defaultValue: "Total" })}:{" "}
+                            <span className={over ? "text-destructive font-medium" : "font-medium text-foreground"}>
+                              {fmt(totalSpent)} / {fmt(totalBudget)}
+                            </span>
+                          </div>
+                        );
+                      })()
+                    : null}
+                </div>
+                <div className="flex flex-wrap items-center gap-1">
+                  <Button
+                    variant={activePlan.id === mainId ? "secondary" : "outline"}
+                    size="sm"
+                    onClick={() => setMainBudgetPlan(activePlan.id === mainId ? undefined : activePlan.id)}
+                  >
+                    {activePlan.id === mainId ? (
+                      <><Star className="h-3.5 w-3.5 mr-1 fill-current" /> {t("planning.budgets.isMain", { defaultValue: "Main" })}</>
+                    ) : (
+                      <><StarOff className="h-3.5 w-3.5 mr-1" /> {t("planning.budgets.setMain", { defaultValue: "Set as main" })}</>
+                    )}
+                  </Button>
+                  <PlanDialog
+                    mode="edit"
+                    initial={{ name: activePlan.name, description: activePlan.description, color: planAccent(activePlan) }}
+                    trigger={
+                      <Button size="sm" variant="ghost">
+                        <Pencil className="h-3.5 w-3.5 mr-1" />
+                        {t("planning.budgets.edit", { defaultValue: "Edit" })}
+                      </Button>
+                    }
+                    onSubmit={(vals) => updateBudgetPlan(activePlan.id, vals)}
+                  />
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      const p = duplicateBudgetPlan(activePlan.id);
+                      if (p) setActiveId(p.id);
+                    }}
+                  >
+                    <Copy className="h-3.5 w-3.5 mr-1" />
+                    {t("planning.budgets.duplicate", { defaultValue: "Duplicate" })}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      if (confirm(t("planning.budgets.deletePlanConfirm", { defaultValue: "Delete this plan?" }))) {
+                        removeBudgetPlan(activePlan.id);
+                        setActiveId(undefined);
+                      }
+                    }}
+                  >
+                    <Trash2 className="h-3.5 w-3.5 mr-1" />
+                    {t("planning.budgets.deletePlan", { defaultValue: "Delete" })}
+                  </Button>
+                </div>
+              </div>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <div>
-                <Label>{t("planning.budgets.itemLabel", { defaultValue: "Label" })}</Label>
-                <Input
-                  value={label}
-                  onChange={(e) => setLabel(e.target.value)}
-                  placeholder={t("planning.budgets.labelPlaceholder", { defaultValue: "e.g. Vacation fund" })}
-                />
-              </div>
-              <div>
-                <Label>{t("planning.budgets.linkCategory", { defaultValue: "Link to category (optional)" })}</Label>
-                <Select value={linkCategoryId} onValueChange={setLinkCategoryId}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">
-                      {t("planning.budgets.noCategory", { defaultValue: "None — track manually" })}
-                    </SelectItem>
-                    {expenseCats.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid grid-cols-[1fr_auto] gap-2">
-                <div>
-                  <Label>{t("planning.budgets.monthlyLimit")}</Label>
-                  <Input inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder={t("planning.budgets.limitPlaceholder")} />
-                </div>
-                <div>
-                  <Label>{t("planning.budgets.currency")}</Label>
-                  <CurrencyPicker value={entryCurrency} onChange={setEntryCurrency} className="w-28" />
-                </div>
-              </div>
-              <Button onClick={submitItem} className="w-full">
-                <Plus className="h-4 w-4 mr-1" />{t("planning.budgets.addBudget")}
-              </Button>
-            </CardContent>
           </Card>
 
-          <Card className="lg:col-span-2">
-            <CardHeader>
-              <CardTitle className="text-base flex items-center justify-between gap-2">
-                <span>{activePlan.name} — {t("planning.budgets.thisMonth")}</span>
-                {activePlan.items.length > 0 ? (() => {
-                  const totalBudget = activePlan.items.reduce((sum, it) => sum + toDisplay(it.amount, it.currency), 0);
-                  const totalSpent = activePlan.items.reduce((sum, it) => sum + (it.categoryId ? (monthSpent.get(it.categoryId) ?? 0) : 0), 0);
-                  const over = totalSpent > totalBudget;
-                  return (
-                    <span className="text-xs font-normal text-muted-foreground">
-                      {t("planning.budgets.total", { defaultValue: "Total" })}:{" "}
-                      <span className={over ? "text-destructive font-medium" : "font-medium text-foreground"}>
-                        {fmt(totalSpent)} / {fmt(totalBudget)}
-                      </span>
-                    </span>
-                  );
-                })() : null}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {activePlan.items.length === 0 ? (
-                <p className="text-sm text-muted-foreground">{t("planning.budgets.empty")}</p>
-              ) : null}
+          <div className="grid lg:grid-cols-3 gap-6">
+            <Card className="lg:col-span-1">
+              <CardHeader>
+                <CardTitle className="text-base">{t("planning.budgets.addTitle")}</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div>
+                  <Label>{t("planning.budgets.itemLabel", { defaultValue: "Label" })}</Label>
+                  <Input
+                    value={label}
+                    onChange={(e) => setLabel(e.target.value)}
+                    placeholder={t("planning.budgets.labelPlaceholder", { defaultValue: "e.g. Vacation fund" })}
+                  />
+                </div>
+                <div>
+                  <Label>{t("planning.budgets.linkCategory", { defaultValue: "Link to category (optional)" })}</Label>
+                  <Select value={linkCategoryId} onValueChange={setLinkCategoryId}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">
+                        {t("planning.budgets.noCategory", { defaultValue: "None — track manually" })}
+                      </SelectItem>
+                      {expenseCats.map((c) => (
+                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid grid-cols-[1fr_auto] gap-2">
+                  <div>
+                    <Label>{t("planning.budgets.monthlyLimit")}</Label>
+                    <Input inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder={t("planning.budgets.limitPlaceholder")} />
+                  </div>
+                  <div>
+                    <Label>{t("planning.budgets.currency")}</Label>
+                    <CurrencyPicker value={entryCurrency} onChange={setEntryCurrency} className="w-28" />
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Label className="text-xs">{t("planning.budgets.color", { defaultValue: "Color" })}</Label>
+                  <ColorSwatchPicker value={itemColor} onChange={setItemColor} />
+                  <span className="text-xs text-muted-foreground">
+                    {t("planning.budgets.colorHint", { defaultValue: "Optional — falls back to category" })}
+                  </span>
+                </div>
+                <Button onClick={submitItem} className="w-full">
+                  <Plus className="h-4 w-4 mr-1" />{t("planning.budgets.addBudget")}
+                </Button>
+              </CardContent>
+            </Card>
 
-              {activePlan.items.map((it) => {
-                const cat = it.categoryId ? state.categories.find((c) => c.id === it.categoryId) : undefined;
-                const tracked = !!it.categoryId;
-                const spent = tracked ? (monthSpent.get(it.categoryId!) ?? 0) : 0;
-                const budgetDisp = toDisplay(it.amount, it.currency);
-                const pct = tracked ? Math.min(100, (spent / Math.max(0.0001, budgetDisp)) * 100) : 0;
-                const over = tracked && spent > budgetDisp;
-                const displayName = it.label || cat?.name || t("planning.budgets.unknown");
-                return (
-                  <div key={it.id} className="space-y-1">
-                    <div className="flex items-center justify-between gap-2 text-sm">
-                      <span className="font-medium flex items-center gap-2 min-w-0">
-                        <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: cat?.color || "#888" }} />
-                        <span className="truncate">{displayName}</span>
-                        {!tracked ? (
-                          <span className="text-[10px] uppercase tracking-wide text-muted-foreground/70">
-                            {t("planning.budgets.manual", { defaultValue: "manual" })}
-                          </span>
-                        ) : null}
-                      </span>
-                      <span className={over ? "text-destructive font-medium" : "text-muted-foreground"}>
-                        {tracked ? `${fmt(spent)} / ${fmt(budgetDisp)}` : fmt(budgetDisp)}
-                      </span>
-                    </div>
-                    {tracked ? (
-                      <Progress value={pct} className={over ? "[&>div]:bg-destructive" : ""} />
-                    ) : null}
-                    <div className="flex items-center justify-between text-xs">
-                      <span className={over ? "text-destructive" : "text-muted-foreground"}>
-                        {tracked
-                          ? over
-                            ? t("planning.budgets.overBy", { amount: fmt(spent - budgetDisp) })
-                            : t("planning.budgets.left", { amount: fmt(budgetDisp - spent) })
-                          : t("planning.budgets.notTracked", { defaultValue: "Not tracked from cashflow" })}
-                      </span>
-                      <div className="flex items-center gap-1">
-                        <EditBudgetItemButton
-                          item={it}
-                          onSave={(patch) => updateBudgetItem(activePlan.id, it.id, patch)}
+            <Card className="lg:col-span-2">
+              <CardHeader>
+                <CardTitle className="text-base">
+                  {t("planning.budgets.thisMonth")}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {activePlan.items.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">{t("planning.budgets.empty")}</p>
+                ) : null}
+
+                {activePlan.items.map((it) => {
+                  const cat = it.categoryId ? state.categories.find((c) => c.id === it.categoryId) : undefined;
+                  const tracked = !!it.categoryId;
+                  const spent = tracked ? (monthSpent.get(it.categoryId!) ?? 0) : 0;
+                  const budgetDisp = toDisplay(it.amount, it.currency);
+                  const pct = tracked ? Math.min(100, (spent / Math.max(0.0001, budgetDisp)) * 100) : 0;
+                  const over = tracked && spent > budgetDisp;
+                  const displayName = it.label || cat?.name || t("planning.budgets.unknown");
+                  const swatch = itemColorOf(it, activePlan);
+                  return (
+                    <div key={it.id} className="space-y-1">
+                      <div className="flex items-center justify-between gap-2 text-sm">
+                        <span className="font-medium flex items-center gap-2 min-w-0">
+                          <ColorSwatchPicker
+                            value={it.color}
+                            onChange={(c) => updateBudgetItem(activePlan.id, it.id, { color: c })}
+                            size={12}
+                            ariaLabel="Item color"
+                          />
+                          <span className="truncate">{displayName}</span>
+                          {!tracked ? (
+                            <span className="text-[10px] uppercase tracking-wide text-muted-foreground/70">
+                              {t("planning.budgets.manual", { defaultValue: "manual" })}
+                            </span>
+                          ) : null}
+                        </span>
+                        <span className={over ? "text-destructive font-medium" : "text-muted-foreground"}>
+                          {tracked ? `${fmt(spent)} / ${fmt(budgetDisp)}` : fmt(budgetDisp)}
+                        </span>
+                      </div>
+                      {tracked ? (
+                        <Progress
+                          value={pct}
+                          className={over ? "[&>div]:bg-destructive" : ""}
+                          style={!over ? ({ ["--progress-fg" as any]: swatch } as any) : undefined}
                         />
-                        <Button size="icon" variant="ghost" onClick={() => removeBudgetItem(activePlan.id, it.id)}>
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
+                      ) : null}
+                      <div className="flex items-center justify-between text-xs">
+                        <span className={over ? "text-destructive" : "text-muted-foreground"}>
+                          {tracked
+                            ? over
+                              ? t("planning.budgets.overBy", { amount: fmt(spent - budgetDisp) })
+                              : t("planning.budgets.left", { amount: fmt(budgetDisp - spent) })
+                            : t("planning.budgets.notTracked", { defaultValue: "Not tracked from cashflow" })}
+                        </span>
+                        <div className="flex items-center gap-1">
+                          <EditBudgetItemButton
+                            item={it}
+                            onSave={(patch) => updateBudgetItem(activePlan.id, it.id, patch)}
+                          />
+                          <Button size="icon" variant="ghost" onClick={() => removeBudgetItem(activePlan.id, it.id)}>
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
-            </CardContent>
-          </Card>
-        </div>
+                  );
+                })}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Pie */}
+          {activePlan.items.length > 0 ? (
+            <BudgetPieCard
+              title={t("planning.budgets.pieTitle", { defaultValue: "Budget breakdown" })}
+              centerLabel={t("planning.budgets.total", { defaultValue: "Total" })}
+              slices={activePlan.items.map<PieSlice>((it) => ({
+                id: it.id,
+                label: it.label || state.categories.find((c) => c.id === it.categoryId)?.name || t("planning.budgets.unknown"),
+                value: toDisplay(it.amount, it.currency),
+                color: itemColorOf(it, activePlan),
+              }))}
+              format={(v) => fmt(v)}
+              emptyLabel={t("planning.budgets.pieEmpty", { defaultValue: "Add items to see the breakdown" })}
+            />
+          ) : null}
+        </>
       ) : null}
     </div>
   );
 }
 
-function RenamePlanButton({ plan, onSave }: { plan: BudgetPlan; onSave: (name: string) => void }) {
-  const [editing, setEditing] = useState(false);
-  const [name, setName] = useState(plan.name);
-  if (!editing) {
-    return (
-      <Button size="sm" variant="ghost" onClick={() => { setName(plan.name); setEditing(true); }}>
-        <Pencil className="h-3.5 w-3.5 mr-1" /> Rename
-      </Button>
-    );
-  }
+/** Create / edit dialog for a budget plan (name + description + color). */
+function PlanDialog({
+  trigger,
+  onSubmit,
+  initial,
+  mode = "create",
+}: {
+  trigger: React.ReactNode;
+  onSubmit: (vals: { name: string; description?: string; color?: string }) => void;
+  initial?: { name?: string; description?: string; color?: string };
+  mode?: "create" | "edit";
+}) {
+  const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState(initial?.name ?? "");
+  const [description, setDescription] = useState(initial?.description ?? "");
+  const [color, setColor] = useState<string | undefined>(initial?.color);
   return (
-    <div className="flex items-center gap-1">
-      <Input className="h-8 w-40" value={name} onChange={(e) => setName(e.target.value)} />
-      <Button size="sm" variant="secondary" onClick={() => { if (name.trim()) onSave(name.trim()); setEditing(false); }}>OK</Button>
-    </div>
+    <Dialog open={open} onOpenChange={(v) => {
+      setOpen(v);
+      if (v) {
+        setName(initial?.name ?? "");
+        setDescription(initial?.description ?? "");
+        setColor(initial?.color);
+      }
+    }}>
+      <DialogTrigger asChild>{trigger}</DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>
+            {mode === "edit"
+              ? t("planning.budgets.editPlan", { defaultValue: "Edit plan" })
+              : t("planning.budgets.newPlan", { defaultValue: "New plan" })}
+          </DialogTitle>
+          <DialogDescription>
+            {t("planning.budgets.planDialogDesc", {
+              defaultValue: "Give this budget a clear name so you can tell it apart from your others.",
+            })}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div>
+            <Label>{t("planning.budgets.planName", { defaultValue: "Name" })}</Label>
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder={t("planning.budgets.planNamePlaceholder", { defaultValue: "e.g. Japan trip 2026" })}
+            />
+          </div>
+          <div>
+            <Label>{t("planning.budgets.planDescription", { defaultValue: "Description (optional)" })}</Label>
+            <Textarea
+              rows={2}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder={t("planning.budgets.planDescriptionPlaceholder", { defaultValue: "What is this budget for?" })}
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <Label className="text-xs">{t("planning.budgets.color", { defaultValue: "Color" })}</Label>
+            <ColorSwatchPicker value={color} onChange={setColor} />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => setOpen(false)}>
+            {t("common.cancel", { defaultValue: "Cancel" })}
+          </Button>
+          <Button
+            onClick={() => {
+              const n = name.trim();
+              if (!n) return;
+              onSubmit({ name: n, description: description.trim() || undefined, color });
+              setOpen(false);
+            }}
+          >
+            {mode === "edit" ? t("common.save", { defaultValue: "Save" }) : t("common.create", { defaultValue: "Create" })}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -400,6 +610,9 @@ function EditBudgetItemButton({ item, onSave }: { item: BudgetItem; onSave: (p: 
     </div>
   );
 }
+
+// RenamePlanButton removed — replaced by PlanDialog (which handles name + description + color).
+
 
 
 /* -------------------- Goals -------------------- */
