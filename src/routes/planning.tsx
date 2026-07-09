@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { addMonths, format, startOfMonth, endOfMonth, isWithinInterval } from "date-fns";
+import { addMonths, format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, startOfDay, endOfDay, startOfYear, endOfYear, subDays, isWithinInterval } from "date-fns";
 import { useStore, useMoney } from "@/lib/store";
 import { PageHeader } from "@/components/app-shell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,7 +25,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import type { Budget, BudgetPlan, BudgetItem, ForecastScenario, Loan, CashflowEntry } from "@/lib/types";
+import type { Budget, BudgetPlan, BudgetItem, BudgetPeriodType, ForecastScenario, Loan, CashflowEntry } from "@/lib/types";
 import { Star, StarOff, Copy } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -104,11 +104,57 @@ const BUDGET_TEMPLATES: {
   name: string;
   description: string;
   color: string;
+  periodType?: BudgetPeriodType;
+  periodDays?: number;
 }[] = [
-  { key: "monthly", name: "Monthly", description: "Your regular monthly plan", color: "#3b82f6" },
-  { key: "vacation", name: "Vacation", description: "Trip or getaway budget", color: "#f59e0b" },
-  { key: "project", name: "Personal project", description: "Side project or one-off", color: "#a78bfa" },
+  { key: "monthly", name: "Monthly", description: "Your regular monthly plan", color: "#3b82f6", periodType: "monthly" },
+  { key: "vacation", name: "Vacation", description: "Trip or getaway budget", color: "#f59e0b", periodType: "custom", periodDays: 10 },
+  { key: "project", name: "Personal project", description: "Side project or one-off", color: "#a78bfa", periodType: "custom", periodDays: 30 },
 ];
+
+const PERIOD_OPTIONS: { value: BudgetPeriodType; label: string }[] = [
+  { value: "daily", label: "Daily" },
+  { value: "weekly", label: "Weekly" },
+  { value: "biweekly", label: "Every 2 weeks" },
+  { value: "monthly", label: "Monthly" },
+  { value: "yearly", label: "Yearly" },
+  { value: "custom", label: "Custom (N days)" },
+];
+
+/** Compute the current window and a short label for a plan's period. */
+function computePlanWindow(plan: Pick<BudgetPlan, "periodType" | "periodDays">): {
+  start: Date;
+  end: Date;
+  label: string;
+} {
+  const now = new Date();
+  const type = plan.periodType ?? "monthly";
+  switch (type) {
+    case "daily":
+      return { start: startOfDay(now), end: endOfDay(now), label: "Today" };
+    case "weekly":
+      return {
+        start: startOfWeek(now, { weekStartsOn: 1 }),
+        end: endOfWeek(now, { weekStartsOn: 1 }),
+        label: "This week",
+      };
+    case "biweekly": {
+      const start = startOfDay(subDays(now, 13));
+      return { start, end: endOfDay(now), label: "Last 14 days" };
+    }
+    case "yearly":
+      return { start: startOfYear(now), end: endOfYear(now), label: "This year" };
+    case "custom": {
+      const n = Math.max(1, Math.min(3650, Math.floor(plan.periodDays || 30)));
+      const start = startOfDay(subDays(now, n - 1));
+      return { start, end: endOfDay(now), label: `Last ${n} days` };
+    }
+    case "monthly":
+    default:
+      return { start: startOfMonth(now), end: endOfMonth(now), label: "This month" };
+  }
+}
+
 
 function BudgetsPanel() {
   const { t } = useTranslation();
@@ -145,10 +191,16 @@ function BudgetsPanel() {
   const [linkCategoryId, setLinkCategoryId] = useState<string>("none");
   const [itemColor, setItemColor] = useState<string | undefined>(undefined);
 
+  const planWindow = useMemo(
+    () =>
+      activePlan
+        ? computePlanWindow(activePlan)
+        : { start: startOfMonth(new Date()), end: endOfMonth(new Date()), label: "This month" },
+    [activePlan?.periodType, activePlan?.periodDays, activePlan?.id],
+  );
+
   const monthSpent = useMemo(() => {
-    const now = new Date();
-    const start = startOfMonth(now);
-    const end = endOfMonth(now);
+    const { start, end } = planWindow;
     const expanded = expandCashflows(state.cashflows, end);
     const values = valuesByEntry(expanded, toDisplay);
     const nameToId = new Map<string, string>();
@@ -166,16 +218,23 @@ function BudgetsPanel() {
       byCat.set(catId, (byCat.get(catId) ?? 0) + v);
     }
     return byCat;
-  }, [state.cashflows, state.categories, toDisplay]);
+  }, [state.cashflows, state.categories, toDisplay, planWindow]);
 
-  const createPlan = (preset?: { name?: string; description?: string; color?: string }) => {
+  const createPlan = (preset?: {
+    name?: string;
+    description?: string;
+    color?: string;
+    periodType?: BudgetPeriodType;
+    periodDays?: number;
+  }) => {
     const p = addBudgetPlan(preset?.name || t("planning.budgets.newPlanName", { defaultValue: "New plan" }));
-    if (preset?.description || preset?.color) {
-      updateBudgetPlan(p.id, { description: preset.description, color: preset.color });
-    } else if (!p.color) {
-      const idx = plans.length;
-      updateBudgetPlan(p.id, { color: SWATCH_PALETTE[idx % SWATCH_PALETTE.length] });
-    }
+    const patch: Partial<BudgetPlan> = {};
+    if (preset?.description) patch.description = preset.description;
+    if (preset?.color) patch.color = preset.color;
+    else if (!p.color) patch.color = SWATCH_PALETTE[plans.length % SWATCH_PALETTE.length];
+    if (preset?.periodType) patch.periodType = preset.periodType;
+    if (preset?.periodDays) patch.periodDays = preset.periodDays;
+    if (Object.keys(patch).length > 0) updateBudgetPlan(p.id, patch);
     setActiveId(p.id);
   };
 
@@ -295,6 +354,11 @@ function BudgetsPanel() {
                   {activePlan.description ? (
                     <div className="mt-1 text-sm text-muted-foreground">{activePlan.description}</div>
                   ) : null}
+                  <div className="mt-1 text-xs text-muted-foreground">
+                    <span className="inline-flex items-center gap-1 rounded-full border border-border/60 px-2 py-0.5">
+                      {planWindow.label}
+                    </span>
+                  </div>
                   {activePlan.items.length > 0
                     ? (() => {
                         const totalBudget = activePlan.items.reduce((sum, it) => sum + toDisplay(it.amount, it.currency), 0);
@@ -328,7 +392,7 @@ function BudgetsPanel() {
                   </Button>
                   <PlanDialog
                     mode="edit"
-                    initial={{ name: activePlan.name, description: activePlan.description, color: planAccent(activePlan) }}
+                    initial={{ name: activePlan.name, description: activePlan.description, color: planAccent(activePlan), periodType: activePlan.periodType, periodDays: activePlan.periodDays }}
                     trigger={
                       <Button size="sm" variant="ghost">
                         <Pencil className="h-3.5 w-3.5 mr-1" />
@@ -419,8 +483,11 @@ function BudgetsPanel() {
 
             <Card className="lg:col-span-2">
               <CardHeader>
-                <CardTitle className="text-base">
-                  {t("planning.budgets.thisMonth")}
+                <CardTitle className="text-base flex items-center gap-2">
+                  <span>{planWindow.label}</span>
+                  <span className="text-xs font-normal text-muted-foreground">
+                    {format(planWindow.start, "MMM d")} – {format(planWindow.end, "MMM d, yyyy")}
+                  </span>
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -511,7 +578,7 @@ function BudgetsPanel() {
   );
 }
 
-/** Create / edit dialog for a budget plan (name + description + color). */
+/** Create / edit dialog for a budget plan (name + description + color + period). */
 function PlanDialog({
   trigger,
   onSubmit,
@@ -519,8 +586,20 @@ function PlanDialog({
   mode = "create",
 }: {
   trigger: React.ReactNode;
-  onSubmit: (vals: { name: string; description?: string; color?: string }) => void;
-  initial?: { name?: string; description?: string; color?: string };
+  onSubmit: (vals: {
+    name: string;
+    description?: string;
+    color?: string;
+    periodType?: BudgetPeriodType;
+    periodDays?: number;
+  }) => void;
+  initial?: {
+    name?: string;
+    description?: string;
+    color?: string;
+    periodType?: BudgetPeriodType;
+    periodDays?: number;
+  };
   mode?: "create" | "edit";
 }) {
   const { t } = useTranslation();
@@ -528,6 +607,8 @@ function PlanDialog({
   const [name, setName] = useState(initial?.name ?? "");
   const [description, setDescription] = useState(initial?.description ?? "");
   const [color, setColor] = useState<string | undefined>(initial?.color);
+  const [periodType, setPeriodType] = useState<BudgetPeriodType>(initial?.periodType ?? "monthly");
+  const [periodDays, setPeriodDays] = useState<string>(String(initial?.periodDays ?? 10));
   return (
     <Dialog open={open} onOpenChange={(v) => {
       setOpen(v);
@@ -535,6 +616,8 @@ function PlanDialog({
         setName(initial?.name ?? "");
         setDescription(initial?.description ?? "");
         setColor(initial?.color);
+        setPeriodType(initial?.periodType ?? "monthly");
+        setPeriodDays(String(initial?.periodDays ?? 10));
       }
     }}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
@@ -569,6 +652,30 @@ function PlanDialog({
               placeholder={t("planning.budgets.planDescriptionPlaceholder", { defaultValue: "What is this budget for?" })}
             />
           </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <Label>{t("planning.budgets.period", { defaultValue: "Period" })}</Label>
+              <Select value={periodType} onValueChange={(v) => setPeriodType(v as BudgetPeriodType)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {PERIOD_OPTIONS.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {periodType === "custom" ? (
+              <div>
+                <Label>{t("planning.budgets.periodDays", { defaultValue: "Days" })}</Label>
+                <Input
+                  inputMode="numeric"
+                  value={periodDays}
+                  onChange={(e) => setPeriodDays(e.target.value)}
+                  placeholder="10"
+                />
+              </div>
+            ) : null}
+          </div>
           <div className="flex items-center gap-2">
             <Label className="text-xs">{t("planning.budgets.color", { defaultValue: "Color" })}</Label>
             <ColorSwatchPicker value={color} onChange={setColor} />
@@ -582,7 +689,17 @@ function PlanDialog({
             onClick={() => {
               const n = name.trim();
               if (!n) return;
-              onSubmit({ name: n, description: description.trim() || undefined, color });
+              const days =
+                periodType === "custom"
+                  ? Math.max(1, Math.min(3650, Math.floor(Number(periodDays) || 10)))
+                  : undefined;
+              onSubmit({
+                name: n,
+                description: description.trim() || undefined,
+                color,
+                periodType,
+                periodDays: days,
+              });
               setOpen(false);
             }}
           >
@@ -1254,16 +1371,28 @@ function ForecastPanel() {
           state.categories,
           incomeAdj,
           t("planning.forecast.scenarioAdjustment", { defaultValue: "Scenario adjustment" }),
+          activeScenario?.sliceColors,
         )}
         expenseSlices={buildForecastSlices(
           expenseItems,
           state.categories,
           expenseAdj,
           t("planning.forecast.scenarioAdjustment", { defaultValue: "Scenario adjustment" }),
+          activeScenario?.sliceColors,
         )}
         incomeTitle={t("planning.forecast.recurringIncome", { defaultValue: "Recurring income" })}
         expenseTitle={t("planning.forecast.recurringExpenses", { defaultValue: "Recurring expenses" })}
         format={(v) => fmt(v)}
+        onColorChange={
+          activeScenario
+            ? (sliceId, color) => {
+                const next = { ...(activeScenario.sliceColors ?? {}) };
+                if (color) next[sliceId] = color;
+                else delete next[sliceId];
+                updateForecastScenario(activeScenario.id, { sliceColors: next });
+              }
+            : undefined
+        }
       />
     </div>
   );
@@ -1277,20 +1406,21 @@ function buildForecastSlices(
   categories: { name: string; color: string }[],
   adjustment: number,
   adjustmentLabel: string,
+  overrides?: Record<string, string>,
 ): PieSlice[] {
   const catByName = new Map(categories.map((c) => [c.name, c.color]));
   const slices: PieSlice[] = items.map((r) => ({
     id: r.id,
     label: r.name,
     value: r.perMonth,
-    color: r.category ? catByName.get(r.category) : undefined,
+    color: overrides?.[r.id] ?? (r.category ? catByName.get(r.category) : undefined),
   }));
   if (adjustment && Math.abs(adjustment) > 0.0001) {
     slices.push({
       id: "__adjustment",
       label: adjustmentLabel,
       value: Math.abs(adjustment),
-      color: adjustment > 0 ? "#22c55e" : "#ef4444",
+      color: overrides?.["__adjustment"] ?? (adjustment > 0 ? "#22c55e" : "#ef4444"),
     });
   }
   return slices;
@@ -1303,6 +1433,7 @@ function RecurringPiesSection({
   incomeTitle,
   expenseTitle,
   format,
+  onColorChange,
 }: {
   title: string;
   incomeSlices: PieSlice[];
@@ -1310,6 +1441,7 @@ function RecurringPiesSection({
   incomeTitle: string;
   expenseTitle: string;
   format: (v: number) => string;
+  onColorChange?: (sliceId: string, color: string | undefined) => void;
 }) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
@@ -1329,6 +1461,7 @@ function RecurringPiesSection({
             format={format}
             centerLabel={t("planning.forecast.perMonthShort", { defaultValue: "Per month" })}
             emptyLabel={t("planning.forecast.recurringEmpty")}
+            onColorChange={onColorChange}
           />
           <BudgetPieCard
             title={expenseTitle}
@@ -1336,6 +1469,7 @@ function RecurringPiesSection({
             format={format}
             centerLabel={t("planning.forecast.perMonthShort", { defaultValue: "Per month" })}
             emptyLabel={t("planning.forecast.recurringEmpty")}
+            onColorChange={onColorChange}
           />
         </div>
       </CollapsibleContent>

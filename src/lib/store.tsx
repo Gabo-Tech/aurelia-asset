@@ -21,12 +21,17 @@ function migrateBudgets(parsed: any, defCcy: string): { plans: BudgetPlan[]; mai
   const plans: BudgetPlan[] = rawPlans.map((p: any) => ({
     id: String(p.id),
     name: String(p.name ?? "Plan"),
+    description: p.description || undefined,
+    color: p.color || undefined,
+    periodType: p.periodType || undefined,
+    periodDays: Number.isFinite(Number(p.periodDays)) ? Number(p.periodDays) : undefined,
     items: (Array.isArray(p.items) ? p.items : []).map((it: any) => ({
       id: String(it.id),
       label: String(it.label ?? ""),
       amount: Number(it.amount) || 0,
       currency: it.currency || defCcy,
       categoryId: it.categoryId || undefined,
+      color: it.color || undefined,
     })),
   }));
   let mainId: string | undefined = parsed?.mainBudgetPlanId;
@@ -60,6 +65,10 @@ function migrateScenarios(parsed: any): { scenarios: ForecastScenario[]; mainId?
     monthlyExpenseAdjust: Number(s.monthlyExpenseAdjust) || 0,
     currency: s.currency,
     notes: s.notes,
+    description: s.description || undefined,
+    color: s.color || undefined,
+    sliceColors:
+      s.sliceColors && typeof s.sliceColors === "object" ? { ...s.sliceColors } : undefined,
   }));
   let mainId: string | undefined = parsed?.mainForecastScenarioId;
   if (scenarios.length === 0) {
