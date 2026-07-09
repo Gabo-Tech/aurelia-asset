@@ -65,6 +65,10 @@ function migrateScenarios(parsed: any): { scenarios: ForecastScenario[]; mainId?
     monthlyExpenseAdjust: Number(s.monthlyExpenseAdjust) || 0,
     currency: s.currency,
     notes: s.notes,
+    description: s.description || undefined,
+    color: s.color || undefined,
+    sliceColors:
+      s.sliceColors && typeof s.sliceColors === "object" ? { ...s.sliceColors } : undefined,
   }));
   let mainId: string | undefined = parsed?.mainForecastScenarioId;
   if (scenarios.length === 0) {
