@@ -398,6 +398,89 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         })),
       removeBudget: (id) =>
         setState((s) => ({ ...s, budgets: (s.budgets ?? []).filter((b) => b.id !== id) })),
+      addBudgetPlan: (name) => {
+        const created: BudgetPlan = { id: uid(), name: name || "New plan", items: [] };
+        setState((s) => {
+          const plans = [...(s.budgetPlans ?? []), created];
+          return {
+            ...s,
+            budgetPlans: plans,
+            mainBudgetPlanId: s.mainBudgetPlanId ?? created.id,
+          };
+        });
+        return created;
+      },
+      updateBudgetPlan: (id, patch) =>
+        setState((s) => ({
+          ...s,
+          budgetPlans: (s.budgetPlans ?? []).map((p) => (p.id === id ? { ...p, ...patch } : p)),
+        })),
+      removeBudgetPlan: (id) =>
+        setState((s) => {
+          const plans = (s.budgetPlans ?? []).filter((p) => p.id !== id);
+          return {
+            ...s,
+            budgetPlans: plans,
+            mainBudgetPlanId:
+              s.mainBudgetPlanId === id ? plans[0]?.id : s.mainBudgetPlanId,
+          };
+        }),
+      setMainBudgetPlan: (id) =>
+        setState((s) => ({ ...s, mainBudgetPlanId: id })),
+      addBudgetItem: (planId, item) =>
+        setState((s) => ({
+          ...s,
+          budgetPlans: (s.budgetPlans ?? []).map((p) =>
+            p.id === planId ? { ...p, items: [...p.items, { ...item, id: uid() }] } : p,
+          ),
+        })),
+      updateBudgetItem: (planId, itemId, patch) =>
+        setState((s) => ({
+          ...s,
+          budgetPlans: (s.budgetPlans ?? []).map((p) =>
+            p.id === planId
+              ? { ...p, items: p.items.map((it) => (it.id === itemId ? { ...it, ...patch } : it)) }
+              : p,
+          ),
+        })),
+      removeBudgetItem: (planId, itemId) =>
+        setState((s) => ({
+          ...s,
+          budgetPlans: (s.budgetPlans ?? []).map((p) =>
+            p.id === planId ? { ...p, items: p.items.filter((it) => it.id !== itemId) } : p,
+          ),
+        })),
+      addForecastScenario: (sc) => {
+        const created: ForecastScenario = { ...sc, id: uid() };
+        setState((s) => {
+          const scenarios = [...(s.forecastScenarios ?? []), created];
+          return {
+            ...s,
+            forecastScenarios: scenarios,
+            mainForecastScenarioId: s.mainForecastScenarioId ?? created.id,
+          };
+        });
+        return created;
+      },
+      updateForecastScenario: (id, patch) =>
+        setState((s) => ({
+          ...s,
+          forecastScenarios: (s.forecastScenarios ?? []).map((sc) =>
+            sc.id === id ? { ...sc, ...patch } : sc,
+          ),
+        })),
+      removeForecastScenario: (id) =>
+        setState((s) => {
+          const scenarios = (s.forecastScenarios ?? []).filter((sc) => sc.id !== id);
+          return {
+            ...s,
+            forecastScenarios: scenarios,
+            mainForecastScenarioId:
+              s.mainForecastScenarioId === id ? scenarios[0]?.id : s.mainForecastScenarioId,
+          };
+        }),
+      setMainForecastScenario: (id) =>
+        setState((s) => ({ ...s, mainForecastScenarioId: id })),
       addGoal: (g) => {
         const created: SavingsGoal = { ...g, id: uid() };
         setState((s) => ({ ...s, goals: [...(s.goals ?? []), created] }));
