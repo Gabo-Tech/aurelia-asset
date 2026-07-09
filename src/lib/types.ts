@@ -141,6 +141,14 @@ export type BudgetItem = {
 /** A named collection of budget lines. Users can maintain multiple plans
  *  (e.g. "Baseline", "Vacation month", "Side project") and pick one as the
  *  main plan shown by default. */
+export type BudgetPeriodType =
+  | "daily"
+  | "weekly"
+  | "biweekly"
+  | "monthly"
+  | "yearly"
+  | "custom";
+
 export type BudgetPlan = {
   id: string;
   name: string;
@@ -149,6 +157,10 @@ export type BudgetPlan = {
   description?: string;
   /** Accent color used in the selector chip and as a fallback for items. */
   color?: string;
+  /** Period this plan covers. Defaults to "monthly" when omitted. */
+  periodType?: BudgetPeriodType;
+  /** When periodType === "custom", the rolling window length in days. */
+  periodDays?: number;
 };
 
 /** A named forecast scenario. `months` is the projection horizon, and the
@@ -166,6 +178,9 @@ export type ForecastScenario = {
   description?: string;
   /** Accent color for the selector chip. */
   color?: string;
+  /** Per-slice color overrides for the recurring income/expense pies,
+   *  keyed by the recurring cashflow id (or "__adjustment"). */
+  sliceColors?: Record<string, string>;
 };
 
 
