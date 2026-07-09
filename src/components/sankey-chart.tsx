@@ -86,21 +86,22 @@ export function SankeyChart({
     return { incomeCount: iC, expenseCount: eC, incomeTotal: iT, expenseTotal: eT };
   }, [data]);
 
-  const rowHeight = isNarrow ? 68 : 78;
+  const rowHeight = isNarrow ? 78 : 92;
   const maxSide = Math.max(incomeCount, expenseCount, 1);
-  const marginTop = isNarrow ? 40 : 48;
-  const marginBottom = isNarrow ? 24 : 28;
+  const marginTop = isNarrow ? 44 : 52;
+  const marginBottom = isNarrow ? 28 : 32;
   const marginX = isNarrow ? 6 : 10;
   const autoHeight = Math.max(
-    isNarrow ? 380 : 460,
+    isNarrow ? 420 : 500,
     maxSide * rowHeight + marginTop + marginBottom,
   );
   const resolvedHeight = height ?? autoHeight;
 
   const resolvedNodeWidth = nodeWidth ?? (isNarrow ? 14 : 20);
   const innerH = Math.max(100, resolvedHeight - marginTop - marginBottom);
-  const resolvedNodePadding =
-    nodePadding ?? Math.max(isNarrow ? 28 : 36, innerH / (maxSide * 2.2));
+  // Vertical gap between sibling nodes must fit two lines of label text + breathing room.
+  const minGap = isNarrow ? 42 : 52;
+  const resolvedNodePadding = nodePadding ?? Math.max(minGap, innerH / (maxSide * 1.8));
 
   const graph = useMemo(() => {
     const innerW = Math.max(100, width - marginX * 2);
