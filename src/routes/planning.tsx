@@ -392,7 +392,7 @@ function BudgetsPanel() {
                   </Button>
                   <PlanDialog
                     mode="edit"
-                    initial={{ name: activePlan.name, description: activePlan.description, color: planAccent(activePlan) }}
+                    initial={{ name: activePlan.name, description: activePlan.description, color: planAccent(activePlan), periodType: activePlan.periodType, periodDays: activePlan.periodDays }}
                     trigger={
                       <Button size="sm" variant="ghost">
                         <Pencil className="h-3.5 w-3.5 mr-1" />
