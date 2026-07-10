@@ -12,4 +12,11 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  vite: {
+    optimizeDeps: {
+      // Ensure chart/export deps are always prebundled — avoids stale .vite/deps
+      // misses after node_modules reinstalls while the dev server is still running.
+      include: ["recharts", "html-to-image"],
+    },
+  },
 });
