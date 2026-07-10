@@ -289,6 +289,7 @@ type Prefs = {
   nodeColors: Record<string, string>;
   incomeOrder: string[];
   expenseOrder: string[];
+  accountOrder: string[];
 };
 
 const DEFAULT_STAGES: SankeyStages = {
@@ -303,6 +304,7 @@ const DEFAULT_PREFS: Prefs = {
   nodeColors: {},
   incomeOrder: [],
   expenseOrder: [],
+  accountOrder: [],
 };
 
 async function loadPrefs(): Promise<Prefs> {
@@ -321,6 +323,7 @@ async function loadPrefs(): Promise<Prefs> {
       nodeColors: p.nodeColors ?? {},
       incomeOrder: Array.isArray(p.incomeOrder) ? p.incomeOrder : [],
       expenseOrder: Array.isArray(p.expenseOrder) ? p.expenseOrder : [],
+      accountOrder: Array.isArray(p.accountOrder) ? p.accountOrder : [],
     };
   } catch {
     return { ...DEFAULT_PREFS };
@@ -446,6 +449,7 @@ function CashflowPage() {
       nodeColors: prefs.nodeColors,
       incomeOrder: prefs.incomeOrder,
       expenseOrder: prefs.expenseOrder,
+      accountOrder: prefs.accountOrder,
       stages: prefs.stages,
     };
     const ctx = {
@@ -471,6 +475,7 @@ function CashflowPage() {
     prefs.nodeColors,
     prefs.incomeOrder,
     prefs.expenseOrder,
+    prefs.accountOrder,
     prefs.layoutMode,
     prefs.stages,
     catByName,
@@ -694,11 +699,24 @@ function CashflowPage() {
                   align={prefs.layoutMode === "staged" ? "left" : "justify"}
                   labelMode={prefs.labelMode}
                   format={(v: number) => (privacy ? MASK : formatMoney(v, currency))}
-                  onReorder={(kind, names) =>
-                    setPrefs((p) => ({
-                      ...p,
-                      ...(kind === "income" ? { incomeOrder: names } : { expenseOrder: names }),
-                    }))
+                  onReorder={(side, names) =>
+                    setPrefs((p) => {
+                      const key =
+                        side === "income"
+                          ? "incomeOrder"
+                          : side === "account"
+                            ? "accountOrder"
+                            : "expenseOrder";
+                      const prev = p[key];
+                      // Merge so reordering one set doesn't wipe another (e.g. cats vs leaves).
+                      const set = new Set(names);
+                      const queue = [...names];
+                      const merged =
+                        prev.length === 0
+                          ? names
+                          : [...prev.map((n) => (set.has(n) ? queue.shift()! : n)), ...queue];
+                      return { ...p, [key]: merged };
+                    })
                   }
                 />
               ) : (

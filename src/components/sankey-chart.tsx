@@ -10,9 +10,12 @@ import {
 
 export type LabelMode = "always" | "hover" | "off";
 
+/** Flow domain for classic (Accounts) layout — drives vertical grouping. */
+export type SankeyBranch = "main" | "credit" | "shared";
+
 export type SankeyDatum = {
-  nodes: { name: string; fill: string; kind?: string; group?: string }[];
-  links: { source: number; target: number; value: number }[];
+  nodes: { name: string; fill: string; kind?: string; group?: string; branch?: SankeyBranch }[];
+  links: { source: number; target: number; value: number; branch?: SankeyBranch }[];
 };
 
 type Props = {
@@ -25,7 +28,7 @@ type Props = {
   align?: "left" | "right" | "center" | "justify";
   nodeWidth?: number;
   nodePadding?: number;
-  onReorder?: (kind: "income" | "expense", orderedNames: string[]) => void;
+  onReorder?: (side: "income" | "expense" | "account", orderedNames: string[]) => void;
 };
 
 const alignFns = {
@@ -35,7 +38,96 @@ const alignFns = {
   justify: sankeyJustify,
 };
 
-const REORDERABLE = new Set(["income", "expense"]);
+const REORDERABLE = new Set([
+  "income",
+  "expense",
+  "category",
+  "leaf",
+  "type_total",
+  "saved",
+  "account",
+]);
+
+function reorderSide(n: {
+  kind?: string;
+  group?: string;
+}): "income" | "expense" | "account" | null {
+  if (n.kind === "account") return "account";
+  if (n.kind === "income" || n.group === "income") return "income";
+  if (
+    n.kind === "expense" ||
+    n.kind === "type_total" ||
+    n.kind === "saved" ||
+    n.group === "expense" ||
+    n.group === "savings" ||
+    n.group === "investment"
+  ) {
+    return "expense";
+  }
+  return null;
+}
+
+function reorderSiblings(nodes: any[], dragged: any): any[] {
+  if (dragged.kind === "type_total" || dragged.kind === "saved") {
+    // Grouped type totals, or Accounts saved sitting with expense categories
+    const typed = nodes.filter((n) => n.kind === "type_total" || n.kind === "saved");
+    if (typed.length >= 2) return typed;
+    return nodes.filter((n) => n.kind === "expense" || n.kind === "saved");
+  }
+  // Accounts: all expense categories share one column (ignore category group).
+  if (dragged.kind === "expense") {
+    return nodes.filter((n) => n.kind === "expense" || n.kind === "saved");
+  }
+  if (dragged.kind === "account") {
+    return nodes.filter((n) => n.kind === "account");
+  }
+  // Grouped categories/leaves: keep income vs expense groups separate.
+  if (dragged.kind === "category" || dragged.kind === "leaf") {
+    return nodes.filter(
+      (n) => n.kind === dragged.kind && (n.group ?? "") === (dragged.group ?? ""),
+    );
+  }
+  return nodes.filter((n) => n.kind === dragged.kind);
+}
+
+const BRANCH_ORDER: Record<SankeyBranch, number> = { main: 0, shared: 1, credit: 2 };
+
+function branchOf(node: { branch?: SankeyBranch }): SankeyBranch {
+  return node.branch ?? "main";
+}
+
+/** Detect nodes in the same column whose Y ranges intersect. */
+function hasColumnOverlap(nodes: { x0: number; y0: number; y1: number }[]): boolean {
+  const byCol = new Map<number, { y0: number; y1: number }[]>();
+  for (const n of nodes) {
+    const col = Math.round(n.x0);
+    const list = byCol.get(col) ?? [];
+    list.push(n);
+    byCol.set(col, list);
+  }
+  for (const colNodes of byCol.values()) {
+    colNodes.sort((a, b) => a.y0 - b.y0);
+    for (let i = 1; i < colNodes.length; i++) {
+      if (colNodes[i].y0 < colNodes[i - 1].y1 - 0.5) return true;
+    }
+  }
+  return false;
+}
+
+function resolveNodePadding(
+  innerH: number,
+  maxColNodes: number,
+  explicit?: number,
+  isNarrow?: boolean,
+): number {
+  if (explicit != null) return explicit;
+  const bandShare = Math.max(0.55, Math.min(0.72, 0.76 - maxColNodes * 0.015));
+  const maxPaddingTotal = innerH * (1 - bandShare);
+  const gapCount = Math.max(1, maxColNodes - 1);
+  const computed = maxPaddingTotal / gapCount;
+  const cap = isNarrow ? 12 : 20;
+  return Math.min(cap, Math.max(2, computed));
+}
 
 function truncate(str: string, max: number) {
   if (str.length <= max) return str;
@@ -214,23 +306,22 @@ export function SankeyChart({
   const amtFontSize = isNarrow ? 10 : 11;
   const labelBlockH = effectiveLabelMode !== "off" ? nameFontSize + amtFontSize + 10 : 0;
 
-  const leafCount = data.nodes.filter(
-    (n) =>
-      n.kind === "leaf" || n.kind === "income" || n.kind === "expense" || n.kind === "category",
-  ).length;
   const maxColNodes = Math.max(maxNodesInAnyColumn(data), 1);
+  const hasCreditBranch = data.nodes.some((n) => n.branch === "credit");
 
   const marginTop = labelBlockH > 0 ? labelBlockH + 10 : 16;
   const marginBottom = isNarrow ? 12 : 16;
   const marginX = isNarrow ? 6 : 10;
 
-  const layoutHeight = fitToViewport && fixedChartHeight != null ? fixedChartHeight : (height ?? 0);
-  const autoHeight = Math.max(
-    isNarrow ? 320 : 380,
-    maxColNodes * (labelBlockH + 24) + marginTop + marginBottom,
-  );
-  const idealHeight = height ?? (layoutHeight > 0 ? layoutHeight : autoHeight);
-  const displayHeight = layoutHeight > 0 ? layoutHeight : idealHeight;
+  const minBandPerNode = isNarrow ? 10 : 12;
+  const branchGap = hasCreditBranch ? (isNarrow ? 48 : 32) : 0;
+  const autoHeight =
+    Math.max(isNarrow ? 320 : 380, maxColNodes * (minBandPerNode + 8) + marginTop + marginBottom) +
+    branchGap;
+
+  // Cap to available screen height when fitToViewport is on; autoHeight is fallback only.
+  const viewportHeight = fitToViewport && fixedChartHeight != null ? fixedChartHeight : 0;
+  const displayHeight = height ?? (viewportHeight > 0 ? viewportHeight : autoHeight);
 
   const innerH = Math.max(80, displayHeight - marginTop - marginBottom);
 
@@ -240,91 +331,198 @@ export function SankeyChart({
   const renderNameFont = compactFonts ? Math.max(9, nameFontSize - 2) : nameFontSize;
   const renderAmtFont = compactFonts ? Math.max(8, amtFontSize - 2) : amtFontSize;
   const renderLabelBlockH = renderLabelMode !== "off" ? renderNameFont + renderAmtFont + 10 : 0;
-  const labelGapAbove = renderLabelBlockH > 0 ? renderLabelBlockH + 6 : 14;
-
-  // Reserve ~60–70% of height for flow bands; cap padding so links/nodes stay visible.
-  const bandShare = Math.max(0.55, Math.min(0.72, 0.76 - maxColNodes * 0.015));
-  const maxPaddingTotal = innerH * (1 - bandShare);
-  const gapCount = Math.max(1, maxColNodes - 1);
-  const computedPadding = maxPaddingTotal / gapCount;
-  const resolvedNodePadding = nodePadding ?? Math.max(labelGapAbove, computedPadding);
+  const extentY0 = renderLabelBlockH > 0 ? renderLabelBlockH + 4 : 0;
 
   const resolvedNodeWidth = nodeWidth ?? (isNarrow ? 14 : 20);
 
   const graph = useMemo(() => {
     const innerW = Math.max(100, width - marginX * 2);
-    const gen = d3sankey<any, any>()
-      .nodeId((d: any) => d.index)
-      .nodeAlign(alignFns[align])
-      .nodeWidth(resolvedNodeWidth)
-      .nodePadding(resolvedNodePadding)
-      .linkSort((a: any, b: any) => (a.value ?? 0) - (b.value ?? 0))
-      .iterations(64)
-      .extent([
-        [0, renderLabelBlockH > 0 ? renderLabelBlockH + 4 : 0],
-        [innerW, innerH],
-      ]);
-    const nodes = data.nodes.map((n, i) => ({ ...n, index: i }));
-    const links = data.links.map((l) => ({ ...l }));
-    try {
-      return gen({ nodes, links } as any);
-    } catch {
-      return null;
+
+    let padding = resolveNodePadding(innerH, maxColNodes, nodePadding, isNarrow);
+    let result: { nodes: any[]; links: any[] } | null = null;
+
+    const runLayout = (pad: number) => {
+      const hasCredit = data.nodes.some((n) => n.branch === "credit");
+
+      // Start from input order; for Accounts+credit, group main above credit.
+      let nodes = data.nodes.map((n, i) => ({ ...n, index: i }));
+      let links = data.links.map((l) => ({ ...l }));
+
+      if (hasCredit) {
+        nodes = [...nodes].sort((a, b) => {
+          const d = BRANCH_ORDER[branchOf(a)] - BRANCH_ORDER[branchOf(b)];
+          return d !== 0 ? d : a.index - b.index;
+        });
+        const indexMap = new Map(nodes.map((n, i) => [n.index, i]));
+        nodes = nodes.map((n, i) => ({ ...n, index: i }));
+        links = links.map((l) => ({
+          ...l,
+          source: indexMap.get(l.source as number) ?? l.source,
+          target: indexMap.get(l.target as number) ?? l.target,
+        }));
+      }
+
+      const gen = d3sankey<any, any>()
+        .nodeId((d: any) => d.index)
+        .nodeAlign(alignFns[align])
+        .nodeWidth(resolvedNodeWidth)
+        .nodePadding(pad)
+        .iterations(64)
+        .extent([
+          [0, extentY0],
+          [innerW, innerH],
+        ]);
+
+      // Pin node order to the build/input order (respects saved incomeOrder/expenseOrder).
+      // linkSort stays undefined so d3 can still stack links to reduce crossings.
+      // Pin vertical order to build/input order (saved income/expense/account orders).
+      // Pre-sort by branch when credit-card flows exist, then lock with nodeSort(null).
+      if (hasCredit) {
+        gen.nodeSort(null);
+        gen.linkSort((a: any, b: any) => {
+          const td = BRANCH_ORDER[branchOf(a.target)] - BRANCH_ORDER[branchOf(b.target)];
+          if (td !== 0) return td;
+          const sd = BRANCH_ORDER[branchOf(a.source)] - BRANCH_ORDER[branchOf(b.source)];
+          if (sd !== 0) return sd;
+          const ty = (a.target.y0 ?? a.target.index ?? 0) - (b.target.y0 ?? b.target.index ?? 0);
+          if (ty !== 0) return ty;
+          return (a.source.y0 ?? a.source.index ?? 0) - (b.source.y0 ?? b.source.index ?? 0);
+        });
+      } else {
+        gen.nodeSort(null);
+      }
+
+      try {
+        return gen({ nodes, links } as any);
+      } catch {
+        return null;
+      }
+    };
+
+    for (let attempt = 0; attempt < 6; attempt++) {
+      result = runLayout(padding);
+      if (!result) return null;
+      if (!hasColumnOverlap(result.nodes)) break;
+      padding = Math.max(2, padding * 0.65);
     }
+
+    return result;
   }, [
     data,
     width,
-    displayHeight,
     align,
     resolvedNodeWidth,
-    resolvedNodePadding,
+    nodePadding,
     marginX,
     innerH,
-    renderLabelBlockH,
+    maxColNodes,
+    isNarrow,
+    extentY0,
   ]);
+
+  // Scale so the largest node band is ~50% of chart height; everything else stays proportional.
+  // Applied to layout coordinates (not an SVG scale) so labels keep normal aspect ratio.
+  const scaledGraph = useMemo(() => {
+    if (!graph?.nodes?.length) return null;
+
+    const nodes = graph.nodes as any[];
+    const links = graph.links as any[];
+
+    let usedTop = Infinity;
+    let usedBottom = -Infinity;
+    let maxBand = 0;
+    for (const n of nodes) {
+      usedTop = Math.min(usedTop, n.y0);
+      usedBottom = Math.max(usedBottom, n.y1);
+      maxBand = Math.max(maxBand, n.y1 - n.y0);
+    }
+
+    const available = Math.max(1, innerH - extentY0);
+    const targetMaxBand = displayHeight * 0.5;
+    const usedSpan = Math.max(0, usedBottom - usedTop);
+
+    // Primary rule: largest node ≈ 50% of chart height.
+    let scale = maxBand > 0 ? Math.min(1, targetMaxBand / maxBand) : 1;
+    // Never overflow the available band space.
+    if (usedSpan * scale > available && usedSpan > 0) {
+      scale = available / usedSpan;
+    }
+
+    const finalSpan = usedSpan * scale;
+    const pad = Math.max(0, (available - finalSpan) / 2);
+    const origin = extentY0 + pad;
+    const mapY = (y: number) => origin + (y - usedTop) * scale;
+
+    const scaledNodes = nodes.map((n: any) => ({
+      ...n,
+      y0: mapY(n.y0),
+      y1: mapY(n.y1),
+    }));
+
+    const byIndex = new Map(scaledNodes.map((n: any, i: number) => [n.index ?? i, n]));
+    const scaledLinks = links.map((l: any) => {
+      const sIdx = l.source?.index ?? 0;
+      const tIdx = l.target?.index ?? 0;
+      return {
+        ...l,
+        source: byIndex.get(sIdx) ?? { ...l.source, y0: mapY(l.source.y0), y1: mapY(l.source.y1) },
+        target: byIndex.get(tIdx) ?? { ...l.target, y0: mapY(l.target.y0), y1: mapY(l.target.y1) },
+        width: (l.width ?? 0) * scale,
+        y0: l.y0 != null ? mapY(l.y0) : undefined,
+        y1: l.y1 != null ? mapY(l.y1) : undefined,
+      };
+    });
+
+    return { nodes: scaledNodes, links: scaledLinks };
+  }, [graph, innerH, extentY0, displayHeight]);
 
   const [drag, setDrag] = useState<{ idx: number; dy: number; startY: number } | null>(null);
 
-  if (!graph) return null;
+  if (!scaledGraph) return null;
+
+  const { nodes: renderNodes, links: renderLinks } = scaledGraph;
 
   const linkPath = sankeyLinkHorizontal();
   const innerW = Math.max(100, width - marginX * 2);
 
-  const yScale = () => 1;
-
   const activeLinkIdxs = new Set<number>();
   if (activeIdx != null) {
-    graph.links.forEach((l: any, i: number) => {
+    renderLinks.forEach((l: any, i: number) => {
       if (l.source.index === activeIdx || l.target.index === activeIdx) activeLinkIdxs.add(i);
     });
   }
 
   const handlePointerDown = (e: React.PointerEvent<SVGGElement>, idx: number, kind?: string) => {
     if (!onReorder || !kind || !REORDERABLE.has(kind)) return;
+    e.preventDefault();
     (e.currentTarget as Element).setPointerCapture(e.pointerId);
     setDrag({ idx, dy: 0, startY: e.clientY });
   };
   const handlePointerMove = (e: React.PointerEvent<SVGGElement>) => {
     if (!drag) return;
-    setDrag({ ...drag, dy: (e.clientY - drag.startY) * yScale() });
+    setDrag({ ...drag, dy: e.clientY - drag.startY });
   };
   const handlePointerUp = () => {
     if (!drag || !onReorder) {
       setDrag(null);
       return;
     }
-    const dragged: any = graph.nodes[drag.idx];
-    const kind = dragged?.kind;
-    if (!kind || !REORDERABLE.has(kind)) {
+    const dragged: any = renderNodes[drag.idx];
+    const side = dragged ? reorderSide(dragged) : null;
+    if (!side || !REORDERABLE.has(dragged.kind)) {
       setDrag(null);
       return;
     }
-    const siblings = (graph.nodes as any[]).filter((n) => n.kind === kind);
+    const siblings = reorderSiblings(renderNodes, dragged);
+    if (siblings.length < 2) {
+      setDrag(null);
+      return;
+    }
     const centerOf = (n: any) => (n === dragged ? (n.y0 + n.y1) / 2 + drag.dy : (n.y0 + n.y1) / 2);
-    const ordered = [...siblings].sort((a, b) => centerOf(a) - centerOf(b));
+    const ordered = [...siblings].sort((a: any, b: any) => centerOf(a) - centerOf(b));
     onReorder(
-      kind as "income" | "expense",
-      ordered.map((n) => n.name),
+      side,
+      ordered.map((n: any) => n.name),
     );
     setDrag(null);
   };
@@ -373,7 +571,7 @@ export function SankeyChart({
       >
         <g transform={`translate(${marginX},${marginTop})`}>
           <defs>
-            {graph.links.map((l: any, i: number) => (
+            {renderLinks.map((l: any, i: number) => (
               <linearGradient
                 key={i}
                 id={`sk-grad-${i}`}
@@ -388,7 +586,7 @@ export function SankeyChart({
           </defs>
 
           <g fill="none">
-            {graph.links.map((l: any, i: number) => {
+            {renderLinks.map((l: any, i: number) => {
               const lit = activeIdx == null || activeLinkIdxs.has(i);
               return (
                 <path
@@ -407,8 +605,9 @@ export function SankeyChart({
           </g>
 
           <g>
-            {graph.nodes.map((n: any, i: number) => {
+            {renderNodes.map((n: any, i: number) => {
               const bandH = Math.max(2, n.y1 - n.y0);
+              const strokeW = bandH < 6 ? 0 : 1.5;
               const reorderable = !!onReorder && REORDERABLE.has(n.kind);
               const isDragging = drag?.idx === i;
               const dy = isDragging ? drag!.dy : 0;
@@ -458,7 +657,7 @@ export function SankeyChart({
                     height={bandH}
                     fill={n.fill}
                     stroke="var(--background)"
-                    strokeWidth={2}
+                    strokeWidth={strokeW}
                     rx={3}
                     opacity={isDragging ? 0.85 : activeIdx != null && !isActive ? 0.55 : 1}
                   >

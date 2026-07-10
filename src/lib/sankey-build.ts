@@ -1,5 +1,5 @@
 import { GROUP_COLORS, type CashflowEntry, type Category, type CategoryGroup } from "@/lib/types";
-import type { SankeyDatum } from "@/components/sankey-chart";
+import type { SankeyBranch, SankeyDatum } from "@/components/sankey-chart";
 
 export type SankeyLayoutMode = "classic" | "staged";
 
@@ -14,6 +14,8 @@ export type SankeyBuildPrefs = {
   nodeColors: Record<string, string>;
   incomeOrder: string[];
   expenseOrder: string[];
+  /** Vertical order of account nodes (credit cards / holdings) in Accounts layout. */
+  accountOrder: string[];
   stages: SankeyStages;
 };
 
@@ -33,7 +35,10 @@ type NodeMeta = {
   kind: string;
   fill: string;
   group?: CategoryGroup;
+  branch?: SankeyBranch;
 };
+
+type LinkMeta = { source: number; target: number; value: number; branch?: SankeyBranch };
 
 const POOL_COLOR = "#64748b";
 const SAVED_COLOR = "#0ea5e9";
@@ -159,24 +164,55 @@ export function buildClassicSankey(ctx: ClassicSankeyContext): SankeyDatum | nul
   };
 
   sources.forEach((s) =>
-    pushNode({ name: s, kind: "income", fill: colorFor(s, "income"), group: "income" }),
+    pushNode({
+      name: s,
+      kind: "income",
+      fill: colorFor(s, "income"),
+      group: "income",
+      branch: "main",
+    }),
   );
-  pushNode({ name: POOL, kind: "pool", fill: prefs.nodeColors[POOL] ?? POOL_COLOR });
+  pushNode({
+    name: POOL,
+    kind: "pool",
+    fill: prefs.nodeColors[POOL] ?? POOL_COLOR,
+    branch: "main",
+  });
 
+  // Register accounts, then re-order by saved accountOrder (Accounts layout).
   const registerAccount = (ref: string, role: "source" | "target") => {
     if (ref === "liquidity") return;
     const name = nameFor(ref, role);
     const fill = prefs.nodeColors[name] ?? colorOf(ref);
-    pushNode({ name, kind: "account", fill });
+    const branch: SankeyBranch = ref.startsWith("credit:") ? "credit" : "main";
+    pushNode({ name, kind: "account", fill, branch });
+  };
+  const accountRefs: { ref: string; role: "source" | "target" }[] = [];
+  const seenAccountNames = new Set<string>();
+  const queueAccount = (ref: string, role: "source" | "target") => {
+    if (ref === "liquidity") return;
+    const name = nameFor(ref, role);
+    if (seenAccountNames.has(name)) return;
+    seenAccountNames.add(name);
+    accountRefs.push({ ref, role });
   };
   for (const t of transfers) {
-    if (t.fromAccount) registerAccount(t.fromAccount, "source");
-    if (t.toAccount) registerAccount(t.toAccount, "target");
+    if (t.fromAccount) queueAccount(t.fromAccount, "source");
+    if (t.toAccount) queueAccount(t.toAccount, "target");
   }
   for (const e of expenses) {
     if (e.paymentMethod && e.paymentMethod !== "liquidity") {
-      registerAccount(e.paymentMethod, "source");
+      queueAccount(e.paymentMethod, "source");
     }
+  }
+  const accountNames = applyOrder(
+    accountRefs.map(({ ref, role }) => nameFor(ref, role)),
+    prefs.accountOrder ?? [],
+  );
+  for (const name of accountNames) {
+    const item = accountRefs.find(({ ref, role }) => nameFor(ref, role) === name);
+    if (!item) continue;
+    registerAccount(item.ref, item.role);
   }
 
   cats.forEach((c) => {
@@ -186,15 +222,15 @@ export function buildClassicSankey(ctx: ClassicSankeyContext): SankeyDatum | nul
   });
 
   const idx = (name: string) => nodes.findIndex((n) => n.name === name);
-  const links: { source: number; target: number; value: number }[] = [];
-  const addLink = (a: string, b: string, v: number) => {
+  const links: LinkMeta[] = [];
+  const addLink = (a: string, b: string, v: number, branch: SankeyBranch = "main") => {
     if (!(v > 0)) return;
     const si = idx(a);
     const ti = idx(b);
     if (si < 0 || ti < 0 || si === ti) return;
     const existing = links.find((l) => l.source === si && l.target === ti);
     if (existing) existing.value += v;
-    else links.push({ source: si, target: ti, value: v });
+    else links.push({ source: si, target: ti, value: v, branch });
   };
 
   for (const s of sources) {
@@ -206,16 +242,20 @@ export function buildClassicSankey(ctx: ClassicSankeyContext): SankeyDatum | nul
   for (const e of expenses) {
     const v = valuesTop.get(e.id) ?? 0;
     const cat = e.category || labels.other;
-    const from =
-      e.paymentMethod && e.paymentMethod !== "liquidity"
-        ? nameFor(e.paymentMethod, "source")
-        : POOL;
-    addLink(from, cat, v);
+    const fromCard = !!(e.paymentMethod && e.paymentMethod !== "liquidity");
+    const from = fromCard ? nameFor(e.paymentMethod!, "source") : POOL;
+    addLink(from, cat, v, fromCard ? "credit" : "main");
   }
   for (const t of transfers) {
     const v = valuesTop.get(t.id) ?? 0;
     if (!t.fromAccount || !t.toAccount) continue;
-    addLink(nameFor(t.fromAccount, "source"), nameFor(t.toAccount, "target"), v);
+    const involvesCredit = t.fromAccount.startsWith("credit:") || t.toAccount.startsWith("credit:");
+    addLink(
+      nameFor(t.fromAccount, "source"),
+      nameFor(t.toAccount, "target"),
+      v,
+      involvesCredit ? "credit" : "main",
+    );
   }
 
   const totalIntoPool =
@@ -237,8 +277,48 @@ export function buildClassicSankey(ctx: ClassicSankeyContext): SankeyDatum | nul
       kind: "saved",
       fill: prefs.nodeColors[SAVED] ?? SAVED_COLOR,
       group: "savings",
+      branch: "main",
     });
     addLink(POOL, SAVED, saved);
+  }
+
+  // Classify shared expense categories fed by both pool and credit-card flows.
+  for (const n of nodes) {
+    if (n.kind !== "expense") continue;
+    const ni = idx(n.name);
+    const incoming = links.filter((l) => l.target === ni);
+    const hasMain = incoming.some((l) => l.branch === "main");
+    const hasCredit = incoming.some((l) => l.branch === "credit");
+    if (hasMain && hasCredit) n.branch = "shared";
+    else if (hasCredit) n.branch = "credit";
+    else n.branch = "main";
+  }
+
+  // Re-apply expenseOrder across expense categories + Saved (same column in Accounts).
+  {
+    const movableKinds = new Set(["expense", "saved"]);
+    const movable = nodes.filter((n) => movableKinds.has(n.kind));
+    if (movable.length > 1) {
+      const orderedNames = applyOrder(
+        movable.map((n) => n.name),
+        prefs.expenseOrder,
+      );
+      const byName = new Map(movable.map((n) => [n.name, n]));
+      let mi = 0;
+      const newNodes = nodes.map((n) =>
+        movableKinds.has(n.kind) ? byName.get(orderedNames[mi++])! : n,
+      );
+      const oldIdx = new Map(nodes.map((n, i) => [n.name, i]));
+      const newIdx = new Map(newNodes.map((n, i) => [n.name, i]));
+      for (const l of links) {
+        const sName = nodes[l.source]?.name;
+        const tName = nodes[l.target]?.name;
+        if (sName != null) l.source = newIdx.get(sName) ?? oldIdx.get(sName) ?? l.source;
+        if (tName != null) l.target = newIdx.get(tName) ?? oldIdx.get(tName) ?? l.target;
+      }
+      nodes.length = 0;
+      nodes.push(...newNodes);
+    }
   }
 
   if (!links.length) return null;
@@ -349,45 +429,54 @@ export function buildStagedSankey(ctx: StagedSankeyContext): SankeyDatum | null 
         });
 
         if (showDescriptions) {
+          const pendingLeaves: { name: string; value: number }[] = [];
           let describedSum = 0;
           for (const [key, { category, value }] of incomeByDesc) {
             if (category !== cat) continue;
             const desc = key.split("\0")[1]!;
             const leafName = uniqueLeafName(desc, cat, usedNames, labels);
-            pushNode({
-              name: leafName,
-              kind: "leaf",
-              fill: colorFor(cat, "income"),
-              group: "income",
-            });
-            addLink(leafName, catName, value);
+            pendingLeaves.push({ name: leafName, value });
             describedSum += value;
           }
           const remainder = v - describedSum;
           if (remainder > 0.005) {
-            const bucket = generalLeafName(cat, usedNames, labels);
+            pendingLeaves.push({ name: generalLeafName(cat, usedNames, labels), value: remainder });
+          }
+          for (const name of applyOrder(
+            pendingLeaves.map((l) => l.name),
+            prefs.incomeOrder,
+          )) {
+            const leaf = pendingLeaves.find((l) => l.name === name)!;
             pushNode({
-              name: bucket,
+              name: leaf.name,
               kind: "leaf",
               fill: colorFor(cat, "income"),
               group: "income",
             });
-            addLink(bucket, catName, remainder);
+            addLink(leaf.name, catName, leaf.value);
           }
         }
         addLink(catName, TOTAL_INCOME, v);
       }
     } else if (showDescriptions && incomeByDesc.size > 0) {
+      const pendingLeaves: { name: string; value: number; category: string }[] = [];
       for (const [key, { category, value }] of incomeByDesc) {
         const desc = key.split("\0")[1]!;
         const leafName = uniqueLeafName(desc, category, usedNames, labels);
+        pendingLeaves.push({ name: leafName, value, category });
+      }
+      for (const name of applyOrder(
+        pendingLeaves.map((l) => l.name),
+        prefs.incomeOrder,
+      )) {
+        const leaf = pendingLeaves.find((l) => l.name === name)!;
         pushNode({
-          name: leafName,
+          name: leaf.name,
           kind: "leaf",
-          fill: colorFor(category, "income"),
+          fill: colorFor(leaf.category, "income"),
           group: "income",
         });
-        addLink(leafName, TOTAL_INCOME, value);
+        addLink(leaf.name, TOTAL_INCOME, leaf.value);
       }
     }
   }
@@ -422,26 +511,36 @@ export function buildStagedSankey(ctx: StagedSankeyContext): SankeyDatum | null 
   const saved = Math.max(0, totalIncome - totalOutflows);
 
   if (totalIncome > 0) {
+    const outflowTotals: { group: CategoryGroup; name: string; value: number }[] = [];
     for (const group of OUTFLOW_GROUPS) {
       const v = groupTotals.get(group) ?? 0;
       if (v <= 0) continue;
-      const totalName = totalLabelForGroup(group, labels);
-      pushNode({
-        name: totalName,
-        kind: "type_total",
-        fill: prefs.nodeColors[totalName] ?? GROUP_COLORS[group],
-        group,
-      });
-      addLink(TOTAL_INCOME, totalName, v);
+      outflowTotals.push({ group, name: totalLabelForGroup(group, labels), value: v });
     }
     if (saved > 0) {
-      pushNode({
-        name: SAVED,
-        kind: "saved",
-        fill: prefs.nodeColors[SAVED] ?? SAVED_COLOR,
-        group: "savings",
-      });
-      addLink(TOTAL_INCOME, SAVED, saved);
+      outflowTotals.push({ group: "savings", name: SAVED, value: saved });
+    }
+    for (const name of applyOrder(
+      outflowTotals.map((o) => o.name),
+      prefs.expenseOrder,
+    )) {
+      const item = outflowTotals.find((o) => o.name === name)!;
+      if (item.name === SAVED) {
+        pushNode({
+          name: SAVED,
+          kind: "saved",
+          fill: prefs.nodeColors[SAVED] ?? SAVED_COLOR,
+          group: "savings",
+        });
+      } else {
+        pushNode({
+          name: item.name,
+          kind: "type_total",
+          fill: prefs.nodeColors[item.name] ?? GROUP_COLORS[item.group],
+          group: item.group,
+        });
+      }
+      addLink(TOTAL_INCOME, item.name, item.value);
     }
   }
 
@@ -465,45 +564,54 @@ export function buildStagedSankey(ctx: StagedSankeyContext): SankeyDatum | null 
         addLink(totalName, catName, v);
 
         if (showDescriptions) {
+          const pendingLeaves: { name: string; value: number }[] = [];
           let describedSum = 0;
           for (const [key, { group: g, category, value }] of byGroupDesc) {
             if (g !== group || category !== cat) continue;
             const desc = key.split("\0")[2]!;
             const leafName = uniqueLeafName(desc, cat, usedNames, labels);
-            pushNode({
-              name: leafName,
-              kind: "leaf",
-              fill: colorFor(cat, group),
-              group,
-            });
-            addLink(catName, leafName, value);
+            pendingLeaves.push({ name: leafName, value });
             describedSum += value;
           }
           const remainder = v - describedSum;
           if (remainder > 0.005) {
-            const bucket = generalLeafName(cat, usedNames, labels);
+            pendingLeaves.push({ name: generalLeafName(cat, usedNames, labels), value: remainder });
+          }
+          for (const name of applyOrder(
+            pendingLeaves.map((l) => l.name),
+            prefs.expenseOrder,
+          )) {
+            const leaf = pendingLeaves.find((l) => l.name === name)!;
             pushNode({
-              name: bucket,
+              name: leaf.name,
               kind: "leaf",
               fill: colorFor(cat, group),
               group,
             });
-            addLink(catName, bucket, remainder);
+            addLink(catName, leaf.name, leaf.value);
           }
         }
       }
     } else if (showDescriptions) {
+      const pendingLeaves: { name: string; value: number; category: string }[] = [];
       for (const [key, { group: g, category, value }] of byGroupDesc) {
         if (g !== group) continue;
         const desc = key.split("\0")[2]!;
         const leafName = uniqueLeafName(desc, category, usedNames, labels);
+        pendingLeaves.push({ name: leafName, value, category });
+      }
+      for (const name of applyOrder(
+        pendingLeaves.map((l) => l.name),
+        prefs.expenseOrder,
+      )) {
+        const leaf = pendingLeaves.find((l) => l.name === name)!;
         pushNode({
-          name: leafName,
+          name: leaf.name,
           kind: "leaf",
-          fill: colorFor(category, group),
+          fill: colorFor(leaf.category, group),
           group,
         });
-        addLink(totalName, leafName, value);
+        addLink(totalName, leaf.name, leaf.value);
       }
     }
   }
