@@ -22,13 +22,13 @@ Artifacts produced:
 | `*.deb`, `*.rpm`, `*.AppImage` | Linux             |
 | `*.msi`, `*-setup.exe`         | Windows           |
 | `*.dmg`                        | macOS (universal) |
-| `*.apk` (+ `.aab` if signed)   | Android           |
+| `portfolio-tracker.apk` (arm64) | Android           |
 | `*-unsigned.ipa`               | iOS               |
 
-**No signing secrets are required.** All builds ship unsigned. If you later add
-an Android release keystore (set `ANDROID_KEYSTORE_BASE64`,
-`ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD` repo
-secrets), the workflow automatically switches to a signed release APK + AAB.
+Desktop builds ship unsigned. For a signed Android APK, set
+`ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, and `ANDROID_KEY_ALIAS`
+repo secrets — the workflow writes `keystore.properties`, patches Gradle signing,
+and builds an arm64 release APK.
 
 ## Distribution & first-run warnings
 
@@ -57,7 +57,11 @@ cargo tauri build --bundles app,dmg
 
 # Android (first time)
 cargo tauri android init
-cargo tauri android build --apk
+cargo tauri icon app-icon.png   # required — init resets launcher to Tauri default
+npm run tauri:android:patch     # microphone permissions
+npm run tauri:android:signing   # Gradle release signingConfigs
+# optional: write gen/android/keystore.properties (password, keyAlias, storeFile)
+cargo tauri android build --apk --target aarch64
 
 # iOS (first time, macOS only)
 cargo tauri ios init
@@ -67,6 +71,13 @@ cargo tauri ios build
 Requires: Rust, `cargo install tauri-cli --version "^2.0" --locked`, plus the
 platform toolchain (Xcode, VS 2022 Build Tools, Android Studio + NDK, or the
 Linux dev packages: `libwebkit2gtk-4.1-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev patchelf rpm`).
+
+**Android distribution notes:**
+
+- Sideload APKs are **arm64 release-signed** (`portfolio-tracker.apk`), not universal.
+- If install fails with "App not installed" after switching from a debug build,
+  uninstall the existing `Portfolio Tracker` app first (same package ID, different
+  signing certificate).
 
 ## Icons
 

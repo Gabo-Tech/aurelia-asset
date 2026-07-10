@@ -131,6 +131,9 @@ jobs:
       - name: Patch Android manifest (microphone permissions)
         run: npm run tauri:android:patch
 
+      - name: Patch Android Gradle signing config
+        run: npm run tauri:android:signing
+
       - name: Decode release keystore (if provided)
         id: keystore
         env:
@@ -138,9 +141,8 @@ jobs:
         run: |
           if [ -n "$ANDROID_KEYSTORE_BASE64" ]; then
             echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
-            cat > src-tauri/gen/android/key.properties <<EOF
-          storePassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}
+            cat > src-tauri/gen/android/keystore.properties <<EOF
+          password=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}
           storeFile=$RUNNER_TEMP/release.jks
           EOF
@@ -150,37 +152,44 @@ jobs:
             echo "mode=debug" >> $GITHUB_OUTPUT
           fi
 
-      - name: Build Android APK + AAB (release, signed)
+      - name: Build Android APK (release, signed, arm64)
         if: steps.keystore.outputs.mode == 'release'
         working-directory: src-tauri
-        run: cargo tauri android build --apk --aab
+        run: cargo tauri android build --apk --target aarch64
 
       - name: Build Android APK (debug, unsigned)
         if: steps.keystore.outputs.mode == 'debug'
         working-directory: src-tauri
-        run: cargo tauri android build --apk --debug
+        run: cargo tauri android build --apk --debug --target aarch64
 
       - name: Stage Android download as portfolio-tracker.apk
         run: |
           mkdir -p dist-android
           APK=""
           if [ "${{ steps.keystore.outputs.mode }}" = "release" ]; then
-            APK=$(find src-tauri/gen/android/app/build/outputs/apk -name '*release*.apk' ! -name '*unsigned*' | head -n1)
+            for candidate in \
+              "src-tauri/gen/android/app/build/outputs/apk/arm64/release/app-arm64-release.apk" \
+              "src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release.apk"
+            do
+              if [ -f "$candidate" ]; then
+                APK="$candidate"
+                break
+              fi
+            done
+            if [ -z "$APK" ]; then
+              APK=$(find src-tauri/gen/android/app/build/outputs/apk -name '*release*.apk' ! -name '*unsigned*' | head -n1)
+            fi
           fi
           if [ -z "$APK" ]; then
-            APK=$(find src-tauri/gen/android/app/build/outputs/apk -name '*.apk' | head -n1)
+            APK=$(find src-tauri/gen/android/app/build/outputs/apk -name '*.apk' ! -name '*unsigned*' | head -n1)
           fi
           if [ -z "$APK" ]; then
             echo "No APK found to stage"
             exit 1
           fi
+          echo "Staging $APK"
           cp "$APK" dist-android/portfolio-tracker.apk
           ls -lh dist-android/
-          # Also keep AAB if present
-          AAB=$(find src-tauri/gen/android/app/build/outputs/bundle -name '*.aab' 2>/dev/null | head -n1 || true)
-          if [ -n "$AAB" ]; then
-            cp "$AAB" dist-android/
-          fi
 
       - name: Upload Android artifacts to release
         uses: softprops/action-gh-release@v2

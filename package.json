@@ -13,6 +13,7 @@
     "build:tauri": "npm run build && node scripts/tauri-prepare.mjs",
     "tauri:icon": "cd src-tauri && cargo tauri icon app-icon.png",
     "tauri:android:patch": "node scripts/patch-android-manifest.mjs",
+    "tauri:android:signing": "node scripts/patch-android-signing.mjs",
     "setup:sherpa-onnx": "bash scripts/setup-sherpa-onnx.sh",
     "tauri:dev:local-ai": "bash scripts/tauri-dev-local-ai.sh",
     "build:dev": "vite build --mode development",
