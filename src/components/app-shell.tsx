@@ -19,7 +19,7 @@ import { ThemeToggle } from "./theme-toggle";
 import { PageLoader } from "./page-loader";
 import { TourLauncher } from "./tour-launcher";
 import { usePrefetchPortfolioHistory } from "@/hooks/use-portfolio-history";
-import logoAsset from "@/assets/logo.png.asset.json";
+import { ASSETS, githubSourceUrl } from "@/lib/site-config";
 
 const navItems = [
   { to: "/dashboard", key: "dashboard", icon: LayoutDashboard },
@@ -27,6 +27,7 @@ const navItems = [
   { to: "/performance", key: "performance", icon: TrendingUp },
   { to: "/cashflow", key: "cashflow", icon: ArrowLeftRight },
   { to: "/planning", key: "planning", icon: Target },
+  { to: "/assistant", key: "assistant", icon: Sparkles },
   { to: "/settings", key: "settings", icon: SettingsIcon },
 ] as const;
 
@@ -62,10 +63,17 @@ export function AppShell({ children }: { children: ReactNode }) {
   usePrefetchPortfolioHistory(state.holdings, hydrated);
   const fxReady = useFxReady();
   const ready = hydrated && fxReady && !isNavigating;
+  const assistantEnabled = state.settings.aiAssistantEnabled !== false;
   const { t } = useTranslation();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
-  const nav = navItems.map((n) => ({ ...n, label: mounted ? t(`nav.${n.key}`) : "" }));
+  const nav = navItems
+    .filter((item) => item.key !== "assistant" || assistantEnabled)
+    .map((n) => ({
+      ...n,
+      label: mounted ? t(`nav.${n.key}`) : "",
+      shortLabel: mounted ? t(`nav.short.${n.key}`) : "",
+    }));
   const brand = mounted ? t("shell.brand") : "";
   const brandTagline = mounted ? t("shell.brandTagline") : "";
 
@@ -75,7 +83,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         {/* Sidebar (desktop) */}
         <aside className="hidden lg:flex lg:w-64 lg:flex-col 2xl:w-72 3xl:w-80 border-r border-border/60 bg-sidebar min-h-screen sticky top-0">
           <div className="flex items-center gap-2 px-6 py-7">
-            <img src={logoAsset.url} alt="Logo" className="h-9 w-9 rounded-xl object-contain" />
+            <img src={ASSETS.logo} alt="Logo" className="h-9 w-9 rounded-xl object-contain" />
             <div className="min-w-0 flex-1">
               <div className="text-sm font-semibold tracking-tight">{brand}</div>
               <div className="text-xs text-muted-foreground">{brandTagline}</div>
@@ -114,7 +122,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         {/* Mobile top bar */}
         <header className="lg:hidden flex items-center justify-between px-4 py-3 border-b border-border/60 bg-sidebar/95 backdrop-blur sticky top-0 z-20">
           <Link to="/dashboard" className="flex items-center gap-2 min-w-0">
-            <img src={logoAsset.url} alt="Logo" className="h-8 w-8 shrink-0 rounded-lg object-contain" />
+            <img src={ASSETS.logo} alt="Logo" className="h-8 w-8 shrink-0 rounded-lg object-contain" />
             <div className="truncate font-semibold text-sm">{brand} {brandTagline}</div>
           </Link>
           <div className="flex items-center gap-1">
@@ -125,11 +133,21 @@ export function AppShell({ children }: { children: ReactNode }) {
         </header>
 
         {/* Main */}
-        <main className="flex-1 min-w-0 pb-[calc(5.5rem+env(safe-area-inset-bottom))] lg:pb-12 flex flex-col">
-          <div className="flex-1 px-4 sm:px-8 2xl:px-12 3xl:px-16 py-6 sm:py-10">{ready ? children : <PageLoader />}</div>
+        <main className="flex-1 min-w-0 pb-[calc(5.5rem+env(safe-area-inset-bottom))] lg:pb-12 flex flex-col min-h-[100dvh] lg:min-h-screen">
+          <div className="flex-1 flex flex-col min-h-0 px-4 sm:px-8 2xl:px-12 3xl:px-16 py-6 sm:py-10">{ready ? children : <PageLoader />}</div>
           <footer className="hidden lg:flex mt-8 border-t border-border/60 px-4 sm:px-8 py-4 flex-wrap items-center justify-between gap-3 text-[11px] text-muted-foreground/80">
             <span>{mounted ? t("shell.footerNote") : ""}</span>
-            <SponsorBanner variant="inline" />
+            <div className="flex items-center gap-4">
+              <a
+                href={githubSourceUrl()}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-foreground underline-offset-2 hover:underline"
+              >
+                {mounted ? t("shell.sourceCode") : ""}
+              </a>
+              <SponsorBanner variant="inline" />
+            </div>
           </footer>
         </main>
       </div>
@@ -140,7 +158,10 @@ export function AppShell({ children }: { children: ReactNode }) {
         aria-label="Primary"
         data-tour="bottom-nav"
       >
-        <div className="grid grid-cols-6">
+        <div
+          className="grid"
+          style={{ gridTemplateColumns: `repeat(${nav.length}, minmax(0, 1fr))` }}
+        >
           {nav.map((item) => {
             const active =
               pathname === item.to || pathname.startsWith(item.to + "/");
@@ -151,15 +172,15 @@ export function AppShell({ children }: { children: ReactNode }) {
                 to={item.to}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "relative flex flex-col items-center justify-center gap-1 py-2.5 min-h-[56px] text-[10px] font-medium transition-colors",
+                  "relative flex flex-col items-center justify-center gap-0.5 py-2 min-h-[56px] min-w-0 px-0.5 text-[10px] font-medium transition-colors",
                   active ? "text-primary" : "text-muted-foreground hover:text-foreground"
                 )}
               >
                 {active && (
                   <span className="absolute top-0 left-1/2 -translate-x-1/2 h-0.5 w-8 rounded-b-full bg-primary" />
                 )}
-                <Icon className={cn("h-5 w-5", active && "scale-110 transition-transform")} />
-                <span>{item.label}</span>
+                <Icon className={cn("h-5 w-5 shrink-0", active && "scale-110 transition-transform")} />
+                <span className="max-w-full truncate leading-tight">{item.shortLabel}</span>
               </Link>
             );
           })}

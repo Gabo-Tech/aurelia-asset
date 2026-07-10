@@ -15,6 +15,7 @@ import { Route as PerformanceRouteImport } from './routes/performance'
 import { Route as HoldingsRouteImport } from './routes/holdings'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as CashflowRouteImport } from './routes/cashflow'
+import { Route as AssistantRouteImport } from './routes/assistant'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiFinanceProxyRouteImport } from './routes/api/finance-proxy'
@@ -49,6 +50,11 @@ const CashflowRoute = CashflowRouteImport.update({
   path: '/cashflow',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AssistantRoute = AssistantRouteImport.update({
+  id: '/assistant',
+  path: '/assistant',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminRoute = AdminRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -68,6 +74,7 @@ const ApiFinanceProxyRoute = ApiFinanceProxyRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/assistant': typeof AssistantRoute
   '/cashflow': typeof CashflowRoute
   '/dashboard': typeof DashboardRoute
   '/holdings': typeof HoldingsRoute
@@ -79,6 +86,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/assistant': typeof AssistantRoute
   '/cashflow': typeof CashflowRoute
   '/dashboard': typeof DashboardRoute
   '/holdings': typeof HoldingsRoute
@@ -91,6 +99,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/assistant': typeof AssistantRoute
   '/cashflow': typeof CashflowRoute
   '/dashboard': typeof DashboardRoute
   '/holdings': typeof HoldingsRoute
@@ -104,6 +113,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/admin'
+    | '/assistant'
     | '/cashflow'
     | '/dashboard'
     | '/holdings'
@@ -115,6 +125,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/admin'
+    | '/assistant'
     | '/cashflow'
     | '/dashboard'
     | '/holdings'
@@ -126,6 +137,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/admin'
+    | '/assistant'
     | '/cashflow'
     | '/dashboard'
     | '/holdings'
@@ -138,6 +150,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
+  AssistantRoute: typeof AssistantRoute
   CashflowRoute: typeof CashflowRoute
   DashboardRoute: typeof DashboardRoute
   HoldingsRoute: typeof HoldingsRoute
@@ -191,6 +204,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CashflowRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/assistant': {
+      id: '/assistant'
+      path: '/assistant'
+      fullPath: '/assistant'
+      preLoaderRoute: typeof AssistantRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin': {
       id: '/admin'
       path: '/admin'
@@ -218,6 +238,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
+  AssistantRoute: AssistantRoute,
   CashflowRoute: CashflowRoute,
   DashboardRoute: DashboardRoute,
   HoldingsRoute: HoldingsRoute,
@@ -229,3 +250,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

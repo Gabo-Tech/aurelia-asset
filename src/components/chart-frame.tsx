@@ -2,6 +2,8 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Maximize2, Camera, X } from "lucide-react";
 import { toPng } from "html-to-image";
+import { useTranslation } from "react-i18next";
+import { saveExportFile } from "@/lib/export";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -15,6 +17,7 @@ type Props = {
 };
 
 export function ChartFrame({ children, filename = "chart", title, className, extras }: Props) {
+  const { t } = useTranslation();
   const inlineRef = useRef<HTMLDivElement>(null);
   const fullRef = useRef<HTMLDivElement>(null);
   const [full, setFull] = useState(false);
@@ -43,14 +46,15 @@ export function ChartFrame({ children, filename = "chart", title, className, ext
         cacheBust: true,
         backgroundColor: bg,
       });
-      const a = document.createElement("a");
-      a.href = dataUrl;
-      a.download = `${filename}-${new Date().toISOString().slice(0, 10)}.png`;
-      a.click();
-      toast.success("Screenshot saved");
+      const outName = `${filename}-${new Date().toISOString().slice(0, 10)}.png`;
+      const res = await fetch(dataUrl);
+      const bytes = new Uint8Array(await res.arrayBuffer());
+      const method = await saveExportFile(outName, { bytes });
+      if (method === "cancelled") return;
+      toast.success(t("chart.screenshotSaved", { defaultValue: "Screenshot saved" }));
     } catch (e) {
       console.error(e);
-      toast.error("Couldn't capture screenshot");
+      toast.error(t("chart.screenshotFailed", { defaultValue: "Couldn't capture screenshot" }));
     } finally {
       setShooting(false);
     }
@@ -126,7 +130,7 @@ export function ChartFrame({ children, filename = "chart", title, className, ext
               </div>
               <div
                 ref={fullRef}
-                className="min-h-0 flex-1 overflow-hidden p-3 sm:p-4 [&>div]:!h-full [&>div]:!max-h-full [&>div]:!w-full"
+                className="chart-viewport min-h-0 flex-1 overflow-hidden p-3 sm:p-4 [&>div]:!w-full"
               >
                 {children}
               </div>

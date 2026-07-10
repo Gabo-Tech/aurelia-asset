@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { invoke } from "@tauri-apps/api/core";
 import { useStore } from "@/lib/store";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -35,8 +36,36 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { PageHeader } from "@/components/app-shell";
-import { Download, Upload, RotateCcw, FileJson, FileSpreadsheet, Languages, RefreshCw, Copy, ClipboardPaste } from "lucide-react";
+import {
+  Download,
+  Upload,
+  RotateCcw,
+  FileJson,
+  FileSpreadsheet,
+  Languages,
+  RefreshCw,
+  Copy,
+  ClipboardPaste,
+  Sparkles,
+  Volume2,
+  FolderOpen,
+  X,
+  CheckCircle2,
+  Circle,
+} from "lucide-react";
 import { clearPriceHistoryCache } from "@/lib/finance";
+import { isTauri } from "@/lib/export";
+import { getAiCapabilities, type AiCapabilities } from "@/lib/ai/provider";
+import { aiConfigFromSettings } from "@/lib/ai/config";
+import { clearChatHistory } from "@/lib/ai/persistence";
+import {
+  datedFilename,
+  exportMethodDescription,
+  redactStateForExport,
+  rowsToCsv,
+  saveExportFile,
+  stringifyExportJson,
+} from "@/lib/export";
 import { toast } from "sonner";
 import { z } from "zod";
 import type { AppState } from "@/lib/types";
@@ -51,9 +80,7 @@ const ALLOWED_CORS_PROXIES = [
   "https://api.allorigins.win/raw?url=",
 ] as const;
 
-const hexColor = z
-  .string()
-  .regex(/^#(?:[0-9a-fA-F]{3}){1,2}$/, "Invalid color");
+const hexColor = z.string().regex(/^#(?:[0-9a-fA-F]{3}){1,2}$/, "Invalid color");
 const isoDate = z.string().max(64);
 const finiteNumber = z.number().finite();
 const nonNegNumber = finiteNumber.min(0);
@@ -182,7 +209,6 @@ const forecastScenarioSchema = z.object({
   color: z.string().max(32).optional(),
 });
 
-
 const goalSchema = z.object({
   id: z.string().min(1).max(128),
   name: z.string().max(200),
@@ -258,10 +284,10 @@ function collectPreferences(): Promise<Record<string, string>> {
       if (!k || !k.startsWith(PREF_KEY_PREFIX) || PREF_KEY_DENY.has(k)) continue;
       keys.push(k);
     }
-  } catch {}
-  return Promise.all(
-    keys.map(async (k) => [k, await secureGet(k)] as const),
-  ).then((entries) => {
+  } catch {
+    // Ignore: preferences are best-effort.
+  }
+  return Promise.all(keys.map(async (k) => [k, await secureGet(k)] as const)).then((entries) => {
     for (const [k, v] of entries) if (v != null) out[k] = v;
     return out;
   });
@@ -280,7 +306,9 @@ async function applyPreferences(prefs: Record<string, string>) {
       if (!k.startsWith(PREF_KEY_PREFIX) || PREF_KEY_DENY.has(k)) continue;
       await secureSet(k, v);
     }
-  } catch {}
+  } catch {
+    // Ignore: preferences are best-effort.
+  }
 }
 
 export const Route = createFileRoute("/settings")({
@@ -307,11 +335,12 @@ function SettingsPage() {
     const envelope = {
       version: 1 as const,
       exportedAt: new Date().toISOString(),
-      state,
+      state: redactStateForExport(state),
       preferences: await collectPreferences(),
       userPreferences: { language },
+      secretsNote: "API keys are not included in exports. Re-enter them in Settings after restore.",
     };
-    return JSON.stringify(envelope, null, 2);
+    return stringifyExportJson(envelope);
   }
 
   async function copyJsonToClipboard() {
@@ -329,23 +358,13 @@ function SettingsPage() {
 
   async function exportJson() {
     try {
-      const filename = `portfolio-${new Date().toISOString().slice(0, 10)}.json`;
+      const filename = datedFilename("portfolio", "json");
       const json = await buildExportJson();
-      const blob = new Blob([json], { type: "application/json" });
-      const method = await saveOrShare(blob, filename, json);
-      toast.success(
-        t("settings.data.exported", { defaultValue: "Export completed" }),
-        {
-          description:
-            method === "share"
-              ? t("settings.data.exportedShare", { defaultValue: `Shared ${filename}` })
-              : method === "clipboard"
-                ? t("settings.data.exportedClipboard", {
-                    defaultValue: "Copied JSON to clipboard (download unavailable on this device)",
-                  })
-                : t("settings.data.exportedFile", { defaultValue: `Saved ${filename}` }),
-        },
-      );
+      const method = await saveExportFile(filename, { text: json });
+      if (method === "cancelled") return;
+      toast.success(t("settings.data.exported", { defaultValue: "Export completed" }), {
+        description: exportMethodDescription(method, filename, t),
+      });
     } catch (e) {
       toast.error(
         `${t("settings.data.exportFailed", { defaultValue: "Export failed" })}: ${(e as Error).message}`,
@@ -359,7 +378,7 @@ function SettingsPage() {
         ["symbol", "name", "type", "quantity", "currentPrice", "marketValue", "color"],
         ...state.holdings.map((h) => [
           h.symbol,
-          h.name.replaceAll(",", " "),
+          h.name,
           h.type,
           h.quantity,
           h.currentPrice,
@@ -367,12 +386,12 @@ function SettingsPage() {
           h.color,
         ]),
       ];
-      const csv = rows.map((r) => r.join(",")).join("\n");
-      const filename = `holdings-${new Date().toISOString().slice(0, 10)}.csv`;
-      const blob = new Blob([csv], { type: "text/csv" });
-      await saveOrShare(blob, filename, csv);
+      const csv = rowsToCsv(rows);
+      const filename = datedFilename("holdings", "csv");
+      const method = await saveExportFile(filename, { text: csv });
+      if (method === "cancelled") return;
       toast.success(t("settings.data.exported", { defaultValue: "Export completed" }), {
-        description: t("settings.data.exportedFile", { defaultValue: `Saved ${filename}` }),
+        description: exportMethodDescription(method, filename, t),
       });
     } catch (e) {
       toast.error(
@@ -494,7 +513,9 @@ function SettingsPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="https://corsproxy.io/?">corsproxy.io</SelectItem>
-                  <SelectItem value="https://api.allorigins.win/raw?url=">allorigins.win</SelectItem>
+                  <SelectItem value="https://api.allorigins.win/raw?url=">
+                    allorigins.win
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -517,14 +538,21 @@ function SettingsPage() {
                   {t("common.save")}
                 </Button>
               </div>
-              <p className="text-xs text-muted-foreground mt-2">{t("settings.api.finnhubFootnote")}</p>
+              <p className="text-xs text-muted-foreground mt-2">
+                {t("settings.api.finnhubFootnote")}
+              </p>
             </div>
 
             <div className="flex items-start justify-between gap-4 pt-2 border-t border-border/40">
               <div>
-                <Label className="text-sm">{t("settings.api.clearPriceCache", { defaultValue: "Refresh price history" })}</Label>
+                <Label className="text-sm">
+                  {t("settings.api.clearPriceCache", { defaultValue: "Refresh price history" })}
+                </Label>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  {t("settings.api.clearPriceCacheHelp", { defaultValue: "Drop cached price data so the next chart load re-fetches from the providers." })}
+                  {t("settings.api.clearPriceCacheHelp", {
+                    defaultValue:
+                      "Drop cached price data so the next chart load re-fetches from the providers.",
+                  })}
                 </p>
               </div>
               <Button
@@ -532,7 +560,9 @@ function SettingsPage() {
                 size="sm"
                 onClick={() => {
                   clearPriceHistoryCache();
-                  toast.success(t("settings.api.priceCacheCleared", { defaultValue: "Price cache cleared" }));
+                  toast.success(
+                    t("settings.api.priceCacheCleared", { defaultValue: "Price cache cleared" }),
+                  );
                 }}
               >
                 <RefreshCw className="mr-2 h-4 w-4" />
@@ -568,6 +598,8 @@ function SettingsPage() {
             </CardContent>
           </Card>
 
+          <AiSettingsCard />
+
           <Card className="border-border/60" data-tour="settings-data">
             <CardHeader>
               <CardTitle>{t("settings.data.title")}</CardTitle>
@@ -577,8 +609,13 @@ function SettingsPage() {
               <Button variant="outline" className="w-full justify-start" onClick={exportJson}>
                 <FileJson className="mr-2 h-4 w-4" /> {t("settings.data.exportJson")}
               </Button>
-              <Button variant="outline" className="w-full justify-start" onClick={copyJsonToClipboard}>
-                <Copy className="mr-2 h-4 w-4" /> {t("settings.data.copyJson", { defaultValue: "Copy JSON to clipboard" })}
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                onClick={copyJsonToClipboard}
+              >
+                <Copy className="mr-2 h-4 w-4" />{" "}
+                {t("settings.data.copyJson", { defaultValue: "Copy JSON to clipboard" })}
               </Button>
               <Button variant="outline" className="w-full justify-start" onClick={exportCsv}>
                 <FileSpreadsheet className="mr-2 h-4 w-4" /> {t("settings.data.exportCsv")}
@@ -598,7 +635,8 @@ function SettingsPage() {
                   setPasteOpen(true);
                 }}
               >
-                <ClipboardPaste className="mr-2 h-4 w-4" /> {t("settings.data.pasteJson", { defaultValue: "Paste JSON to import" })}
+                <ClipboardPaste className="mr-2 h-4 w-4" />{" "}
+                {t("settings.data.pasteJson", { defaultValue: "Paste JSON to import" })}
               </Button>
               <input
                 ref={fileRef}
@@ -615,10 +653,13 @@ function SettingsPage() {
               <Dialog open={pasteOpen} onOpenChange={setPasteOpen}>
                 <DialogContent className="max-w-2xl">
                   <DialogHeader>
-                    <DialogTitle>{t("settings.data.pasteJson", { defaultValue: "Paste JSON to import" })}</DialogTitle>
+                    <DialogTitle>
+                      {t("settings.data.pasteJson", { defaultValue: "Paste JSON to import" })}
+                    </DialogTitle>
                     <DialogDescription>
                       {t("settings.data.pasteJsonDesc", {
-                        defaultValue: "Paste a previously exported JSON below. This will replace your current data.",
+                        defaultValue:
+                          "Paste a previously exported JSON below. This will replace your current data.",
                       })}
                     </DialogDescription>
                   </DialogHeader>
@@ -636,12 +677,18 @@ function SettingsPage() {
                           const txt = await navigator.clipboard?.readText?.();
                           if (txt) setPasteValue(txt);
                         } catch {
-                          toast.error(t("settings.data.clipboardReadFailed", { defaultValue: "Could not read clipboard" }));
+                          toast.error(
+                            t("settings.data.clipboardReadFailed", {
+                              defaultValue: "Could not read clipboard",
+                            }),
+                          );
                         }
                       }}
                     >
                       <ClipboardPaste className="mr-2 h-4 w-4" />
-                      {t("settings.data.pasteFromClipboard", { defaultValue: "Paste from clipboard" })}
+                      {t("settings.data.pasteFromClipboard", {
+                        defaultValue: "Paste from clipboard",
+                      })}
                     </Button>
                     <Button variant="ghost" onClick={() => setPasteOpen(false)}>
                       {t("common.cancel")}
@@ -661,7 +708,6 @@ function SettingsPage() {
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
-
 
               <AlertDialog>
                 <AlertDialogTrigger asChild>
@@ -726,54 +772,218 @@ function SettingsPage() {
         </CardContent>
       </Card>
 
-
       <Download className="hidden" />
     </>
   );
 }
 
-async function saveOrShare(
-  blob: Blob,
-  filename: string,
-  textContent?: string,
-): Promise<"download" | "share" | "clipboard"> {
-  // 1) Try Web Share API with a File (works on iOS/Android WebViews when https)
-  try {
-    const nav = typeof navigator !== "undefined" ? (navigator as Navigator & { canShare?: (d: ShareData) => boolean }) : undefined;
-    if (nav && typeof File !== "undefined" && nav.canShare) {
-      const file = new File([blob], filename, { type: blob.type });
-      const data: ShareData & { files?: File[] } = { files: [file], title: filename };
-      if (nav.canShare(data)) {
-        await nav.share(data);
-        return "share";
-      }
+/** AI Assistant settings: model management + voice output, all on-device. */
+function AiSettingsCard() {
+  const { t } = useTranslation();
+  const { state, updateSettings } = useStore();
+  const s = state.settings;
+  const native = isTauri();
+  const [caps, setCaps] = useState<AiCapabilities>({
+    llm: false,
+    stt: false,
+    tts: false,
+  });
+
+  useEffect(() => {
+    let alive = true;
+    getAiCapabilities(aiConfigFromSettings(s)).then((c) => {
+      if (alive) setCaps(c);
+    });
+    return () => {
+      alive = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [s.aiLlmModelPath, s.aiSttModelDir, s.aiTtsModelDir]);
+
+  const pick = async (
+    kind: "file" | "dir",
+    key: "aiLlmModelPath" | "aiSttModelDir" | "aiTtsModelDir",
+  ) => {
+    try {
+      const p = await invoke<string | null>("pick_model_path", { kind });
+      if (p) updateSettings({ [key]: p });
+    } catch {
+      toast.error(t("settings.ai.pickError", { defaultValue: "Couldn't open the file picker." }));
     }
-  } catch {
-    // fall through
-  }
+  };
 
-  // 2) Try classic anchor download
-  try {
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    const supportsDownload = "download" in a;
-    a.href = url;
-    a.download = filename;
-    a.rel = "noopener";
-    a.target = "_blank";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 4000);
-    if (supportsDownload) return "download";
-  } catch {
-    // fall through
-  }
+  const modelRow = (
+    label: string,
+    help: string,
+    key: "aiLlmModelPath" | "aiSttModelDir" | "aiTtsModelDir",
+    kind: "file" | "dir",
+    ready: boolean,
+  ) => {
+    const value = s[key];
+    return (
+      <div className="rounded-lg border border-border/50 p-3">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            {ready ? (
+              <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+            ) : (
+              <Circle className="h-4 w-4 text-muted-foreground/50" />
+            )}
+            <Label className="text-sm">{label}</Label>
+          </div>
+          {native && (
+            <div className="flex items-center gap-1">
+              <Button variant="outline" size="sm" onClick={() => pick(kind, key)}>
+                <FolderOpen className="mr-1.5 h-3.5 w-3.5" />
+                {t("settings.ai.browse", { defaultValue: "Browse" })}
+              </Button>
+              {value && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => updateSettings({ [key]: undefined })}
+                  title={t("settings.ai.clearPath", { defaultValue: "Clear" })}
+                >
+                  <X className="h-3.5 w-3.5" />
+                </Button>
+              )}
+            </div>
+          )}
+        </div>
+        <p className="mt-1 text-xs text-muted-foreground">{help}</p>
+        {value ? (
+          <p className="mt-1 truncate font-mono text-[11px] text-muted-foreground/80" title={value}>
+            {value}
+          </p>
+        ) : null}
+      </div>
+    );
+  };
 
-  // 3) Last-resort clipboard fallback (mobile WebViews without download support)
-  if (textContent && typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
-    await navigator.clipboard.writeText(textContent);
-    return "clipboard";
-  }
-  throw new Error("No available way to save the file on this device");
+  return (
+    <Card className="border-border/60">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Sparkles className="h-4 w-4" />
+          {t("settings.ai.title", { defaultValue: "AI Assistant" })}
+        </CardTitle>
+        <CardDescription>
+          {t("settings.ai.description", {
+            defaultValue:
+              "Fully offline. Configure local models for the LLM and voice, or use the built-in assistant with no download.",
+          })}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <Label className="text-sm flex items-center gap-2">
+              <Sparkles className="h-4 w-4" />
+              {t("settings.ai.enabled", { defaultValue: "Show AI assistant" })}
+            </Label>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {t("settings.ai.enabledHelp", {
+                defaultValue: "Hide the assistant from the navigation menu to free up space.",
+              })}
+            </p>
+          </div>
+          <Switch
+            checked={s.aiAssistantEnabled !== false}
+            onCheckedChange={(v) => updateSettings({ aiAssistantEnabled: v })}
+          />
+        </div>
+
+        {s.aiAssistantEnabled !== false ? (
+          <>
+        <div className="flex items-start justify-between gap-4 border-t border-border/40 pt-4">
+          <div>
+            <Label className="text-sm flex items-center gap-2">
+              <Volume2 className="h-4 w-4" />
+              {t("settings.ai.voiceOutput", { defaultValue: "Speak replies aloud" })}
+            </Label>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {t("settings.ai.voiceOutputHelp", {
+                defaultValue: "Read the assistant's answers using on-device text-to-speech.",
+              })}
+            </p>
+          </div>
+          <Switch
+            checked={s.aiTtsEnabled !== false}
+            onCheckedChange={(v) => updateSettings({ aiTtsEnabled: v })}
+          />
+        </div>
+
+        {native ? (
+          <div className="space-y-3">
+            {modelRow(
+              t("settings.ai.llmModel", { defaultValue: "Language model (GGUF)" }),
+              t("settings.ai.llmModelHelp", {
+                defaultValue:
+                  "e.g. Qwen2.5-1.5B-Instruct Q4_K_M. Without one, the built-in assistant is used.",
+              }),
+              "aiLlmModelPath",
+              "file",
+              caps.llm,
+            )}
+            {modelRow(
+              t("settings.ai.sttModel", { defaultValue: "Speech-to-text model folder" }),
+              t("settings.ai.sttModelHelp", {
+                defaultValue:
+                  "A Sherpa-ONNX STT model folder. Falls back to the browser recognizer.",
+              }),
+              "aiSttModelDir",
+              "dir",
+              caps.stt,
+            )}
+            {modelRow(
+              t("settings.ai.ttsModel", { defaultValue: "Text-to-speech model folder" }),
+              t("settings.ai.ttsModelHelp", {
+                defaultValue:
+                  "A Sherpa-ONNX VITS/Piper model folder. Falls back to the browser voice.",
+              }),
+              "aiTtsModelDir",
+              "dir",
+              caps.tts,
+            )}
+          </div>
+        ) : (
+          <p className="rounded-lg border border-border/50 bg-muted/30 p-3 text-xs text-muted-foreground">
+            {t("settings.ai.webNote", {
+              defaultValue:
+                "You're on the web build. The assistant works offline with the built-in engine and your browser's voice. Install the desktop/mobile app to run local LLM and Sherpa-ONNX speech models.",
+            })}
+          </p>
+        )}
+
+        <div className="flex items-start justify-between gap-4 border-t border-border/40 pt-3">
+          <div>
+            <Label className="text-sm">
+              {t("settings.ai.clearHistory", { defaultValue: "Clear chat history" })}
+            </Label>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {t("settings.ai.clearHistoryHelp", {
+                defaultValue: "Delete the saved AI conversation from this device.",
+              })}
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              void clearChatHistory();
+              toast.success(
+                t("settings.ai.historyCleared", { defaultValue: "Chat history cleared" }),
+              );
+            }}
+          >
+            <RotateCcw className="mr-2 h-4 w-4" />
+            {t("common.clear", { defaultValue: "Clear" })}
+          </Button>
+        </div>
+          </>
+        ) : null}
+      </CardContent>
+    </Card>
+  );
 }

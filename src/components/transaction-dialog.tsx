@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Dialog,
   DialogContent,
@@ -33,6 +34,7 @@ type Props = {
 };
 
 export function TransactionDialog({ open, onOpenChange, editing, defaultHoldingId }: Props) {
+  const { t } = useTranslation();
   const { state, addTransaction, updateTransaction } = useStore();
   const holdings = state.holdings;
 
@@ -76,11 +78,11 @@ export function TransactionDialog({ open, onOpenChange, editing, defaultHoldingI
   }, [holdingId, editing, holdings, state.settings.displayCurrency]);
 
   function save() {
-    if (!holdingId) return toast.error("Pick a holding");
+    if (!holdingId) return toast.error(t("holdings.txDialog.pickHoldingError"));
     const qty = parseFloat(quantity);
     const px = parseFloat(price);
-    if (!isFinite(qty) || qty <= 0) return toast.error("Quantity must be > 0");
-    if (!isFinite(px) || px < 0) return toast.error("Price must be ≥ 0");
+    if (!isFinite(qty) || qty <= 0) return toast.error(t("holdings.txDialog.qtyGtZero"));
+    if (!isFinite(px) || px < 0) return toast.error(t("holdings.txDialog.priceGteZero"));
     const fee = fees.trim() ? parseFloat(fees) : undefined;
     const payload: Omit<HoldingTransaction, "id"> = {
       holdingId,
@@ -94,10 +96,12 @@ export function TransactionDialog({ open, onOpenChange, editing, defaultHoldingI
     };
     if (editing) {
       updateTransaction(editing.id, payload);
-      toast.success("Transaction updated");
+      toast.success(t("holdings.txDialog.updated"));
     } else {
       addTransaction(payload);
-      toast.success(`${kind === "buy" ? "Buy" : "Sell"} added`);
+      toast.success(
+        kind === "buy" ? t("holdings.txDialog.buyAdded") : t("holdings.txDialog.sellAdded"),
+      );
     }
     onOpenChange(false);
   }
@@ -106,17 +110,19 @@ export function TransactionDialog({ open, onOpenChange, editing, defaultHoldingI
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{editing ? "Edit transaction" : "Add transaction"}</DialogTitle>
-          <DialogDescription>
-            Record a buy or sell. Quantity on the holding is recalculated from your transactions.
-          </DialogDescription>
+          <DialogTitle>
+            {editing ? t("holdings.txDialog.editTitle") : t("holdings.txDialog.addTitle")}
+          </DialogTitle>
+          <DialogDescription>{t("holdings.txDialog.description")}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-3">
           <div>
-            <Label className="text-xs">Holding</Label>
+            <Label className="text-xs">{t("holdings.txDialog.holding")}</Label>
             <Select value={holdingId} onValueChange={setHoldingId}>
-              <SelectTrigger className="mt-1.5"><SelectValue placeholder="Pick a holding" /></SelectTrigger>
+              <SelectTrigger className="mt-1.5">
+                <SelectValue placeholder={t("holdings.txDialog.pickHolding")} />
+              </SelectTrigger>
               <SelectContent>
                 {holdings.map((h) => (
                   <SelectItem key={h.id} value={h.id}>
@@ -129,18 +135,18 @@ export function TransactionDialog({ open, onOpenChange, editing, defaultHoldingI
 
           <Tabs value={kind} onValueChange={(v) => setKind(v as "buy" | "sell")}>
             <TabsList className="grid grid-cols-2">
-              <TabsTrigger value="buy">Buy</TabsTrigger>
-              <TabsTrigger value="sell">Sell</TabsTrigger>
+              <TabsTrigger value="buy">{t("holdings.buy")}</TabsTrigger>
+              <TabsTrigger value="sell">{t("holdings.sell")}</TabsTrigger>
             </TabsList>
           </Tabs>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label className="text-xs">Date</Label>
+              <Label className="text-xs">{t("holdings.txDialog.date")}</Label>
               <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="mt-1.5" />
             </div>
             <div>
-              <Label className="text-xs">Currency</Label>
+              <Label className="text-xs">{t("common.currency")}</Label>
               <Select value={currency} onValueChange={setCurrency}>
                 <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
                 <SelectContent className="max-h-72">
@@ -154,18 +160,18 @@ export function TransactionDialog({ open, onOpenChange, editing, defaultHoldingI
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label className="text-xs">Quantity</Label>
+              <Label className="text-xs">{t("holdings.quantity")}</Label>
               <Input type="number" step="any" value={quantity} onChange={(e) => setQuantity(e.target.value)} placeholder="0.00" className="mt-1.5" />
             </div>
             <div>
-              <Label className="text-xs">Price / unit</Label>
+              <Label className="text-xs">{t("holdings.txDialog.pricePerUnit")}</Label>
               <Input type="number" step="any" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="0.00" className="mt-1.5" />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label className="text-xs">Total value</Label>
+              <Label className="text-xs">{t("holdings.totalValue")}</Label>
               <Input
                 type="number"
                 step="any"
@@ -185,25 +191,29 @@ export function TransactionDialog({ open, onOpenChange, editing, defaultHoldingI
                     setPrice(String(total / q));
                   }
                 }}
-                placeholder="auto from qty × price"
+                placeholder={t("holdings.txDialog.totalValueAuto")}
                 className="mt-1.5"
               />
             </div>
             <div>
-              <Label className="text-xs">Fees (optional)</Label>
+              <Label className="text-xs">{t("holdings.txDialog.feesOptional")}</Label>
               <Input type="number" step="any" value={fees} onChange={(e) => setFees(e.target.value)} placeholder="0.00" className="mt-1.5" />
             </div>
           </div>
 
           <div>
-            <Label className="text-xs">Notes (optional)</Label>
+            <Label className="text-xs">{t("holdings.txDialog.notesOptional")}</Label>
             <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} className="mt-1.5 h-20" />
           </div>
         </div>
 
         <DialogFooter>
-          <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={save}>{editing ? "Save" : "Add"}</Button>
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>
+            {t("common.cancel")}
+          </Button>
+          <Button onClick={save}>
+            {editing ? t("common.save") : t("holdings.txDialog.add")}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

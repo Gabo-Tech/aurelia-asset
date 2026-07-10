@@ -1,3 +1,4 @@
+import { isTauri } from "../export";
 import { fetchJson, fetchWithFallback, getFinnhubKey } from "./client";
 import type { PricePoint } from "../types";
 
@@ -6,7 +7,7 @@ function call<T>(rawUrl: string, hasUserKey: boolean): Promise<T> {
   // Without one, route through the same-origin proxy which injects the
   // server-side FINNHUB_API_KEY so the browser never sees it.
   if (hasUserKey) return fetchJson<T>(rawUrl);
-  if (typeof window === "undefined") {
+  if (typeof window === "undefined" || isTauri()) {
     return fetchWithFallback<T>(rawUrl, { preferDirect: false });
   }
   return fetch(`/api/finance-proxy?url=${encodeURIComponent(rawUrl)}`).then((r) => {

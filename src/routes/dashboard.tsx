@@ -19,12 +19,13 @@ import { ChartFrame } from "@/components/chart-frame";
 import { expandCashflows, valuesByEntry, liquidityImpact, cardDebtImpact } from "@/routes/cashflow";
 import { useTranslation } from "react-i18next";
 import i18n from "@/i18n";
+import { SITE_URL } from "@/lib/site-config";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => {
     const title = i18n.t("dashboard.metaTitle");
     const desc = i18n.t("dashboard.metaDesc");
-    const url = "https://financetracker.putopulse.org/dashboard";
+    const url = `${SITE_URL}/dashboard`;
     return {
       meta: [
         { title },

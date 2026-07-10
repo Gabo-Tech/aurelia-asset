@@ -21,17 +21,12 @@ import {
   Download,
 } from "lucide-react";
 import { getGithubRepo } from "@/lib/repo.functions";
-import apkAsset from "@/assets/portfolio-tracker-apk.asset.json";
-import logoAsset from "@/assets/logo.png.asset.json";
-import heroAsset from "@/assets/landing-hero.png.asset.json";
+import { ASSETS, DEFAULT_GITHUB_REPO, SITE_URL, githubSourceUrl } from "@/lib/site-config";
 
 import { MouseGlow, ScrollAurora, Reveal } from "@/components/landing-ambient";
 import i18n from "@/i18n";
 
-
-const SITE_URL = "https://financetracker.putopulse.org";
-import ogImageAsset from "@/assets/og-image.png.asset.json";
-const OG_IMAGE = SITE_URL + ogImageAsset.url;
+const OG_IMAGE = SITE_URL + ASSETS.ogImage;
 
 const LOCALES = ["en", "es", "pt", "de", "nl", "ca"] as const;
 const OG_LOCALE_MAP: Record<(typeof LOCALES)[number], string> = {
@@ -179,7 +174,7 @@ function SiteHeader() {
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
         <Link to="/" className="flex items-center gap-2">
           <img
-            src={logoAsset.url}
+            src={ASSETS.logo}
             alt="Portfolio Tracker logo"
             className="h-8 w-8 rounded-xl object-contain"
             width={32}
@@ -252,7 +247,7 @@ function Hero() {
         <div className="mx-auto mt-14 max-w-5xl animate-fade-in" style={{ animationDelay: "480ms", animationDuration: "900ms", animationFillMode: "both" }}>
           <div className="rounded-2xl border border-border/60 bg-card/40 p-2 shadow-2xl shadow-primary/5">
             <img
-              src={heroAsset.url}
+              src={ASSETS.hero}
               alt={t("landing.hero.screenshotAlt")}
               loading="lazy"
               className="w-full rounded-xl"
@@ -440,8 +435,8 @@ const DOWNLOAD_PLATFORMS: Array<{
   icon: typeof MonitorDown;
   /** Filename suffix pattern at github.com/<repo>/releases/latest/download/. Null = link to release page. */
   assetGlob: string | null;
-  /** Optional direct URL that overrides the GitHub release link. */
-  directHref?: string;
+  /** Asset filename on GitHub Releases. */
+  releaseAsset?: string;
   /** Suggested filename for the downloaded file. */
   downloadAs?: string;
   /** Marks the platform as not yet available. */
@@ -449,14 +444,32 @@ const DOWNLOAD_PLATFORMS: Array<{
 }> = [
   { key: "windows", icon: MonitorDown, assetGlob: ".msi", comingSoon: true },
   { key: "mac", icon: Apple, assetGlob: ".dmg", comingSoon: true },
-  { key: "linuxAppImage", icon: Download, assetGlob: ".AppImage" },
-  { key: "linuxDeb", icon: Download, assetGlob: ".deb" },
-  { key: "linuxRpm", icon: Download, assetGlob: ".rpm" },
+  {
+    key: "linuxAppImage",
+    icon: Download,
+    assetGlob: ".AppImage",
+    releaseAsset: "PortfolioTracker_0.1.0_amd64.AppImage",
+    downloadAs: "PortfolioTracker_0.1.0_amd64.AppImage",
+  },
+  {
+    key: "linuxDeb",
+    icon: Download,
+    assetGlob: ".deb",
+    releaseAsset: "PortfolioTracker_0.1.0_amd64.deb",
+    downloadAs: "PortfolioTracker_0.1.0_amd64.deb",
+  },
+  {
+    key: "linuxRpm",
+    icon: Download,
+    assetGlob: ".rpm",
+    releaseAsset: "PortfolioTracker-0.1.0-1.x86_64.rpm",
+    downloadAs: "PortfolioTracker-0.1.0-1.x86_64.rpm",
+  },
   {
     key: "android",
     icon: Smartphone,
     assetGlob: ".apk",
-    directHref: apkAsset.url,
+    releaseAsset: "portfolio-tracker.apk",
     downloadAs: "portfolio-tracker.apk",
   },
   { key: "ios", icon: Apple, assetGlob: ".ipa", comingSoon: true },
@@ -474,6 +487,11 @@ function Downloads() {
   }, [fetchRepo]);
 
   const releaseBase = repo ? `https://github.com/${repo}/releases/latest` : null;
+  const releaseRepo = repo ?? DEFAULT_GITHUB_REPO;
+
+  function releaseDownloadUrl(filename: string) {
+    return `https://github.com/${releaseRepo}/releases/latest/download/${encodeURIComponent(filename)}`;
+  }
 
   return (
     <section id="downloads" className="border-b border-border/50">
@@ -489,8 +507,10 @@ function Downloads() {
             const Icon = d.icon;
             const label = t(`landing.downloads.platforms.${d.key}`);
             const note = t(`landing.downloads.notes.${d.key}`, { defaultValue: "" });
-            const href = d.directHref ?? releaseBase ?? "https://github.com";
-            const isDirect = Boolean(d.directHref);
+            const releaseHref =
+              d.releaseAsset ? releaseDownloadUrl(d.releaseAsset) : null;
+            const href = releaseHref ?? releaseBase ?? githubSourceUrl();
+            const isDirect = Boolean(d.releaseAsset);
             const cls =
               "relative flex flex-col items-center justify-center rounded-2xl border border-border/60 bg-card/40 p-6 text-center transition-colors hover:border-primary/60 hover:bg-card";
             if (d.comingSoon) {
@@ -572,7 +592,7 @@ function SiteFooter() {
       <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-4 py-10 text-sm text-muted-foreground sm:flex-row sm:px-6">
         <div className="flex items-center gap-2">
           <img
-            src={logoAsset.url}
+            src={ASSETS.logo}
             alt="Portfolio Tracker logo"
             className="h-7 w-7 rounded-lg object-contain"
             width={28}
@@ -585,6 +605,15 @@ function SiteFooter() {
           <Link to="/dashboard" className="hover:text-foreground">{t("landing.openApp")}</Link>
           <a href="#features" className="hover:text-foreground">{t("landing.nav.features")}</a>
           <a href="#faq" className="hover:text-foreground">{t("landing.nav.faq")}</a>
+          <a
+            href={githubSourceUrl()}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 hover:text-foreground"
+          >
+            <Github className="h-3.5 w-3.5" />
+            {t("landing.footer.sourceCode")}
+          </a>
         </div>
         <div>
           {t("landing.footer.madeBy")}{" "}

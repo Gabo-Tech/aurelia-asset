@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { SankeyChart } from "@/components/sankey-chart";
+import { SankeyChart, type LabelMode } from "@/components/sankey-chart";
 import { useStore, useMoney } from "@/lib/store";
 import { secureGet, secureSet } from "@/lib/secure-storage";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,6 +20,7 @@ import { PageHeader } from "@/components/app-shell";
 import { useTranslation } from "react-i18next";
 import i18n from "@/i18n";
 import { ChartFrame } from "@/components/chart-frame";
+import { saveExportFile } from "@/lib/export";
 import { CURRENCIES } from "@/lib/currency";
 import { formatMoney } from "@/lib/format";
 import {
@@ -79,6 +80,12 @@ export const Route = createFileRoute("/cashflow")({
 });
 
 import { GROUP_COLORS, type Category, type CategoryGroup, type CashflowEntry, type RecurrenceFrequency } from "@/lib/types";
+import {
+  buildClassicSankey,
+  buildStagedSankey,
+  type SankeyLayoutMode,
+  type SankeyStages,
+} from "@/lib/sankey-build";
 import { CreditCardsManager } from "@/components/credit-cards-manager";
 
 /** Expand recurring cashflow entries into individual occurrences up to `until`.
@@ -234,21 +241,26 @@ function describePercentOf(
   return ref.kind === "income" ? ref.source || "income" : ref.category || "expense";
 }
 
-const POOL_COLOR = "#64748b";
-const SAVED_COLOR = "#0ea5e9";
-
-type LabelMode = "always" | "hover" | "off";
 const PREF_KEY = "ept_cashflow_sankey_prefs_v1";
 
 type Prefs = {
   labelMode: LabelMode;
+  layoutMode: SankeyLayoutMode;
+  stages: SankeyStages;
   nodeColors: Record<string, string>;
   incomeOrder: string[];
   expenseOrder: string[];
 };
 
+const DEFAULT_STAGES: SankeyStages = {
+  categories: true,
+  descriptions: true,
+};
+
 const DEFAULT_PREFS: Prefs = {
   labelMode: "always",
+  layoutMode: "staged",
+  stages: { ...DEFAULT_STAGES },
   nodeColors: {},
   incomeOrder: [],
   expenseOrder: [],
@@ -262,6 +274,11 @@ async function loadPrefs(): Promise<Prefs> {
     const p = JSON.parse(raw);
     return {
       labelMode: p.labelMode ?? "always",
+      layoutMode: p.layoutMode === "classic" ? "classic" : "staged",
+      stages: {
+        categories: p.stages?.categories ?? DEFAULT_STAGES.categories,
+        descriptions: p.stages?.descriptions ?? DEFAULT_STAGES.descriptions,
+      },
       nodeColors: p.nodeColors ?? {},
       incomeOrder: Array.isArray(p.incomeOrder) ? p.incomeOrder : [],
       expenseOrder: Array.isArray(p.expenseOrder) ? p.expenseOrder : [],
@@ -354,170 +371,59 @@ function CashflowPage() {
     return { income, expense, net: income - expense };
   }, [expandedToToday, valuesTop]);
 
+  const sankeyLabels = useMemo(
+    () => ({
+      totalIncome: t("cashflow.sankey.totalIncome", { defaultValue: "Total Income" }),
+      totalExpenses: t("cashflow.sankey.totalExpenses", { defaultValue: "Total Expenses" }),
+      totalSavings: t("cashflow.sankey.totalSavings", { defaultValue: "Total Savings" }),
+      totalInvestments: t("cashflow.sankey.totalInvestments", { defaultValue: "Total Investments" }),
+      saved: t("cashflow.sankey.saved", { defaultValue: "Saved" }),
+      other: t("cashflow.other", { defaultValue: "Other" }),
+      cashPool: t("cashflow.cashPool", { defaultValue: "Cash Pool" }),
+      general: t("cashflow.sankey.general", { defaultValue: "General" }),
+    }),
+    [t],
+  );
+
   const sankey = useMemo(() => {
     if (!expandedToToday.length) return null;
-    const incomes = expandedToToday.filter((c) => c.kind === "income");
-    const expenses = expandedToToday.filter((c) => c.kind === "expense");
-    const transfers = expandedToToday.filter((c) => c.kind === "transfer");
-
-    const applyOrder = (items: string[], saved: string[]) => {
-      const set = new Set(items);
-      const ordered = saved.filter((n) => set.has(n));
-      const remaining = items.filter((n) => !ordered.includes(n));
-      return [...ordered, ...remaining];
+    const buildPrefs = {
+      nodeColors: prefs.nodeColors,
+      incomeOrder: prefs.incomeOrder,
+      expenseOrder: prefs.expenseOrder,
+      stages: prefs.stages,
     };
-    const sources = applyOrder(
-      Array.from(new Set(incomes.map((i) => i.source || "Other"))),
-      prefs.incomeOrder,
-    );
-    const cats = applyOrder(
-      Array.from(new Set(expenses.map((e) => e.category || "Other"))),
-      prefs.expenseOrder,
-    );
-    const POOL = "Cash Pool";
-    const SAVED = "Saved";
-
-    // Resolve account refs to display labels + colors.
-    const cardById = new Map(state.creditCards.map((c) => [c.id, c]));
-    const holdById = new Map(state.holdings.map((h) => [h.id, h]));
-    const baseLabelOf = (ref: string) => {
-      if (ref === "liquidity") return POOL;
-      if (ref.startsWith("credit:")) {
-        const c = cardById.get(ref.slice(7));
-        return c ? `💳 ${c.name}` : POOL;
-      }
-      if (ref.startsWith("holding:")) {
-        const h = holdById.get(ref.slice(8));
-        return h ? `📈 ${h.symbol || h.name}` : POOL;
-      }
-      return POOL;
-    };
-    const colorOf = (ref: string): string => {
-      if (ref === "liquidity") return prefs.nodeColors[POOL] ?? POOL_COLOR;
-      if (ref.startsWith("credit:"))
-        return cardById.get(ref.slice(7))?.color ?? "#f97316";
-      if (ref.startsWith("holding:"))
-        return holdById.get(ref.slice(8))?.color ?? "#a855f7";
-      return POOL_COLOR;
+    const ctx = {
+      entries: expandedToToday,
+      valuesTop,
+      catByName,
+      colorFor,
+      prefs: buildPrefs,
+      labels: sankeyLabels,
     };
 
-    // Determine if a non-liquidity account is used on both sides (cycle risk).
-    const usedAsSource = new Set<string>();
-    const usedAsTarget = new Set<string>();
-    for (const t of transfers) {
-      if (t.fromAccount && t.fromAccount !== "liquidity") usedAsSource.add(t.fromAccount);
-      if (t.toAccount && t.toAccount !== "liquidity") usedAsTarget.add(t.toAccount);
+    if (prefs.layoutMode === "staged") {
+      return buildStagedSankey(ctx);
     }
-    for (const e of expenses) {
-      if (e.paymentMethod && e.paymentMethod !== "liquidity") usedAsSource.add(e.paymentMethod);
-    }
-    const needsSplit = (ref: string) =>
-      ref !== "liquidity" && usedAsSource.has(ref) && usedAsTarget.has(ref);
-    const nameFor = (ref: string, role: "source" | "target") => {
-      if (ref === "liquidity") return POOL;
-      const base = baseLabelOf(ref);
-      if (!needsSplit(ref)) return base;
-      return role === "source" ? `${base} →` : `← ${base}`;
-    };
-
-    type NodeMeta = {
-      name: string;
-      kind: "income" | "pool" | "expense" | "saved" | "account";
-      fill: string;
-    };
-    const nodes: NodeMeta[] = [];
-    const pushNode = (n: NodeMeta) => {
-      if (!nodes.find((x) => x.name === n.name)) nodes.push(n);
-    };
-
-    sources.forEach((s) =>
-      pushNode({ name: s, kind: "income", fill: colorFor(s, "income") }),
-    );
-    pushNode({ name: POOL, kind: "pool", fill: prefs.nodeColors[POOL] ?? POOL_COLOR });
-
-    // Account intermediary nodes (cards / holdings)
-    const accountNodes = new Set<string>();
-    const registerAccount = (ref: string, role: "source" | "target") => {
-      if (ref === "liquidity") return;
-      const name = nameFor(ref, role);
-      const fill = prefs.nodeColors[name] ?? colorOf(ref);
-      pushNode({ name, kind: "account", fill });
-      accountNodes.add(name);
-    };
-    for (const t of transfers) {
-      if (t.fromAccount) registerAccount(t.fromAccount, "source");
-      if (t.toAccount) registerAccount(t.toAccount, "target");
-    }
-    for (const e of expenses) {
-      if (e.paymentMethod && e.paymentMethod !== "liquidity") {
-        registerAccount(e.paymentMethod, "source");
-      }
-    }
-
-    cats.forEach((c) => {
-      const meta = catByName.get(c);
-      const group: CategoryGroup = meta?.group ?? "expense";
-      pushNode({ name: c, kind: "expense", fill: colorFor(c, group) });
+    return buildClassicSankey({
+      ...ctx,
+      creditCards: state.creditCards,
+      holdings: state.holdings,
     });
-
-    const idx = (name: string) => nodes.findIndex((n) => n.name === name);
-    const links: { source: number; target: number; value: number }[] = [];
-    const addLink = (a: string, b: string, v: number) => {
-      if (!(v > 0)) return;
-      const si = idx(a);
-      const ti = idx(b);
-      if (si < 0 || ti < 0 || si === ti) return;
-      const existing = links.find((l) => l.source === si && l.target === ti);
-      if (existing) existing.value += v;
-      else links.push({ source: si, target: ti, value: v });
-    };
-
-    // Income → pool
-    for (const s of sources) {
-      const sum = incomes
-        .filter((i) => (i.source || "Other") === s)
-        .reduce((a, b) => a + (valuesTop.get(b.id) ?? 0), 0);
-      addLink(s, POOL, sum);
-    }
-    // Expenses: pool→cat or card→cat
-    for (const e of expenses) {
-      const v = valuesTop.get(e.id) ?? 0;
-      const cat = e.category || "Other";
-      const from =
-        e.paymentMethod && e.paymentMethod !== "liquidity"
-          ? nameFor(e.paymentMethod, "source")
-          : POOL;
-      addLink(from, cat, v);
-    }
-    // Transfers
-    for (const t of transfers) {
-      const v = valuesTop.get(t.id) ?? 0;
-      if (!t.fromAccount || !t.toAccount) continue;
-      const from = nameFor(t.fromAccount, "source");
-      const to = nameFor(t.toAccount, "target");
-      addLink(from, to, v);
-    }
-
-    // Saved residue = leftover liquidity after pool outflows.
-    const totalIntoPool = incomes.reduce((s, c) => s + (valuesTop.get(c.id) ?? 0), 0)
-      + transfers
-        .filter((t) => t.toAccount === "liquidity")
-        .reduce((s, t) => s + (valuesTop.get(t.id) ?? 0), 0);
-    const totalOutOfPool = expenses
-      .filter((e) => !e.paymentMethod || e.paymentMethod === "liquidity")
-      .reduce((s, c) => s + (valuesTop.get(c.id) ?? 0), 0)
-      + transfers
-        .filter((t) => t.fromAccount === "liquidity")
-        .reduce((s, t) => s + (valuesTop.get(t.id) ?? 0), 0);
-    const saved = Math.max(0, totalIntoPool - totalOutOfPool);
-    if (saved > 0) {
-      pushNode({ name: SAVED, kind: "saved", fill: prefs.nodeColors[SAVED] ?? SAVED_COLOR });
-      addLink(POOL, SAVED, saved);
-    }
-
-    if (!links.length) return null;
-    return { nodes, links };
-  }, [expandedToToday, valuesTop, prefs.nodeColors, prefs.incomeOrder, prefs.expenseOrder, catByName, state.creditCards, state.holdings]);
+  }, [
+    expandedToToday,
+    valuesTop,
+    prefs.nodeColors,
+    prefs.incomeOrder,
+    prefs.expenseOrder,
+    prefs.layoutMode,
+    prefs.stages,
+    catByName,
+    colorFor,
+    sankeyLabels,
+    state.creditCards,
+    state.holdings,
+  ]);
 
 
 
@@ -695,10 +601,11 @@ function CashflowPage() {
               />
             }
           >
-            <div className="min-h-80 sm:min-h-96 w-full min-w-0">
+            <div className="w-full min-w-0">
               {sankey ? (
                 <SankeyChart
                   data={sankey}
+                  align={prefs.layoutMode === "staged" ? "left" : "justify"}
                   labelMode={prefs.labelMode}
                   format={(v: number) => (privacy ? MASK : formatMoney(v, currency))}
                   onReorder={(kind, names) =>
@@ -930,155 +837,170 @@ function EntriesPanel({
     return { income, expense, net: income - expense };
   }, [filtered, values]);
 
-  function exportPdf() {
+  async function exportPdf() {
     if (!filtered.length) {
-      toast.error("No entries in selected range");
+      toast.error(t("more.entriesNoneInRange"));
       return;
     }
-    const doc = new jsPDF({ unit: "pt", format: "a4" });
-    const pageW = doc.internal.pageSize.getWidth();
-    const margin = 40;
+    const toastId = toast.loading(t("cashflow.exportingPdf"));
+    try {
+      await new Promise((r) => setTimeout(r, 0));
+      const doc = new jsPDF({ unit: "pt", format: "a4" });
+      const pageW = doc.internal.pageSize.getWidth();
+      const margin = 40;
 
-    // Header
-    doc.setFontSize(18);
-    doc.text("Cashflow Report", margin, 50);
-    doc.setFontSize(10);
-    doc.setTextColor(110);
-    doc.text(`Period: ${periodLabel}`, margin, 68);
-    const filterDesc = `Type: ${kindFilter} · Category: ${categoryFilter} · Currency: ${currency}`;
-    doc.text(filterDesc, margin, 82);
+      doc.setFontSize(18);
+      doc.text(t("cashflow.pdfReportTitle"), margin, 50);
+      doc.setFontSize(10);
+      doc.setTextColor(110);
+      doc.text(`${t("cashflow.pdfPeriod")}: ${periodLabel}`, margin, 68);
+      const filterDesc = t("cashflow.pdfFilters", {
+        type: kindFilter,
+        category: categoryFilter,
+        currency,
+      });
+      doc.text(filterDesc, margin, 82);
 
-    // Summary
-    doc.setTextColor(0);
-    doc.setFontSize(11);
-    const sumY = 110;
-    doc.text(`Income: ${formatMoney(totals.income, currency)}`, margin, sumY);
-    doc.text(`Expenses: ${formatMoney(totals.expense, currency)}`, margin + 180, sumY);
-    doc.text(
-      `Net: ${totals.net >= 0 ? "+" : "-"}${formatMoney(Math.abs(totals.net), currency)}`,
-      margin + 360,
-      sumY,
-    );
+      doc.setTextColor(0);
+      doc.setFontSize(11);
+      const sumY = 110;
+      doc.text(`${t("cashflow.pdfIncome")}: ${formatMoney(totals.income, currency)}`, margin, sumY);
+      doc.text(`${t("cashflow.pdfExpenses")}: ${formatMoney(totals.expense, currency)}`, margin + 180, sumY);
+      doc.text(
+        `${t("cashflow.pdfNet")}: ${totals.net >= 0 ? "+" : "-"}${formatMoney(Math.abs(totals.net), currency)}`,
+        margin + 360,
+        sumY,
+      );
 
-    // Line chart (manual draw)
-    const chartTop = 135;
-    const chartH = 200;
-    const chartW = pageW - margin * 2;
-    const chartLeft = margin;
-    const chartBottom = chartTop + chartH;
+      const chartTop = 135;
+      const chartH = 200;
+      const chartW = pageW - margin * 2;
+      const chartLeft = margin;
+      const chartBottom = chartTop + chartH;
 
-    // axes
-    doc.setDrawColor(200);
-    doc.setLineWidth(0.5);
-    doc.line(chartLeft, chartBottom, chartLeft + chartW, chartBottom);
-    doc.line(chartLeft, chartTop, chartLeft, chartBottom);
+      doc.setDrawColor(200);
+      doc.setLineWidth(0.5);
+      doc.line(chartLeft, chartBottom, chartLeft + chartW, chartBottom);
+      doc.line(chartLeft, chartTop, chartLeft, chartBottom);
 
-    if (chartData.length > 0) {
-      const minBal = Math.min(0, ...chartData.map((d) => d.balance));
-      const maxBal = Math.max(0, ...chartData.map((d) => d.balance));
-      const range = Math.max(1, maxBal - minBal);
-      const xStep = chartData.length > 1 ? chartW / (chartData.length - 1) : 0;
-      const yFor = (v: number) => chartBottom - ((v - minBal) / range) * (chartH - 10);
+      if (chartData.length > 0) {
+        const minBal = Math.min(0, ...chartData.map((d) => d.balance));
+        const maxBal = Math.max(0, ...chartData.map((d) => d.balance));
+        const range = Math.max(1, maxBal - minBal);
+        const xStep = chartData.length > 1 ? chartW / (chartData.length - 1) : 0;
+        const yFor = (v: number) => chartBottom - ((v - minBal) / range) * (chartH - 10);
 
-      // Y-axis ticks
-      doc.setFontSize(8);
-      doc.setTextColor(140);
-      for (let i = 0; i <= 4; i++) {
-        const v = minBal + (range / 4) * i;
-        const y = yFor(v);
-        doc.setDrawColor(235);
-        doc.line(chartLeft, y, chartLeft + chartW, y);
-        doc.text(formatMoney(v, currency, { compact: true }), chartLeft - 4, y + 3, { align: "right" });
-      }
-
-      // Balance line - green when >= 0, red when < 0 (split at zero crossings)
-      const GREEN: [number, number, number] = [34, 197, 94];
-      const RED: [number, number, number] = [239, 68, 68];
-      doc.setLineWidth(1.4);
-      for (let i = 0; i < chartData.length - 1; i++) {
-        const x1 = chartLeft + i * xStep;
-        const x2 = chartLeft + (i + 1) * xStep;
-        const v1 = chartData[i].balance;
-        const v2 = chartData[i + 1].balance;
-        const y1 = yFor(v1);
-        const y2 = yFor(v2);
-        if ((v1 >= 0 && v2 >= 0) || (v1 < 0 && v2 < 0)) {
-          const c = v1 >= 0 ? GREEN : RED;
-          doc.setDrawColor(c[0], c[1], c[2]);
-          doc.line(x1, y1, x2, y2);
-        } else {
-          const t = Math.abs(v1) / (Math.abs(v1) + Math.abs(v2));
-          const xm = x1 + (x2 - x1) * t;
-          const ym = yFor(0);
-          const c1 = v1 >= 0 ? GREEN : RED;
-          const c2 = v2 >= 0 ? GREEN : RED;
-          doc.setDrawColor(c1[0], c1[1], c1[2]);
-          doc.line(x1, y1, xm, ym);
-          doc.setDrawColor(c2[0], c2[1], c2[2]);
-          doc.line(xm, ym, x2, y2);
+        doc.setFontSize(8);
+        doc.setTextColor(140);
+        for (let i = 0; i <= 4; i++) {
+          const v = minBal + (range / 4) * i;
+          const y = yFor(v);
+          doc.setDrawColor(235);
+          doc.line(chartLeft, y, chartLeft + chartW, y);
+          doc.text(formatMoney(v, currency, { compact: true }), chartLeft - 4, y + 3, { align: "right" });
         }
+
+        const GREEN: [number, number, number] = [34, 197, 94];
+        const RED: [number, number, number] = [239, 68, 68];
+        doc.setLineWidth(1.4);
+        for (let i = 0; i < chartData.length - 1; i++) {
+          const x1 = chartLeft + i * xStep;
+          const x2 = chartLeft + (i + 1) * xStep;
+          const v1 = chartData[i].balance;
+          const v2 = chartData[i + 1].balance;
+          const y1 = yFor(v1);
+          const y2 = yFor(v2);
+          if ((v1 >= 0 && v2 >= 0) || (v1 < 0 && v2 < 0)) {
+            const c = v1 >= 0 ? GREEN : RED;
+            doc.setDrawColor(c[0], c[1], c[2]);
+            doc.line(x1, y1, x2, y2);
+          } else {
+            const tZero = Math.abs(v1) / (Math.abs(v1) + Math.abs(v2));
+            const xm = x1 + (x2 - x1) * tZero;
+            const ym = yFor(0);
+            const c1 = v1 >= 0 ? GREEN : RED;
+            const c2 = v2 >= 0 ? GREEN : RED;
+            doc.setDrawColor(c1[0], c1[1], c1[2]);
+            doc.line(x1, y1, xm, ym);
+            doc.setDrawColor(c2[0], c2[1], c2[2]);
+            doc.line(xm, ym, x2, y2);
+          }
+        }
+
+        const step = Math.max(1, Math.ceil(chartData.length / 6));
+        doc.setTextColor(140);
+        for (let i = 0; i < chartData.length; i += step) {
+          const x = chartLeft + i * xStep;
+          doc.text(chartData[i].label, x, chartBottom + 12, { align: "center" });
+        }
+
+        doc.setFillColor(GREEN[0], GREEN[1], GREEN[2]);
+        doc.rect(chartLeft, chartTop - 14, 8, 8, "F");
+        doc.setTextColor(80);
+        doc.text(t("cashflow.pdfBalancePositive"), chartLeft + 12, chartTop - 8);
+        doc.setFillColor(RED[0], RED[1], RED[2]);
+        doc.rect(chartLeft + 90, chartTop - 14, 8, 8, "F");
+        doc.text(t("cashflow.pdfBalanceNegative"), chartLeft + 102, chartTop - 8);
       }
 
-      // X-axis labels (sparse)
-      const step = Math.max(1, Math.ceil(chartData.length / 6));
-      doc.setTextColor(140);
-      for (let i = 0; i < chartData.length; i += step) {
-        const x = chartLeft + i * xStep;
-        doc.text(chartData[i].label, x, chartBottom + 12, { align: "center" });
-      }
+      const rows = [...filtered]
+        .sort((a, b) => +new Date(a.date) - +new Date(b.date))
+        .map((c) => {
+          const isPct = (c.amountKind ?? "fixed") === "percent";
+          const amountText = isPct
+            ? `${c.amount}% of ${describePercentOf(c, cashflows)}`
+            : formatMoney(c.amount, (c.currency || currency).toUpperCase());
+          return [
+            format(new Date(c.date), "yyyy-MM-dd"),
+            c.kind,
+            c.kind === "income" ? c.source : c.category,
+            amountText,
+            formatMoney(values.get(c.id) ?? 0, currency),
+          ];
+        });
 
-      // Legend
-      doc.setFillColor(GREEN[0], GREEN[1], GREEN[2]);
-      doc.rect(chartLeft, chartTop - 14, 8, 8, "F");
-      doc.setTextColor(80);
-      doc.text("Balance \u2265 0", chartLeft + 12, chartTop - 8);
-      doc.setFillColor(RED[0], RED[1], RED[2]);
-      doc.rect(chartLeft + 90, chartTop - 14, 8, 8, "F");
-      doc.text("Balance < 0", chartLeft + 102, chartTop - 8);
-    }
-
-    // Table
-    const rows = [...filtered]
-      .sort((a, b) => +new Date(a.date) - +new Date(b.date))
-      .map((c) => {
-        const isPct = (c.amountKind ?? "fixed") === "percent";
-        const amountText = isPct
-          ? `${c.amount}% of ${describePercentOf(c, cashflows)}`
-          : formatMoney(c.amount, (c.currency || currency).toUpperCase());
-        return [
-          format(new Date(c.date), "yyyy-MM-dd"),
-          c.kind,
-          c.kind === "income" ? c.source : c.category,
-          amountText,
-          formatMoney(values.get(c.id) ?? 0, currency),
-        ];
+      autoTable(doc, {
+        startY: chartBottom + 40,
+        head: [[
+          t("cashflow.pdfDate"),
+          t("cashflow.pdfType"),
+          t("cashflow.pdfSourceCategory"),
+          t("cashflow.pdfAmount"),
+          t("cashflow.pdfInCurrency", { currency }),
+        ]],
+        body: rows,
+        styles: { fontSize: 9, cellPadding: 4 },
+        headStyles: { fillColor: [30, 41, 59], textColor: 255 },
+        columnStyles: {
+          3: { halign: "right" },
+          4: { halign: "right" },
+        },
+        didParseCell: (data) => {
+          if (data.section !== "body") return;
+          const type = String((data.row.raw as unknown as unknown[])?.[1] ?? "");
+          if (type === "income") {
+            data.cell.styles.textColor = [22, 163, 74];
+          } else if (type === "expense") {
+            data.cell.styles.textColor = [220, 38, 38];
+          }
+        },
+        margin: { left: margin, right: margin },
       });
 
-    autoTable(doc, {
-      startY: chartBottom + 40,
-      head: [["Date", "Type", "Source / Category", "Amount", `In ${currency}`]],
-      body: rows,
-      styles: { fontSize: 9, cellPadding: 4 },
-      headStyles: { fillColor: [30, 41, 59], textColor: 255 },
-      columnStyles: {
-        3: { halign: "right" },
-        4: { halign: "right" },
-      },
-      didParseCell: (data) => {
-        if (data.section !== "body") return;
-        const type = String((data.row.raw as unknown as unknown[])?.[1] ?? "");
-        if (type === "income") {
-          data.cell.styles.textColor = [22, 163, 74];
-        } else if (type === "expense") {
-          data.cell.styles.textColor = [220, 38, 38];
-        }
-      },
-      margin: { left: margin, right: margin },
-    });
-
-    const fname = `cashflow_${period}_${format(new Date(), "yyyyMMdd_HHmm")}.pdf`;
-    doc.save(fname);
-    toast.success(t("more.entriesPdfExported"));
+      const fname = `cashflow_${period}_${format(new Date(), "yyyyMMdd_HHmm")}.pdf`;
+      const pdfBytes = new Uint8Array(doc.output("arraybuffer"));
+      const method = await saveExportFile(fname, { bytes: pdfBytes });
+      if (method === "cancelled") {
+        toast.dismiss(toastId);
+        return;
+      }
+      toast.success(t("more.entriesPdfExported"), { id: toastId });
+    } catch (e) {
+      toast.error(
+        `${t("settings.data.exportFailed", { defaultValue: "Export failed" })}: ${(e as Error).message}`,
+        { id: toastId },
+      );
+    }
   }
 
   return (
@@ -1634,7 +1556,51 @@ function SankeyControls({
 }) {
   const { t } = useTranslation();
   return (
-    <div className="flex items-center gap-1.5">
+    <div className="flex flex-wrap items-center justify-end gap-1.5">
+      <Select
+        value={prefs.layoutMode}
+        onValueChange={(v) => setPrefs((p) => ({ ...p, layoutMode: v as SankeyLayoutMode }))}
+      >
+        <SelectTrigger className="h-8 w-[96px] sm:w-[130px] text-xs">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="staged">{t("cashflow.sankey.layoutStaged", { defaultValue: "Grouped" })}</SelectItem>
+          <SelectItem value="classic">{t("cashflow.sankey.layoutClassic", { defaultValue: "Accounts" })}</SelectItem>
+        </SelectContent>
+      </Select>
+      {prefs.layoutMode === "staged" && (
+        <>
+          <label className="flex h-8 items-center gap-1.5 rounded-md border border-border/60 px-2 text-xs">
+            <input
+              type="checkbox"
+              className="h-3.5 w-3.5"
+              checked={prefs.stages.categories}
+              onChange={(e) =>
+                setPrefs((p) => ({
+                  ...p,
+                  stages: { ...p.stages, categories: e.target.checked },
+                }))
+              }
+            />
+            {t("cashflow.sankey.stageCategories", { defaultValue: "Categories" })}
+          </label>
+          <label className="flex h-8 items-center gap-1.5 rounded-md border border-border/60 px-2 text-xs">
+            <input
+              type="checkbox"
+              className="h-3.5 w-3.5"
+              checked={prefs.stages.descriptions}
+              onChange={(e) =>
+                setPrefs((p) => ({
+                  ...p,
+                  stages: { ...p.stages, descriptions: e.target.checked },
+                }))
+              }
+            />
+            {t("cashflow.sankey.stageDescriptions", { defaultValue: "Descriptions" })}
+          </label>
+        </>
+      )}
       <Select
         value={prefs.labelMode}
         onValueChange={(v) => setPrefs((p) => ({ ...p, labelMode: v as LabelMode }))}

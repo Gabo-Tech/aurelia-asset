@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Dialog,
   DialogContent,
@@ -54,6 +55,7 @@ function parseCsvHistory(text: string): CustomPricePoint[] {
 }
 
 export function HoldingDialog({ open, onOpenChange, editing }: Props) {
+  const { t } = useTranslation();
   const { addHolding, updateHolding, state } = useStore();
   const defaultCurrency = state.settings.displayCurrency || "USD";
   const [mode, setMode] = useState<Mode>("stock");
@@ -131,7 +133,7 @@ export function HoldingDialog({ open, onOpenChange, editing }: Props) {
       setResults([]);
       return;
     }
-    const t = setTimeout(async () => {
+    const timerId = setTimeout(async () => {
       setSearching(true);
       try {
         const r = await searchAssets(q, mode);
@@ -141,13 +143,13 @@ export function HoldingDialog({ open, onOpenChange, editing }: Props) {
         }
       } catch (e) {
         setResults([]);
-        toast.error("Search failed - try a different proxy in Settings");
+        toast.error(t("holdings.dialog.searchFailed"));
         console.error(e);
       } finally {
         setSearching(false);
       }
     }, 300);
-    return () => clearTimeout(t);
+    return () => clearTimeout(timerId);
   }, [query, mode, open, editing]);
 
   // Re-parse history textarea on change
@@ -159,7 +161,7 @@ export function HoldingDialog({ open, onOpenChange, editing }: Props) {
   async function handleSave() {
     const qty = parseFloat(quantity);
     if (!isFinite(qty) || qty <= 0) {
-      toast.error("Quantity must be > 0");
+      toast.error(t("holdings.dialog.qtyGtZero"));
       return;
     }
     setSaving(true);
@@ -168,7 +170,7 @@ export function HoldingDialog({ open, onOpenChange, editing }: Props) {
         const sym = customSymbol.trim() || customName.trim().slice(0, 8).toUpperCase();
         const name = customName.trim() || sym;
         if (!sym || !name) {
-          toast.error("Name is required");
+          toast.error(t("holdings.dialog.nameRequired"));
           setSaving(false);
           return;
         }
@@ -191,17 +193,17 @@ export function HoldingDialog({ open, onOpenChange, editing }: Props) {
         };
         if (editing) {
           updateHolding(editing.id, base);
-          toast.success("Custom holding updated");
+          toast.success(t("holdings.dialog.customUpdated"));
         } else {
           addHolding(base);
-          toast.success("Custom holding added");
+          toast.success(t("holdings.dialog.customAdded"));
         }
         onOpenChange(false);
         return;
       }
 
       if (!selected) {
-        toast.error("Pick an asset first");
+        toast.error(t("holdings.dialog.pickAsset"));
         setSaving(false);
         return;
       }
@@ -225,15 +227,15 @@ export function HoldingDialog({ open, onOpenChange, editing }: Props) {
           base.currentPrice = q.price;
           if (q.currency) base.priceCurrency = q.currency;
         } catch {
-          toast.warning("Couldn't fetch price - you can refresh later");
+          toast.warning(t("holdings.dialog.priceFetchFailed"));
         }
       }
       if (editing) {
         updateHolding(editing.id, base);
-        toast.success("Holding updated");
+        toast.success(t("holdings.dialog.holdingUpdated"));
       } else {
         addHolding(base);
-        toast.success("Holding added");
+        toast.success(t("holdings.dialog.holdingAdded"));
       }
       onOpenChange(false);
     } finally {
@@ -244,7 +246,7 @@ export function HoldingDialog({ open, onOpenChange, editing }: Props) {
   function handleCsvUpload(file: File) {
     file.text().then((txt) => {
       setHistoryText(txt);
-      toast.success(`Loaded ${parseCsvHistory(txt).length} price points`);
+      toast.success(t("holdings.dialog.loadedPricePoints", { count: parseCsvHistory(txt).length }));
     });
   }
 
@@ -252,18 +254,18 @@ export function HoldingDialog({ open, onOpenChange, editing }: Props) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{editing ? "Edit holding" : "Add holding"}</DialogTitle>
-          <DialogDescription>
-            Search a market asset, or add a custom holding (e.g. Quanloop, private equity).
-          </DialogDescription>
+          <DialogTitle>
+            {editing ? t("holdings.dialog.editTitle") : t("holdings.dialog.addTitle")}
+          </DialogTitle>
+          <DialogDescription>{t("holdings.dialog.description")}</DialogDescription>
         </DialogHeader>
 
         {!editing && (
           <Tabs value={mode} onValueChange={(v) => setMode(v as Mode)}>
             <TabsList className="grid grid-cols-3">
-              <TabsTrigger value="stock">Stocks / ETF</TabsTrigger>
-              <TabsTrigger value="crypto">Crypto</TabsTrigger>
-              <TabsTrigger value="custom">Custom</TabsTrigger>
+              <TabsTrigger value="stock">{t("holdings.dialog.tabStock")}</TabsTrigger>
+              <TabsTrigger value="crypto">{t("holdings.dialog.tabCrypto")}</TabsTrigger>
+              <TabsTrigger value="custom">{t("holdings.dialog.tabCustom")}</TabsTrigger>
             </TabsList>
 
             <TabsContent value="stock" className="mt-4">
@@ -384,14 +386,14 @@ export function HoldingDialog({ open, onOpenChange, editing }: Props) {
 
         {selected && mode !== "custom" && (
           <div className="rounded-lg bg-muted/40 px-3 py-2 text-xs">
-            <span className="text-muted-foreground">Selected: </span>
+            <span className="text-muted-foreground">{t("holdings.dialog.selected")} </span>
             <span className="font-medium">{selected.symbol}</span> · {selected.name}
           </div>
         )}
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="qty">Quantity</Label>
+            <Label htmlFor="qty">{t("holdings.quantity")}</Label>
             <Input
               id="qty"
               type="number"
@@ -404,7 +406,9 @@ export function HoldingDialog({ open, onOpenChange, editing }: Props) {
           </div>
           <div>
             <Label htmlFor="manual">
-              {mode === "custom" ? "Current price" : "Manual price (optional)"}
+              {mode === "custom"
+                ? t("holdings.dialog.currentPrice")
+                : t("holdings.dialog.manualPriceOptional")}
             </Label>
             <Input
               id="manual"
@@ -412,7 +416,11 @@ export function HoldingDialog({ open, onOpenChange, editing }: Props) {
               step="any"
               value={manualPrice}
               onChange={(e) => setManualPrice(e.target.value)}
-              placeholder={mode === "custom" ? "Latest known unit price" : "Override live price"}
+              placeholder={
+                mode === "custom"
+                  ? t("holdings.dialog.latestUnitPrice")
+                  : t("holdings.dialog.overrideLivePrice")
+              }
               className="mt-1.5"
             />
           </div>
@@ -420,15 +428,15 @@ export function HoldingDialog({ open, onOpenChange, editing }: Props) {
 
         <div>
           <Label htmlFor="curr">
-            Price currency
+            {t("holdings.dialog.priceCurrency")}
             {mode === "stock" && !manualPrice.trim() && (
               <span className="ml-2 text-xs font-normal text-muted-foreground">
-                auto-detected on save; override if needed
+                {t("holdings.dialog.autoDetectedHint")}
               </span>
             )}
             {manualPrice.trim() && (
               <span className="ml-2 text-xs font-normal text-muted-foreground">
-                will be converted to {defaultCurrency}
+                {t("holdings.dialog.convertedHint", { currency: defaultCurrency })}
               </span>
             )}
           </Label>
@@ -447,7 +455,7 @@ export function HoldingDialog({ open, onOpenChange, editing }: Props) {
         </div>
 
         <div>
-          <Label>Color</Label>
+          <Label>{t("common.color")}</Label>
           <div className="mt-2 flex flex-wrap gap-2">
             {PALETTE.map((c) => (
               <button
@@ -471,7 +479,7 @@ export function HoldingDialog({ open, onOpenChange, editing }: Props) {
         </div>
 
         <div>
-          <Label>Horizon</Label>
+          <Label>{t("holdings.dialog.horizon")}</Label>
           <div className="mt-2 flex gap-2">
             <Button
               type="button"
@@ -479,7 +487,7 @@ export function HoldingDialog({ open, onOpenChange, editing }: Props) {
               variant={horizon === "long" ? "default" : "outline"}
               onClick={() => setHorizon("long")}
             >
-              Long-term
+              {t("holdings.dialog.horizonLong")}
             </Button>
             <Button
               type="button"
@@ -487,22 +495,20 @@ export function HoldingDialog({ open, onOpenChange, editing }: Props) {
               variant={horizon === "short" ? "default" : "outline"}
               onClick={() => setHorizon("short")}
             >
-              Short-term / cash-like
+              {t("holdings.dialog.horizonShort")}
             </Button>
           </div>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Short-term holdings (e.g. lending platforms, broker cash) can be used as transfer accounts in Cashflow.
-          </p>
+          <p className="mt-1 text-xs text-muted-foreground">{t("holdings.dialog.horizonHint")}</p>
         </div>
 
 
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
-            Cancel
+            {t("common.cancel")}
           </Button>
           <Button onClick={handleSave} disabled={saving}>
             {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {editing ? "Save changes" : "Add holding"}
+            {editing ? t("holdings.dialog.saveChanges") : t("holdings.addHolding")}
           </Button>
         </DialogFooter>
       </DialogContent>

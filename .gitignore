@@ -16,6 +16,26 @@ dist-ssr
 .nitro
 *.local
 
+# Environment secrets (never commit real values)
+.env
+.env.*
+!.env.example
+
+# Rust / Tauri build output
+src-tauri/target/
+src-tauri/gen/
+
+# Native binaries too large for GitHub (>100 MB); published via GitHub Releases
+public/downloads/*.apk
+public/downloads/*.AppImage
+
+# Local AI runtime artifacts (downloaded, not committed)
+models/
+native/sherpa-onnx/
+.llvm/
+.build-tools/
+src-tauri/.cargo/config.toml
+
 # Wrangler / Cloudflare
 .wrangler/
 .dev.vars

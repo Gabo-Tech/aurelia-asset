@@ -1,3 +1,4 @@
+import { isTauri } from "../export";
 import { DEFAULT_STATE, type Settings } from "../types";
 
 // Only proxies surfaced in the Settings UI are used. Adding undisclosed
@@ -53,7 +54,7 @@ function buildAttempts(rawUrl: string, preferDirect: boolean): string[] {
   // Try direct first when the caller hints the endpoint is CORS-friendly,
   // OR when the user has explicitly disabled public proxies.
   if (preferDirect || !s.useCorsProxy) out.push(rawUrl);
-  if (typeof window !== "undefined") out.push(sameOriginProxy(rawUrl));
+  if (typeof window !== "undefined" && !isTauri()) out.push(sameOriginProxy(rawUrl));
   // Native/static builds may not have a Start server route available, so keep
   // a direct request in the chain after the same-origin proxy attempt.
   if (!preferDirect && s.useCorsProxy) out.push(rawUrl);

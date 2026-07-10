@@ -1,4 +1,4 @@
-import logoAsset from "@/assets/logo.png.asset.json";
+import { ASSETS } from "@/lib/site-config";
 
 export function PageLoader() {
   return (
@@ -7,7 +7,7 @@ export function PageLoader() {
         <span className="absolute inline-flex h-20 w-20 animate-ping rounded-full bg-primary/30" />
         <span className="absolute inline-flex h-16 w-16 animate-pulse rounded-full bg-primary/20" />
         <img
-          src={logoAsset.url}
+          src={ASSETS.logo}
           alt=""
           aria-hidden
           className="relative h-12 w-12 rounded-xl object-contain drop-shadow-[0_0_18px_hsl(var(--primary)/0.55)]"

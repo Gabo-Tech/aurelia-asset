@@ -141,9 +141,9 @@ function HoldingsPage() {
             });
         })
       );
-      toast.success("Prices refreshed");
+      toast.success(t("holdings.refreshed"));
     } catch {
-      toast.error("Failed to refresh some prices");
+      toast.error(t("holdings.refreshFailed"));
     } finally {
       setRefreshing(false);
     }
@@ -293,7 +293,7 @@ function HoldingsPage() {
                               className="text-destructive focus:text-destructive"
                               onClick={() => {
                                 removeHolding(h.id);
-                                toast.success(`Removed ${h.symbol}`);
+                                toast.success(t("holdings.removed", { symbol: h.symbol }));
                               }}
                             >
                               <Trash2 className="mr-2 h-4 w-4" /> Delete

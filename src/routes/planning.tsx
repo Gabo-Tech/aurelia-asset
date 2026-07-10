@@ -1547,11 +1547,11 @@ function ScenarioDialog({
               <Input inputMode="numeric" value={monthsStr} onChange={(e) => setMonthsStr(e.target.value)} />
             </div>
             <div>
-              <Label className="text-xs">± income /mo</Label>
+              <Label className="text-xs">{t("planning.forecast.incomeAdjustPerMonth")}</Label>
               <Input inputMode="decimal" value={inc} onChange={(e) => setInc(e.target.value)} />
             </div>
             <div>
-              <Label className="text-xs">± expense /mo</Label>
+              <Label className="text-xs">{t("planning.forecast.expenseAdjustPerMonth")}</Label>
               <Input inputMode="decimal" value={exp} onChange={(e) => setExp(e.target.value)} />
             </div>
           </div>

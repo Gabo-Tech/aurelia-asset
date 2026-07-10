@@ -98,6 +98,21 @@ export type Settings = {
   privacyMode?: boolean;
   /** Currency the UI renders all values in. Default "USD". */
   displayCurrency?: string;
+
+  // ===== AI Assistant (fully on-device) =====
+  /** Show the AI assistant in navigation and allow access to /assistant. Default true. */
+  aiAssistantEnabled?: boolean;
+  /** Speak assistant replies aloud via local TTS. Default true. */
+  aiTtsEnabled?: boolean;
+  /** Absolute path to the local LLM GGUF file (native builds only). */
+  aiLlmModelPath?: string;
+  /** Folder containing a Sherpa-ONNX STT model (encoder/decoder/joiner/tokens
+   *  or a Whisper/SenseVoice model). Native builds only. */
+  aiSttModelDir?: string;
+  /** Folder containing a Sherpa-ONNX TTS (VITS/Piper) model. Native only. */
+  aiTtsModelDir?: string;
+  /** User has seen the one-time financial-advice responsibility disclaimer. */
+  aiAdviceDisclaimerSeen?: boolean;
 };
 
 export type CreditCard = {
@@ -289,6 +304,7 @@ export const DEFAULT_STATE: AppState = {
     corsProxy: "https://corsproxy.io/?",
     privacyMode: false,
     displayCurrency: "USD",
+    aiAssistantEnabled: true,
   },
 };
 

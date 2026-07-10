@@ -11,13 +11,15 @@ import {
 export type LabelMode = "always" | "hover" | "off";
 
 export type SankeyDatum = {
-  nodes: { name: string; fill: string; kind?: string }[];
+  nodes: { name: string; fill: string; kind?: string; group?: string }[];
   links: { source: number; target: number; value: number }[];
 };
 
 type Props = {
   data: SankeyDatum;
   height?: number;
+  /** When true (default), cap height to the viewport and scale the graph vertically. */
+  fitToViewport?: boolean;
   labelMode?: LabelMode;
   format?: (v: number) => string;
   align?: "left" | "right" | "center" | "justify";
@@ -40,9 +42,98 @@ function truncate(str: string, max: number) {
   return str.slice(0, max - 1) + "…";
 }
 
+/** Max nodes stacked in any single Sankey column (drives vertical spacing). */
+function maxNodesInAnyColumn(data: SankeyDatum): number {
+  const n = data.nodes.length;
+  if (n === 0) return 1;
+
+  const incoming = new Array(n).fill(0);
+  const adj: number[][] = Array.from({ length: n }, () => []);
+
+  for (const l of data.links) {
+    adj[l.source]?.push(l.target);
+    incoming[l.target]++;
+  }
+
+  const depth = new Array(n).fill(0);
+  const queue: number[] = [];
+  for (let i = 0; i < n; i++) {
+    if (incoming[i] === 0) queue.push(i);
+  }
+
+  while (queue.length) {
+    const u = queue.shift()!;
+    for (const v of adj[u] ?? []) {
+      depth[v] = Math.max(depth[v], depth[u] + 1);
+      incoming[v]--;
+      if (incoming[v] === 0) queue.push(v);
+    }
+  }
+
+  const counts = new Map<number, number>();
+  for (let i = 0; i < n; i++) {
+    counts.set(depth[i], (counts.get(depth[i]) ?? 0) + 1);
+  }
+  return Math.max(1, ...counts.values());
+}
+
+/** Fixed chart height from viewport (resize only — never changes while scrolling). */
+function useFixedChartHeight(
+  wrapRef: React.RefObject<HTMLDivElement | null>,
+  enabled: boolean,
+) {
+  const [maxH, setMaxH] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!enabled) {
+      setMaxH(null);
+      return;
+    }
+
+    const measure = () => {
+      const el = wrapRef.current;
+      const constrained = el?.closest(".chart-viewport") as HTMLElement | null;
+      if (constrained && constrained.clientHeight > 120) {
+        setMaxH(constrained.clientHeight);
+        return;
+      }
+
+      const vh = window.innerHeight;
+      const mobile = window.innerWidth < 1024;
+      setMaxH(Math.round(vh * (mobile ? 0.42 : 0.48)));
+    };
+
+    measure();
+    window.addEventListener("resize", measure);
+
+    const ro = new ResizeObserver(measure);
+    let raf = 0;
+    const attach = () => {
+      const el = wrapRef.current;
+      if (!el) {
+        raf = requestAnimationFrame(attach);
+        return;
+      }
+      const constrained = el.closest(".chart-viewport");
+      if (constrained) ro.observe(constrained);
+      measure();
+    };
+    attach();
+
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("resize", measure);
+      ro.disconnect();
+    };
+  }, [wrapRef, enabled]);
+
+  return maxH;
+}
+
 export function SankeyChart({
   data,
   height,
+  fitToViewport = true,
   labelMode = "always",
   format = (v) => v.toLocaleString(),
   align = "justify",
@@ -54,6 +145,7 @@ export function SankeyChart({
   const svgRef = useRef<SVGSVGElement>(null);
   const [width, setWidth] = useState(800);
   const [activeIdx, setActiveIdx] = useState<number | null>(null);
+  const fixedChartHeight = useFixedChartHeight(wrapRef, fitToViewport && !height);
 
   useEffect(() => {
     if (!wrapRef.current) return;
@@ -71,37 +163,86 @@ export function SankeyChart({
   const effectiveLabelMode: LabelMode =
     isNarrow && labelMode === "always" ? "hover" : labelMode;
 
-  const { incomeCount, expenseCount, incomeTotal, expenseTotal } = useMemo(() => {
-    let iC = 0, eC = 0, iT = 0, eT = 0;
+  const { incomeCount, expenseCount, incomeTotal, expenseTotal, groupTotals } = useMemo(() => {
+    let iC = 0, eC = 0;
+    let iT = 0, eT = 0;
+    const gT: Record<string, number> = {};
+
     for (const n of data.nodes) {
-      if (n.kind === "income") iC++;
-      else if (n.kind === "expense") eC++;
+      if (n.kind === "income" || (n.kind === "category" && n.group === "income") || (n.kind === "leaf" && n.group === "income")) {
+        iC++;
+      }
+      if (n.kind === "expense" || (n.kind === "category" && n.group === "expense") || (n.kind === "leaf" && n.group === "expense")) {
+        eC++;
+      }
     }
+
     for (const l of data.links) {
       const s = data.nodes[l.source as number];
       const t = data.nodes[l.target as number];
+      if (t?.kind === "aggregate") iT += l.value;
       if (s?.kind === "income") iT += l.value;
       if (t?.kind === "expense") eT += l.value;
+      if (t?.kind === "type_total" && t.group) {
+        gT[t.group] = (gT[t.group] ?? 0) + l.value;
+        if (t.group === "expense") eT += l.value;
+      }
     }
-    return { incomeCount: iC, expenseCount: eC, incomeTotal: iT, expenseTotal: eT };
+
+    if (iT === 0) {
+      for (const n of data.nodes) {
+        if (n.kind === "aggregate") iT = Math.max(iT, (n as { value?: number }).value ?? 0);
+      }
+    }
+
+    return { incomeCount: iC, expenseCount: eC, incomeTotal: iT, expenseTotal: eT, groupTotals: gT };
   }, [data]);
 
-  const rowHeight = isNarrow ? 78 : 92;
-  const maxSide = Math.max(incomeCount, expenseCount, 1);
-  const marginTop = isNarrow ? 44 : 52;
-  const marginBottom = isNarrow ? 28 : 32;
+  const nameFontSize = isNarrow ? 11 : 13;
+  const amtFontSize = isNarrow ? 10 : 11;
+  const labelBlockH =
+    effectiveLabelMode !== "off" ? nameFontSize + amtFontSize + 10 : 0;
+
+  const leafCount = data.nodes.filter(
+    (n) => n.kind === "leaf" || n.kind === "income" || n.kind === "expense" || n.kind === "category",
+  ).length;
+  const maxColNodes = Math.max(maxNodesInAnyColumn(data), 1);
+
+  const marginTop = labelBlockH > 0 ? labelBlockH + 10 : 16;
+  const marginBottom = isNarrow ? 12 : 16;
   const marginX = isNarrow ? 6 : 10;
+
+  const layoutHeight =
+    fitToViewport && fixedChartHeight != null ? fixedChartHeight : (height ?? 0);
   const autoHeight = Math.max(
-    isNarrow ? 420 : 500,
-    maxSide * rowHeight + marginTop + marginBottom,
+    isNarrow ? 320 : 380,
+    maxColNodes * (labelBlockH + 24) + marginTop + marginBottom,
   );
-  const resolvedHeight = height ?? autoHeight;
+  const idealHeight = height ?? (layoutHeight > 0 ? layoutHeight : autoHeight);
+  const displayHeight = layoutHeight > 0 ? layoutHeight : idealHeight;
+
+  const innerH = Math.max(80, displayHeight - marginTop - marginBottom);
+
+  const isCompact =
+    effectiveLabelMode !== "off" &&
+    maxColNodes > 6;
+  const renderLabelMode: LabelMode = effectiveLabelMode;
+  const compactFonts = isCompact || maxColNodes > 8;
+  const renderNameFont = compactFonts ? Math.max(9, nameFontSize - 2) : nameFontSize;
+  const renderAmtFont = compactFonts ? Math.max(8, amtFontSize - 2) : amtFontSize;
+  const renderLabelBlockH = renderLabelMode !== "off" ? renderNameFont + renderAmtFont + 10 : 0;
+  const labelGapAbove = renderLabelBlockH > 0 ? renderLabelBlockH + 6 : 14;
+
+  // Reserve ~60–70% of height for flow bands; cap padding so links/nodes stay visible.
+  const bandShare = Math.max(0.55, Math.min(0.72, 0.76 - maxColNodes * 0.015));
+  const maxPaddingTotal = innerH * (1 - bandShare);
+  const gapCount = Math.max(1, maxColNodes - 1);
+  const computedPadding = maxPaddingTotal / gapCount;
+  const resolvedNodePadding =
+    nodePadding ??
+    Math.max(labelGapAbove, computedPadding);
 
   const resolvedNodeWidth = nodeWidth ?? (isNarrow ? 14 : 20);
-  const innerH = Math.max(100, resolvedHeight - marginTop - marginBottom);
-  // Vertical gap between sibling nodes must fit two lines of label text + breathing room.
-  const minGap = isNarrow ? 42 : 52;
-  const resolvedNodePadding = nodePadding ?? Math.max(minGap, innerH / (maxSide * 1.8));
 
   const graph = useMemo(() => {
     const innerW = Math.max(100, width - marginX * 2);
@@ -110,8 +251,10 @@ export function SankeyChart({
       .nodeAlign(alignFns[align])
       .nodeWidth(resolvedNodeWidth)
       .nodePadding(resolvedNodePadding)
+      .linkSort((a: any, b: any) => (a.value ?? 0) - (b.value ?? 0))
+      .iterations(64)
       .extent([
-        [0, 0],
+        [0, renderLabelBlockH > 0 ? renderLabelBlockH + 4 : 0],
         [innerW, innerH],
       ]);
     const nodes = data.nodes.map((n, i) => ({ ...n, index: i }));
@@ -121,7 +264,7 @@ export function SankeyChart({
     } catch {
       return null;
     }
-  }, [data, width, resolvedHeight, align, resolvedNodeWidth, resolvedNodePadding, marginX, innerH]);
+  }, [data, width, displayHeight, align, resolvedNodeWidth, resolvedNodePadding, marginX, innerH, renderLabelBlockH]);
 
   const [drag, setDrag] = useState<{ idx: number; dy: number; startY: number } | null>(null);
 
@@ -130,12 +273,14 @@ export function SankeyChart({
   const linkPath = sankeyLinkHorizontal();
   const innerW = Math.max(100, width - marginX * 2);
 
-  const yScale = () => {
-    const el = svgRef.current;
-    if (!el) return 1;
-    const rect = el.getBoundingClientRect();
-    return rect.height === 0 ? 1 : resolvedHeight / rect.height;
-  };
+  const yScale = () => 1;
+
+  const activeLinkIdxs = new Set<number>();
+  if (activeIdx != null) {
+    graph.links.forEach((l: any, i: number) => {
+      if (l.source.index === activeIdx || l.target.index === activeIdx) activeLinkIdxs.add(i);
+    });
+  }
 
   const handlePointerDown = (e: React.PointerEvent<SVGGElement>, idx: number, kind?: string) => {
     if (!onReorder || !kind || !REORDERABLE.has(kind)) return;
@@ -165,24 +310,44 @@ export function SankeyChart({
     setDrag(null);
   };
 
-  const nameFontSize = isNarrow ? 11 : 13;
-  const amtFontSize = isNarrow ? 10 : 11;
-  const nameMaxLen = isNarrow ? 12 : 22;
+  const nameMaxLen = isNarrow ? (compactFonts ? 10 : 12) : (compactFonts ? 16 : 22);
 
   const pctFor = (n: any): number | null => {
     if (n.kind === "income" && incomeTotal > 0) return (n.value / incomeTotal) * 100;
     if (n.kind === "expense" && expenseTotal > 0) return (n.value / expenseTotal) * 100;
+    if (n.group === "income" && incomeTotal > 0) return (n.value / incomeTotal) * 100;
+    if (n.group === "expense" && expenseTotal > 0) return (n.value / expenseTotal) * 100;
+    if (n.kind === "type_total" && n.group && groupTotals[n.group] > 0) {
+      return (n.value / groupTotals[n.group]) * 100;
+    }
+    if (n.kind === "category" && n.group) {
+      const base =
+        n.group === "income"
+          ? incomeTotal
+          : n.group === "expense"
+            ? expenseTotal
+            : groupTotals[n.group];
+      if (base > 0) return (n.value / base) * 100;
+    }
+    if (n.kind === "leaf" && n.group) {
+      const base =
+        n.group === "income"
+          ? incomeTotal
+          : n.group === "expense"
+            ? expenseTotal
+            : groupTotals[n.group];
+      if (base > 0) return (n.value / base) * 100;
+    }
+    if (n.kind === "aggregate" && incomeTotal > 0) return 100;
     return null;
   };
 
-  const edgePad = 4;
-
   return (
-    <div ref={wrapRef} className="w-full min-w-0" style={{ height: resolvedHeight }}>
+    <div ref={wrapRef} className="w-full min-w-0" style={{ height: displayHeight }}>
       <svg
         ref={svgRef}
         width={width}
-        height={resolvedHeight}
+        height={displayHeight}
         className="block max-w-full"
         style={{ overflow: "visible" }}
         onPointerLeave={() => setActiveIdx(null)}
@@ -203,30 +368,33 @@ export function SankeyChart({
             ))}
           </defs>
 
-          <g fill="none" className="[mix-blend-mode:multiply] dark:[mix-blend-mode:screen]">
-            {graph.links.map((l: any, i: number) => (
+          <g fill="none">
+            {graph.links.map((l: any, i: number) => {
+              const lit = activeIdx == null || activeLinkIdxs.has(i);
+              return (
               <path
                 key={i}
                 d={linkPath(l) ?? ""}
                 stroke={`url(#sk-grad-${i})`}
-                strokeWidth={Math.max(1, l.width)}
-                strokeOpacity={0.55}
-                className="transition-[stroke-opacity] duration-150 hover:!stroke-opacity-90"
+                strokeWidth={Math.max(1.5, l.width)}
+                strokeOpacity={lit ? 0.5 : 0.12}
+                strokeLinecap="butt"
+                className="transition-[stroke-opacity] duration-150"
               >
                 <title>{`${l.source.name} → ${l.target.name}\n${format(l.value)}`}</title>
               </path>
-            ))}
+              );
+            })}
           </g>
 
           <g>
             {graph.nodes.map((n: any, i: number) => {
-              const bandH = Math.max(1, n.y1 - n.y0);
+              const bandH = Math.max(2, n.y1 - n.y0);
               const reorderable = !!onReorder && REORDERABLE.has(n.kind);
               const isDragging = drag?.idx === i;
               const dy = isDragging ? drag!.dy : 0;
               const pct = pctFor(n);
               const displayName = truncate(n.name, nameMaxLen);
-              const amountText = pct != null ? `${format(n.value)} (${pct.toFixed(1)}%)` : format(n.value);
 
               // Label alignment: left-anchored at each node's own x0, so labels
               // in the same column line up regardless of node kind. Right-most
@@ -238,12 +406,16 @@ export function SankeyChart({
                 labelX = n.x1;
                 anchor = "end";
               }
-              const labelY = Math.max(edgePad + nameFontSize, n.y0 - 8);
-
               const isActive = activeIdx === i;
               const showLabel =
-                effectiveLabelMode === "always" ||
-                (effectiveLabelMode === "hover" && isActive);
+                renderLabelMode === "always" ||
+                (renderLabelMode === "hover" && isActive);
+              const showPct = !isCompact && pct != null;
+              const amountText = showPct
+                ? `${format(n.value)} (${pct!.toFixed(1)}%)`
+                : format(n.value);
+              const amountY = n.y0 - 6;
+              const nameY = amountY - renderAmtFont - 3;
 
               return (
                 <g
@@ -269,12 +441,16 @@ export function SankeyChart({
                     width={n.x1 - n.x0}
                     height={bandH}
                     fill={n.fill}
+                    stroke="var(--background)"
+                    strokeWidth={2}
                     rx={3}
-                    opacity={isDragging ? 0.85 : 1}
+                    opacity={
+                      isDragging ? 0.85 : activeIdx != null && !isActive ? 0.55 : 1
+                    }
                   >
                     <title>{`${n.name}\n${amountText}${reorderable ? "\n(drag to reorder)" : ""}`}</title>
                   </rect>
-                  {effectiveLabelMode !== "off" && (
+                  {renderLabelMode !== "off" && (
                     <g
                       style={{
                         pointerEvents: "none",
@@ -284,9 +460,9 @@ export function SankeyChart({
                     >
                       <text
                         x={labelX}
-                        y={labelY - amtFontSize - 2}
+                        y={nameY}
                         textAnchor={anchor}
-                        fontSize={nameFontSize}
+                        fontSize={renderNameFont}
                         fontWeight={600}
                         fill="var(--foreground)"
                         style={{ paintOrder: "stroke", stroke: "var(--background)", strokeWidth: 3 }}
@@ -295,9 +471,9 @@ export function SankeyChart({
                       </text>
                       <text
                         x={labelX}
-                        y={labelY}
+                        y={amountY}
                         textAnchor={anchor}
-                        fontSize={amtFontSize}
+                        fontSize={renderAmtFont}
                         fill="var(--muted-foreground)"
                         style={{ paintOrder: "stroke", stroke: "var(--background)", strokeWidth: 3 }}
                       >
