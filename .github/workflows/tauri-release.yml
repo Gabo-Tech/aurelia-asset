@@ -160,14 +160,35 @@ jobs:
         working-directory: src-tauri
         run: cargo tauri android build --apk --debug
 
+      - name: Stage Android download as portfolio-tracker.apk
+        run: |
+          mkdir -p dist-android
+          APK=""
+          if [ "${{ steps.keystore.outputs.mode }}" = "release" ]; then
+            APK=$(find src-tauri/gen/android/app/build/outputs/apk -name '*release*.apk' ! -name '*unsigned*' | head -n1)
+          fi
+          if [ -z "$APK" ]; then
+            APK=$(find src-tauri/gen/android/app/build/outputs/apk -name '*.apk' | head -n1)
+          fi
+          if [ -z "$APK" ]; then
+            echo "No APK found to stage"
+            exit 1
+          fi
+          cp "$APK" dist-android/portfolio-tracker.apk
+          ls -lh dist-android/
+          # Also keep AAB if present
+          AAB=$(find src-tauri/gen/android/app/build/outputs/bundle -name '*.aab' 2>/dev/null | head -n1 || true)
+          if [ -n "$AAB" ]; then
+            cp "$AAB" dist-android/
+          fi
+
       - name: Upload Android artifacts to release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
           draft: true
           files: |
-            src-tauri/gen/android/app/build/outputs/apk/**/*.apk
-            src-tauri/gen/android/app/build/outputs/bundle/**/*.aab
+            dist-android/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
