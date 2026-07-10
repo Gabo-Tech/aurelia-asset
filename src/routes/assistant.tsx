@@ -36,6 +36,7 @@ import {
 } from "@/lib/ai/voice";
 import { loadChatHistory, saveChatHistory, clearChatHistory } from "@/lib/ai/persistence";
 import { aiConfigFromSettings } from "@/lib/ai/config";
+import { SITE_URL } from "@/lib/site-config";
 
 export const Route = createFileRoute("/assistant")({
   head: () => {
@@ -46,7 +47,7 @@ export const Route = createFileRoute("/assistant")({
       defaultValue:
         "Talk to a fully offline finance assistant. Log expenses by voice or text and get saving tips from your own data.",
     });
-    const url = "https://financetracker.putopulse.org/assistant";
+    const url = `${SITE_URL}/assistant`;
     return {
       meta: [
         { title },

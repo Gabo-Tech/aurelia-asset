@@ -32,12 +32,13 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { ChevronDown } from "lucide-react";
 import { BudgetPieCard, type PieSlice } from "@/components/budget-pie-card";
 import { ColorSwatchPicker, SWATCH_PALETTE } from "@/components/color-swatch-picker";
+import { SITE_URL } from "@/lib/site-config";
 
 export const Route = createFileRoute("/planning")({
   head: () => {
     const title = "Planning - Budgets, Goals & Forecast";
     const desc = "Plan your finances: monthly budgets, savings goals, 24-month cashflow forecasts and loan amortization tables.";
-    const url = "https://financetracker.putopulse.org/planning";
+    const url = `${SITE_URL}/planning`;
     return {
       meta: [
         { title },

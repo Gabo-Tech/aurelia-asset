@@ -111,7 +111,7 @@ export async function saveExportFile(
     (opts.text != null
       ? new Blob([opts.text], { type: "text/plain;charset=utf-8" })
       : opts.bytes
-        ? new Blob([opts.bytes])
+        ? new Blob([new Uint8Array(opts.bytes)])
         : undefined);
   if (!blob) throw new Error("No export content provided");
   return saveOrShare(blob, filename, text);

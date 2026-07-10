@@ -38,12 +38,13 @@ import { fetchCurrentQuote } from "@/lib/finance";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { Holding } from "@/lib/types";
+import { SITE_URL } from "@/lib/site-config";
 
 export const Route = createFileRoute("/holdings")({
   head: () => {
     const title = i18n.t("holdings.metaTitle");
     const desc = i18n.t("holdings.metaDesc");
-    const url = "https://financetracker.putopulse.org/holdings";
+    const url = `${SITE_URL}/holdings`;
     return {
       meta: [
         { title },

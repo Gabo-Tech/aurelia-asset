@@ -189,6 +189,7 @@ const ca: Translation = {
     showValues: "Mostrar valors",
     hideValues: "Amagar valors",
     footerNote: "Només local · les dades es queden al teu navegador",
+    sourceCode: "Codi font",
   },
   landing: {
     headerTagline: "Teu · Privat · Gratuït",
@@ -281,7 +282,7 @@ const ca: Translation = {
         ios: "Requereix AltStore o Sideloadly",
       },
     },
-    footer: { brand: "Gestor de cartera elegant", madeBy: "Fet per" },
+    footer: { brand: "Gestor de cartera elegant", madeBy: "Fet per", sourceCode: "Codi font" },
     meta: {
       title: "Gestor de cartera privat - Accions, Cripto i ETFs",
       description: "Segueix cada acció, ETF, cripto, metall i euro que tens en un gestor privat. Veges assignació, flux de caixa, previsió i patrimoni - sense registre, sense núvol, gratis per sempre.",

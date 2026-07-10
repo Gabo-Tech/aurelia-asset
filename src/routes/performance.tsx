@@ -24,12 +24,13 @@ import { PERIODS, type PeriodId } from "@/lib/finance";
 import { formatPct, formatMoney, MASK } from "@/lib/format";
 import { convert } from "@/lib/finance/fx";
 import { cn } from "@/lib/utils";
+import { SITE_URL } from "@/lib/site-config";
 
 export const Route = createFileRoute("/performance")({
   head: () => {
     const title = i18n.t("performance.metaTitle");
     const desc = i18n.t("performance.metaDesc");
-    const url = "https://financetracker.putopulse.org/performance";
+    const url = `${SITE_URL}/performance`;
     return {
       meta: [
         { title },

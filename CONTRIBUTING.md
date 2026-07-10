@@ -4,7 +4,7 @@ Thanks for considering a contribution!
 
 ## Ground rules
 
-- Be respectful. No harassment, no spam, no off-topic political content.
+- Be respectful — see [`CODE_OF_CONDUCT.md`](./CODE_OF_CONDUCT.md).
 - Keep changes focused. One concern per pull request.
 - Match the existing code style (Prettier + ESLint enforced).
 - Add or update translations for all 6 supported locales when you touch
@@ -13,16 +13,17 @@ Thanks for considering a contribution!
 ## Development
 
 ```bash
-bun install
-bun run dev
+npm ci          # or: bun install
+cp .env.example .env   # optional for local dev
+npm run dev
 ```
 
 Run checks before opening a PR:
 
 ```bash
-bun run lint
-bun run typecheck
-bun run build
+npm run lint
+npm run typecheck
+npm run build
 ```
 
 ## Licensing of your contribution

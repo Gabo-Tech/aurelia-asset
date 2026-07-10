@@ -188,6 +188,7 @@ const de: Translation = {
     showValues: "Werte anzeigen",
     hideValues: "Werte verbergen",
     footerNote: "Nur lokal · Daten bleiben in deinem Browser",
+    sourceCode: "Quellcode",
   },
   landing: {
     headerTagline: "Deins · Privat · Kostenlos",
@@ -280,7 +281,7 @@ const de: Translation = {
         ios: "Benötigt AltStore oder Sideloadly",
       },
     },
-    footer: { brand: "Eleganter Portfolio-Tracker", madeBy: "Gemacht von" },
+    footer: { brand: "Eleganter Portfolio-Tracker", madeBy: "Gemacht von", sourceCode: "Quellcode" },
     meta: {
       title: "Privater Portfolio-Tracker - Aktien, Krypto & ETFs",
       description: "Verfolge jede Aktie, ETF, Krypto, jedes Metall und jeden Euro, den du besitzt, in einem privaten Tracker. Sieh Allokation, Cashflow, Prognose und Vermögen - ohne Anmeldung, ohne Cloud, für immer kostenlos.",

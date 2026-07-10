@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { SITE_URL } from "@/lib/site-config";
 
 const ALLOWED_HOSTS = new Set([
   "query1.finance.yahoo.com",
@@ -62,8 +63,7 @@ export const Route = createFileRoute("/api/finance-proxy")({
           redirect: "manual",
           headers: {
             Accept: request.headers.get("accept") || "application/json, text/plain, */*",
-            "User-Agent":
-              "Mozilla/5.0 (compatible; AureliaAsset/1.0; +https://financetracker.putopulse.org)",
+            "User-Agent": `Mozilla/5.0 (compatible; AureliaAsset/1.0; +${SITE_URL})`,
           },
         });
 

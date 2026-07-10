@@ -1,161 +1,135 @@
 # Aurelia Asset
 
-A privacy-first personal finance and portfolio tracker. Cashflow, holdings,
-performance, budgets, savings goals, loans and forecasts - all stored locally
-in your browser (AES-GCM encrypted) and shippable as a web app or a native
-desktop/mobile app via Tauri.
+[![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](./LICENSE)
+[![TanStack Start](https://img.shields.io/badge/TanStack-Start-000000)](https://tanstack.com/start)
+[![Tauri](https://img.shields.io/badge/Tauri-v2-24C8DB)](https://tauri.app)
+[![Cloudflare Workers](https://img.shields.io/badge/Deploy-Cloudflare%20Workers-F38020)](https://workers.cloudflare.com)
 
-Made by [GABO](https://solutions.gabo.rocks).
+> Privacy-first personal finance and portfolio tracker. Cashflow, holdings,
+> performance, budgets, savings goals, loans and forecasts — stored locally,
+> encrypted in your browser, available as a web app or native desktop/mobile
+> build via Tauri.
+
+**[Live demo](https://financetracker.putopulse.org)** · Made by [GABO](https://solutions.gabo.rocks) · [Source code](https://github.com/Gabo-Tech/aurelia-asset)
+
+## Table of contents
+
+- [Features](#features)
+- [Quick start](#quick-start)
+- [Documentation map](#documentation-map)
+- [Environment variables](#environment-variables)
+- [Using the app](#using-the-app)
+- [Import file format](#import-file-format)
+- [Finance providers & API keys](#finance-providers--api-keys)
+- [Local AI models (native builds)](#local-ai-models-native-builds)
+- [Native builds & releases](#native-builds--releases)
+- [Self-hosting](#self-hosting)
+- [License](#license)
+- [Security & contributing](#security--contributing)
 
 ## Features
 
-- Cashflow with recurring income/expenses, categories, transfers, credit
-  cards, installments and Sankey visualisation
-- Holdings with buy/sell transactions, horizons (short/long term) and
-  multi-currency support
-- Performance tracking via Finnhub, Yahoo Finance, Stooq, CoinGecko and
-  Binance (with same-origin proxy fallback)
-- Planning: budgets, savings goals, loan amortization, 24-month forecast
-- **AI Assistant** (`/assistant`): fully offline chat about your finances,
-  voice input/output, natural-language expense logging with confirm-first
-  flow, spending summaries and saving tips (built-in engine on web; optional
-  local LLM + Sherpa-ONNX speech on native builds)
-- Multilingual: English, Spanish, Portuguese, Dutch, German, Valencian
-- Light/dark theme, mobile-first responsive UI, onboarding tour
-- Local-only data, encrypted at rest, exportable as JSON or PDF
-- Optional native builds for Windows, macOS, Linux, Android and iOS
+- **Cashflow** — recurring income/expenses, categories, transfers, credit cards, installments, Sankey visualisation
+- **Holdings** — buy/sell transactions, horizons, multi-currency support
+- **Performance** — time-weighted return via Finnhub, Yahoo Finance, Stooq, CoinGecko, Binance
+- **Planning** — budgets, savings goals, loan amortization, 24-month forecast
+- **AI Assistant** (`/assistant`) — offline chat, voice I/O, natural-language expense logging (built-in NLU on web; optional local LLM + Sherpa-ONNX on native)
+- **Multilingual** — English, Spanish, Portuguese, Dutch, German, Valencian
+- **Privacy** — local-only data, AES-GCM encryption, JSON/PDF export
+- **Native builds** — Windows, macOS, Linux, Android, iOS (via Tauri)
 
-## Tech stack
-
-TanStack Start v1 (React 19) + Vite 7 + Tailwind v4 + shadcn-ui, Tauri v2
-wrapper, deployed to Cloudflare Workers.
-
-## Getting started
+## Quick start
 
 ```bash
-bun install
-cp .env.example .env   # fill in what you need (all optional for local dev)
-bun run dev
+npm ci                    # or: bun install
+cp .env.example .env      # optional — see Environment variables
+npm run dev
 ```
 
-Open http://localhost:8080. Without env vars the app still runs - finance
-data falls back to public providers and the admin panel is disabled.
+Open http://localhost:8080. Without env vars the app runs — finance data falls
+back to public providers and the admin panel is disabled.
+
+## Documentation map
+
+| Topic | Where |
+|-------|-------|
+| Import/export JSON schema | [Import file format](#import-file-format) |
+| Finnhub key & CORS proxies | [Finance providers](#finance-providers--api-keys) |
+| Local LLM / voice models | [Local AI models](#local-ai-models-native-builds) |
+| Desktop & mobile builds | [Native builds](#native-builds--releases) |
+| Privacy & data flows | [PRIVACY.md](./PRIVACY.md) |
+| Security reporting | [SECURITY.md](./SECURITY.md) |
+| Contributing | [CONTRIBUTING.md](./CONTRIBUTING.md) |
+| Code of conduct | [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md) |
+| Third-party licenses | [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md) |
 
 ## Environment variables
 
-See [`.env.example`](./.env.example). All are read server-side only.
+All variables are **server-side only** — never exposed to the browser bundle.
+See [`.env.example`](./.env.example).
+
+| Variable | Required | Purpose |
+|----------|----------|---------|
+| `SITE_URL` | No | Canonical URL for SEO/OG tags (defaults to production URL) |
+| `FINNHUB_API_KEY` | No | Finnhub token for `/api/finance-proxy` (recommended for self-hosting) |
+| `ADMIN_PASSWORD` | No | Enables `/admin` sponsors panel |
+| `GITHUB_REPO` | No | `owner/repo` for sponsor persistence |
+| `GITHUB_BRANCH` | No | Branch for sponsor commits (default: `main`) |
+| `GITHUB_TOKEN` | No | Fine-grained token with Contents read/write on `GITHUB_REPO` |
 
 ## Using the app
 
-The app is fully client-side: your data lives in your browser's local
-storage, encrypted with an AES-GCM 256 key that never leaves your
-device. Nothing is sent to any server unless you explicitly query a
-price (and even then, only the asset symbol is sent).
+Your data lives in browser local storage, encrypted with AES-GCM 256. Nothing is
+sent to any server unless you explicitly query a price (and only the asset
+symbol is sent).
 
 ### First run
 
-1. Open `/` (landing page) and click **Open the app**, or go straight
-   to `/dashboard`.
-2. Optionally run the **onboarding tour** from the help icon in the
-   header - it walks you through every screen.
-3. Pick your **language**, **theme** (light/dark) and **base currency**
-   in **Settings**.
+1. Open `/` and click **Open the app**, or go to `/dashboard`.
+2. Run the **onboarding tour** from the help icon (optional).
+3. Set **language**, **theme**, and **base currency** in Settings.
 
 ### Cashflow (`/cashflow`)
 
-Track everything that moves money in or out.
-
-- **Add entry**: pick *Income* or *Expense*, amount, currency, date,
-  category, and an optional short description. Toggle **Recurring** to
-  set a frequency (weekly, monthly, yearly, custom) and an end date.
-- **Percent amounts**: switch the amount kind to **%** to compute a
-  value relative to another entry (useful for taxes, tithes, fees).
-- **Transfers**: move money between accounts (cash, holdings, credit
-  card). Transfers appear in the Sankey diagram and never count as
-  income or expense.
-- **Categories**: create your own under **Manage categories**. Defaults
-  use green for income, red for expenses, blue for savings, green for
-  investments.
-- **Filters**: filter the entries table by type, category, week,
-  month, year or custom date range.
-- **Edit / delete**: click any row to edit; recurring entries can be
-  edited as a single occurrence or for the whole series.
-- **Export PDF**: the *Export* button generates a styled PDF of the
-  filtered period including a colour-coded cumulative balance chart.
-- **Sankey diagram**: drag and drop nodes to reorder; the order is
-  remembered. Use the toolbar to toggle labels and customise colours.
-  Open fullscreen to resize and export as PNG.
+Track income, expenses, transfers, and recurring entries. Filter by period,
+export PDF, and explore the interactive Sankey diagram.
 
 ### Holdings (`/holdings`)
 
-- **Add holding**: ticker (e.g. `AAPL`, `BTC`, `VWCE.DE`), quantity,
-  currency, account, and **horizon** (short / long term).
-- **Buy / sell transactions**: add as many as you want; the current
-  quantity is computed from the transaction history.
-- **Credit cards**: track limit, balance and statement payments; use
-  the **Pay** shortcut to log a repayment as a cashflow transfer.
-- **Installments**: split a purchase into N scheduled payments.
+Add tickers (`AAPL`, `BTC`, `VWCE.DE`), buy/sell transactions, credit cards,
+and installment plans.
 
 ### Performance (`/performance`)
 
-Shows time-weighted return per asset and overall, using cached
-daily-history data. Switch period (1M / 3M / 6M / 1Y / All). The data
-is fetched once per day per asset and sliced locally to avoid
-rate-limits.
+Time-weighted return per asset with cached daily history (1M / 3M / 6M / 1Y / All).
 
 ### Planning (`/planning`)
 
-- **Budgets**: monthly spending limits per category, with progress
-  bars based on the current month's cashflow.
-- **Savings goals**: target amount and date; the app suggests a
-  monthly contribution.
-- **Forecast**: 24-month liquidity projection from your recurring
-  entries, with runway calculation.
-- **Loans**: enter principal, rate, term and optional extra payment;
-  see the full amortization table and payoff date.
+Monthly budgets, savings goals with suggested contributions, 24-month liquidity
+forecast, and loan amortization tables.
 
 ### AI Assistant (`/assistant`)
 
-Talk to an on-device finance assistant by text or voice.
-
-- **Log expenses naturally** — e.g. *"I spent 45 dollars on groceries at
-  Walmart yesterday"* — and confirm before anything is saved.
-- **Ask questions** — spending this month, recent transactions, budget
-  status, saving tips — answers use your real local data.
-- **Voice** — tap the mic to speak; replies can be read aloud (toggle in
-  the header or in Settings).
-- **Quick chips** — shortcuts like "Add expense" or "How much on food
-  this month?".
-
-On the **web build**, the assistant uses a built-in local NLU engine and
-your browser's speech APIs. No model download required.
-
-On **native Tauri builds**, you can optionally enable a local LLM
-(Qwen-2.5 GGUF via llama.cpp) and Sherpa-ONNX speech models — see
-[Local AI models](#local-ai-models-native-builds) below.
+Log expenses in natural language (confirm before saving), ask spending questions,
+use voice input/output. Web build uses built-in NLU; native builds can enable
+local LLM and Sherpa-ONNX — see [Local AI models](#local-ai-models-native-builds).
 
 ### Dashboard (`/dashboard`)
 
-Net worth (cashflow balance + holdings), portfolio value (holdings
-only), allocation pie, and quick stats.
+Net worth, portfolio value, allocation pie, and quick stats.
 
-## Settings: data, proxy and API keys
+### Settings → Data
 
-### Import / export
+- **Export** — JSON backup (schema-validated)
+- **Import** — validated with Zod; replaces data after confirmation
+- **Reset** — wipes all local data (irreversible)
 
-In **Settings -> Data**:
+## Import file format
 
-- **Export**: download a JSON file containing all entries, holdings,
-  transactions, categories, budgets, goals, loans and preferences.
-  Schema-validated; safe to keep as a backup.
-- **Import**: load a previously exported JSON file. Imports are
-  validated with Zod and replace your current data after confirmation.
-- **Reset**: wipes all local data (irreversible).
+The importer accepts the envelope produced by **Export**. Minimum viable file:
 
-#### Import file format
-
-The importer accepts the envelope produced by **Export**. Minimum
-viable file:
+<details>
+<summary>Example JSON (click to expand)</summary>
 
 ```json
 {
@@ -172,17 +146,6 @@ viable file:
         "currentPrice": 195.5,
         "priceCurrency": "USD",
         "color": "#22c55e"
-      },
-      {
-        "id": "h_btc",
-        "symbol": "BTC",
-        "name": "Bitcoin",
-        "type": "crypto",
-        "quantity": 0.25,
-        "currentPrice": 65000,
-        "priceCurrency": "USD",
-        "color": "#f59e0b",
-        "coinGeckoId": "bitcoin"
       }
     ],
     "cashflows": [
@@ -194,49 +157,12 @@ viable file:
         "amount": 3500,
         "currency": "EUR",
         "date": "2026-06-01",
-        "recurrence": { "frequency": "monthly" },
-        "description": "Net monthly salary"
-      },
-      {
-        "id": "c_rent",
-        "kind": "expense",
-        "source": "Apartment rent",
-        "category": "housing",
-        "amount": 1100,
-        "currency": "EUR",
-        "date": "2026-06-03",
-        "recurrence": { "frequency": "monthly", "until": "2027-06-01" }
-      },
-      {
-        "id": "c_tax",
-        "kind": "expense",
-        "source": "Income tax",
-        "category": "taxes",
-        "amount": 20,
-        "currency": "EUR",
-        "date": "2026-06-01",
-        "amountKind": "percent",
-        "percentOf": "c_salary"
+        "recurrence": { "frequency": "monthly" }
       }
     ],
-    "transactions": [
-      {
-        "id": "t_aapl_buy",
-        "holdingId": "h_aapl",
-        "kind": "buy",
-        "date": "2025-01-15",
-        "quantity": 10,
-        "pricePerUnit": 180.2,
-        "currency": "USD",
-        "fees": 1.5
-      }
-    ],
+    "transactions": [],
     "categories": [
-      { "id": "salary",  "name": "Salary",  "kind": "income",  "group": "income",     "color": "#22c55e" },
-      { "id": "housing", "name": "Housing", "kind": "expense", "group": "expense",    "color": "#ef4444" },
-      { "id": "taxes",   "name": "Taxes",   "kind": "expense", "group": "expense",    "color": "#f97316" },
-      { "id": "savings", "name": "Savings", "kind": "expense", "group": "savings",    "color": "#3b82f6" },
-      { "id": "invest",  "name": "Invest",  "kind": "expense", "group": "investment", "color": "#10b981" }
+      { "id": "salary", "name": "Salary", "kind": "income", "group": "income", "color": "#22c55e" }
     ],
     "settings": {
       "useCorsProxy": true,
@@ -249,260 +175,141 @@ viable file:
 }
 ```
 
-Field notes:
+</details>
 
-- `id` is any unique string you choose; reuse it to update an item
-  on re-import.
-- `holdings.type`: `crypto` | `stock` | `etf` | `metal` | `other`.
-- `holdings.color` / `categories.color`: 3- or 6-digit hex.
-- `holdings.coinGeckoId` is required for live crypto pricing
-  (e.g. `bitcoin`, `ethereum`, `solana`).
-- `cashflows.kind`: `income` | `expense`. Use a **transfer category**
-  to model account-to-account moves (configure in the UI).
-- `cashflows.date` is `YYYY-MM-DD`.
-- `cashflows.recurrence.frequency`: `weekly` | `monthly` | `yearly`;
-  omit `recurrence` for one-off entries.
-- `cashflows.amountKind`: `fixed` (default) or `percent`; when
-  `percent`, set `percentOf` to another cashflow `id`.
-- `categories.group`: `income` | `expense` | `savings` | `investment`
-  (drives default colour grouping).
-- `settings.corsProxy` must be one of the two allow-listed values
-  shown above.
-- `version` and `exportedAt` are optional but recommended; a legacy
-  file containing only the `state` object is also accepted.
+**Field notes:**
 
+- `holdings.type`: `crypto` | `stock` | `etf` | `metal` | `other`
+- `cashflows.kind`: `income` | `expense`; `date` is `YYYY-MM-DD`
+- `cashflows.amountKind`: `fixed` (default) or `percent` with `percentOf` referencing another cashflow `id`
+- `settings.corsProxy` must be an allow-listed value (`corsproxy.io` or `allorigins.win`)
+- Legacy files containing only the `state` object are also accepted
 
-### Finnhub API key (optional, recommended)
+## Finance providers & API keys
 
-The app ships with a server-side Finnhub key behind
-`/api/finance-proxy` so prices work out of the box. If you self-host
-or run the native app, add your own key for higher rate limits:
+### Finnhub (optional, recommended for self-hosting)
 
-1. Sign up for a free key at https://finnhub.io.
-2. **Self-hosted web**: set `FINNHUB_API_KEY` as a server env var (see
-   [`.env.example`](./.env.example)). The browser never sees it.
-3. **Native app or "bring your own key"**: paste it in
-   **Settings -> Finance providers -> Finnhub API key**. Stored
-   encrypted in local storage.
+For self-hosted deployments, set `FINNHUB_API_KEY` as a server env var. The
+browser never sees it — requests go through `/api/finance-proxy`.
+
+1. Sign up at https://finnhub.io (free tier available).
+2. Set `FINNHUB_API_KEY` in your host's secret store or `.env`.
+3. **Alternatively**, paste your key in **Settings → Finance providers** (stored
+   encrypted locally; useful for native app or BYOK).
+
+Without a Finnhub key, the app falls back to Yahoo Finance, Stooq, CoinGecko,
+and Binance.
 
 ### CORS proxy
 
-Some providers (Yahoo, Stooq) don't allow direct browser requests. The
-chain is:
+Some providers block direct browser requests. The fallback chain:
 
-1. Direct request (when the endpoint allows it).
-2. Same-origin `/api/finance-proxy` (Cloudflare Workers route, allow-
-   listed hosts, HTTPS only, 2 MB cap). Best option, no third party.
-3. Disclosed public proxies (`corsproxy.io`, `allorigins.win`) - only
-   if you enable them in **Settings -> Finance providers**.
+1. Direct request (when allowed)
+2. Same-origin `/api/finance-proxy` (HTTPS allow-list, 2 MB cap) — best for self-hosting
+3. Disclosed public proxies (`corsproxy.io`, `allorigins.win`) — opt-in via Settings
 
-To change the proxy or disable public proxies entirely, edit those
-fields in Settings. Native Tauri builds can talk to providers
-directly and skip proxies altogether.
+Native Tauri builds can reach providers directly and skip proxies.
 
 ### Provider priority
 
-Finnhub -> Yahoo Finance -> Stooq -> CoinGecko / Binance (for crypto).
-The first provider that returns valid data wins; failed providers go
-into a 60-second cooldown to keep refreshes fast.
+Finnhub → Yahoo Finance → Stooq → CoinGecko / Binance. Failed providers enter a
+60-second cooldown.
 
 ## Local AI models (native builds)
 
-The AI Assistant works out of the box with a built-in on-device NLU
-engine. For stronger replies and fully local voice on **desktop/mobile
-Tauri builds**, compile the optional Rust backends and point the app at
-downloaded model files in **Settings → AI Assistant**.
+The assistant works out of the box with built-in NLU. For stronger replies and
+fully local voice on **Tauri builds**, enable optional Rust backends in
+**Settings → AI Assistant**.
 
 ### Cargo features
 
-AI backends are **off by default** so normal builds stay fast and do not
-require clang or ONNX tooling. Enable them when building the native app:
-
-| Feature | Backend | What it powers |
-|---------|---------|----------------|
+| Feature | Backend | Powers |
+|---------|---------|--------|
 | `llm` | [llama-cpp-2](https://docs.rs/llama-cpp-2) | Local LLM chat + tool calling |
-| `stt` | [sherpa-onnx](https://docs.rs/sherpa-onnx) | Speech-to-text |
-| `tts` | [sherpa-onnx](https://docs.rs/sherpa-onnx) | Text-to-speech |
+| `stt` / `tts` | [sherpa-onnx](https://docs.rs/sherpa-onnx) | Speech-to-text / text-to-speech |
 | `local-ai` | all of the above | Convenience alias |
 
 ```bash
-# One-time: Sherpa-ONNX shared libs for voice (STT/TTS)
-npm run setup:sherpa-onnx
+npm run setup:sherpa-onnx    # one-time: Sherpa-ONNX libs for voice
 
 cd src-tauri
-
-# Dev with all local AI backends
-cargo tauri dev --features local-ai
-
-# Or from repo root (also handles bindgen paths when needed):
-npm run tauri:dev:local-ai
-
-# Release build (current OS)
-cargo tauri build --features local-ai
-
-# Or enable individually
-cargo tauri build --features llm
-cargo tauri build --features "llm,stt,tts"
+cargo tauri dev --features local-ai     # dev with all AI backends
+cargo tauri build --features local-ai   # release build
 ```
 
-**Build requirements** (only when enabling these features):
-
-- **clang** — llama.cpp uses bindgen (same as upstream llama-cpp-rs).
-- **Sherpa-ONNX shared libraries** — required for `stt` / `tts` / `local-ai` on Linux.
-  From the repo root:
-
-  ```bash
-  npm run setup:sherpa-onnx
-  ```
-
-  This downloads prebuilt `libsherpa-onnx-c-api.so` and `libonnxruntime.so` into
-  `native/sherpa-onnx/lib/` and writes `src-tauri/.cargo/config.toml` with
-  `SHERPA_ONNX_LIB_DIR` (absolute path; needed when the project path contains spaces).
-- **C/C++ toolchain** — for sherpa-onnx native libraries.
-- Enough RAM/disk for model files (see below).
-
-With features disabled, the app still compiles and the assistant falls
-back to the built-in NLU engine and browser speech APIs.
+**Build requirements** (only when enabling AI features): clang, C/C++ toolchain,
+Sherpa-ONNX shared libs (`npm run setup:sherpa-onnx`), and enough RAM/disk for
+model files.
 
 ### Download models
 
-All models stay on your device. Nothing is uploaded to a cloud API.
+| Model | Source | Size hint |
+|-------|--------|-----------|
+| Qwen2.5-1.5B-Instruct GGUF | [Hugging Face](https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF) | ~1 GB (q4_k_m) |
+| Sherpa-ONNX STT | [Releases](https://github.com/k2-fsa/sherpa-onnx/releases) | varies |
+| Sherpa-ONNX TTS (Piper/VITS) | [Releases](https://github.com/k2-fsa/sherpa-onnx/releases) | varies |
 
-#### Language model (GGUF)
-
-Recommended starting point: **Qwen2.5-1.5B-Instruct** in GGUF format
-(small, fast, good at tool-style replies).
-
-1. Browse [Qwen2.5-1.5B-Instruct-GGUF](https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF)
-   on Hugging Face.
-2. Download a quantized file, e.g. `qwen2.5-1.5b-instruct-q4_k_m.gguf`
-   (~1 GB — good balance of speed and quality).
-3. In the app: **Settings → AI Assistant → Language model (GGUF) → Browse**
-   and select the `.gguf` file.
-
-Other GGUF chat models may work; Qwen2.5-Instruct is what the prompt
-format targets.
-
-#### Speech-to-text (Sherpa-ONNX folder)
-
-Download a **pre-built Sherpa-ONNX offline recognizer** and unzip it.
-The folder should contain model files the app can auto-detect:
-
-- **Transducer** — `encoder*.onnx`, `decoder*.onnx`, `joiner*.onnx`, `tokens.txt`
-- **Whisper** — `encoder*.onnx`, `decoder*.onnx`, `tokens.txt`
-- **SenseVoice** — `model*.onnx`, `tokens.txt`
-
-Sources:
-
-- [Sherpa-ONNX releases](https://github.com/k2-fsa/sherpa-onnx/releases)
-  (pre-built ONNX models)
-- [csukuangfj on Hugging Face](https://huggingface.co/csukuangfj) —
-  many `sherpa-onnx-*` STT packages
-
-Example search terms: `sherpa-onnx whisper tiny en`, `sherpa-onnx zipformer`,
-`sherpa-onnx sensevoice`.
-
-In the app: **Settings → AI Assistant → Speech-to-text model folder → Browse**
-and pick the **folder** (not a single file).
-
-If no STT model is configured, native builds fall back to the browser
-speech recognizer when available.
-
-#### Text-to-speech (Sherpa-ONNX folder)
-
-Download a **VITS / Piper-style** Sherpa-ONNX TTS package. The folder
-should include at least:
-
-- `model.onnx` (or similar)
-- `tokens.txt`
-- optional: `lexicon.txt`, `espeak-ng-data/`, `dict/`
-
-Sources: same [Sherpa-ONNX releases](https://github.com/k2-fsa/sherpa-onnx/releases)
-and [csukuangfj Hugging Face](https://huggingface.co/csukuangfj) —
-look for `sherpa-onnx-vits-*` or `sherpa-onnx-piper-*` (match language
-to your locale, e.g. `en_US`).
-
-In the app: **Settings → AI Assistant → Text-to-speech model folder → Browse**.
-
-If no TTS model is configured, replies use the browser's speech synthesis.
-
-### Configure in Settings
-
-Open **Settings → AI Assistant**:
-
-| Control | Purpose |
-|---------|---------|
-| **Speak replies aloud** | Toggle TTS for assistant answers |
-| **Language model (GGUF)** | Path to your `.gguf` file |
-| **Speech-to-text model folder** | Folder with Sherpa STT ONNX files |
-| **Text-to-speech model folder** | Folder with Sherpa TTS ONNX files |
-| **Clear chat history** | Remove encrypted local conversation |
-
-Green checkmarks appear when a backend is **compiled in** and the path
-points at valid model files. Paths are stored in your encrypted local
-settings and passed to the Rust backend on each request (models are
-cached in memory after first load).
-
-### Environment variable fallback (optional)
-
-Instead of using the Settings UI, you can point the native backend at
-models via env vars (useful for dev or CI):
+Configure paths in **Settings → AI Assistant**, or via env vars:
 
 ```bash
-export AURELIA_LLM_MODEL=/path/to/qwen2.5-1.5b-instruct-q4_k_m.gguf
-export AURELIA_STT_MODEL=/path/to/sherpa-onnx-whisper-tiny.en
-export AURELIA_TTS_MODEL=/path/to/sherpa-onnx-vits-piper-en_US
+export AURELIA_LLM_MODEL=/path/to/model.gguf
+export AURELIA_STT_MODEL=/path/to/sherpa-stt-folder
+export AURELIA_TTS_MODEL=/path/to/sherpa-tts-folder
 ```
 
-Settings paths take precedence when set.
+Settings paths take precedence. Chat history is encrypted locally; inference
+runs on your device with local models enabled.
 
-### Privacy
-
-- Chat history is stored **encrypted** in local storage (same AES-GCM
-  scheme as the rest of the app).
-- With local models enabled, **inference runs entirely on your device**.
-- The built-in NLU engine never sends data to a server.
-- Expense writes always require your **confirmation** before saving.
-
-## Native builds
+## Native builds & releases
 
 ```bash
 cd src-tauri
 cargo tauri dev               # desktop dev
-cargo tauri build             # current OS
-cargo tauri dev --features local-ai   # desktop dev + on-device LLM/STT/TTS
-cargo tauri build --features local-ai # release with local AI backends
+cargo tauri build             # current OS installer
 cargo tauri android build     # APK / AAB
-cargo tauri ios build         # iOS (macOS only)
+cargo tauri ios build         # iOS (macOS host only)
 ```
 
-For model downloads, Settings paths and build requirements for the AI
-Assistant, see [Local AI models](#local-ai-models-native-builds).
+From repo root: `npm run build:tauri` prepares the static bundle for Tauri.
 
-GitHub Actions workflow at `.github/workflows/tauri-release.yml` builds
-all platforms on tag push.
+GitHub Actions ([`.github/workflows/tauri-release.yml`](./.github/workflows/tauri-release.yml))
+builds all platforms on tag push (`v*`). Download installers from
+[GitHub Releases](https://github.com/Gabo-Tech/aurelia-asset/releases).
+
+## Self-hosting
+
+The web app targets **Cloudflare Workers** via TanStack Start + Nitro.
+
+```bash
+npm ci && npm run build
+# Deploy .output to your Cloudflare Workers project
+```
+
+Set at minimum `FINNHUB_API_KEY` for reliable stock quotes. Optional: `SITE_URL`,
+`ADMIN_PASSWORD`, and GitHub vars for the sponsors panel.
+
+**Tech stack:** TanStack Start v1 (React 19) + Vite 8 + Tailwind v4 + shadcn-ui,
+Tauri v2 wrapper. Vite config uses `@lovable.dev/vite-tanstack-config` (public
+npm) as a convenience wrapper — standard `npm ci` / `npm run dev` works for all
+contributors.
 
 ## License
 
-This project is licensed under the **GNU Affero General Public License
-v3.0 or later** (AGPL-3.0-or-later). See [`LICENSE`](./LICENSE) and
-[`NOTICE`](./NOTICE).
+Licensed under **GNU Affero General Public License v3.0 or later**
+(AGPL-3.0-or-later). See [`LICENSE`](./LICENSE) and [`NOTICE`](./NOTICE).
 
-- Personal, educational and non-commercial use: free under AGPL-3.0.
-- Commercial use that cannot meet AGPL-3.0 obligations (including the
-  network-use source-disclosure requirement): a separate commercial
-  license is available - contact [GABO](https://solutions.gabo.rocks).
+- Personal, educational, and non-commercial use: free under AGPL-3.0.
+- Commercial use that cannot meet AGPL obligations (including network-use
+  source disclosure): contact [GABO](https://solutions.gabo.rocks) for a
+  commercial license.
 
-Attribution to GABO must be preserved in all distributions and
-deployments (see [`NOTICE`](./NOTICE)).
+Attribution to GABO must be preserved in all distributions (see `NOTICE`).
 
-## Security
+## Security & contributing
 
-To report a vulnerability, see [`SECURITY.md`](./SECURITY.md). Please do
-not open a public issue for security reports.
-
-## Contributing
-
-See [`CONTRIBUTING.md`](./CONTRIBUTING.md). By contributing you agree to
-license your contribution under AGPL-3.0-or-later and grant GABO the
-right to also offer it under a commercial license.
+- **Vulnerabilities:** report privately via [`SECURITY.md`](./SECURITY.md) — do
+  not open public issues for security findings.
+- **Contributions:** see [`CONTRIBUTING.md`](./CONTRIBUTING.md). By contributing
+  you agree to license under AGPL-3.0-or-later.
+- **Privacy:** see [`PRIVACY.md`](./PRIVACY.md) for data handling details.
+- **Conduct:** [`CODE_OF_CONDUCT.md`](./CODE_OF_CONDUCT.md).

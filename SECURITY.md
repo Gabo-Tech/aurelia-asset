@@ -40,5 +40,22 @@ Out of scope:
   response size cap
 - JSON imports are validated with Zod
 - No third-party CORS proxy is used without being disclosed in Settings
+- State exports redact user Finnhub API keys
+- `.env` and local secrets are gitignored; server secrets belong in the host's secret store only
+
+## Threat model notes
+
+**Web vs desktop:** The web app runs in a browser sandbox. Tauri builds add a
+native shell with minimal permissions (save dialog for exports, optional local
+AI backends). Neither mode protects against malware on the device or a user who
+leaves an unlocked session unattended.
+
+**Client-side encryption:** AES-GCM encryption in the browser protects stored
+data from casual inspection of `localStorage`. It does not protect against XSS
+in the same origin, browser extensions with storage access, or forensic access
+to an unlocked profile. See [`PRIVACY.md`](./PRIVACY.md) for details.
+
+**AI model paths (native):** Users choose local model file paths in Settings.
+Only enable local AI features if you trust the model files you download.
 
 Thanks for helping keep users safe.

@@ -510,7 +510,6 @@ function Downloads() {
             const releaseHref =
               d.releaseAsset ? releaseDownloadUrl(d.releaseAsset) : null;
             const href = releaseHref ?? releaseBase ?? githubSourceUrl();
-            const isDirect = Boolean(d.releaseAsset);
             const cls =
               "relative flex flex-col items-center justify-center rounded-2xl border border-border/60 bg-card/40 p-6 text-center transition-colors hover:border-primary/60 hover:bg-card";
             if (d.comingSoon) {
@@ -532,9 +531,8 @@ function Downloads() {
               <a
                 key={d.key}
                 href={href}
-                target={isDirect ? undefined : "_blank"}
-                rel={isDirect ? undefined : "noopener noreferrer"}
-                download={isDirect ? (d.downloadAs ?? true) : undefined}
+                target="_blank"
+                rel="noopener noreferrer"
                 className={cls}
               >
                 <Icon className="h-7 w-7 text-primary" />

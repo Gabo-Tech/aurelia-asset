@@ -59,12 +59,13 @@ import {
 } from "recharts";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { SITE_URL } from "@/lib/site-config";
 
 export const Route = createFileRoute("/cashflow")({
   head: () => {
     const title = i18n.t("cashflow.metaTitle");
     const desc = i18n.t("cashflow.metaDesc");
-    const url = "https://financetracker.putopulse.org/cashflow";
+    const url = `${SITE_URL}/cashflow`;
     return {
       meta: [
         { title },
@@ -1551,7 +1552,7 @@ function SankeyControls({
 }: {
   prefs: Prefs;
   setPrefs: (updater: (p: Prefs) => Prefs) => void;
-  nodes: { name: string; fill: string; kind: string }[];
+  nodes: { name: string; fill: string; kind?: string }[];
   resetColors: () => void;
 }) {
   const { t } = useTranslation();

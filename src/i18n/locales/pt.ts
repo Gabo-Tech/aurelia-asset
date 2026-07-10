@@ -188,6 +188,7 @@ const pt: Translation = {
     showValues: "Mostrar valores",
     hideValues: "Ocultar valores",
     footerNote: "Apenas local · os dados ficam no seu navegador",
+    sourceCode: "Código-fonte",
   },
   landing: {
     headerTagline: "Seu · Privado · Grátis",
@@ -280,7 +281,7 @@ const pt: Translation = {
         ios: "Requer AltStore ou Sideloadly",
       },
     },
-    footer: { brand: "Gestor de carteira elegante", madeBy: "Feito por" },
+    footer: { brand: "Gestor de carteira elegante", madeBy: "Feito por", sourceCode: "Código-fonte" },
     meta: {
       title: "Gestor de carteira privado - Ações, Cripto e ETFs",
       description: "Acompanhe cada ação, ETF, cripto, metal e euro que possui num gestor privado. Veja alocação, fluxo de caixa, previsão e património - sem registo, sem nuvem, grátis para sempre.",

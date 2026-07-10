@@ -1,8 +1,9 @@
 [package]
 name = "portfolio-tracker"
 version = "0.1.0"
-description = "Private portfolio tracker desktop & mobile wrapper"
+description = "Privacy-first personal finance and portfolio tracker"
 authors = ["GABO"]
+license = "AGPL-3.0-or-later"
 edition = "2021"
 rust-version = "1.77"
 

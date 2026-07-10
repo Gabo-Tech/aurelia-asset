@@ -186,6 +186,7 @@ const en = {
     showValues: "Show values",
     hideValues: "Hide values",
     footerNote: "Local-only · data stays in your browser",
+    sourceCode: "Source code",
   },
   landing: {
     headerTagline: "Yours · Private · Free",
@@ -322,6 +323,7 @@ const en = {
     footer: {
       brand: "Elegant Portfolio Tracker",
       madeBy: "Made by",
+      sourceCode: "Source code",
     },
     meta: {
       title: "Private Portfolio Tracker - Stocks, Crypto & ETFs",

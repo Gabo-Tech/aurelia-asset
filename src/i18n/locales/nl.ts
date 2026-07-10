@@ -188,6 +188,7 @@ const nl: Translation = {
     showValues: "Waarden tonen",
     hideValues: "Waarden verbergen",
     footerNote: "Alleen lokaal · je gegevens blijven in je browser",
+    sourceCode: "Broncode",
   },
   landing: {
     headerTagline: "Van jou · Privé · Gratis",
@@ -280,7 +281,7 @@ const nl: Translation = {
         ios: "Vereist AltStore of Sideloadly",
       },
     },
-    footer: { brand: "Elegante Portfolio Tracker", madeBy: "Gemaakt door" },
+    footer: { brand: "Elegante Portfolio Tracker", madeBy: "Gemaakt door", sourceCode: "Broncode" },
     meta: {
       title: "Privé Portfolio Tracker - Aandelen, Crypto & ETFs",
       description: "Volg elk aandeel, elke ETF, crypto, metaal en euro die je bezit in één privé-tracker. Zie allocatie, kasstroom, prognose en vermogen - zonder registratie, zonder cloud, voor altijd gratis.",

@@ -40,6 +40,8 @@ src-tauri/.cargo/config.toml
 .wrangler/
 .dev.vars
 
+bun.lock
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
