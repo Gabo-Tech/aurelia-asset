@@ -18,6 +18,7 @@ import { SponsorBanner } from "./sponsor-banner";
 import { ThemeToggle } from "./theme-toggle";
 import { PageLoader } from "./page-loader";
 import { TourLauncher } from "./tour-launcher";
+import { AiModelSetupDialog } from "./ai-model-setup-dialog";
 import { usePrefetchPortfolioHistory } from "@/hooks/use-portfolio-history";
 import { ASSETS, githubSourceUrl } from "@/lib/site-config";
 
@@ -186,6 +187,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           })}
         </div>
       </nav>
+      <AiModelSetupDialog />
     </div>
   );
 }

@@ -35,7 +35,31 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev libssl-dev \
-            libayatana-appindicator3-dev librsvg2-dev patchelf rpm
+            libayatana-appindicator3-dev librsvg2-dev patchelf rpm clang libclang-dev
+
+      - name: Install macOS dependencies
+        if: matrix.os == 'macos-latest'
+        run: brew install llvm
+
+      - name: Setup Sherpa-ONNX native libraries
+        if: matrix.os != 'windows-latest'
+        run: bash scripts/setup-sherpa-onnx.sh
+
+      - name: Setup Sherpa-ONNX native libraries (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: bash
+        run: bash scripts/setup-sherpa-onnx.sh
+
+      - name: Configure libclang for llama.cpp bindgen
+        shell: bash
+        run: |
+          if [[ "${{ matrix.os }}" == "ubuntu-22.04" ]]; then
+            echo "LIBCLANG_PATH=/usr/lib/llvm-14/lib" >> "$GITHUB_ENV"
+          elif [[ "${{ matrix.os }}" == "macos-latest" ]]; then
+            echo "LIBCLANG_PATH=$(brew --prefix llvm)/lib" >> "$GITHUB_ENV"
+          else
+            echo "LIBCLANG_PATH=C:/Program Files/LLVM/bin" >> "$GITHUB_ENV"
+          fi
 
       - uses: dtolnay/rust-toolchain@stable
         with:
@@ -53,7 +77,7 @@ jobs:
           releaseName: "Portfolio Tracker ${{ github.ref_name }}"
           releaseDraft: true
           prerelease: false
-          args: ${{ matrix.args }}
+          args: --features local-ai ${{ matrix.args }}
 
   android:
     runs-on: ubuntu-latest
@@ -96,6 +120,10 @@ jobs:
       - name: Initialize Android project
         working-directory: src-tauri
         run: cargo tauri android init
+
+      - name: Apply app icons to Android project
+        working-directory: src-tauri
+        run: cargo tauri icon app-icon.png
 
       - name: Decode release keystore (if provided)
         id: keystore

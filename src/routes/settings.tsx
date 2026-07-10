@@ -59,6 +59,14 @@ import { getAiCapabilities, type AiCapabilities } from "@/lib/ai/provider";
 import { aiConfigFromSettings } from "@/lib/ai/config";
 import { clearChatHistory } from "@/lib/ai/persistence";
 import {
+  downloadModel,
+  formatDownloadProgress,
+  isNativeDesktop,
+  type ModelDownloadProgress,
+  type ModelKind,
+} from "@/lib/ai/downloads";
+import { Progress } from "@/components/ui/progress";
+import {
   datedFilename,
   exportMethodDescription,
   redactStateForExport,
@@ -783,11 +791,18 @@ function AiSettingsCard() {
   const { state, updateSettings } = useStore();
   const s = state.settings;
   const native = isTauri();
+  const [desktopNative, setDesktopNative] = useState(false);
   const [caps, setCaps] = useState<AiCapabilities>({
     llm: false,
     stt: false,
     tts: false,
   });
+  const [downloadKind, setDownloadKind] = useState<ModelKind | null>(null);
+  const [downloadProgress, setDownloadProgress] = useState<ModelDownloadProgress | null>(null);
+
+  useEffect(() => {
+    void isNativeDesktop().then(setDesktopNative);
+  }, []);
 
   useEffect(() => {
     let alive = true;
@@ -812,14 +827,45 @@ function AiSettingsCard() {
     }
   };
 
+  const runDownload = async (
+    modelKind: ModelKind,
+    key: "aiLlmModelPath" | "aiSttModelDir" | "aiTtsModelDir",
+  ) => {
+    setDownloadKind(modelKind);
+    setDownloadProgress(null);
+    try {
+      const path = await downloadModel(modelKind, setDownloadProgress);
+      updateSettings({ [key]: path, aiModelSetup: "done" });
+      toast.success(t("settings.ai.downloadReady"));
+      const nextCaps = await getAiCapabilities(
+        aiConfigFromSettings({ ...s, [key]: path }),
+      );
+      setCaps(nextCaps);
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : t("settings.ai.downloadFailed"),
+      );
+    } finally {
+      setDownloadKind(null);
+      setDownloadProgress(null);
+    }
+  };
+
   const modelRow = (
     label: string,
     help: string,
     key: "aiLlmModelPath" | "aiSttModelDir" | "aiTtsModelDir",
-    kind: "file" | "dir",
+    pickerKind: "file" | "dir",
+    modelKind: ModelKind,
     ready: boolean,
   ) => {
     const value = s[key];
+    const isDownloading = downloadKind === modelKind;
+    const pct =
+      isDownloading && downloadProgress?.total && downloadProgress.total > 0
+        ? Math.min(100, Math.round((downloadProgress.received / downloadProgress.total) * 100))
+        : undefined;
+
     return (
       <div className="rounded-lg border border-border/50 p-3">
         <div className="flex items-center justify-between gap-2">
@@ -833,7 +879,23 @@ function AiSettingsCard() {
           </div>
           {native && (
             <div className="flex items-center gap-1">
-              <Button variant="outline" size="sm" onClick={() => pick(kind, key)}>
+              {desktopNative && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={isDownloading || downloadKind !== null}
+                  onClick={() => void runDownload(modelKind, key)}
+                >
+                  <Download className="mr-1.5 h-3.5 w-3.5" />
+                  {t("settings.ai.download", { defaultValue: "Download" })}
+                </Button>
+              )}
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={isDownloading}
+                onClick={() => pick(pickerKind, key)}
+              >
                 <FolderOpen className="mr-1.5 h-3.5 w-3.5" />
                 {t("settings.ai.browse", { defaultValue: "Browse" })}
               </Button>
@@ -842,6 +904,7 @@ function AiSettingsCard() {
                   variant="ghost"
                   size="icon"
                   className="h-8 w-8"
+                  disabled={isDownloading}
                   onClick={() => updateSettings({ [key]: undefined })}
                   title={t("settings.ai.clearPath", { defaultValue: "Clear" })}
                 >
@@ -852,6 +915,16 @@ function AiSettingsCard() {
           )}
         </div>
         <p className="mt-1 text-xs text-muted-foreground">{help}</p>
+        {isDownloading && (
+          <div className="mt-2 space-y-1">
+            <Progress value={pct ?? (downloadProgress?.phase === "extracting" ? 100 : 10)} />
+            <p className="text-[11px] text-muted-foreground">
+              {downloadProgress
+                ? formatDownloadProgress(downloadProgress)
+                : t("settings.ai.downloadStarting")}
+            </p>
+          </div>
+        )}
         {value ? (
           <p className="mt-1 truncate font-mono text-[11px] text-muted-foreground/80" title={value}>
             {value}
@@ -924,6 +997,7 @@ function AiSettingsCard() {
               }),
               "aiLlmModelPath",
               "file",
+              "llm",
               caps.llm,
             )}
             {modelRow(
@@ -934,6 +1008,7 @@ function AiSettingsCard() {
               }),
               "aiSttModelDir",
               "dir",
+              "stt",
               caps.stt,
             )}
             {modelRow(
@@ -944,6 +1019,7 @@ function AiSettingsCard() {
               }),
               "aiTtsModelDir",
               "dir",
+              "tts",
               caps.tts,
             )}
           </div>

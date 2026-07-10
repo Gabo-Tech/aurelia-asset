@@ -1,13 +1,25 @@
 #!/usr/bin/env bash
-# Download prebuilt Sherpa-ONNX shared libraries for Linux x64.
+# Download prebuilt Sherpa-ONNX shared libraries for the current desktop OS.
 # Required to link the `stt` / `tts` / `local-ai` Cargo features.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 DEST="$ROOT/native/sherpa-onnx"
 VERSION="${SHERPA_ONNX_VERSION:-v1.13.0}"
-ARCHIVE="sherpa-onnx-${VERSION}-linux-x64-shared-lib.tar.bz2"
+
+case "$(uname -s)" in
+  Linux*) PLATFORM="linux-x64" ;;
+  Darwin*) PLATFORM="osx-universal2" ;;
+  MINGW*|MSYS*|CYGWIN*) PLATFORM="win-x64" ;;
+  *)
+    echo "Unsupported OS for Sherpa-ONNX setup: $(uname -s)" >&2
+    exit 1
+    ;;
+esac
+
+ARCHIVE="sherpa-onnx-${VERSION}-${PLATFORM}-shared-lib.tar.bz2"
 URL="https://github.com/k2-fsa/sherpa-onnx/releases/download/${VERSION}/${ARCHIVE}"
+EXTRACT_DIR="sherpa-onnx-${VERSION}-${PLATFORM}-shared-lib"
 
 mkdir -p "$DEST"
 cd "$DEST"
@@ -23,19 +35,43 @@ EOF
   echo "Wrote $CONFIG"
 }
 
-if [[ -f lib/libsherpa-onnx-c-api.so && -f lib/libonnxruntime.so ]]; then
+marker_present() {
+  [[ -d lib ]] || return 1
+  case "$PLATFORM" in
+    linux-x64)
+      [[ -f lib/libsherpa-onnx-c-api.so && -f lib/libonnxruntime.so ]]
+      ;;
+    osx-universal2)
+      [[ -f lib/libsherpa-onnx-c-api.dylib && -f lib/libonnxruntime.dylib ]]
+      ;;
+    win-x64)
+      [[ -f lib/sherpa-onnx-c-api.dll && -f lib/onnxruntime.dll ]]
+      ;;
+    *) return 1 ;;
+  esac
+}
+
+if marker_present; then
   echo "Sherpa-ONNX libs already present in $DEST/lib"
   write_cargo_config
   exit 0
 fi
 
 echo "Downloading $URL ..."
-wget -q --show-progress -O "$ARCHIVE" "$URL"
+if command -v wget >/dev/null 2>&1; then
+  wget -q --show-progress -O "$ARCHIVE" "$URL"
+elif command -v curl >/dev/null 2>&1; then
+  curl -L --progress-bar -o "$ARCHIVE" "$URL"
+else
+  echo "Need wget or curl to download Sherpa-ONNX" >&2
+  exit 1
+fi
+
 tar -xjf "$ARCHIVE"
 rm -rf lib
-mv "sherpa-onnx-${VERSION}-linux-x64-shared-lib/lib" lib
-rm -rf "sherpa-onnx-${VERSION}-linux-x64-shared-lib" "$ARCHIVE"
+mv "$EXTRACT_DIR/lib" lib
+rm -rf "$EXTRACT_DIR" "$ARCHIVE"
 
 echo "Installed:"
-ls -la lib/*.so
+ls -la lib/
 write_cargo_config

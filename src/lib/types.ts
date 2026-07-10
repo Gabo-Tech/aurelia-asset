@@ -111,6 +111,8 @@ export type Settings = {
   aiSttModelDir?: string;
   /** Folder containing a Sherpa-ONNX TTS (VITS/Piper) model. Native only. */
   aiTtsModelDir?: string;
+  /** First-run local model download flow: pending (offer), done, or declined. */
+  aiModelSetup?: "pending" | "done" | "declined";
   /** User has seen the one-time financial-advice responsibility disclaimer. */
   aiAdviceDisclaimerSeen?: boolean;
 };
@@ -305,6 +307,7 @@ export const DEFAULT_STATE: AppState = {
     privacyMode: false,
     displayCurrency: "USD",
     aiAssistantEnabled: true,
+    aiModelSetup: "pending",
   },
 };
 

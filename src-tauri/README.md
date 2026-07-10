@@ -70,8 +70,13 @@ Linux dev packages: `libwebkit2gtk-4.1-dev libssl-dev libayatana-appindicator3-d
 
 ## Icons
 
-Place a 1024x1024 PNG at `src-tauri/app-icon.png`, then:
+Place a 1024x1024 PNG at `src-tauri/app-icon.png`, then regenerate all
+platform icons (desktop bundles, iOS, and Android):
 
 ```
 cargo tauri icon src-tauri/app-icon.png
 ```
+
+**Android note:** `src-tauri/gen/android` is gitignored and recreated by
+`cargo tauri android init` with the default Tauri launcher art. Always run
+`cargo tauri icon` again after `android init`, before `cargo tauri android build`.

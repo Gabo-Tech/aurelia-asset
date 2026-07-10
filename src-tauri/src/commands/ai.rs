@@ -41,10 +41,17 @@ pub struct AiConfig {
 
 /// Which on-device AI features are ready (compiled in *and* have model files).
 #[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct AiStatus {
     pub llm: bool,
     pub stt: bool,
     pub tts: bool,
+    /// Whether the LLM backend was compiled into this binary.
+    pub llm_enabled: bool,
+    /// Whether the STT backend was compiled into this binary.
+    pub stt_enabled: bool,
+    /// Whether the TTS backend was compiled into this binary.
+    pub tts_enabled: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub model: Option<String>,
 }
@@ -172,6 +179,9 @@ pub fn ai_status(config: Option<AiConfig>) -> AiStatus {
         llm: llm_ready,
         stt: stt_ready,
         tts: tts_ready,
+        llm_enabled: cfg!(feature = "llm"),
+        stt_enabled: cfg!(feature = "stt"),
+        tts_enabled: cfg!(feature = "tts"),
         model: if llm_ready {
             llm.and_then(|p| {
                 PathBuf::from(&p)
@@ -203,6 +213,7 @@ pub async fn pick_model_path(
 
 #[cfg(not(any(target_os = "android", target_os = "ios")))]
 fn pick_folder_path(app: &tauri::AppHandle) -> Result<Option<tauri_plugin_dialog::FilePath>, String> {
+    use tauri_plugin_dialog::DialogExt;
     Ok(app.dialog().file().blocking_pick_folder())
 }
 

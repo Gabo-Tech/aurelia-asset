@@ -28,6 +28,9 @@ export interface AiCapabilities {
   llm: boolean;
   stt: boolean;
   tts: boolean;
+  llmEnabled?: boolean;
+  sttEnabled?: boolean;
+  ttsEnabled?: boolean;
   model?: string;
 }
 
