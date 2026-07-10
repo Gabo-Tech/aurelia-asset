@@ -5,13 +5,16 @@ Make the multi-budget and multi-forecast UX communicate "create as many as you w
 ## 1. Budget plans (`src/routes/planning.tsx` + types + store)
 
 ### 1a. Per-plan metadata
+
 Extend `BudgetPlan` in `src/lib/types.ts`:
 
 ```ts
 export type BudgetPlan = {
-  id: string; name: string; items: BudgetItem[];
+  id: string;
+  name: string;
+  items: BudgetItem[];
   description?: string; // e.g. "Summer vacation to Japan"
-  color?: string;       // accent color, default from palette on create
+  color?: string; // accent color, default from palette on create
 };
 ```
 
@@ -20,6 +23,7 @@ export type BudgetPlan = {
 - Add the same fields to Zod schemas in `src/routes/settings.tsx` so import/export keeps them.
 
 ### 1b. Plan-manager UX (freedom-focused)
+
 Replace the current single dropdown with a "workspace" strip:
 
 - Sticky top row: horizontal scroll of **plan chips** (color dot + name + item count). Active chip highlighted; "★ Main" badge on the main plan. Tap a chip to switch.
@@ -29,6 +33,7 @@ Replace the current single dropdown with a "workspace" strip:
 - Empty state copy: "Create a budget for anything — a vacation, a personal project, a moving month, your regular monthly plan." with 3 quick-start template buttons (`Monthly`, `Vacation`, `Project`) that just prefill the name/description/color.
 
 ### 1c. Per-item color override
+
 Extend `BudgetItem`:
 
 ```ts
@@ -39,6 +44,7 @@ export type BudgetItem = { ...; color?: string };
 - Persist through existing `updateBudgetItem`.
 
 ### 1d. Budget pie chart (new, always visible under items)
+
 Add a new `<BudgetPieCard>` (in `src/components/budget-pie-card.tsx`) that renders one donut per active plan:
 
 - Data: one slice per budget item, `value = toDisplay(item.amount, item.currency)`, `color = item.color ?? categoryColor ?? planColor`, `label = item.label`.
@@ -51,6 +57,7 @@ Add a new `<BudgetPieCard>` (in `src/components/budget-pie-card.tsx`) that rende
 ## 2. Forecast scenarios (`src/routes/planning.tsx` + types + store)
 
 ### 2a. Per-scenario metadata
+
 Extend `ForecastScenario`:
 
 ```ts
@@ -62,6 +69,7 @@ export type ForecastScenario = {
 Migration + schema update same as budgets.
 
 ### 2b. Scenario-manager UX
+
 Same chip strip pattern as budgets:
 
 - Horizontal chip scroller with color dot + name; trailing `+ New scenario`.
@@ -70,9 +78,11 @@ Same chip strip pattern as budgets:
 - Empty-state templates: `Personal`, `Small business`, `Side project`, `Optimistic (+income)`, `Downturn (+expense)` — each seeds sensible defaults.
 
 ### 2c. Recurring income/expense pies (collapsible, hidden by default)
+
 Add a `<Collapsible>` section under the forecast chart titled **"Recurring income & expenses"**, hidden by default (persist open/closed per scenario in localStorage).
 
 Compute from the same recurring cashflows the forecast baseline uses:
+
 - `recurringIncomeByMonth`: sum of resolved values from `expandCashflows(state.cashflows, oneMonthFromNow)` filtered to `kind === "income"` and grouped by `source` (fallback "Other"), for the next 1 month.
 - `recurringExpenseByMonth`: same for `kind === "expense"` grouped by `category`.
 - Include the scenario's `monthlyIncomeAdjust` / `monthlyExpenseAdjust` as an extra "Scenario adjustment" slice (only when non-zero).

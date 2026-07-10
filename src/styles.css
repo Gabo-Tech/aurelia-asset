@@ -60,86 +60,86 @@
 /* Warm Editorial — Light mode (default) */
 :root {
   --radius: 4px;
-  --background: #FDFBF9;
-  --foreground: #1A1A1A;
-  --card: #FFFFFF;
-  --card-foreground: #1A1A1A;
-  --popover: #FFFFFF;
-  --popover-foreground: #1A1A1A;
+  --background: #fdfbf9;
+  --foreground: #1a1a1a;
+  --card: #ffffff;
+  --card-foreground: #1a1a1a;
+  --popover: #ffffff;
+  --popover-foreground: #1a1a1a;
   --primary: #121212;
-  --primary-foreground: #FDFBF9;
-  --secondary: #F4F1EC;
-  --secondary-foreground: #1A1A1A;
-  --muted: #F4F1EC;
-  --muted-foreground: #71717A;
-  --accent: #4A5243;
-  --accent-foreground: #FDFBF9;
-  --destructive: #8C2E22;
-  --destructive-foreground: #FDFBF9;
-  --success: #4A5243;
-  --success-foreground: #FDFBF9;
-  --warning: #B7893A;
-  --warning-foreground: #1A1A1A;
-  --info: #3E5871;
-  --info-foreground: #FDFBF9;
-  --border: #EAE8E4;
-  --input: #EAE8E4;
+  --primary-foreground: #fdfbf9;
+  --secondary: #f4f1ec;
+  --secondary-foreground: #1a1a1a;
+  --muted: #f4f1ec;
+  --muted-foreground: #71717a;
+  --accent: #4a5243;
+  --accent-foreground: #fdfbf9;
+  --destructive: #8c2e22;
+  --destructive-foreground: #fdfbf9;
+  --success: #4a5243;
+  --success-foreground: #fdfbf9;
+  --warning: #b7893a;
+  --warning-foreground: #1a1a1a;
+  --info: #3e5871;
+  --info-foreground: #fdfbf9;
+  --border: #eae8e4;
+  --input: #eae8e4;
   --ring: #121212;
-  --chart-1: #4A5243;
-  --chart-2: #B7893A;
-  --chart-3: #8C6A4A;
-  --chart-4: #3E5871;
-  --chart-5: #8C2E22;
-  --sidebar: #FFFFFF;
-  --sidebar-foreground: #1A1A1A;
+  --chart-1: #4a5243;
+  --chart-2: #b7893a;
+  --chart-3: #8c6a4a;
+  --chart-4: #3e5871;
+  --chart-5: #8c2e22;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #1a1a1a;
   --sidebar-primary: #121212;
-  --sidebar-primary-foreground: #FDFBF9;
-  --sidebar-accent: #F4F1EC;
-  --sidebar-accent-foreground: #1A1A1A;
-  --sidebar-border: #EAE8E4;
+  --sidebar-primary-foreground: #fdfbf9;
+  --sidebar-accent: #f4f1ec;
+  --sidebar-accent-foreground: #1a1a1a;
+  --sidebar-border: #eae8e4;
   --sidebar-ring: #121212;
 }
 
 /* Dark Luxury — Dark mode */
 .dark {
-  --background: #0B0B0C;
-  --foreground: #E4E4E7;
+  --background: #0b0b0c;
+  --foreground: #e4e4e7;
   --card: #121214;
-  --card-foreground: #E4E4E7;
+  --card-foreground: #e4e4e7;
   --popover: #121214;
-  --popover-foreground: #E4E4E7;
-  --primary: #C5A880;
-  --primary-foreground: #0B0B0C;
-  --secondary: #17171A;
-  --secondary-foreground: #E4E4E7;
-  --muted: #17171A;
-  --muted-foreground: #A1A1AA;
-  --accent: #F3F3F3;
-  --accent-foreground: #0B0B0C;
-  --destructive: #B4534A;
-  --destructive-foreground: #F3F3F3;
-  --success: #8FA98A;
-  --success-foreground: #0B0B0C;
-  --warning: #C5A880;
-  --warning-foreground: #0B0B0C;
-  --info: #8FA1B8;
-  --info-foreground: #0B0B0C;
-  --border: #1F1F23;
-  --input: #1F1F23;
-  --ring: #C5A880;
-  --chart-1: #C5A880;
-  --chart-2: #8FA98A;
-  --chart-3: #8FA1B8;
-  --chart-4: #B48A6B;
-  --chart-5: #B4534A;
-  --sidebar: #0B0B0C;
-  --sidebar-foreground: #E4E4E7;
-  --sidebar-primary: #C5A880;
-  --sidebar-primary-foreground: #0B0B0C;
-  --sidebar-accent: #17171A;
-  --sidebar-accent-foreground: #E4E4E7;
-  --sidebar-border: #1F1F23;
-  --sidebar-ring: #C5A880;
+  --popover-foreground: #e4e4e7;
+  --primary: #c5a880;
+  --primary-foreground: #0b0b0c;
+  --secondary: #17171a;
+  --secondary-foreground: #e4e4e7;
+  --muted: #17171a;
+  --muted-foreground: #a1a1aa;
+  --accent: #f3f3f3;
+  --accent-foreground: #0b0b0c;
+  --destructive: #b4534a;
+  --destructive-foreground: #f3f3f3;
+  --success: #8fa98a;
+  --success-foreground: #0b0b0c;
+  --warning: #c5a880;
+  --warning-foreground: #0b0b0c;
+  --info: #8fa1b8;
+  --info-foreground: #0b0b0c;
+  --border: #1f1f23;
+  --input: #1f1f23;
+  --ring: #c5a880;
+  --chart-1: #c5a880;
+  --chart-2: #8fa98a;
+  --chart-3: #8fa1b8;
+  --chart-4: #b48a6b;
+  --chart-5: #b4534a;
+  --sidebar: #0b0b0c;
+  --sidebar-foreground: #e4e4e7;
+  --sidebar-primary: #c5a880;
+  --sidebar-primary-foreground: #0b0b0c;
+  --sidebar-accent: #17171a;
+  --sidebar-accent-foreground: #e4e4e7;
+  --sidebar-border: #1f1f23;
+  --sidebar-ring: #c5a880;
 }
 
 @layer base {
@@ -162,13 +162,17 @@
     padding-left: env(safe-area-inset-left, 0px);
     padding-right: env(safe-area-inset-right, 0px);
   }
-  h1, h2, h3, h4 {
+  h1,
+  h2,
+  h3,
+  h4 {
     font-family: var(--font-serif);
     font-weight: 400;
     letter-spacing: 0.06em;
     line-height: 1.15;
   }
-  h5, h6 {
+  h5,
+  h6 {
     font-family: var(--font-sans);
     font-weight: 600;
     letter-spacing: 0.02em;
@@ -247,21 +251,39 @@
   color: var(--muted-foreground) !important;
   margin-right: auto;
 }
-.driver-popover-arrow-side-top.driver-popover-arrow { border-top-color: var(--popover) !important; }
-.driver-popover-arrow-side-bottom.driver-popover-arrow { border-bottom-color: var(--popover) !important; }
-.driver-popover-arrow-side-left.driver-popover-arrow { border-left-color: var(--popover) !important; }
-.driver-popover-arrow-side-right.driver-popover-arrow { border-right-color: var(--popover) !important; }
+.driver-popover-arrow-side-top.driver-popover-arrow {
+  border-top-color: var(--popover) !important;
+}
+.driver-popover-arrow-side-bottom.driver-popover-arrow {
+  border-bottom-color: var(--popover) !important;
+}
+.driver-popover-arrow-side-left.driver-popover-arrow {
+  border-left-color: var(--popover) !important;
+}
+.driver-popover-arrow-side-right.driver-popover-arrow {
+  border-right-color: var(--popover) !important;
+}
 .driver-popover-close-btn {
   color: var(--muted-foreground) !important;
 }
 
 @keyframes aurora-drift-slow {
-  0%, 100% { translate: 0 0; }
-  50% { translate: 4% 3%; }
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: 4% 3%;
+  }
 }
 @keyframes aurora-drift-slower {
-  0%, 100% { translate: 0 0; }
-  50% { translate: -3% -4%; }
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: -3% -4%;
+  }
 }
 .animate-aurora-drift-slow {
   animation: aurora-drift-slow 24s ease-in-out infinite;
@@ -271,5 +293,7 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .animate-aurora-drift-slow,
-  .animate-aurora-drift-slower { animation: none !important; }
+  .animate-aurora-drift-slower {
+    animation: none !important;
+  }
 }

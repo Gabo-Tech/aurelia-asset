@@ -6,13 +6,13 @@ how third-party services are used.
 
 ## Summary
 
-| Data | Where it lives | Leaves your device? |
-|------|----------------|---------------------|
-| Cashflow, holdings, budgets, goals, loans | Browser local storage (AES-GCM encrypted) | No |
-| Finnhub API key (optional, user-provided) | Encrypted local storage | Only when you query prices (symbol sent to provider) |
-| Chat history (AI assistant) | Encrypted local storage | No (with local models); built-in NLU never calls a server |
-| Theme, language, preferences | Local storage | No |
-| Export / backup JSON | User-initiated download | Only if you choose to save or share the file |
+| Data                                      | Where it lives                            | Leaves your device?                                       |
+| ----------------------------------------- | ----------------------------------------- | --------------------------------------------------------- |
+| Cashflow, holdings, budgets, goals, loans | Browser local storage (AES-GCM encrypted) | No                                                        |
+| Finnhub API key (optional, user-provided) | Encrypted local storage                   | Only when you query prices (symbol sent to provider)      |
+| Chat history (AI assistant)               | Encrypted local storage                   | No (with local models); built-in NLU never calls a server |
+| Theme, language, preferences              | Local storage                             | No                                                        |
+| Export / backup JSON                      | User-initiated download                   | Only if you choose to save or share the file              |
 
 **We do not operate analytics, advertising, or user accounts.** There is no
 telemetry in this application.
@@ -56,11 +56,11 @@ the same way unless you self-host fonts.
 If you deploy the server routes (e.g. on Cloudflare Workers), these optional
 env vars enable server-side features:
 
-| Variable | Purpose |
-|----------|---------|
-| `FINNHUB_API_KEY` | Injects Finnhub token in `/api/finance-proxy` (never sent to browser) |
-| `ADMIN_PASSWORD` | Protects `/admin` sponsors panel |
-| `GITHUB_TOKEN` / `GITHUB_REPO` | Persists sponsor data to a GitHub repo |
+| Variable                       | Purpose                                                               |
+| ------------------------------ | --------------------------------------------------------------------- |
+| `FINNHUB_API_KEY`              | Injects Finnhub token in `/api/finance-proxy` (never sent to browser) |
+| `ADMIN_PASSWORD`               | Protects `/admin` sponsors panel                                      |
+| `GITHUB_TOKEN` / `GITHUB_REPO` | Persists sponsor data to a GitHub repo                                |
 
 None of your personal finance data is sent to these server features.
 

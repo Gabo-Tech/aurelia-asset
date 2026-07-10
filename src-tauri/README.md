@@ -17,13 +17,13 @@ git push --tags
 
 Artifacts produced:
 
-| File | Platform |
-|---|---|
-| `*.deb`, `*.rpm`, `*.AppImage` | Linux |
-| `*.msi`, `*-setup.exe` | Windows |
-| `*.dmg` | macOS (universal) |
-| `*.apk` (+ `.aab` if signed) | Android |
-| `*-unsigned.ipa` | iOS |
+| File                           | Platform          |
+| ------------------------------ | ----------------- |
+| `*.deb`, `*.rpm`, `*.AppImage` | Linux             |
+| `*.msi`, `*-setup.exe`         | Windows           |
+| `*.dmg`                        | macOS (universal) |
+| `*.apk` (+ `.aab` if signed)   | Android           |
+| `*-unsigned.ipa`               | iOS               |
 
 **No signing secrets are required.** All builds ship unsigned. If you later add
 an Android release keystore (set `ANDROID_KEYSTORE_BASE64`,
@@ -32,13 +32,13 @@ secrets), the workflow automatically switches to a signed release APK + AAB.
 
 ## Distribution & first-run warnings
 
-| Platform | What users see | Workaround |
-|---|---|---|
-| Linux deb/rpm/AppImage | Installs normally | None |
-| Windows .msi/.exe | SmartScreen blocks first run | Click "More info" > "Run anyway" |
-| macOS .dmg | Gatekeeper blocks first launch | Right-click the app > Open > confirm. If Safari quarantines: `xattr -dr com.apple.quarantine /Applications/Portfolio\ Tracker.app` |
-| Android .apk | "Install from unknown sources" prompt | Enable in Settings > Security |
-| iOS .ipa (unsigned) | iOS refuses direct install | Install with [AltStore](https://altstore.io) or [Sideloadly](https://sideloadly.io) using your free Apple ID. Re-sign every 7 days. |
+| Platform               | What users see                        | Workaround                                                                                                                          |
+| ---------------------- | ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| Linux deb/rpm/AppImage | Installs normally                     | None                                                                                                                                |
+| Windows .msi/.exe      | SmartScreen blocks first run          | Click "More info" > "Run anyway"                                                                                                    |
+| macOS .dmg             | Gatekeeper blocks first launch        | Right-click the app > Open > confirm. If Safari quarantines: `xattr -dr com.apple.quarantine /Applications/Portfolio\ Tracker.app`  |
+| Android .apk           | "Install from unknown sources" prompt | Enable in Settings > Security                                                                                                       |
+| iOS .ipa (unsigned)    | iOS refuses direct install            | Install with [AltStore](https://altstore.io) or [Sideloadly](https://sideloadly.io) using your free Apple ID. Re-sign every 7 days. |
 
 ## Local builds
 

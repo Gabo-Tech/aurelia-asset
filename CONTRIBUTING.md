@@ -39,6 +39,7 @@ and open-source use while remaining viable for commercial users who
 cannot meet AGPL-3.0's obligations.
 
 You confirm that:
+
 - The contribution is your original work, or
 - You have the right to submit it under the terms above.
 

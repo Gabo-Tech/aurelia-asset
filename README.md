@@ -51,31 +51,31 @@ back to public providers and the admin panel is disabled.
 
 ## Documentation map
 
-| Topic | Where |
-|-------|-------|
-| Import/export JSON schema | [Import file format](#import-file-format) |
-| Finnhub key & CORS proxies | [Finance providers](#finance-providers--api-keys) |
-| Local LLM / voice models | [Local AI models](#local-ai-models-native-builds) |
-| Desktop & mobile builds | [Native builds](#native-builds--releases) |
-| Privacy & data flows | [PRIVACY.md](./PRIVACY.md) |
-| Security reporting | [SECURITY.md](./SECURITY.md) |
-| Contributing | [CONTRIBUTING.md](./CONTRIBUTING.md) |
-| Code of conduct | [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md) |
-| Third-party licenses | [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md) |
+| Topic                      | Where                                              |
+| -------------------------- | -------------------------------------------------- |
+| Import/export JSON schema  | [Import file format](#import-file-format)          |
+| Finnhub key & CORS proxies | [Finance providers](#finance-providers--api-keys)  |
+| Local LLM / voice models   | [Local AI models](#local-ai-models-native-builds)  |
+| Desktop & mobile builds    | [Native builds](#native-builds--releases)          |
+| Privacy & data flows       | [PRIVACY.md](./PRIVACY.md)                         |
+| Security reporting         | [SECURITY.md](./SECURITY.md)                       |
+| Contributing               | [CONTRIBUTING.md](./CONTRIBUTING.md)               |
+| Code of conduct            | [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md)         |
+| Third-party licenses       | [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md) |
 
 ## Environment variables
 
 All variables are **server-side only** — never exposed to the browser bundle.
 See [`.env.example`](./.env.example).
 
-| Variable | Required | Purpose |
-|----------|----------|---------|
-| `SITE_URL` | No | Canonical URL for SEO/OG tags (defaults to production URL) |
-| `FINNHUB_API_KEY` | No | Finnhub token for `/api/finance-proxy` (recommended for self-hosting) |
-| `ADMIN_PASSWORD` | No | Enables `/admin` sponsors panel |
-| `GITHUB_REPO` | No | `owner/repo` for sponsor persistence |
-| `GITHUB_BRANCH` | No | Branch for sponsor commits (default: `main`) |
-| `GITHUB_TOKEN` | No | Fine-grained token with Contents read/write on `GITHUB_REPO` |
+| Variable          | Required | Purpose                                                               |
+| ----------------- | -------- | --------------------------------------------------------------------- |
+| `SITE_URL`        | No       | Canonical URL for SEO/OG tags (defaults to production URL)            |
+| `FINNHUB_API_KEY` | No       | Finnhub token for `/api/finance-proxy` (recommended for self-hosting) |
+| `ADMIN_PASSWORD`  | No       | Enables `/admin` sponsors panel                                       |
+| `GITHUB_REPO`     | No       | `owner/repo` for sponsor persistence                                  |
+| `GITHUB_BRANCH`   | No       | Branch for sponsor commits (default: `main`)                          |
+| `GITHUB_TOKEN`    | No       | Fine-grained token with Contents read/write on `GITHUB_REPO`          |
 
 ## Using the app
 
@@ -223,11 +223,11 @@ fully local voice on **Tauri builds**, enable optional Rust backends in
 
 ### Cargo features
 
-| Feature | Backend | Powers |
-|---------|---------|--------|
-| `llm` | [llama-cpp-2](https://docs.rs/llama-cpp-2) | Local LLM chat + tool calling |
+| Feature       | Backend                                    | Powers                          |
+| ------------- | ------------------------------------------ | ------------------------------- |
+| `llm`         | [llama-cpp-2](https://docs.rs/llama-cpp-2) | Local LLM chat + tool calling   |
 | `stt` / `tts` | [sherpa-onnx](https://docs.rs/sherpa-onnx) | Speech-to-text / text-to-speech |
-| `local-ai` | all of the above | Convenience alias |
+| `local-ai`    | all of the above                           | Convenience alias               |
 
 ```bash
 npm run setup:sherpa-onnx    # one-time: Sherpa-ONNX libs for voice
@@ -243,11 +243,11 @@ model files.
 
 ### Download models
 
-| Model | Source | Size hint |
-|-------|--------|-----------|
-| Qwen2.5-1.5B-Instruct GGUF | [Hugging Face](https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF) | ~1 GB (q4_k_m) |
-| Sherpa-ONNX STT | [Releases](https://github.com/k2-fsa/sherpa-onnx/releases) | varies |
-| Sherpa-ONNX TTS (Piper/VITS) | [Releases](https://github.com/k2-fsa/sherpa-onnx/releases) | varies |
+| Model                        | Source                                                                 | Size hint      |
+| ---------------------------- | ---------------------------------------------------------------------- | -------------- |
+| Qwen2.5-1.5B-Instruct GGUF   | [Hugging Face](https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF) | ~1 GB (q4_k_m) |
+| Sherpa-ONNX STT              | [Releases](https://github.com/k2-fsa/sherpa-onnx/releases)             | varies         |
+| Sherpa-ONNX TTS (Piper/VITS) | [Releases](https://github.com/k2-fsa/sherpa-onnx/releases)             | varies         |
 
 Configure paths in **Settings → AI Assistant**, or via env vars:
 

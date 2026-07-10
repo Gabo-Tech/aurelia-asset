@@ -7,6 +7,7 @@ https://solutions.gabo.rocks (contact form) rather than opening a public
 GitHub issue.
 
 Include:
+
 - A description of the issue and its impact
 - Steps to reproduce (or a proof-of-concept)
 - Affected version / commit
@@ -19,12 +20,14 @@ findings.
 ## Scope
 
 In scope:
+
 - The web app and its server routes (`src/routes/api/**`)
 - The Tauri native wrappers
 - The admin panel (`/admin`)
 - Local data storage and encryption
 
 Out of scope:
+
 - Vulnerabilities in third-party data providers (Finnhub, Yahoo, Stooq,
   CoinGecko, Binance) themselves
 - Social-engineering attacks against the author or users

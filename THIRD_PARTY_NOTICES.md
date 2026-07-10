@@ -5,21 +5,21 @@ See each project's license for full terms.
 
 ## Application dependencies (npm)
 
-| Component | License | Notes |
-|-----------|---------|-------|
-| React, React DOM | MIT | UI framework |
-| TanStack Router / Start / Query | MIT | Routing, SSR, data fetching |
-| Vite | MIT | Build tool |
-| Tailwind CSS | MIT | Styling |
-| Radix UI / shadcn-ui patterns | MIT | Accessible UI primitives |
-| Recharts | MIT | Charts |
-| D3 (sankey, shape) | BSD-3-Clause | Sankey diagram |
-| Lucide React | ISC | Icons |
-| Zod | MIT | Schema validation |
-| i18next | MIT | Internationalization |
-| jsPDF, jspdf-autotable | MIT | PDF export |
-| date-fns | MIT | Date utilities |
-| Tauri API (`@tauri-apps/api`) | Apache-2.0 OR MIT | Desktop/mobile bridge |
+| Component                       | License           | Notes                       |
+| ------------------------------- | ----------------- | --------------------------- |
+| React, React DOM                | MIT               | UI framework                |
+| TanStack Router / Start / Query | MIT               | Routing, SSR, data fetching |
+| Vite                            | MIT               | Build tool                  |
+| Tailwind CSS                    | MIT               | Styling                     |
+| Radix UI / shadcn-ui patterns   | MIT               | Accessible UI primitives    |
+| Recharts                        | MIT               | Charts                      |
+| D3 (sankey, shape)              | BSD-3-Clause      | Sankey diagram              |
+| Lucide React                    | ISC               | Icons                       |
+| Zod                             | MIT               | Schema validation           |
+| i18next                         | MIT               | Internationalization        |
+| jsPDF, jspdf-autotable          | MIT               | PDF export                  |
+| date-fns                        | MIT               | Date utilities              |
+| Tauri API (`@tauri-apps/api`)   | Apache-2.0 OR MIT | Desktop/mobile bridge       |
 
 Dev tooling includes ESLint, Prettier, TypeScript (all permissive licenses).
 
@@ -28,28 +28,28 @@ wrapper around standard TanStack Start plugins.
 
 ## Native dependencies (Rust / Tauri)
 
-| Component | License | Notes |
-|-----------|---------|-------|
-| Tauri v2 | Apache-2.0 OR MIT | Desktop/mobile shell |
-| serde / serde_json | Apache-2.0 OR MIT | Serialization |
-| llama-cpp-2 (optional) | MIT | Local LLM backend |
-| sherpa-onnx (optional) | Apache-2.0 | Local STT/TTS |
+| Component              | License           | Notes                |
+| ---------------------- | ----------------- | -------------------- |
+| Tauri v2               | Apache-2.0 OR MIT | Desktop/mobile shell |
+| serde / serde_json     | Apache-2.0 OR MIT | Serialization        |
+| llama-cpp-2 (optional) | MIT               | Local LLM backend    |
+| sherpa-onnx (optional) | Apache-2.0        | Local STT/TTS        |
 
 ## User-downloaded models (not bundled)
 
 These are downloaded separately by the user and governed by their own licenses:
 
-| Model | Typical license |
-|-------|-----------------|
-| Qwen2.5 GGUF (Hugging Face) | Apache-2.0 |
-| Sherpa-ONNX speech models | Apache-2.0 |
-| ONNX Runtime (via Sherpa) | MIT |
+| Model                       | Typical license |
+| --------------------------- | --------------- |
+| Qwen2.5 GGUF (Hugging Face) | Apache-2.0      |
+| Sherpa-ONNX speech models   | Apache-2.0      |
+| ONNX Runtime (via Sherpa)   | MIT             |
 
 ## Fonts
 
-| Font | License | Source |
-|------|---------|--------|
-| Playfair Display | SIL Open Font License 1.1 | Google Fonts CDN |
+| Font              | License                   | Source           |
+| ----------------- | ------------------------- | ---------------- |
+| Playfair Display  | SIL Open Font License 1.1 | Google Fonts CDN |
 | Plus Jakarta Sans | SIL Open Font License 1.1 | Google Fonts CDN |
 
 ## Brand assets
