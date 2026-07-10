@@ -477,10 +477,56 @@ export function SankeyChart({
   }, [graph, innerH, extentY0, displayHeight]);
 
   const [drag, setDrag] = useState<{ idx: number; dy: number; startY: number } | null>(null);
+  const dragRef = useRef(drag);
+  dragRef.current = drag;
+  const didDragRef = useRef(false);
+
+  const renderNodes = scaledGraph?.nodes ?? [];
+  const renderLinks = scaledGraph?.links ?? [];
+  const nodesRef = useRef(renderNodes);
+  nodesRef.current = renderNodes;
+
+  // Window-level listeners so touch drag keeps working when the finger leaves the node.
+  useEffect(() => {
+    if (!drag) return;
+
+    const onMove = (e: PointerEvent) => {
+      const d = dragRef.current;
+      if (!d) return;
+      e.preventDefault();
+      const dy = e.clientY - d.startY;
+      if (Math.abs(dy) > 4) didDragRef.current = true;
+      setDrag({ ...d, dy });
+    };
+    const onUp = () => {
+      const d = dragRef.current;
+      const nodes = nodesRef.current;
+      setDrag(null);
+      if (!d || !onReorder) return;
+      const dragged: any = nodes[d.idx];
+      const side = dragged ? reorderSide(dragged) : null;
+      if (!side || !REORDERABLE.has(dragged.kind)) return;
+      const siblings = reorderSiblings(nodes, dragged);
+      if (siblings.length < 2) return;
+      const centerOf = (n: any) => (n === dragged ? (n.y0 + n.y1) / 2 + d.dy : (n.y0 + n.y1) / 2);
+      const ordered = [...siblings].sort((a: any, b: any) => centerOf(a) - centerOf(b));
+      onReorder(
+        side,
+        ordered.map((n: any) => n.name),
+      );
+    };
+
+    window.addEventListener("pointermove", onMove, { passive: false });
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
+    return () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
+    };
+  }, [drag, onReorder]);
 
   if (!scaledGraph) return null;
-
-  const { nodes: renderNodes, links: renderLinks } = scaledGraph;
 
   const linkPath = sankeyLinkHorizontal();
   const innerW = Math.max(100, width - marginX * 2);
@@ -495,47 +541,38 @@ export function SankeyChart({
   const handlePointerDown = (e: React.PointerEvent<SVGGElement>, idx: number, kind?: string) => {
     if (!onReorder || !kind || !REORDERABLE.has(kind)) return;
     e.preventDefault();
-    (e.currentTarget as Element).setPointerCapture(e.pointerId);
+    e.stopPropagation();
+    didDragRef.current = false;
+    try {
+      (e.currentTarget as Element).setPointerCapture(e.pointerId);
+    } catch {
+      /* ignore — capture optional on some browsers */
+    }
     setDrag({ idx, dy: 0, startY: e.clientY });
-  };
-  const handlePointerMove = (e: React.PointerEvent<SVGGElement>) => {
-    if (!drag) return;
-    setDrag({ ...drag, dy: e.clientY - drag.startY });
-  };
-  const handlePointerUp = () => {
-    if (!drag || !onReorder) {
-      setDrag(null);
-      return;
-    }
-    const dragged: any = renderNodes[drag.idx];
-    const side = dragged ? reorderSide(dragged) : null;
-    if (!side || !REORDERABLE.has(dragged.kind)) {
-      setDrag(null);
-      return;
-    }
-    const siblings = reorderSiblings(renderNodes, dragged);
-    if (siblings.length < 2) {
-      setDrag(null);
-      return;
-    }
-    const centerOf = (n: any) => (n === dragged ? (n.y0 + n.y1) / 2 + drag.dy : (n.y0 + n.y1) / 2);
-    const ordered = [...siblings].sort((a: any, b: any) => centerOf(a) - centerOf(b));
-    onReorder(
-      side,
-      ordered.map((n: any) => n.name),
-    );
-    setDrag(null);
   };
 
   const nameMaxLen = isNarrow ? (compactFonts ? 10 : 12) : compactFonts ? 16 : 22;
 
+  const displayValueFor = (n: any): number => {
+    // Aggregate (Total Income) must reflect incoming income, not d3's max(in, out).
+    if (n.kind === "aggregate") {
+      let incoming = 0;
+      for (const l of renderLinks) {
+        if (l.target?.index === n.index || l.target === n) incoming += l.value ?? 0;
+      }
+      return incoming > 0 ? incoming : incomeTotal > 0 ? incomeTotal : (n.value ?? 0);
+    }
+    return n.value ?? 0;
+  };
+
   const pctFor = (n: any): number | null => {
-    if (n.kind === "income" && incomeTotal > 0) return (n.value / incomeTotal) * 100;
-    if (n.kind === "expense" && expenseTotal > 0) return (n.value / expenseTotal) * 100;
-    if (n.group === "income" && incomeTotal > 0) return (n.value / incomeTotal) * 100;
-    if (n.group === "expense" && expenseTotal > 0) return (n.value / expenseTotal) * 100;
+    const val = displayValueFor(n);
+    if (n.kind === "income" && incomeTotal > 0) return (val / incomeTotal) * 100;
+    if (n.kind === "expense" && expenseTotal > 0) return (val / expenseTotal) * 100;
+    if (n.group === "income" && incomeTotal > 0) return (val / incomeTotal) * 100;
+    if (n.group === "expense" && expenseTotal > 0) return (val / expenseTotal) * 100;
     if (n.kind === "type_total" && n.group && groupTotals[n.group] > 0) {
-      return (n.value / groupTotals[n.group]) * 100;
+      return (val / groupTotals[n.group]) * 100;
     }
     if (n.kind === "category" && n.group) {
       const base =
@@ -544,7 +581,7 @@ export function SankeyChart({
           : n.group === "expense"
             ? expenseTotal
             : groupTotals[n.group];
-      if (base > 0) return (n.value / base) * 100;
+      if (base > 0) return (val / base) * 100;
     }
     if (n.kind === "leaf" && n.group) {
       const base =
@@ -553,21 +590,27 @@ export function SankeyChart({
           : n.group === "expense"
             ? expenseTotal
             : groupTotals[n.group];
-      if (base > 0) return (n.value / base) * 100;
+      if (base > 0) return (val / base) * 100;
     }
     if (n.kind === "aggregate" && incomeTotal > 0) return 100;
     return null;
   };
 
   return (
-    <div ref={wrapRef} className="w-full min-w-0" style={{ height: displayHeight }}>
+    <div
+      ref={wrapRef}
+      className="w-full min-w-0"
+      style={{ height: displayHeight, touchAction: drag ? "none" : undefined }}
+    >
       <svg
         ref={svgRef}
         width={width}
         height={displayHeight}
         className="block max-w-full"
-        style={{ overflow: "visible" }}
-        onPointerLeave={() => setActiveIdx(null)}
+        style={{ overflow: "visible", touchAction: drag ? "none" : undefined }}
+        onPointerLeave={() => {
+          if (!drag) setActiveIdx(null);
+        }}
       >
         <g transform={`translate(${marginX},${marginTop})`}>
           <defs>
@@ -628,9 +671,10 @@ export function SankeyChart({
               const showLabel =
                 renderLabelMode === "always" || (renderLabelMode === "hover" && isActive);
               const showPct = !isCompact && pct != null;
+              const nodeAmount = displayValueFor(n);
               const amountText = showPct
-                ? `${format(n.value)} (${pct!.toFixed(1)}%)`
-                : format(n.value);
+                ? `${format(nodeAmount)} (${pct!.toFixed(1)}%)`
+                : format(nodeAmount);
               const amountY = n.y0 - 6;
               const nameY = amountY - renderAmtFont - 3;
 
@@ -644,11 +688,14 @@ export function SankeyChart({
                     touchAction: reorderable ? "none" : "auto",
                   }}
                   onPointerDown={(e) => handlePointerDown(e, i, n.kind)}
-                  onPointerMove={handlePointerMove}
-                  onPointerUp={handlePointerUp}
-                  onPointerCancel={handlePointerUp}
                   onPointerEnter={() => setActiveIdx(i)}
-                  onClick={() => setActiveIdx((cur) => (cur === i ? null : i))}
+                  onClick={() => {
+                    if (didDragRef.current) {
+                      didDragRef.current = false;
+                      return;
+                    }
+                    setActiveIdx((cur) => (cur === i ? null : i));
+                  }}
                 >
                   <rect
                     x={n.x0}

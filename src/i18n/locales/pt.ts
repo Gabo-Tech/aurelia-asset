@@ -566,6 +566,7 @@ const pt: Translation = {
       totalSavings: "Poupanças totais",
       totalInvestments: "Investimentos totais",
       saved: "Poupado",
+      deficit: "Défice",
       layoutStaged: "Agrupado",
       layoutClassic: "Contas",
       stageCategories: "Categorias",

@@ -569,6 +569,7 @@ const es: Translation = {
       totalSavings: "Ahorros totales",
       totalInvestments: "Inversiones totales",
       saved: "Ahorrado",
+      deficit: "Déficit",
       layoutStaged: "Agrupado",
       layoutClassic: "Cuentas",
       stageCategories: "Categorías",

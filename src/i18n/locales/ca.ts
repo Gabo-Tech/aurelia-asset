@@ -563,6 +563,7 @@ const ca: Translation = {
       totalSavings: "Estalvis totals",
       totalInvestments: "Inversions totals",
       saved: "Estalviat",
+      deficit: "Dèficit",
       layoutStaged: "Agrupat",
       layoutClassic: "Comptes",
       stageCategories: "Categories",

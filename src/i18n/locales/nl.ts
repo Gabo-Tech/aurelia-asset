@@ -561,6 +561,7 @@ const nl: Translation = {
       totalSavings: "Totaal gespaard",
       totalInvestments: "Totale beleggingen",
       saved: "Gespaard",
+      deficit: "Tekort",
       layoutStaged: "Gegroepeerd",
       layoutClassic: "Rekeningen",
       stageCategories: "Categorieën",

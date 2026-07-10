@@ -25,6 +25,7 @@ export type SankeyLabels = {
   totalSavings: string;
   totalInvestments: string;
   saved: string;
+  deficit: string;
   other: string;
   cashPool: string;
   general: string;
@@ -42,6 +43,7 @@ type LinkMeta = { source: number; target: number; value: number; branch?: Sankey
 
 const POOL_COLOR = "#64748b";
 const SAVED_COLOR = "#0ea5e9";
+const DEFICIT_COLOR = "#f43f5e";
 
 function applyOrder(items: string[], saved: string[]) {
   const set = new Set(items);
@@ -508,39 +510,69 @@ export function buildStagedSankey(ctx: StagedSankeyContext): SankeyDatum | null 
   }
 
   const totalOutflows = OUTFLOW_GROUPS.reduce((s, g) => s + (groupTotals.get(g) ?? 0), 0);
+  const covered = Math.min(totalIncome, totalOutflows);
+  const deficit = Math.max(0, totalOutflows - totalIncome);
   const saved = Math.max(0, totalIncome - totalOutflows);
+  const coverShare = totalOutflows > 0 ? covered / totalOutflows : 0;
+  const deficitShare = totalOutflows > 0 ? deficit / totalOutflows : 0;
 
-  if (totalIncome > 0) {
-    const outflowTotals: { group: CategoryGroup; name: string; value: number }[] = [];
-    for (const group of OUTFLOW_GROUPS) {
-      const v = groupTotals.get(group) ?? 0;
-      if (v <= 0) continue;
-      outflowTotals.push({ group, name: totalLabelForGroup(group, labels), value: v });
+  const DEFICIT = labels.deficit;
+
+  // Ensure type_total / saved nodes exist, then fund them from income and/or deficit
+  // so Total Income is never inflated by expenses that exceed income.
+  const outflowTotals: { group: CategoryGroup; name: string; value: number }[] = [];
+  for (const group of OUTFLOW_GROUPS) {
+    const v = groupTotals.get(group) ?? 0;
+    if (v <= 0) continue;
+    outflowTotals.push({ group, name: totalLabelForGroup(group, labels), value: v });
+  }
+  if (saved > 0) {
+    outflowTotals.push({ group: "savings", name: SAVED, value: saved });
+  }
+
+  for (const name of applyOrder(
+    outflowTotals.map((o) => o.name),
+    prefs.expenseOrder,
+  )) {
+    const item = outflowTotals.find((o) => o.name === name)!;
+    if (item.name === SAVED) {
+      pushNode({
+        name: SAVED,
+        kind: "saved",
+        fill: prefs.nodeColors[SAVED] ?? SAVED_COLOR,
+        group: "savings",
+      });
+    } else {
+      pushNode({
+        name: item.name,
+        kind: "type_total",
+        fill: prefs.nodeColors[item.name] ?? GROUP_COLORS[item.group],
+        group: item.group,
+      });
     }
-    if (saved > 0) {
-      outflowTotals.push({ group: "savings", name: SAVED, value: saved });
-    }
-    for (const name of applyOrder(
-      outflowTotals.map((o) => o.name),
-      prefs.expenseOrder,
-    )) {
-      const item = outflowTotals.find((o) => o.name === name)!;
+  }
+
+  if (totalIncome > 0 && idx(TOTAL_INCOME) >= 0) {
+    for (const item of outflowTotals) {
       if (item.name === SAVED) {
-        pushNode({
-          name: SAVED,
-          kind: "saved",
-          fill: prefs.nodeColors[SAVED] ?? SAVED_COLOR,
-          group: "savings",
-        });
-      } else {
-        pushNode({
-          name: item.name,
-          kind: "type_total",
-          fill: prefs.nodeColors[item.name] ?? GROUP_COLORS[item.group],
-          group: item.group,
-        });
+        addLink(TOTAL_INCOME, SAVED, item.value);
+        continue;
       }
-      addLink(TOTAL_INCOME, item.name, item.value);
+      const fromIncome = item.value * coverShare;
+      addLink(TOTAL_INCOME, item.name, fromIncome);
+    }
+  }
+
+  if (deficit > 0) {
+    pushNode({
+      name: DEFICIT,
+      kind: "deficit",
+      fill: prefs.nodeColors[DEFICIT] ?? DEFICIT_COLOR,
+    });
+    for (const item of outflowTotals) {
+      if (item.name === SAVED) continue;
+      const fromDeficit = item.value * deficitShare;
+      addLink(DEFICIT, item.name, fromDeficit);
     }
   }
 

@@ -436,6 +436,7 @@ function CashflowPage() {
         defaultValue: "Total Investments",
       }),
       saved: t("cashflow.sankey.saved", { defaultValue: "Saved" }),
+      deficit: t("cashflow.sankey.deficit", { defaultValue: "Deficit" }),
       other: t("cashflow.other", { defaultValue: "Other" }),
       cashPool: t("cashflow.cashPool", { defaultValue: "Cash Pool" }),
       general: t("cashflow.sankey.general", { defaultValue: "General" }),

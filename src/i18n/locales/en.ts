@@ -566,6 +566,7 @@ const en = {
       totalSavings: "Total Savings",
       totalInvestments: "Total Investments",
       saved: "Saved",
+      deficit: "Deficit",
       layoutStaged: "Grouped",
       layoutClassic: "Accounts",
       stageCategories: "Categories",
