@@ -70,7 +70,11 @@ function PerformancePage() {
     return m;
   }, [state.holdings, currency, rates]);
 
-  const { data, isLoading, isError } = usePortfolioHistory(state.holdings, period);
+  const { data, isLoading, isError } = usePortfolioHistory(
+    state.holdings,
+    state.transactions,
+    period,
+  );
 
   const chartData = useMemo(() => {
     if (!data) return [];

@@ -20,66 +20,15 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ChartFrame } from "@/components/chart-frame";
-import { PERIODS, type PeriodId } from "@/lib/finance";
+import { PERIODS, toUtcDayMs, type PeriodId } from "@/lib/finance";
 import { formatMoney, formatPct, MASK } from "@/lib/format";
 import { convert } from "@/lib/finance/fx";
 import { cn } from "@/lib/utils";
-
-function toUtcDayMs(value: string | number | Date) {
-  const d = new Date(value);
-  d.setUTCHours(0, 0, 0, 0);
-  return d.getTime();
-}
 
 function formatQuantity(value: number) {
   return value.toLocaleString(undefined, {
     maximumFractionDigits: Math.abs(value) < 1 ? 8 : 6,
   });
-}
-
-function buildQuantityByDate(
-  data: Array<{ date: number }>,
-  holdings: Array<{ id: string; quantity: number; openingQuantity?: number }>,
-  transactions: Array<{ holdingId: string; kind: "buy" | "sell"; date: string; quantity: number }>,
-) {
-  const txsByHolding: Record<
-    string,
-    Array<{ day: number; kind: "buy" | "sell"; quantity: number }>
-  > = {};
-  for (const h of holdings) txsByHolding[h.id] = [];
-  for (const t of transactions) {
-    if (txsByHolding[t.holdingId]) {
-      txsByHolding[t.holdingId].push({
-        day: toUtcDayMs(t.date),
-        kind: t.kind,
-        quantity: t.quantity,
-      });
-    }
-  }
-  for (const id of Object.keys(txsByHolding)) txsByHolding[id].sort((a, b) => a.day - b.day);
-
-  const qty: Record<string, number> = {};
-  const idx: Record<string, number> = {};
-  for (const h of holdings) {
-    qty[h.id] = txsByHolding[h.id].length > 0 ? (h.openingQuantity ?? 0) : h.quantity;
-    idx[h.id] = 0;
-  }
-
-  const byDate = new Map<number, Record<string, number>>();
-  for (const d of data) {
-    const row: Record<string, number> = {};
-    for (const h of holdings) {
-      const list = txsByHolding[h.id];
-      while (idx[h.id] < list.length && list[idx[h.id]].day <= d.date) {
-        const t = list[idx[h.id]];
-        qty[h.id] = Math.max(0, qty[h.id] + (t.kind === "buy" ? 1 : -1) * t.quantity);
-        idx[h.id]++;
-      }
-      row[h.id] = qty[h.id];
-    }
-    byDate.set(d.date, row);
-  }
-  return byDate;
 }
 
 export function HoldingsCharts() {
@@ -100,28 +49,27 @@ export function HoldingsCharts() {
     return m;
   }, [state.holdings, currency, rates]);
 
-  const { data, isLoading, isError } = usePortfolioHistory(state.holdings, period);
+  const { data, isLoading, isError } = usePortfolioHistory(
+    state.holdings,
+    state.transactions,
+    period,
+  );
 
-  // Stacked area: value per asset over time
+  // Stacked area: value per asset over time (quantities already in perAsset).
   const stackedData = useMemo(() => {
     if (!data) return [];
-    const quantities = buildQuantityByDate(data, visibleHoldings, state.transactions);
     return data.map((d) => {
       const row: Record<string, number | string> = {
         date: d.date,
         label: format(new Date(d.date), period === "1D" ? "HH:mm" : "MMM d"),
       };
       for (const h of visibleHoldings) {
-        const quantity = quantities.get(d.date)?.[h.id] ?? h.quantity;
-        const nativePrice =
-          d.perAssetPrice?.[h.id] ??
-          (h.quantity ? (d.perAsset[h.id] ?? 0) / h.quantity : h.currentPrice);
-        const v = nativePrice * quantity * (fxByHolding[h.id] ?? 1);
+        const v = (d.perAsset[h.id] ?? 0) * (fxByHolding[h.id] ?? 1);
         row[h.symbol] = Math.round(v * 100) / 100;
       }
       return row;
     });
-  }, [data, visibleHoldings, state.transactions, fxByHolding, period]);
+  }, [data, visibleHoldings, fxByHolding, period]);
 
   // Per-asset Invested (cumulative cost basis) and Value over time.
   const investedSeries = useMemo(() => {
@@ -175,10 +123,7 @@ export function HoldingsCharts() {
           idx[h.id]++;
         }
         const inv = Math.round(cum[h.id] * 100) / 100;
-        const nativePrice =
-          d.perAssetPrice?.[h.id] ??
-          (h.quantity ? (d.perAsset[h.id] ?? 0) / h.quantity : h.currentPrice);
-        const val = Math.round(nativePrice * qty[h.id] * (fxByHolding[h.id] ?? 1) * 100) / 100;
+        const val = Math.round((d.perAsset[h.id] ?? 0) * (fxByHolding[h.id] ?? 1) * 100) / 100;
         row[`inv_${h.id}`] = inv;
         row[`val_${h.id}`] = val;
         row[`qty_${h.id}`] = qty[h.id];

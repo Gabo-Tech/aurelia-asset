@@ -93,3 +93,35 @@ export async function getYahooHistory(symbol: string, range: string): Promise<Pr
   );
   return points;
 }
+
+/** Intraday bars for the 1D performance chart (5-minute interval). */
+export async function getYahooIntraday(symbol: string): Promise<PricePoint[]> {
+  const key = `yh:intra:${symbol}`;
+  const cached = getCache<{ t: number; p: number }[]>(key);
+  if (cached) return cached.map((x) => ({ date: new Date(x.t), price: x.p }));
+  const data = await fetchJsonWithFallback<{
+    chart?: {
+      result?: Array<{
+        timestamp?: number[];
+        indicators?: { quote?: Array<{ close?: (number | null)[] }> };
+      }>;
+    };
+  }>(`${CHART}/${encodeURIComponent(symbol)}?interval=5m&range=1d`);
+  const r = data.chart?.result?.[0];
+  if (!r) return [];
+  const ts = r.timestamp ?? [];
+  const closes = r.indicators?.quote?.[0]?.close ?? [];
+  const points: PricePoint[] = [];
+  for (let i = 0; i < ts.length; i++) {
+    const c = closes[i];
+    if (c != null) points.push({ date: new Date(ts[i] * 1000), price: c });
+  }
+  if (points.length) {
+    setCache(
+      key,
+      points.map((x) => ({ t: x.date.getTime(), p: x.price })),
+      5 * 60 * 1000,
+    );
+  }
+  return points;
+}

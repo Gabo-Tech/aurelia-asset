@@ -1,10 +1,26 @@
-import type { Holding, PricePoint, SearchResult } from "../types";
+import type { Holding, HoldingTransaction, PricePoint, SearchResult } from "../types";
 import { searchCrypto, getCryptoPrice, getCryptoHistory } from "./coingecko";
-import { searchYahoo, getYahooQuote, getYahooHistory } from "./yahoo";
+import { searchYahoo, getYahooQuote, getYahooHistory, getYahooIntraday } from "./yahoo";
 import { finnhubQuote, finnhubHistory } from "./finnhub";
 import { getStooqHistory, getStooqQuote, searchStooq } from "./stooq";
 import { getBinanceHistory, getBinanceQuote } from "./binance";
 import { getCache, getCacheStale, setCache, bustCache } from "./cache";
+import {
+  composePortfolioDaily,
+  composePortfolioIntraday,
+  type AssetPriceSeries,
+  type PortfolioHistoryPoint,
+  type PeriodId,
+} from "./portfolio-history";
+
+export type { PortfolioHistoryPoint, PeriodId, AssetPriceSeries };
+export {
+  composePortfolioDaily,
+  composePortfolioIntraday,
+  slicePortfolioByPeriod,
+  buildQuantityByDate,
+  toUtcDayMs,
+} from "./portfolio-history";
 
 // Resolve a missing coinGeckoId from the ticker symbol so older holdings
 // (added before we started saving the id) still get proper history + price.
@@ -117,8 +133,6 @@ export const PERIODS = [
   { id: "Max", label: "Max", cgDays: "max" as const, yhRange: "max", days: 36500 },
 ] as const;
 
-export type PeriodId = (typeof PERIODS)[number]["id"];
-
 // --- max-history caching ---------------------------------------------------
 // Daily history rarely changes for past dates, so we fetch the full series
 // once per asset and slice it in memory for every period switch. This makes
@@ -126,7 +140,7 @@ export type PeriodId = (typeof PERIODS)[number]["id"];
 // rate-limiting us, because they're served from cache.
 
 const MAX_HIST_KEY = (h: Holding) => `mh:${h.type}:${h.coinGeckoId || h.symbol}`;
-const MAX_HIST_TTL = 24 * 60 * 60 * 1000;
+const MAX_HIST_TTL = 30 * 24 * 60 * 60 * 1000;
 const intraDay = new Map<string, Promise<PricePoint[]>>();
 const maxHistInflight = new Map<string, Promise<PricePoint[]>>();
 
@@ -297,7 +311,7 @@ async function fetchIntraday(h: Holding): Promise<PricePoint[]> {
         const id = h.coinGeckoId || (await resolveCoinGeckoId(h.symbol));
         if (id) data = await getCryptoHistory(id, 1);
       } else if (h.type !== "other") {
-        data = await getYahooHistory(h.symbol, "1d");
+        data = await getYahooIntraday(h.symbol);
       }
     } catch {}
     if (data.length) {
@@ -343,74 +357,45 @@ export function clearPriceHistoryCache() {
   bustCache("mh:");
   bustCache("intra:");
   bustCache("yh:hist:");
+  bustCache("yh:intra:");
   bustCache("cg:hist:");
   bustCache("st:hist:");
   bustCache("bn:hist:");
 }
 
-export type PortfolioHistoryPoint = {
-  date: number;
-  total: number;
-  perAsset: Record<string, number>;
-  perAssetPrice: Record<string, number>;
-};
+/** Fetch and cache full daily + intraday price history for each holding. */
+export async function fetchAllAssetPrices(
+  holdings: Holding[],
+): Promise<Record<string, AssetPriceSeries>> {
+  const entries = await Promise.all(
+    holdings.map(async (h) => {
+      const [daily, intraday] = await Promise.all([
+        fetchMaxHistory(h),
+        h.type !== "other" ? fetchIntraday(h) : Promise.resolve([] as PricePoint[]),
+      ]);
+      return [h.id, { daily, intraday }] as const;
+    }),
+  );
+  return Object.fromEntries(entries);
+}
 
 export async function fetchPortfolioHistory(
   holdings: Holding[],
   period: PeriodId,
+  transactions: HoldingTransaction[] = [],
 ): Promise<PortfolioHistoryPoint[]> {
-  if (!holdings.length) return [];
-  const series = await Promise.all(
-    holdings.map(async (h) => ({ h, points: await fetchHistorical(h, period) })),
-  );
-  const dayKeys = new Set<number>();
-  for (const s of series) {
-    for (const pt of s.points) {
-      const d = new Date(pt.date);
-      d.setUTCHours(0, 0, 0, 0);
-      dayKeys.add(d.getTime());
-    }
+  const prices = await fetchAllAssetPrices(holdings);
+  if (period === "1D") {
+    const intra = composePortfolioIntraday(holdings, transactions, prices);
+    if (intra.length) return intra;
   }
-  if (!dayKeys.size) return [];
-  const days = Array.from(dayKeys).sort((a, b) => a - b);
-
-  const filled = series.map(({ h, points }) => {
-    const sorted = [...points].sort((a, b) => a.date.getTime() - b.date.getTime());
-    const map = new Map<number, number>();
-    let j = 0;
-    let last = sorted[0]?.price ?? h.currentPrice ?? 0;
-    for (const day of days) {
-      while (j < sorted.length && sorted[j].date.getTime() <= day + 86400000 - 1) {
-        last = sorted[j].price;
-        j++;
-      }
-      map.set(day, last);
-    }
-    return { h, map };
-  });
-
-  const today = (() => {
-    const d = new Date();
-    d.setUTCHours(0, 0, 0, 0);
-    return d.getTime();
-  })();
-  if (days[days.length - 1] !== today) days.push(today);
-
-  return days.map((day, idx) => {
-    const isLast = idx === days.length - 1;
-    const perAsset: Record<string, number> = {};
-    const perAssetPrice: Record<string, number> = {};
-    let total = 0;
-    for (const { h, map } of filled) {
-      const historical = map.get(day);
-      // For today's (last) point, prefer the live currentPrice so the header
-      // matches the Holdings total to the cent.
-      const price = isLast && h.currentPrice ? h.currentPrice : (historical ?? h.currentPrice ?? 0);
-      const v = price * h.quantity;
-      perAssetPrice[h.id] = price;
-      perAsset[h.id] = v;
-      total += v;
-    }
-    return { date: day, total, perAsset, perAssetPrice };
-  });
+  const daily = composePortfolioDaily(holdings, transactions, prices);
+  if (period === "Max") return daily;
+  if (period === "YTD") {
+    const start = new Date(new Date().getFullYear(), 0, 1).getTime();
+    return daily.filter((d) => d.date >= start);
+  }
+  const p = PERIODS.find((x) => x.id === period)!;
+  const cutoff = Date.now() - p.days * 86400000;
+  return daily.filter((d) => d.date >= cutoff);
 }

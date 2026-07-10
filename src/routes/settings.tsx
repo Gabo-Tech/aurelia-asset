@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { invoke } from "@tauri-apps/api/core";
 import { useStore } from "@/lib/store";
@@ -54,6 +55,7 @@ import {
   Circle,
 } from "lucide-react";
 import { clearPriceHistoryCache } from "@/lib/finance";
+import { invalidatePortfolioPriceQueries } from "@/hooks/use-portfolio-history";
 import { isTauri, isMobilePlatform } from "@/lib/export";
 import { getAiCapabilities, type AiCapabilities } from "@/lib/ai/provider";
 import { aiConfigFromSettings } from "@/lib/ai/config";
@@ -331,6 +333,7 @@ export const Route = createFileRoute("/settings")({
 });
 
 function SettingsPage() {
+  const queryClient = useQueryClient();
   const { state, updateSettings, importState, reset } = useStore();
   const { t } = useTranslation();
   const { language, setLanguage, languages } = useLanguage();
@@ -581,6 +584,7 @@ function SettingsPage() {
                 size="sm"
                 onClick={() => {
                   clearPriceHistoryCache();
+                  invalidatePortfolioPriceQueries(queryClient);
                   toast.success(
                     t("settings.api.priceCacheCleared", { defaultValue: "Price cache cleared" }),
                   );
