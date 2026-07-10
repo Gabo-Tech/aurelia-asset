@@ -31,7 +31,7 @@ jobs:
           cache: npm
 
       - name: Install frontend dependencies
-        run: npm ci
+        run: npm ci --omit=optional
 
       - name: Install Linux dependencies
         if: matrix.os == 'ubuntu-22.04'
@@ -93,7 +93,7 @@ jobs:
           cache: npm
 
       - name: Install frontend dependencies
-        run: npm ci
+        run: npm ci --omit=optional
 
       - uses: actions/setup-java@v4
         with:
@@ -183,7 +183,7 @@ jobs:
           cache: npm
 
       - name: Install frontend dependencies
-        run: npm ci
+        run: npm ci --omit=optional
 
       - uses: dtolnay/rust-toolchain@stable
         with:
