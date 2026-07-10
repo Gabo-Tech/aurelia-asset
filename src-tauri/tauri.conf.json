@@ -18,11 +18,12 @@
         "minWidth": 360,
         "minHeight": 560,
         "resizable": true,
-        "fullscreen": false
+        "fullscreen": false,
+        "useHttpsScheme": true
       }
     ],
     "security": {
-      "csp": "default-src 'self' tauri: asset: https://asset.localhost ipc: http://ipc.localhost; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: asset: https://asset.localhost; connect-src 'self' tauri: ipc: http://ipc.localhost https://query1.finance.yahoo.com https://query2.finance.yahoo.com https://api.coingecko.com https://api.binance.com https://stooq.com https://finnhub.io https://open.er-api.com https://api.exchangerate-api.com https://api.frankfurter.app https://corsproxy.io https://api.allorigins.win"
+      "csp": "default-src 'self' tauri: asset: https://asset.localhost https://tauri.localhost ipc: http://ipc.localhost https://ipc.localhost; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: asset: https://asset.localhost https://tauri.localhost; connect-src 'self' tauri: ipc: http://ipc.localhost https://ipc.localhost https://tauri.localhost https://query1.finance.yahoo.com https://query2.finance.yahoo.com https://api.coingecko.com https://api.binance.com https://stooq.com https://finnhub.io https://open.er-api.com https://api.exchangerate-api.com https://api.frankfurter.app https://corsproxy.io https://api.allorigins.win"
     }
   },
   "bundle": {
