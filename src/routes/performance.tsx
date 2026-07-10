@@ -85,10 +85,7 @@ function PerformancePage() {
           if (baselines[h.symbol] == null && v > 0) baselines[h.symbol] = v;
         }
         if (baselines.Total == null && total > 0) baselines.Total = total;
-        if (
-          baselines.Total != null &&
-          state.holdings.every((h) => baselines[h.symbol] != null)
-        )
+        if (baselines.Total != null && state.holdings.every((h) => baselines[h.symbol] != null))
           break;
       }
     }
@@ -178,10 +175,7 @@ function PerformancePage() {
 
   return (
     <>
-      <PageHeader
-        title={t("performance.title")}
-        description={t("performance.description")}
-      />
+      <PageHeader title={t("performance.title")} description={t("performance.description")} />
 
       <div className="mb-4 flex flex-wrap gap-1.5" data-tour="perf-period">
         {PERIODS.map((p) => (
@@ -224,7 +218,7 @@ function PerformancePage() {
             "inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs font-medium transition-colors",
             hideTotal
               ? "border-border/60 bg-muted text-muted-foreground opacity-60"
-              : "border-border bg-card text-foreground hover:bg-accent"
+              : "border-border bg-card text-foreground hover:bg-accent",
           )}
         >
           <span
@@ -248,7 +242,7 @@ function PerformancePage() {
               "inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs font-medium transition-colors",
               hidden.has(h.symbol)
                 ? "border-border/60 bg-muted text-muted-foreground opacity-60"
-                : "border-border bg-card text-foreground hover:bg-accent"
+                : "border-border bg-card text-foreground hover:bg-accent",
             )}
           >
             <span
@@ -285,13 +279,11 @@ function PerformancePage() {
           <CardTitle>{t("more.perfPortfolioValue")}</CardTitle>
           {metrics && (
             <div className="text-right">
-              <div className="text-2xl font-semibold tabular-nums">
-                {mask(metrics.last.total)}
-              </div>
+              <div className="text-2xl font-semibold tabular-nums">{mask(metrics.last.total)}</div>
               <div
                 className={cn(
                   "text-sm font-medium",
-                  metrics.totalPct >= 0 ? "text-success" : "text-destructive"
+                  metrics.totalPct >= 0 ? "text-success" : "text-destructive",
                 )}
               >
                 {formatPct(metrics.totalPct)} · {period}
@@ -329,8 +321,8 @@ function PerformancePage() {
                         privacy
                           ? MASK
                           : scaleMode === "indexed"
-                          ? `${(v as number) >= 0 ? "+" : ""}${(v as number).toFixed(1)}%`
-                          : formatMoney(v as number, currency, { compact: true })
+                            ? `${(v as number) >= 0 ? "+" : ""}${(v as number).toFixed(1)}%`
+                            : formatMoney(v as number, currency, { compact: true })
                       }
                       width={60}
                       domain={yDomain}
@@ -373,7 +365,10 @@ function PerformancePage() {
                       dot={false}
                       hide={hideTotal}
                       isAnimationActive
-                      style={{ filter: "drop-shadow(0 0 1.5px var(--background)) drop-shadow(0 0 0.5px var(--foreground))" }}
+                      style={{
+                        filter:
+                          "drop-shadow(0 0 1.5px var(--background)) drop-shadow(0 0 0.5px var(--foreground))",
+                      }}
                     />
                     {state.holdings.map((h) => (
                       <Line
@@ -384,7 +379,10 @@ function PerformancePage() {
                         strokeWidth={1.75}
                         dot={false}
                         hide={hidden.has(h.symbol)}
-                        style={{ filter: "drop-shadow(0 0 1.5px var(--background)) drop-shadow(0 0 0.5px var(--foreground))" }}
+                        style={{
+                          filter:
+                            "drop-shadow(0 0 1.5px var(--background)) drop-shadow(0 0 0.5px var(--foreground))",
+                        }}
                       />
                     ))}
                   </LineChart>
@@ -398,7 +396,9 @@ function PerformancePage() {
       {metrics && (
         <Card className="border-border/60 mt-5" data-tour="perf-returns">
           <CardHeader>
-            <CardTitle>{t("more.perfReturnsByAsset")} · {period}</CardTitle>
+            <CardTitle>
+              {t("more.perfReturnsByAsset")} · {period}
+            </CardTitle>
           </CardHeader>
           <CardContent className="overflow-x-auto">
             <table className="w-full min-w-[560px] text-sm">
@@ -416,17 +416,24 @@ function PerformancePage() {
                   <tr key={h.id}>
                     <td className="py-2.5">
                       <div className="flex items-center gap-2">
-                        <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: h.color }} />
+                        <div
+                          className="h-2.5 w-2.5 rounded-full"
+                          style={{ backgroundColor: h.color }}
+                        />
                         <span className="font-medium">{h.symbol}</span>
                         <span className="text-muted-foreground text-xs truncate">{h.name}</span>
                       </div>
                     </td>
-                    <td className="py-2.5 pl-4 text-right tabular-nums whitespace-nowrap">{mask(start)}</td>
-                    <td className="py-2.5 pl-4 text-right tabular-nums whitespace-nowrap">{mask(end)}</td>
+                    <td className="py-2.5 pl-4 text-right tabular-nums whitespace-nowrap">
+                      {mask(start)}
+                    </td>
+                    <td className="py-2.5 pl-4 text-right tabular-nums whitespace-nowrap">
+                      {mask(end)}
+                    </td>
                     <td
                       className={cn(
                         "py-2.5 pl-4 text-right tabular-nums whitespace-nowrap",
-                        abs >= 0 ? "text-success" : "text-destructive"
+                        abs >= 0 ? "text-success" : "text-destructive",
                       )}
                     >
                       {abs >= 0 ? "+" : "-"}
@@ -435,7 +442,7 @@ function PerformancePage() {
                     <td
                       className={cn(
                         "py-2.5 pl-4 text-right tabular-nums font-medium whitespace-nowrap",
-                        pct >= 0 ? "text-success" : "text-destructive"
+                        pct >= 0 ? "text-success" : "text-destructive",
                       )}
                     >
                       {formatPct(pct)}
@@ -455,7 +462,7 @@ function PerformancePage() {
                       "py-2.5 pl-4 text-right tabular-nums whitespace-nowrap",
                       metrics.last.total - metrics.first.total >= 0
                         ? "text-success"
-                        : "text-destructive"
+                        : "text-destructive",
                     )}
                   >
                     {mask(metrics.last.total - metrics.first.total)}
@@ -463,7 +470,7 @@ function PerformancePage() {
                   <td
                     className={cn(
                       "py-2.5 pl-4 text-right tabular-nums whitespace-nowrap",
-                      metrics.totalPct >= 0 ? "text-success" : "text-destructive"
+                      metrics.totalPct >= 0 ? "text-success" : "text-destructive",
                     )}
                   >
                     {formatPct(metrics.totalPct)}

@@ -7,12 +7,27 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { AppState, DEFAULT_STATE, DEFAULT_CATEGORIES, Holding, CashflowEntry, Category, Settings, HoldingTransaction, CreditCard, Budget, BudgetPlan, BudgetItem, ForecastScenario, SavingsGoal, Loan } from "./types";
+import {
+  AppState,
+  DEFAULT_STATE,
+  DEFAULT_CATEGORIES,
+  Holding,
+  CashflowEntry,
+  Category,
+  Settings,
+  HoldingTransaction,
+  CreditCard,
+  Budget,
+  BudgetPlan,
+  BudgetItem,
+  ForecastScenario,
+  SavingsGoal,
+  Loan,
+} from "./types";
 import { getFxRates, convert, type FxRates } from "./finance/fx";
 import { formatMoney, maskMoney, MASK } from "./format";
 import { secureGet, secureSet } from "./secure-storage";
 import { setSettingsSnapshot } from "./finance/client";
-
 
 const STORAGE_KEY = "ept_state_v1";
 
@@ -119,7 +134,6 @@ async function loadState(): Promise<AppState> {
     return DEFAULT_STATE;
   }
 }
-
 
 type Ctx = {
   state: AppState;
@@ -269,11 +283,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     void secureSet(STORAGE_KEY, JSON.stringify(state));
   }, [state, hydrated]);
 
-
-
   const value = useMemo<Ctx>(() => {
-    const setState = (updater: (s: AppState) => AppState) =>
-      setStateRaw((prev) => updater(prev));
+    const setState = (updater: (s: AppState) => AppState) => setStateRaw((prev) => updater(prev));
     const uid = () =>
       typeof crypto !== "undefined" && crypto.randomUUID
         ? crypto.randomUUID()
@@ -295,8 +306,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           holdings: s.holdings.filter((h) => h.id !== id),
           transactions: s.transactions.filter((t) => t.holdingId !== id),
         })),
-      addCashflow: (c) =>
-        setState((s) => applyCashflowTransferLinks(s, { ...c, id: uid() }, uid)),
+      addCashflow: (c) => setState((s) => applyCashflowTransferLinks(s, { ...c, id: uid() }, uid)),
       updateCashflow: (id, patch) =>
         setState((s) => {
           const existing = s.cashflows.find((c) => c.id === id);
@@ -306,9 +316,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           if (existing.linkedTransactionId) {
             next = {
               ...next,
-              transactions: next.transactions.filter(
-                (t) => t.id !== existing.linkedTransactionId,
-              ),
+              transactions: next.transactions.filter((t) => t.id !== existing.linkedTransactionId),
             };
           }
           const merged: CashflowEntry = { ...existing, ...patch, linkedTransactionId: undefined };
@@ -348,7 +356,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             if (h.openingQuantity != null) return h;
             const hasExisting = s.transactions.some((x) => x.holdingId === h.id);
             // First tx for this holding - capture its current quantity as the baseline
-            return { ...h, openingQuantity: hasExisting ? 0 : (Number(h.quantity) || 0) };
+            return { ...h, openingQuantity: hasExisting ? 0 : Number(h.quantity) || 0 };
           });
           return syncQuantities({
             ...s,
@@ -432,12 +440,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           return {
             ...s,
             budgetPlans: plans,
-            mainBudgetPlanId:
-              s.mainBudgetPlanId === id ? plans[0]?.id : s.mainBudgetPlanId,
+            mainBudgetPlanId: s.mainBudgetPlanId === id ? plans[0]?.id : s.mainBudgetPlanId,
           };
         }),
-      setMainBudgetPlan: (id) =>
-        setState((s) => ({ ...s, mainBudgetPlanId: id })),
+      setMainBudgetPlan: (id) => setState((s) => ({ ...s, mainBudgetPlanId: id })),
       duplicateBudgetPlan: (id) => {
         let created: BudgetPlan | undefined;
         setState((s) => {
@@ -505,8 +511,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
               s.mainForecastScenarioId === id ? scenarios[0]?.id : s.mainForecastScenarioId,
           };
         }),
-      setMainForecastScenario: (id) =>
-        setState((s) => ({ ...s, mainForecastScenarioId: id })),
+      setMainForecastScenario: (id) => setState((s) => ({ ...s, mainForecastScenarioId: id })),
       duplicateForecastScenario: (id) => {
         let created: ForecastScenario | undefined;
         setState((s) => {
@@ -541,14 +546,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         })),
       removeLoan: (id) =>
         setState((s) => ({ ...s, loans: (s.loans ?? []).filter((l) => l.id !== id) })),
-      updateSettings: (patch) =>
-        setState((s) => ({ ...s, settings: { ...s.settings, ...patch } })),
+      updateSettings: (patch) => setState((s) => ({ ...s, settings: { ...s.settings, ...patch } })),
       importState: (data) =>
         setState(() =>
           syncQuantities({
             ...DEFAULT_STATE,
             ...data,
-            transactions: Array.isArray((data as AppState).transactions) ? (data as AppState).transactions : [],
+            transactions: Array.isArray((data as AppState).transactions)
+              ? (data as AppState).transactions
+              : [],
             settings: { ...DEFAULT_STATE.settings, ...(data.settings ?? {}) },
           }),
         ),
@@ -613,7 +619,8 @@ export function useMoney() {
   const displayCurrency = (state.settings.displayCurrency || "USD").toUpperCase();
 
   const toDisplay = useCallback(
-    (amount: number, from?: string) => convert(amount, (from && from.trim()) || displayCurrency, displayCurrency, rates),
+    (amount: number, from?: string) =>
+      convert(amount, (from && from.trim()) || displayCurrency, displayCurrency, rates),
     [displayCurrency, rates],
   );
 
@@ -631,4 +638,3 @@ export function useMoney() {
 
   return { currency: displayCurrency, rates, toDisplay, fmt, mask, privacy, MASK };
 }
-

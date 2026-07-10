@@ -103,9 +103,7 @@ export function CreditCardsManager() {
       </div>
 
       {cards.length === 0 ? (
-        <p className="mt-3 text-xs text-muted-foreground">
-          {t("cards.empty")}
-        </p>
+        <p className="mt-3 text-xs text-muted-foreground">{t("cards.empty")}</p>
       ) : (
         <ul className="mt-3 space-y-2">
           {cards.map((c) => {
@@ -116,10 +114,7 @@ export function CreditCardsManager() {
             const available = limit > 0 ? Math.max(0, limit - used) : null;
             const overLimit = limit > 0 && used > limit;
             return (
-              <li
-                key={c.id}
-                className="rounded-md border border-border/40 p-3 space-y-2"
-              >
+              <li key={c.id} className="rounded-md border border-border/40 p-3 space-y-2">
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-center gap-2 min-w-0">
                     <span
@@ -130,7 +125,9 @@ export function CreditCardsManager() {
                       <div className="text-sm font-medium truncate">{c.name}</div>
                       <div className="text-[11px] text-muted-foreground">
                         {c.currency}
-                        {c.statementDay ? ` · ${t("cards.statementDayAbbr")} ${c.statementDay}` : ""}
+                        {c.statementDay
+                          ? ` · ${t("cards.statementDayAbbr")} ${c.statementDay}`
+                          : ""}
                         {c.dueDay ? ` · ${t("cards.dueDayAbbr")} ${c.dueDay}` : ""}
                       </div>
                     </div>
@@ -173,7 +170,9 @@ export function CreditCardsManager() {
                 <div className="grid grid-cols-3 gap-2 text-[11px]">
                   <div>
                     <div className="text-muted-foreground">{t("cards.balanceOwed")}</div>
-                    <div className={`text-sm font-mono ${debt > 0 ? "text-destructive" : "text-emerald-500"}`}>
+                    <div
+                      className={`text-sm font-mono ${debt > 0 ? "text-destructive" : "text-emerald-500"}`}
+                    >
                       {formatMoney(debt, currency)}
                     </div>
                   </div>
@@ -203,7 +202,8 @@ export function CreditCardsManager() {
                       />
                     </div>
                     <div className="mt-1 text-[10px] text-muted-foreground tabular-nums">
-                      {t("cards.used", { pct: pct.toFixed(0) })}{overLimit ? ` · ${t("cards.overLimit")}` : ""}
+                      {t("cards.used", { pct: pct.toFixed(0) })}
+                      {overLimit ? ` · ${t("cards.overLimit")}` : ""}
                     </div>
                   </div>
                 )}
@@ -242,7 +242,7 @@ export function CreditCardsManager() {
 
       <PayCardDialog
         card={paying}
-        currentDebt={paying ? debtByCard.get(paying.id) ?? 0 : 0}
+        currentDebt={paying ? (debtByCard.get(paying.id) ?? 0) : 0}
         displayCurrency={currency}
         onClose={() => setPaying(null)}
         onPay={(amount, fromAccount) => {
@@ -291,23 +291,29 @@ function CardFormDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>
-            {t("cards.dialogDescription")}
-          </DialogDescription>
+          <DialogDescription>{t("cards.dialogDescription")}</DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
           <div>
             <Label>{t("cards.name")}</Label>
-            <Input value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} placeholder={t("cards.namePlaceholder")} />
+            <Input
+              value={f.name}
+              onChange={(e) => setF({ ...f, name: e.target.value })}
+              placeholder={t("cards.namePlaceholder")}
+            />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label>{t("cards.currency")}</Label>
               <Select value={f.currency} onValueChange={(v) => setF({ ...f, currency: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent className="max-h-72">
                   {CURRENCIES.map((c) => (
-                    <SelectItem key={c.code} value={c.code}>{c.code} · {c.name}</SelectItem>
+                    <SelectItem key={c.code} value={c.code}>
+                      {c.code} · {c.name}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -362,7 +368,9 @@ function CardFormDialog({
           </div>
         </div>
         <DialogFooter>
-          <Button variant="ghost" onClick={onClose}>{t("cards.cancel")}</Button>
+          <Button variant="ghost" onClick={onClose}>
+            {t("cards.cancel")}
+          </Button>
           <Button onClick={() => onSubmit(f)}>{t("cards.save")}</Button>
         </DialogFooter>
       </DialogContent>
@@ -419,16 +427,22 @@ function PayCardDialog({
           <div>
             <Label>{t("cards.payFrom")}</Label>
             <Select value={from} onValueChange={setFrom}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 {accountOptions.map((o) => (
-                  <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                  <SelectItem key={o.value} value={o.value}>
+                    {o.label}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
           <div>
-            <Label>{t("cards.amount")} ({card?.currency})</Label>
+            <Label>
+              {t("cards.amount")} ({card?.currency})
+            </Label>
             <Input
               type="number"
               step="any"
@@ -439,7 +453,9 @@ function PayCardDialog({
           </div>
         </div>
         <DialogFooter>
-          <Button variant="ghost" onClick={onClose}>{t("cards.cancel")}</Button>
+          <Button variant="ghost" onClick={onClose}>
+            {t("cards.cancel")}
+          </Button>
           <Button
             onClick={() => {
               const a = parseFloat(amount);

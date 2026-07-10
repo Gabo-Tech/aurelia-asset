@@ -80,16 +80,14 @@ const en = {
     stopRecording: "Stop",
     startRecording: "Speak",
     sendBtn: "Send",
-    voiceHint:
-      "Voice input requires the native app or a supported browser. Text works everywhere.",
+    voiceHint: "Voice input requires the native app or a supported browser. Text works everywhere.",
     emptyTitle: "Your private money assistant",
     emptyBody:
       'Say or type things like "I spent 45 on groceries at Walmart yesterday". I\'ll confirm before saving, and everything stays on your device.',
     backend: {
       greeting:
-        'Hi! I\'m your finance assistant. Tell me about an expense (e.g. "I spent 12 on lunch"), ask how much you\'ve spent, or ask for saving tips.',
-      help:
-        "I can:\n• Log expenses you describe (I'll confirm first)\n• Summarise your spending for a period or category\n• Show recent transactions\n• Report your budget status\n• Give saving tips based on your data\nEverything runs on your device.",
+        "Hi! I'm your finance assistant. Tell me about an expense (e.g. \"I spent 12 on lunch\"), ask how much you've spent, or ask for saving tips.",
+      help: "I can:\n• Log expenses you describe (I'll confirm first)\n• Summarise your spending for a period or category\n• Show recent transactions\n• Report your budget status\n• Give saving tips based on your data\nEverything runs on your device.",
       thanks: "You're welcome! Let me know if you need anything else with your finances.",
       positive: "Glad I could help! Ask me anytime about spending, budgets, or saving.",
       goodbye: "See you! I'll be here whenever you want to check on your money.",
@@ -99,8 +97,7 @@ const en = {
       unknown:
         'I didn\'t quite catch that. Try things like "spent 8.50 on coffee", "how much did I spend on food this month?", or "give me saving tips".',
       done: "Done.",
-      expenseConfirm:
-        "Add a {{amount}} {{category}} expense for {{when}}? Confirm below.",
+      expenseConfirm: "Add a {{amount}} {{category}} expense for {{when}}? Confirm below.",
       expenseConfirmToday: "today",
       expenseParseError:
         'Sorry, I couldn\'t understand that expense. Try e.g. "spent 12 on lunch yesterday".',
@@ -134,9 +131,10 @@ const en = {
           "About {{pct}}% of your wealth is in cash/liquidity ({{liquidity}} liquid vs {{invested}} invested). If your emergency fund is covered, consider investing a portion for long-term growth.",
         balancedAllocation:
           "Your allocation looks balanced — {{invested}} invested and {{liquid}} in cash/liquid holdings. Keep contributing steadily.",
-        overBudget: "You're over budget on {{categories}}. Ease off there for the rest of the month.",
+        overBudget:
+          "You're over budget on {{categories}}. Ease off there for the rest of the month.",
         onTrack:
-          'You\'re within your "{{plan}}" budget so far — nice. Keep the pace and you\'ll land under {{limit}}.',
+          "You're within your \"{{plan}}\" budget so far — nice. Keep the pace and you'll land under {{limit}}.",
         goalOnTrack:
           'Goal "{{name}}" is {{pct}}% complete ({{current}} of {{target}}) — solid progress.',
         goalBehind:
@@ -214,7 +212,8 @@ const en = {
     },
     features: {
       heading: "Everything you need to feel in control of your money",
-      subheading: "Track what you own, watch where it flows, and plan what comes next - without a spreadsheet in sight.",
+      subheading:
+        "Track what you own, watch where it flows, and plan what comes next - without a spreadsheet in sight.",
       items: {
         assets: {
           title: "All your wealth, one view",
@@ -246,9 +245,18 @@ const en = {
       heading: "From zero to clarity in 60 seconds",
       cta: "Try it now - free",
       steps: {
-        one: { title: "Open it", body: "No signup, no download needed. The tracker loads instantly and runs entirely on your device." },
-        two: { title: "Add what you own and what you spend", body: "Search a ticker, log a paycheck, add a credit card or an installment plan - in your own categories and currencies." },
-        three: { title: "Watch your full picture come alive", body: "Allocation, net worth, cashflow and forecast update in real time as prices move and life happens." },
+        one: {
+          title: "Open it",
+          body: "No signup, no download needed. The tracker loads instantly and runs entirely on your device.",
+        },
+        two: {
+          title: "Add what you own and what you spend",
+          body: "Search a ticker, log a paycheck, add a credit card or an installment plan - in your own categories and currencies.",
+        },
+        three: {
+          title: "Watch your full picture come alive",
+          body: "Allocation, net worth, cashflow and forecast update in real time as prices move and life happens.",
+        },
       },
     },
     comparison: {
@@ -289,7 +297,8 @@ const en = {
     },
     cta: {
       heading: "Take back your money in 60 seconds.",
-      subheading: "No signup. No card. Just open the tracker and start seeing what you already own.",
+      subheading:
+        "No signup. No card. Just open the tracker and start seeing what you already own.",
       button: "Open your tracker",
       footnote: "Works in any modern browser · Native apps for every platform",
     },
@@ -299,7 +308,8 @@ const en = {
       web: "Or just open it in your browser",
       soon: "Coming soon",
       comingSoon: "Coming soon",
-      unsignedNotice: "All builds are unsigned and distributed directly. Your OS may show a first-run warning - this is expected.",
+      unsignedNotice:
+        "All builds are unsigned and distributed directly. Your OS may show a first-run warning - this is expected.",
       platforms: {
         windows: "Windows",
         mac: "macOS",
@@ -332,7 +342,6 @@ const en = {
       keywords:
         "portfolio tracker, net worth tracker, private finance app, stock tracker, crypto portfolio, ETF tracker, cashflow sankey, budget planner, savings goals, offline portfolio",
     },
-
   },
   dashboard: {
     metaTitle: "Dashboard - Portfolio Tracker",
@@ -377,7 +386,8 @@ const en = {
     dialog: {
       editTitle: "Edit holding",
       addTitle: "Add holding",
-      description: "Search a market asset, or add a custom holding (e.g. Quanloop, private equity).",
+      description:
+        "Search a market asset, or add a custom holding (e.g. Quanloop, private equity).",
       searchFailed: "Search failed — try a different proxy in Settings",
       qtyGtZero: "Quantity must be > 0",
       nameRequired: "Name is required",
@@ -415,7 +425,8 @@ const en = {
     txDialog: {
       editTitle: "Edit transaction",
       addTitle: "Add transaction",
-      description: "Record a buy or sell. Quantity on the holding is recalculated from your transactions.",
+      description:
+        "Record a buy or sell. Quantity on the holding is recalculated from your transactions.",
       pickHolding: "Pick a holding",
       pickHoldingError: "Pick a holding",
       qtyGtZero: "Quantity must be > 0",
@@ -510,7 +521,8 @@ const en = {
     frequency: "Frequency",
     untilOptional: "Until (optional)",
     percentToggle: "Use a percentage of another entry (e.g. taxes)",
-    transferIntro: "Move money between accounts without affecting income or expense totals. E.g. selling part of an investment to pay a credit card, or paying down card debt from liquidity.",
+    transferIntro:
+      "Move money between accounts without affecting income or expense totals. E.g. selling part of an investment to pay a credit card, or paying down card debt from liquidity.",
     from: "From",
     to: "To",
     addIncomeBtn: "Add income",
@@ -564,7 +576,8 @@ const en = {
   cards: {
     title: "Credit cards",
     add: "Add card",
-    empty: "No cards yet. Add a card to track debt from credit purchases and pay it down with transfers.",
+    empty:
+      "No cards yet. Add a card to track debt from credit purchases and pay it down with transfers.",
     balanceOwed: "Balance owed",
     limit: "Limit",
     available: "Available",
@@ -579,7 +592,8 @@ const en = {
     overLimit: "over limit",
     newCard: "New credit card",
     editCard: "Edit credit card",
-    dialogDescription: "Track balance and available credit. Charges and payments come from your cashflow entries.",
+    dialogDescription:
+      "Track balance and available credit. Charges and payments come from your cashflow entries.",
     name: "Name",
     namePlaceholder: "Amex Gold",
     currency: "Currency",
@@ -623,8 +637,7 @@ const en = {
     description: "API options and data management.",
     api: {
       title: "API & reliability",
-      description:
-        "CoinGecko and Yahoo Finance work without keys. Finnhub is optional fallback.",
+      description: "CoinGecko and Yahoo Finance work without keys. Finnhub is optional fallback.",
       displayCurrency: "Display currency",
       displayCurrencyHelp:
         "All values across the app are converted to this currency using live FX rates (cached for 6 hours).",
@@ -764,7 +777,8 @@ const en = {
     entriesOf: "of",
     mcTrigger: "Categories",
     mcTitle: "Manage categories",
-    mcDesc: "Organize income sources and expense categories. Savings and Investments are expense-side categories with their own coloring.",
+    mcDesc:
+      "Organize income sources and expense categories. Savings and Investments are expense-side categories with their own coloring.",
     mcAddNew: "Add new",
     mcNamePlaceholder: "Category name",
     mcAdd: "Add",
@@ -863,31 +877,106 @@ const en = {
     restartDesc: "Replay the guided tour at any time to refresh your memory.",
     restartButton: "Start tour",
     steps: {
-      welcome: { title: "Welcome to your finance hub", body: "Let's take a quick tour of the app so you can get the most out of every section. You can skip or replay this tour any time from Settings." },
-      sidebar: { title: "Main navigation", body: "Use this sidebar to jump between Dashboard, Holdings, Performance, Cashflow and Settings." },
-      mobileNav: { title: "Quick navigation", body: "On phones, use the bottom bar to switch between the main sections." },
-      theme: { title: "Light & dark mode", body: "Toggle between light and dark themes. The app remembers your choice." },
-      privacy: { title: "Privacy mode", body: "Hide all monetary values with one click - perfect for screen sharing or showing off charts in public." },
-      dashStats: { title: "Your top-line numbers", body: "Portfolio value, net worth and the last 30 days of cashflow at a glance." },
-      dashAllocation: { title: "Asset allocation", body: "See how your portfolio is distributed. Toggle assets in the legend or show all labels at once." },
-      dashBreakdown: { title: "Breakdown by asset", body: "A detailed list of every holding with its current weight in the portfolio." },
-      holdingsAdd: { title: "Add a holding", body: "Track stocks, ETFs, crypto, cash, metals and more. Prices are fetched automatically when possible." },
-      holdingsFilters: { title: "Search & filter", body: "Find any holding by name, symbol or type." },
-      holdingsTable: { title: "Your holdings", body: "See quantity, price and value for each position. Click a row to edit or delete it." },
-      holdingsCharts: { title: "Allocation charts", body: "Visualise how your money is split across asset classes and horizons (long-term vs short-term)." },
-      holdingsTx: { title: "Buys & sells", body: "Log every transaction. The app keeps your quantities in sync automatically." },
-      perfPeriod: { title: "Pick a period", body: "Compare your portfolio over 24 hours, a week, a month, a year or longer." },
-      perfAssets: { title: "Toggle assets", body: "Show or hide individual assets to compare just the ones you care about." },
-      perfChart: { title: "Portfolio value over time", body: "Hover the chart to inspect the exact value at any point in the selected period." },
-      perfReturns: { title: "Returns by asset", body: "See start price, end price and total change for each holding in the period." },
-      cfAdd: { title: "Add income, expenses & transfers", body: "Log one-time or recurring entries, mark amounts as percentages (great for taxes), and pay with cash or a credit card." },
-      cfSankey: { title: "Money flow diagram", body: "Watch your money move from income sources to expenses, savings and investments. Drag rows to reorder them." },
-      cfEntries: { title: "All your entries", body: "Filter by type, category and period, edit entries, and export a PDF report with a balance chart." },
-      cfCards: { title: "Credit cards & debt", body: "Track card limits, balances, and pay down debt. Card-paid expenses show up in the flow diagram too." },
-      setApi: { title: "API & display options", body: "Choose your display currency, enable a CORS proxy if needed, and add your Finnhub API key for richer price data." },
-      setLanguage: { title: "Language", body: "Switch between English, Spanish, Catalan/Valencià, Portuguese, Dutch and German. Your choice is saved and exportable." },
-      setData: { title: "Backup & restore", body: "Export your data as JSON or CSV, import a previous backup, or reset everything from scratch." },
-      finish: { title: "You're all set!", body: "That's it. You can replay this tour anytime from Settings. Happy tracking!" },
+      welcome: {
+        title: "Welcome to your finance hub",
+        body: "Let's take a quick tour of the app so you can get the most out of every section. You can skip or replay this tour any time from Settings.",
+      },
+      sidebar: {
+        title: "Main navigation",
+        body: "Use this sidebar to jump between Dashboard, Holdings, Performance, Cashflow and Settings.",
+      },
+      mobileNav: {
+        title: "Quick navigation",
+        body: "On phones, use the bottom bar to switch between the main sections.",
+      },
+      theme: {
+        title: "Light & dark mode",
+        body: "Toggle between light and dark themes. The app remembers your choice.",
+      },
+      privacy: {
+        title: "Privacy mode",
+        body: "Hide all monetary values with one click - perfect for screen sharing or showing off charts in public.",
+      },
+      dashStats: {
+        title: "Your top-line numbers",
+        body: "Portfolio value, net worth and the last 30 days of cashflow at a glance.",
+      },
+      dashAllocation: {
+        title: "Asset allocation",
+        body: "See how your portfolio is distributed. Toggle assets in the legend or show all labels at once.",
+      },
+      dashBreakdown: {
+        title: "Breakdown by asset",
+        body: "A detailed list of every holding with its current weight in the portfolio.",
+      },
+      holdingsAdd: {
+        title: "Add a holding",
+        body: "Track stocks, ETFs, crypto, cash, metals and more. Prices are fetched automatically when possible.",
+      },
+      holdingsFilters: {
+        title: "Search & filter",
+        body: "Find any holding by name, symbol or type.",
+      },
+      holdingsTable: {
+        title: "Your holdings",
+        body: "See quantity, price and value for each position. Click a row to edit or delete it.",
+      },
+      holdingsCharts: {
+        title: "Allocation charts",
+        body: "Visualise how your money is split across asset classes and horizons (long-term vs short-term).",
+      },
+      holdingsTx: {
+        title: "Buys & sells",
+        body: "Log every transaction. The app keeps your quantities in sync automatically.",
+      },
+      perfPeriod: {
+        title: "Pick a period",
+        body: "Compare your portfolio over 24 hours, a week, a month, a year or longer.",
+      },
+      perfAssets: {
+        title: "Toggle assets",
+        body: "Show or hide individual assets to compare just the ones you care about.",
+      },
+      perfChart: {
+        title: "Portfolio value over time",
+        body: "Hover the chart to inspect the exact value at any point in the selected period.",
+      },
+      perfReturns: {
+        title: "Returns by asset",
+        body: "See start price, end price and total change for each holding in the period.",
+      },
+      cfAdd: {
+        title: "Add income, expenses & transfers",
+        body: "Log one-time or recurring entries, mark amounts as percentages (great for taxes), and pay with cash or a credit card.",
+      },
+      cfSankey: {
+        title: "Money flow diagram",
+        body: "Watch your money move from income sources to expenses, savings and investments. Drag rows to reorder them.",
+      },
+      cfEntries: {
+        title: "All your entries",
+        body: "Filter by type, category and period, edit entries, and export a PDF report with a balance chart.",
+      },
+      cfCards: {
+        title: "Credit cards & debt",
+        body: "Track card limits, balances, and pay down debt. Card-paid expenses show up in the flow diagram too.",
+      },
+      setApi: {
+        title: "API & display options",
+        body: "Choose your display currency, enable a CORS proxy if needed, and add your Finnhub API key for richer price data.",
+      },
+      setLanguage: {
+        title: "Language",
+        body: "Switch between English, Spanish, Catalan/Valencià, Portuguese, Dutch and German. Your choice is saved and exportable.",
+      },
+      setData: {
+        title: "Backup & restore",
+        body: "Export your data as JSON or CSV, import a previous backup, or reset everything from scratch.",
+      },
+      finish: {
+        title: "You're all set!",
+        body: "That's it. You can replay this tour anytime from Settings. Happy tracking!",
+      },
     },
   },
   planning: {
@@ -895,7 +984,8 @@ const en = {
     description: "Budgets, goals, forecasts and loans - all derived from your existing cashflow.",
     head: {
       title: "Planning · Budgets, Goals, Forecast, Loans",
-      description: "Plan your finances: monthly budgets, savings goals, cashflow forecasts and loan amortization.",
+      description:
+        "Plan your finances: monthly budgets, savings goals, cashflow forecasts and loan amortization.",
     },
     tabs: { budgets: "Budgets", goals: "Savings goals", forecast: "Forecast", loans: "Loans" },
     budgets: {
@@ -964,9 +1054,11 @@ const en = {
       liquidityForecast: "Liquidity forecast",
       months: "Months",
       projectedBalance: "Projected balance",
-      runway: "At your current recurring spend you have ~{{months}} months of runway from today's liquidity.",
+      runway:
+        "At your current recurring spend you have ~{{months}} months of runway from today's liquidity.",
       recurringTitle: "Recurring subscriptions & income",
-      recurringEmpty: "No recurring entries detected. Mark income/expenses as recurring on the Cashflow page.",
+      recurringEmpty:
+        "No recurring entries detected. Mark income/expenses as recurring on the Cashflow page.",
       perMo: "{{amount}}/mo",
       newScenarioName: "New scenario",
       noScenariosHint:
@@ -1017,7 +1109,14 @@ const en = {
       extraShort: "Extra: {{amount}}/mo",
       extraLabel: "Extra/mo",
       meta: "{{principal}} @ {{apr}}% APR · {{months}} mo · starts {{date}}",
-      tbl: { n: "#", date: "Date", payment: "Payment", interest: "Interest", principal: "Principal", balance: "Balance" },
+      tbl: {
+        n: "#",
+        date: "Date",
+        payment: "Payment",
+        interest: "Interest",
+        principal: "Principal",
+        balance: "Balance",
+      },
     },
   },
 };

@@ -10,7 +10,7 @@ export async function searchCrypto(query: string): Promise<SearchResult[]> {
   const cached = getCache<SearchResult[]>(key);
   if (cached) return cached;
   const data = await fetchJson<{ coins?: Array<{ id: string; symbol: string; name: string }> }>(
-    `${BASE}/search?query=${encodeURIComponent(query)}`
+    `${BASE}/search?query=${encodeURIComponent(query)}`,
   );
   const results: SearchResult[] = (data.coins ?? []).slice(0, 10).map((c) => ({
     symbol: c.symbol.toUpperCase(),
@@ -27,7 +27,7 @@ export async function getCryptoPrice(coinId: string): Promise<number> {
   const cached = getCache<number>(key);
   if (cached) return cached;
   const data = await fetchJson<Record<string, { usd: number }>>(
-    `${BASE}/simple/price?ids=${coinId}&vs_currencies=usd`
+    `${BASE}/simple/price?ids=${coinId}&vs_currencies=usd`,
   );
   const p = data[coinId]?.usd ?? 0;
   setCache(key, p, 5 * 60 * 1000);
@@ -36,7 +36,7 @@ export async function getCryptoPrice(coinId: string): Promise<number> {
 
 export async function getCryptoHistory(
   coinId: string,
-  days: string | number
+  days: string | number,
 ): Promise<PricePoint[]> {
   const key = `cg:hist:${coinId}:${days}`;
   const cached = getCache<{ t: number; p: number }[]>(key);
@@ -46,13 +46,13 @@ export async function getCryptoHistory(
   // Without it, the server auto-picks granularity (5m for days=1,
   // hourly for 2-90, daily >90).
   const data = await fetchJson<{ prices: [number, number][] }>(
-    `${BASE}/coins/${coinId}/market_chart?vs_currency=usd&days=${days}`
+    `${BASE}/coins/${coinId}/market_chart?vs_currency=usd&days=${days}`,
   );
   const points = (data.prices ?? []).map(([t, p]) => ({ date: new Date(t), price: p }));
   setCache(
     key,
     points.map((x) => ({ t: x.date.getTime(), p: x.price })),
-    60 * 60 * 1000
+    60 * 60 * 1000,
   );
   return points;
 }

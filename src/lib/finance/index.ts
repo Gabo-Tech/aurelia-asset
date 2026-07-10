@@ -17,8 +17,7 @@ async function resolveCoinGeckoId(symbol: string): Promise<string | null> {
     const results = await searchCrypto(symbol);
     const upper = symbol.toUpperCase();
     const hit =
-      results.find((r) => r.symbol.toUpperCase() === upper && r.coinGeckoId)
-        ?.coinGeckoId ?? null;
+      results.find((r) => r.symbol.toUpperCase() === upper && r.coinGeckoId)?.coinGeckoId ?? null;
     setCache(key, hit, 24 * 60 * 60 * 1000);
     return hit;
   } catch {
@@ -28,7 +27,7 @@ async function resolveCoinGeckoId(symbol: string): Promise<string | null> {
 
 export async function searchAssets(
   query: string,
-  mode: "crypto" | "stock"
+  mode: "crypto" | "stock",
 ): Promise<SearchResult[]> {
   if (mode === "crypto") return searchCrypto(query);
   try {
@@ -131,9 +130,7 @@ const MAX_HIST_TTL = 24 * 60 * 60 * 1000;
 const intraDay = new Map<string, Promise<PricePoint[]>>();
 const maxHistInflight = new Map<string, Promise<PricePoint[]>>();
 
-async function fetchFromChain(
-  chain: Array<() => Promise<PricePoint[]>>,
-): Promise<PricePoint[]> {
+async function fetchFromChain(chain: Array<() => Promise<PricePoint[]>>): Promise<PricePoint[]> {
   for (const fn of chain) {
     try {
       const data = await fn();
@@ -153,9 +150,7 @@ function mergePoints(base: PricePoint[], extra: PricePoint[]): PricePoint[] {
   };
   for (const p of base) byDay.set(dayKey(p.date), p);
   for (const p of extra) byDay.set(dayKey(p.date), p); // extra overwrites (fresher)
-  return Array.from(byDay.values()).sort(
-    (a, b) => a.date.getTime() - b.date.getTime(),
-  );
+  return Array.from(byDay.values()).sort((a, b) => a.date.getTime() - b.date.getTime());
 }
 
 function persistMaxHistory(key: string, points: PricePoint[]) {
@@ -186,12 +181,17 @@ async function fetchRecentChain(h: Holding, days: number): Promise<PricePoint[]>
           },
           async () => {
             const range =
-              spanDays <= 5 ? "5d"
-              : spanDays <= 30 ? "1mo"
-              : spanDays <= 90 ? "3mo"
-              : spanDays <= 180 ? "6mo"
-              : spanDays <= 365 ? "1y"
-              : "max";
+              spanDays <= 5
+                ? "5d"
+                : spanDays <= 30
+                  ? "1mo"
+                  : spanDays <= 90
+                    ? "3mo"
+                    : spanDays <= 180
+                      ? "6mo"
+                      : spanDays <= 365
+                        ? "1y"
+                        : "max";
             return await getYahooHistory(h.symbol, range);
           },
           async () => await getStooqHistory(h.symbol),
@@ -357,11 +357,11 @@ export type PortfolioHistoryPoint = {
 
 export async function fetchPortfolioHistory(
   holdings: Holding[],
-  period: PeriodId
+  period: PeriodId,
 ): Promise<PortfolioHistoryPoint[]> {
   if (!holdings.length) return [];
   const series = await Promise.all(
-    holdings.map(async (h) => ({ h, points: await fetchHistorical(h, period) }))
+    holdings.map(async (h) => ({ h, points: await fetchHistorical(h, period) })),
   );
   const dayKeys = new Set<number>();
   for (const s of series) {
@@ -405,9 +405,7 @@ export async function fetchPortfolioHistory(
       const historical = map.get(day);
       // For today's (last) point, prefer the live currentPrice so the header
       // matches the Holdings total to the cent.
-      const price = isLast && h.currentPrice
-        ? h.currentPrice
-        : (historical ?? h.currentPrice ?? 0);
+      const price = isLast && h.currentPrice ? h.currentPrice : (historical ?? h.currentPrice ?? 0);
       const v = price * h.quantity;
       perAssetPrice[h.id] = price;
       perAsset[h.id] = v;

@@ -33,9 +33,9 @@ export function AiModelSetupDialog() {
   const [open, setOpen] = useState(false);
   const [phase, setPhase] = useState<SetupPhase>("consent");
   const [activeKind, setActiveKind] = useState<ModelKind | null>(null);
-  const [progressByKind, setProgressByKind] = useState<Partial<Record<ModelKind, ModelDownloadProgress>>>(
-    {},
-  );
+  const [progressByKind, setProgressByKind] = useState<
+    Partial<Record<ModelKind, ModelDownloadProgress>>
+  >({});
   const [error, setError] = useState<string | null>(null);
 
   const kindsToOffer = useMemo(() => {
@@ -128,7 +128,9 @@ export function AiModelSetupDialog() {
             <Sparkles className="h-5 w-5 text-primary" />
             {t("settings.ai.setupTitle")}
           </DialogTitle>
-          <DialogDescription>{t("settings.ai.setupDescription", { size: totalDownloadSizeLabel() })}</DialogDescription>
+          <DialogDescription>
+            {t("settings.ai.setupDescription", { size: totalDownloadSizeLabel() })}
+          </DialogDescription>
         </DialogHeader>
 
         {phase === "consent" && (
@@ -136,7 +138,10 @@ export function AiModelSetupDialog() {
             {kindsToOffer.map((kind) => {
               const entry = MODEL_MANIFEST.find((m) => m.kind === kind)!;
               return (
-                <li key={kind} className="flex items-center justify-between gap-3 rounded-lg border border-border/50 px-3 py-2">
+                <li
+                  key={kind}
+                  className="flex items-center justify-between gap-3 rounded-lg border border-border/50 px-3 py-2"
+                >
                   <span>{t(entry.labelKey)}</span>
                   <span className="text-xs">{entry.sizeLabel}</span>
                 </li>
@@ -147,21 +152,25 @@ export function AiModelSetupDialog() {
 
         {phase === "downloading" && activeKind && (
           <div className="space-y-3">
-            <p className="text-sm font-medium">{t(MODEL_MANIFEST.find((m) => m.kind === activeKind)!.labelKey)}</p>
+            <p className="text-sm font-medium">
+              {t(MODEL_MANIFEST.find((m) => m.kind === activeKind)!.labelKey)}
+            </p>
             <Progress value={activePct ?? (activeProgress?.phase === "extracting" ? 100 : 8)} />
             <p className="text-xs text-muted-foreground">
-              {activeProgress ? formatDownloadProgress(activeProgress) : t("settings.ai.downloadStarting")}
+              {activeProgress
+                ? formatDownloadProgress(activeProgress)
+                : t("settings.ai.downloadStarting")}
             </p>
           </div>
         )}
 
         {phase === "done" && (
-          <p className="text-sm text-emerald-600 dark:text-emerald-400">{t("settings.ai.setupDone")}</p>
+          <p className="text-sm text-emerald-600 dark:text-emerald-400">
+            {t("settings.ai.setupDone")}
+          </p>
         )}
 
-        {phase === "error" && error && (
-          <p className="text-sm text-destructive">{error}</p>
-        )}
+        {phase === "error" && error && <p className="text-sm text-destructive">{error}</p>}
 
         <DialogFooter className="gap-2 sm:gap-0">
           {phase === "consent" && (

@@ -90,10 +90,10 @@ const es: Translation = {
     backend: {
       greeting:
         '¡Hola! Soy tu asistente financiero. Cuéntame un gasto (p. ej. "Gasté 12 en el almuerzo"), pregunta cuánto has gastado o pide consejos de ahorro.',
-      help:
-        "Puedo:\n• Registrar gastos que describas (confirmaré antes)\n• Resumir tu gasto por periodo o categoría\n• Mostrar transacciones recientes\n• Informar del estado de tu presupuesto\n• Dar consejos de ahorro basados en tus datos\nTodo funciona en tu dispositivo.",
+      help: "Puedo:\n• Registrar gastos que describas (confirmaré antes)\n• Resumir tu gasto por periodo o categoría\n• Mostrar transacciones recientes\n• Informar del estado de tu presupuesto\n• Dar consejos de ahorro basados en tus datos\nTodo funciona en tu dispositivo.",
       thanks: "¡De nada! Avísame si necesitas algo más con tus finanzas.",
-      positive: "¡Me alegra haber ayudado! Pregúntame cuando quieras sobre gastos, presupuestos o ahorro.",
+      positive:
+        "¡Me alegra haber ayudado! Pregúntame cuando quieras sobre gastos, presupuestos o ahorro.",
       goodbye: "¡Hasta luego! Estaré aquí cuando quieras revisar tu dinero.",
       ack: "Entendido. ¿En qué más puedo ayudarte?",
       howAreYou:
@@ -136,7 +136,8 @@ const es: Translation = {
           "Cerca del {{pct}}% de tu patrimonio está en efectivo/liquidez ({{liquidity}} líquido vs {{invested}} invertido). Si el fondo de emergencia está cubierto, considera invertir una parte.",
         balancedAllocation:
           "Tu reparto parece equilibrado — {{invested}} invertido y {{liquid}} en efectivo/posiciones líquidas.",
-        overBudget: "Te has pasado del presupuesto en {{categories}}. Ve con cuidado el resto del mes.",
+        overBudget:
+          "Te has pasado del presupuesto en {{categories}}. Ve con cuidado el resto del mes.",
         onTrack:
           'Vas dentro del presupuesto "{{plan}}" — bien. Mantén el ritmo y acabarás por debajo de {{limit}}.',
         goalOnTrack:
@@ -212,28 +213,57 @@ const es: Translation = {
     },
     features: {
       heading: "Todo lo que necesitas para sentir el control de tu dinero",
-      subheading: "Sigue lo que tienes, descubre a dónde fluye y planifica lo que viene - sin una sola hoja de cálculo.",
+      subheading:
+        "Sigue lo que tienes, descubre a dónde fluye y planifica lo que viene - sin una sola hoja de cálculo.",
       items: {
-        assets: { title: "Todo tu patrimonio, una vista", body: "Acciones, ETFs, cripto, metales, efectivo y activos personalizados, uno junto a otro y en la moneda con la que realmente piensas." },
-        performance: { title: "Sabe cómo te va de verdad", body: "Precios en vivo, gráficos históricos y retornos ponderados por tiempo te dicen si tu cartera crece, no solo si se mueve." },
-        sankey: { title: "Ve por dónde fluye tu dinero", body: "Tus ingresos, gastos, ahorros e inversiones animan un diagrama Sankey que puedes reordenar y personalizar a tu gusto." },
-        categories: { title: "Planifica los próximos meses", body: "Presupuestos, objetivos de ahorro, cuadros de amortización y una previsión a 24 meses convierten tus números de hoy en el futuro que construyes." },
-        private: { title: "Realmente privado, por defecto", body: "Todo se cifra y se guarda en tu dispositivo. Sin cuenta, sin nube y sin analítica sobre lo que posees." },
-        elegant: { title: "Elegante en cualquier pantalla", body: "Una interfaz calmada y sin distracciones para escritorio, tablet y móvil, con apps nativas y seis idiomas, incluido el valencià." },
+        assets: {
+          title: "Todo tu patrimonio, una vista",
+          body: "Acciones, ETFs, cripto, metales, efectivo y activos personalizados, uno junto a otro y en la moneda con la que realmente piensas.",
+        },
+        performance: {
+          title: "Sabe cómo te va de verdad",
+          body: "Precios en vivo, gráficos históricos y retornos ponderados por tiempo te dicen si tu cartera crece, no solo si se mueve.",
+        },
+        sankey: {
+          title: "Ve por dónde fluye tu dinero",
+          body: "Tus ingresos, gastos, ahorros e inversiones animan un diagrama Sankey que puedes reordenar y personalizar a tu gusto.",
+        },
+        categories: {
+          title: "Planifica los próximos meses",
+          body: "Presupuestos, objetivos de ahorro, cuadros de amortización y una previsión a 24 meses convierten tus números de hoy en el futuro que construyes.",
+        },
+        private: {
+          title: "Realmente privado, por defecto",
+          body: "Todo se cifra y se guarda en tu dispositivo. Sin cuenta, sin nube y sin analítica sobre lo que posees.",
+        },
+        elegant: {
+          title: "Elegante en cualquier pantalla",
+          body: "Una interfaz calmada y sin distracciones para escritorio, tablet y móvil, con apps nativas y seis idiomas, incluido el valencià.",
+        },
       },
     },
     how: {
       heading: "De cero a claridad en 60 segundos",
       cta: "Pruébalo ya - gratis",
       steps: {
-        one: { title: "Ábrelo", body: "Sin registro y sin descargas. El gestor carga al instante y corre íntegramente en tu dispositivo." },
-        two: { title: "Añade lo que tienes y lo que gastas", body: "Busca un ticker, registra una nómina, añade una tarjeta de crédito o un plan a plazos, en tus propias categorías y divisas." },
-        three: { title: "Mira cómo cobra vida tu panorama completo", body: "Asignación, patrimonio, flujo de caja y previsión se actualizan en tiempo real mientras los precios y la vida cambian." },
+        one: {
+          title: "Ábrelo",
+          body: "Sin registro y sin descargas. El gestor carga al instante y corre íntegramente en tu dispositivo.",
+        },
+        two: {
+          title: "Añade lo que tienes y lo que gastas",
+          body: "Busca un ticker, registra una nómina, añade una tarjeta de crédito o un plan a plazos, en tus propias categorías y divisas.",
+        },
+        three: {
+          title: "Mira cómo cobra vida tu panorama completo",
+          body: "Asignación, patrimonio, flujo de caja y previsión se actualizan en tiempo real mientras los precios y la vida cambian.",
+        },
       },
     },
     comparison: {
       heading: "Por qué la gente deja atrás los gestores en la nube",
-      subheading: "Una mirada honesta a lo que aquí obtienes y que las grandes apps te quitan en silencio.",
+      subheading:
+        "Una mirada honesta a lo que aquí obtienes y que las grandes apps te quitan en silencio.",
       feature: "Lo que obtienes",
       us: "Este gestor",
       them: "App típica en la nube",
@@ -249,25 +279,40 @@ const es: Translation = {
     faq: {
       heading: "Tus preguntas, respondidas",
       items: {
-        free: { q: "¿Es realmente gratis?", a: "Sí. Todas las funciones son gratis para siempre, sin registro, sin anuncios y sin plan premium. La app corre en tu navegador o como app nativa en tu dispositivo." },
-        storage: { q: "¿Dónde viven mis datos?", a: "Solo en tu dispositivo, cifrados con AES-GCM. Nada se sube, sincroniza ni comparte. Exportas una copia completa cuando quieras y la restauras en otro dispositivo." },
-        assets: { q: "¿Qué puedo seguir?", a: "Acciones, ETFs, cripto, metales preciosos, cuentas de efectivo y cualquier activo personalizado, con precios en vivo desde una fuente pública o tu propia clave de Finnhub." },
-        account: { q: "¿Necesito una cuenta?", a: "Nunca. Abre la app y empieza. Sin login, sin email y sin telemetría, y te llevas tus datos con un clic cuando quieras." },
+        free: {
+          q: "¿Es realmente gratis?",
+          a: "Sí. Todas las funciones son gratis para siempre, sin registro, sin anuncios y sin plan premium. La app corre en tu navegador o como app nativa en tu dispositivo.",
+        },
+        storage: {
+          q: "¿Dónde viven mis datos?",
+          a: "Solo en tu dispositivo, cifrados con AES-GCM. Nada se sube, sincroniza ni comparte. Exportas una copia completa cuando quieras y la restauras en otro dispositivo.",
+        },
+        assets: {
+          q: "¿Qué puedo seguir?",
+          a: "Acciones, ETFs, cripto, metales preciosos, cuentas de efectivo y cualquier activo personalizado, con precios en vivo desde una fuente pública o tu propia clave de Finnhub.",
+        },
+        account: {
+          q: "¿Necesito una cuenta?",
+          a: "Nunca. Abre la app y empieza. Sin login, sin email y sin telemetría, y te llevas tus datos con un clic cuando quieras.",
+        },
       },
     },
     cta: {
       heading: "Recupera tu dinero en 60 segundos.",
-      subheading: "Sin registro. Sin tarjeta. Solo abre el gestor y empieza a ver lo que ya tienes.",
+      subheading:
+        "Sin registro. Sin tarjeta. Solo abre el gestor y empieza a ver lo que ya tienes.",
       button: "Abrir tu gestor",
       footnote: "Funciona en cualquier navegador moderno · Apps nativas para todas las plataformas",
     },
     downloads: {
       heading: "Llévatelo contigo, a todas partes",
-      subheading: "El mismo gestor privado, empaquetado como app nativa para cada dispositivo que usas.",
+      subheading:
+        "El mismo gestor privado, empaquetado como app nativa para cada dispositivo que usas.",
       web: "O ábrelo directamente en el navegador",
       soon: "Próximamente",
       comingSoon: "Próximamente",
-      unsignedNotice: "Todas las compilaciones son sin firmar y se distribuyen directamente. Tu sistema puede mostrar un aviso la primera vez - es normal.",
+      unsignedNotice:
+        "Todas las compilaciones son sin firmar y se distribuyen directamente. Tu sistema puede mostrar un aviso la primera vez - es normal.",
       platforms: {
         windows: "Windows",
         mac: "macOS",
@@ -287,13 +332,18 @@ const es: Translation = {
         ios: "Requiere AltStore o Sideloadly",
       },
     },
-    footer: { brand: "Gestor de cartera elegante", madeBy: "Hecho por", sourceCode: "Código fuente" },
+    footer: {
+      brand: "Gestor de cartera elegante",
+      madeBy: "Hecho por",
+      sourceCode: "Código fuente",
+    },
     meta: {
       title: "Gestor de cartera privado - Acciones, Cripto y ETFs",
-      description: "Sigue cada acción, ETF, cripto, metal y euro que posees en un gestor privado. Ve asignación, flujo de caja, previsión y patrimonio - sin registro, sin nube, gratis para siempre.",
-      keywords: "gestor de cartera, patrimonio neto, app privada de finanzas, seguimiento de acciones, cartera cripto, seguimiento ETF, sankey de flujo de caja, presupuestos, objetivos de ahorro, cartera offline",
+      description:
+        "Sigue cada acción, ETF, cripto, metal y euro que posees en un gestor privado. Ve asignación, flujo de caja, previsión y patrimonio - sin registro, sin nube, gratis para siempre.",
+      keywords:
+        "gestor de cartera, patrimonio neto, app privada de finanzas, seguimiento de acciones, cartera cripto, seguimiento ETF, sankey de flujo de caja, presupuestos, objetivos de ahorro, cartera offline",
     },
-
   },
   dashboard: {
     metaTitle: "Panel - Gestor de cartera",
@@ -338,7 +388,8 @@ const es: Translation = {
     dialog: {
       editTitle: "Editar activo",
       addTitle: "Añadir activo",
-      description: "Busca un activo de mercado o añade uno personalizado (p. ej. Quanloop, capital privado).",
+      description:
+        "Busca un activo de mercado o añade uno personalizado (p. ej. Quanloop, capital privado).",
       searchFailed: "Búsqueda fallida — prueba otro proxy en Ajustes",
       qtyGtZero: "La cantidad debe ser > 0",
       nameRequired: "El nombre es obligatorio",
@@ -363,7 +414,8 @@ const es: Translation = {
       horizonHint:
         "Los activos a corto plazo (p. ej. plataformas de préstamo, efectivo en broker) pueden usarse como cuentas de transferencia en Flujo de caja.",
       importCsv: "Importar CSV",
-      historyHint: "Una fila por instantánea: fecha,precio. La última entrada será el precio actual.",
+      historyHint:
+        "Una fila por instantánea: fecha,precio. La última entrada será el precio actual.",
       historyParsed: "Analizados {{count}} puntos · último {{price}}",
       currentPrice: "Precio actual",
       manualPriceOptional: "Precio manual (opcional)",
@@ -376,7 +428,8 @@ const es: Translation = {
     txDialog: {
       editTitle: "Editar transacción",
       addTitle: "Añadir transacción",
-      description: "Registra una compra o venta. La cantidad del activo se recalcula a partir de tus transacciones.",
+      description:
+        "Registra una compra o venta. La cantidad del activo se recalcula a partir de tus transacciones.",
       pickHolding: "Elige un activo",
       pickHoldingError: "Elige un activo",
       qtyGtZero: "La cantidad debe ser > 0",
@@ -471,7 +524,8 @@ const es: Translation = {
     frequency: "Frecuencia",
     untilOptional: "Hasta (opcional)",
     percentToggle: "Usar un porcentaje de otra entrada (ej. impuestos)",
-    transferIntro: "Mueve dinero entre cuentas sin afectar a los totales de ingresos o gastos. Ej: vender parte de una inversión para pagar una tarjeta, o amortizar deuda de tarjeta desde liquidez.",
+    transferIntro:
+      "Mueve dinero entre cuentas sin afectar a los totales de ingresos o gastos. Ej: vender parte de una inversión para pagar una tarjeta, o amortizar deuda de tarjeta desde liquidez.",
     from: "Desde",
     to: "A",
     addIncomeBtn: "Añadir ingreso",
@@ -525,7 +579,8 @@ const es: Translation = {
   cards: {
     title: "Tarjetas de crédito",
     add: "Añadir tarjeta",
-    empty: "Aún no hay tarjetas. Añade una para registrar deuda de compras a crédito y amortizarla con transferencias.",
+    empty:
+      "Aún no hay tarjetas. Añade una para registrar deuda de compras a crédito y amortizarla con transferencias.",
     balanceOwed: "Saldo pendiente",
     limit: "Límite",
     available: "Disponible",
@@ -540,7 +595,8 @@ const es: Translation = {
     overLimit: "sobre el límite",
     newCard: "Nueva tarjeta de crédito",
     editCard: "Editar tarjeta de crédito",
-    dialogDescription: "Registra saldo y crédito disponible. Cargos y pagos provienen de tus entradas de flujo de caja.",
+    dialogDescription:
+      "Registra saldo y crédito disponible. Cargos y pagos provienen de tus entradas de flujo de caja.",
     name: "Nombre",
     namePlaceholder: "Amex Gold",
     currency: "Moneda",
@@ -555,7 +611,8 @@ const es: Translation = {
     cardUpdated: "Tarjeta actualizada",
     cardRemoved: "Tarjeta eliminada",
     payTitle: "Pagar {{name}}",
-    payDesc: "Registra una transferencia que reduce el saldo pendiente de esta tarjeta. Deuda actual:",
+    payDesc:
+      "Registra una transferencia que reduce el saldo pendiente de esta tarjeta. Deuda actual:",
     payFrom: "Pagar desde",
     amount: "Importe",
     recordPayment: "Registrar pago",
@@ -584,17 +641,22 @@ const es: Translation = {
     description: "Opciones de API y gestión de datos.",
     api: {
       title: "API y fiabilidad",
-      description: "CoinGecko y Yahoo Finance funcionan sin claves. Finnhub es un respaldo opcional.",
+      description:
+        "CoinGecko y Yahoo Finance funcionan sin claves. Finnhub es un respaldo opcional.",
       displayCurrency: "Moneda de visualización",
-      displayCurrencyHelp: "Todos los valores se convierten a esta moneda usando tipos de cambio en vivo (caché de 6 horas).",
+      displayCurrencyHelp:
+        "Todos los valores se convierten a esta moneda usando tipos de cambio en vivo (caché de 6 horas).",
       privacyMode: "Modo privado",
-      privacyModeHelp: "Oculta cantidades y valores monetarios en toda la app (el icono del ojo en la cabecera hace lo mismo).",
+      privacyModeHelp:
+        "Oculta cantidades y valores monetarios en toda la app (el icono del ojo en la cabecera hace lo mismo).",
       useCorsProxy: "Usar proxy CORS",
-      useCorsProxyHelp: "Actívalo si las peticiones a Yahoo Finance están bloqueadas en tu navegador.",
+      useCorsProxyHelp:
+        "Actívalo si las peticiones a Yahoo Finance están bloqueadas en tu navegador.",
       corsProxyUrl: "URL del proxy CORS",
       finnhubKey: "Clave de API de Finnhub (opcional)",
       finnhubPlaceholder: "pega la clave de finnhub.io",
-      finnhubFootnote: "Gratis en finnhub.io. Se usa como respaldo para acciones cuando Yahoo falla.",
+      finnhubFootnote:
+        "Gratis en finnhub.io. Se usa como respaldo para acciones cuando Yahoo falla.",
       saved: "Guardado",
       clearPriceCache: "Actualizar historial de precios",
       clearPriceCacheHelp:
@@ -610,12 +672,13 @@ const es: Translation = {
       voiceOutput: "Leer respuestas en voz alta",
       voiceOutputHelp: "Lee las respuestas del asistente con síntesis de voz en el dispositivo.",
       llmModel: "Modelo de lenguaje (GGUF)",
-      llmModelHelp:
-        "p. ej. Qwen2.5-1.5B-Instruct Q4_K_M. Sin uno, se usa el asistente integrado.",
+      llmModelHelp: "p. ej. Qwen2.5-1.5B-Instruct Q4_K_M. Sin uno, se usa el asistente integrado.",
       sttModel: "Carpeta del modelo de voz a texto",
-      sttModelHelp: "Carpeta de modelo Sherpa-ONNX STT. Usa el reconocedor del navegador como respaldo.",
+      sttModelHelp:
+        "Carpeta de modelo Sherpa-ONNX STT. Usa el reconocedor del navegador como respaldo.",
       ttsModel: "Carpeta del modelo de texto a voz",
-      ttsModelHelp: "Carpeta de modelo Sherpa-ONNX VITS/Piper. Usa la voz del navegador como respaldo.",
+      ttsModelHelp:
+        "Carpeta de modelo Sherpa-ONNX VITS/Piper. Usa la voz del navegador como respaldo.",
       webNote:
         "Estás en la versión web. El asistente funciona offline con el motor integrado y la voz del navegador. Instala la app de escritorio/móvil para usar LLM local y modelos Sherpa-ONNX.",
       clearHistory: "Borrar historial del chat",
@@ -647,13 +710,15 @@ const es: Translation = {
     },
     data: {
       title: "Datos",
-      description: "Todo el estado vive en el localStorage de tu navegador. Haz copia o muévelo cuando quieras.",
+      description:
+        "Todo el estado vive en el localStorage de tu navegador. Haz copia o muévelo cuando quieras.",
       exportJson: "Exportar estado completo (JSON)",
       exportCsv: "Exportar activos (CSV)",
       importJson: "Importar JSON",
       reset: "Restablecer todos los datos",
       resetTitle: "¿Borrar todo?",
-      resetDesc: "Esto elimina todos los activos, entradas de flujo de caja y ajustes de este navegador. Exporta una copia antes si quieres conservarla.",
+      resetDesc:
+        "Esto elimina todos los activos, entradas de flujo de caja y ajustes de este navegador. Exporta una copia antes si quieres conservarla.",
       resetConfirm: "Sí, borrar",
       imported: "Datos importados",
       importFailed: "No se pudo importar",
@@ -669,7 +734,8 @@ const es: Translation = {
       copyFailed: "Error al copiar",
       copyJson: "Copiar JSON al portapapeles",
       pasteJson: "Pegar JSON para importar",
-      pasteJsonDesc: "Pega abajo un JSON exportado previamente. Esto reemplazará tus datos actuales.",
+      pasteJsonDesc:
+        "Pega abajo un JSON exportado previamente. Esto reemplazará tus datos actuales.",
       pasteFromClipboard: "Pegar desde el portapapeles",
       clipboardReadFailed: "No se pudo leer el portapapeles",
     },
@@ -707,7 +773,8 @@ const es: Translation = {
     entriesNoneInRange: "No hay entradas en el rango seleccionado",
     entriesEditAria: "Editar entrada",
     entriesDeleteAria: "Eliminar entrada",
-    entriesDeleteRecurringConfirm: "¿Eliminar la entrada recurrente completa y todas sus ocurrencias?",
+    entriesDeleteRecurringConfirm:
+      "¿Eliminar la entrada recurrente completa y todas sus ocurrencias?",
     entriesUpdated: "Entrada actualizada",
     entriesPdfExported: "PDF exportado",
     entriesPdfTitle: "Informe de flujo de caja",
@@ -721,7 +788,8 @@ const es: Translation = {
     entriesOf: "de",
     mcTrigger: "Categorías",
     mcTitle: "Gestionar categorías",
-    mcDesc: "Organiza fuentes de ingreso y categorías de gasto. Ahorros e Inversiones son categorías de gasto con su propio color.",
+    mcDesc:
+      "Organiza fuentes de ingreso y categorías de gasto. Ahorros e Inversiones son categorías de gasto con su propio color.",
     mcAddNew: "Añadir nueva",
     mcNamePlaceholder: "Nombre de la categoría",
     mcAdd: "Añadir",
@@ -803,7 +871,8 @@ const es: Translation = {
     hManual: "man",
     hNoMatch: "No hay activos que coincidan con los filtros.",
     perfReturnsByAsset: "Rendimientos por activo",
-    perfCouldntLoad: "No se pudo cargar el histórico de precios. Intenta habilitar el proxy CORS en Ajustes.",
+    perfCouldntLoad:
+      "No se pudo cargar el histórico de precios. Intenta habilitar el proxy CORS en Ajustes.",
     perfNoData: "Sin datos",
     perfAssets: "Activos",
     perfTotalLabel: "Total",
@@ -820,41 +889,123 @@ const es: Translation = {
     restartDesc: "Vuelve a reproducir el tour guiado cuando quieras para repasar todo.",
     restartButton: "Iniciar tour",
     steps: {
-      welcome: { title: "Bienvenido a tu centro financiero", body: "Hagamos un recorrido rápido por la app para que aproveches al máximo cada sección. Puedes saltar o repetir este tour desde Ajustes." },
-      sidebar: { title: "Navegación principal", body: "Usa esta barra lateral para moverte entre Panel, Inversiones, Rendimiento, Flujo de caja y Ajustes." },
-      mobileNav: { title: "Navegación rápida", body: "En el móvil, usa la barra inferior para cambiar entre las secciones principales." },
-      theme: { title: "Modo claro y oscuro", body: "Cambia entre tema claro y oscuro. La app recuerda tu elección." },
-      privacy: { title: "Modo privacidad", body: "Oculta todos los valores monetarios con un clic, ideal para compartir pantalla o mostrar gráficos en público." },
-      dashStats: { title: "Tus cifras clave", body: "Valor de la cartera, patrimonio neto y los últimos 30 días de flujo de caja de un vistazo." },
-      dashAllocation: { title: "Distribución de activos", body: "Visualiza cómo está repartida tu cartera. Alterna activos en la leyenda o muestra todas las etiquetas." },
-      dashBreakdown: { title: "Desglose por activo", body: "Lista detallada de cada inversión con su peso actual en la cartera." },
-      holdingsAdd: { title: "Añadir una inversión", body: "Registra acciones, ETFs, cripto, efectivo, metales y más. Los precios se actualizan automáticamente cuando es posible." },
-      holdingsFilters: { title: "Buscar y filtrar", body: "Encuentra cualquier inversión por nombre, símbolo o tipo." },
-      holdingsTable: { title: "Tus inversiones", body: "Mira la cantidad, precio y valor de cada posición. Pulsa una fila para editarla o borrarla." },
-      holdingsCharts: { title: "Gráficos de distribución", body: "Visualiza cómo se reparte tu dinero entre clases de activos y plazos (largo vs corto)." },
-      holdingsTx: { title: "Compras y ventas", body: "Registra cada transacción. La app mantiene las cantidades sincronizadas automáticamente." },
-      perfPeriod: { title: "Elige un periodo", body: "Compara tu cartera en 24 horas, una semana, un mes, un año o más." },
-      perfAssets: { title: "Alternar activos", body: "Muestra u oculta activos individuales para comparar solo los que te interesan." },
-      perfChart: { title: "Evolución de la cartera", body: "Pasa el ratón por el gráfico para ver el valor exacto en cualquier momento del periodo." },
-      perfReturns: { title: "Rentabilidad por activo", body: "Mira el precio inicial, el final y el cambio total de cada inversión en el periodo." },
-      cfAdd: { title: "Añadir ingresos, gastos y transferencias", body: "Registra entradas únicas o recurrentes, marca importes como porcentajes (genial para impuestos) y paga en efectivo o con tarjeta." },
-      cfSankey: { title: "Diagrama de flujo de dinero", body: "Observa cómo tu dinero pasa de las fuentes de ingreso a gastos, ahorro e inversión. Arrastra para reordenar." },
-      cfEntries: { title: "Todas tus entradas", body: "Filtra por tipo, categoría y periodo, edita registros y exporta un PDF con el gráfico de balance." },
-      cfCards: { title: "Tarjetas de crédito y deuda", body: "Gestiona límites, saldos y pagos de tus tarjetas. Los gastos con tarjeta aparecen también en el diagrama." },
-      setApi: { title: "API y opciones de visualización", body: "Elige tu moneda, activa un proxy CORS si lo necesitas y añade tu clave de Finnhub para datos de precios más completos." },
-      setLanguage: { title: "Idioma", body: "Cambia entre inglés, español, catalán/valencià, portugués, neerlandés y alemán. Tu elección se guarda y exporta." },
-      setData: { title: "Copia y restauración", body: "Exporta tus datos en JSON o CSV, importa una copia previa o restablece todo desde cero." },
-      finish: { title: "¡Todo listo!", body: "Eso es todo. Puedes repetir este tour desde Ajustes cuando quieras. ¡A registrar!" },
+      welcome: {
+        title: "Bienvenido a tu centro financiero",
+        body: "Hagamos un recorrido rápido por la app para que aproveches al máximo cada sección. Puedes saltar o repetir este tour desde Ajustes.",
+      },
+      sidebar: {
+        title: "Navegación principal",
+        body: "Usa esta barra lateral para moverte entre Panel, Inversiones, Rendimiento, Flujo de caja y Ajustes.",
+      },
+      mobileNav: {
+        title: "Navegación rápida",
+        body: "En el móvil, usa la barra inferior para cambiar entre las secciones principales.",
+      },
+      theme: {
+        title: "Modo claro y oscuro",
+        body: "Cambia entre tema claro y oscuro. La app recuerda tu elección.",
+      },
+      privacy: {
+        title: "Modo privacidad",
+        body: "Oculta todos los valores monetarios con un clic, ideal para compartir pantalla o mostrar gráficos en público.",
+      },
+      dashStats: {
+        title: "Tus cifras clave",
+        body: "Valor de la cartera, patrimonio neto y los últimos 30 días de flujo de caja de un vistazo.",
+      },
+      dashAllocation: {
+        title: "Distribución de activos",
+        body: "Visualiza cómo está repartida tu cartera. Alterna activos en la leyenda o muestra todas las etiquetas.",
+      },
+      dashBreakdown: {
+        title: "Desglose por activo",
+        body: "Lista detallada de cada inversión con su peso actual en la cartera.",
+      },
+      holdingsAdd: {
+        title: "Añadir una inversión",
+        body: "Registra acciones, ETFs, cripto, efectivo, metales y más. Los precios se actualizan automáticamente cuando es posible.",
+      },
+      holdingsFilters: {
+        title: "Buscar y filtrar",
+        body: "Encuentra cualquier inversión por nombre, símbolo o tipo.",
+      },
+      holdingsTable: {
+        title: "Tus inversiones",
+        body: "Mira la cantidad, precio y valor de cada posición. Pulsa una fila para editarla o borrarla.",
+      },
+      holdingsCharts: {
+        title: "Gráficos de distribución",
+        body: "Visualiza cómo se reparte tu dinero entre clases de activos y plazos (largo vs corto).",
+      },
+      holdingsTx: {
+        title: "Compras y ventas",
+        body: "Registra cada transacción. La app mantiene las cantidades sincronizadas automáticamente.",
+      },
+      perfPeriod: {
+        title: "Elige un periodo",
+        body: "Compara tu cartera en 24 horas, una semana, un mes, un año o más.",
+      },
+      perfAssets: {
+        title: "Alternar activos",
+        body: "Muestra u oculta activos individuales para comparar solo los que te interesan.",
+      },
+      perfChart: {
+        title: "Evolución de la cartera",
+        body: "Pasa el ratón por el gráfico para ver el valor exacto en cualquier momento del periodo.",
+      },
+      perfReturns: {
+        title: "Rentabilidad por activo",
+        body: "Mira el precio inicial, el final y el cambio total de cada inversión en el periodo.",
+      },
+      cfAdd: {
+        title: "Añadir ingresos, gastos y transferencias",
+        body: "Registra entradas únicas o recurrentes, marca importes como porcentajes (genial para impuestos) y paga en efectivo o con tarjeta.",
+      },
+      cfSankey: {
+        title: "Diagrama de flujo de dinero",
+        body: "Observa cómo tu dinero pasa de las fuentes de ingreso a gastos, ahorro e inversión. Arrastra para reordenar.",
+      },
+      cfEntries: {
+        title: "Todas tus entradas",
+        body: "Filtra por tipo, categoría y periodo, edita registros y exporta un PDF con el gráfico de balance.",
+      },
+      cfCards: {
+        title: "Tarjetas de crédito y deuda",
+        body: "Gestiona límites, saldos y pagos de tus tarjetas. Los gastos con tarjeta aparecen también en el diagrama.",
+      },
+      setApi: {
+        title: "API y opciones de visualización",
+        body: "Elige tu moneda, activa un proxy CORS si lo necesitas y añade tu clave de Finnhub para datos de precios más completos.",
+      },
+      setLanguage: {
+        title: "Idioma",
+        body: "Cambia entre inglés, español, catalán/valencià, portugués, neerlandés y alemán. Tu elección se guarda y exporta.",
+      },
+      setData: {
+        title: "Copia y restauración",
+        body: "Exporta tus datos en JSON o CSV, importa una copia previa o restablece todo desde cero.",
+      },
+      finish: {
+        title: "¡Todo listo!",
+        body: "Eso es todo. Puedes repetir este tour desde Ajustes cuando quieras. ¡A registrar!",
+      },
     },
   },
   planning: {
     title: "Planificación",
-    description: "Presupuestos, objetivos, previsiones y préstamos - todo derivado de tu flujo de caja.",
+    description:
+      "Presupuestos, objetivos, previsiones y préstamos - todo derivado de tu flujo de caja.",
     head: {
       title: "Planificación · Presupuestos, Objetivos, Previsión, Préstamos",
-      description: "Planifica tus finanzas: presupuestos mensuales, objetivos de ahorro, previsiones de caja y amortización de préstamos.",
+      description:
+        "Planifica tus finanzas: presupuestos mensuales, objetivos de ahorro, previsiones de caja y amortización de préstamos.",
     },
-    tabs: { budgets: "Presupuestos", goals: "Objetivos de ahorro", forecast: "Previsión", loans: "Préstamos" },
+    tabs: {
+      budgets: "Presupuestos",
+      goals: "Objetivos de ahorro",
+      forecast: "Previsión",
+      loans: "Préstamos",
+    },
     budgets: {
       addTitle: "Añadir presupuesto mensual",
       category: "Categoría",
@@ -921,9 +1072,11 @@ const es: Translation = {
       liquidityForecast: "Previsión de liquidez",
       months: "Meses",
       projectedBalance: "Saldo proyectado",
-      runway: "Con tu gasto recurrente actual tienes ~{{months}} meses de autonomía desde la liquidez de hoy.",
+      runway:
+        "Con tu gasto recurrente actual tienes ~{{months}} meses de autonomía desde la liquidez de hoy.",
       recurringTitle: "Suscripciones e ingresos recurrentes",
-      recurringEmpty: "No se detectan entradas recurrentes. Marca ingresos/gastos como recurrentes en Flujo de caja.",
+      recurringEmpty:
+        "No se detectan entradas recurrentes. Marca ingresos/gastos como recurrentes en Flujo de caja.",
       perMo: "{{amount}}/mes",
       newScenarioName: "Nuevo escenario",
       noScenariosHint:
@@ -974,7 +1127,14 @@ const es: Translation = {
       extraShort: "Extra: {{amount}}/mes",
       extraLabel: "Extra/mes",
       meta: "{{principal}} al {{apr}}% TAE · {{months}} meses · empieza {{date}}",
-      tbl: { n: "#", date: "Fecha", payment: "Cuota", interest: "Interés", principal: "Capital", balance: "Saldo" },
+      tbl: {
+        n: "#",
+        date: "Fecha",
+        payment: "Cuota",
+        interest: "Interés",
+        principal: "Capital",
+        balance: "Saldo",
+      },
     },
   },
 };

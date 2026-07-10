@@ -158,13 +158,7 @@ export type BudgetItem = {
 /** A named collection of budget lines. Users can maintain multiple plans
  *  (e.g. "Baseline", "Vacation month", "Side project") and pick one as the
  *  main plan shown by default. */
-export type BudgetPeriodType =
-  | "daily"
-  | "weekly"
-  | "biweekly"
-  | "monthly"
-  | "yearly"
-  | "custom";
+export type BudgetPeriodType = "daily" | "weekly" | "biweekly" | "monthly" | "yearly" | "custom";
 
 export type BudgetPlan = {
   id: string;
@@ -199,8 +193,6 @@ export type ForecastScenario = {
    *  keyed by the recurring cashflow id (or "__adjustment"). */
   sliceColors?: Record<string, string>;
 };
-
-
 
 export type SavingsGoal = {
   id: string;
@@ -279,15 +271,33 @@ export const DEFAULT_CATEGORIES: Category[] = [
   { id: "cat-salary", name: "Salary", kind: "income", group: "income", color: "#22c55e" },
   { id: "cat-freelance", name: "Freelance", kind: "income", group: "income", color: "#34d399" },
   { id: "cat-dividends", name: "Dividends", kind: "income", group: "income", color: "#4ade80" },
-  { id: "cat-other-income", name: "Other Income", kind: "income", group: "income", color: "#86efac" },
+  {
+    id: "cat-other-income",
+    name: "Other Income",
+    kind: "income",
+    group: "income",
+    color: "#86efac",
+  },
   // Expenses
   { id: "cat-rent", name: "Rent", kind: "expense", group: "expense", color: "#ef4444" },
   { id: "cat-food", name: "Food", kind: "expense", group: "expense", color: "#f97316" },
   { id: "cat-transport", name: "Transport", kind: "expense", group: "expense", color: "#fb7185" },
-  { id: "cat-entertainment", name: "Entertainment", kind: "expense", group: "expense", color: "#f59e0b" },
+  {
+    id: "cat-entertainment",
+    name: "Entertainment",
+    kind: "expense",
+    group: "expense",
+    color: "#f59e0b",
+  },
   // Savings / Investments (still outflows from the cash pool)
   { id: "cat-savings", name: "Savings", kind: "expense", group: "savings", color: "#0ea5e9" },
-  { id: "cat-investments", name: "Investments", kind: "expense", group: "investment", color: "#10b981" },
+  {
+    id: "cat-investments",
+    name: "Investments",
+    kind: "expense",
+    group: "investment",
+    color: "#10b981",
+  },
 ];
 
 export const DEFAULT_STATE: AppState = {
@@ -310,8 +320,6 @@ export const DEFAULT_STATE: AppState = {
     aiModelSetup: "pending",
   },
 };
-
-
 
 export type SearchResult = {
   symbol: string;

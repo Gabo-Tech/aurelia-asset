@@ -42,10 +42,7 @@ export function MouseGlow() {
   }, []);
 
   return (
-    <div
-      aria-hidden
-      className="pointer-events-none fixed inset-0 z-[2] overflow-hidden"
-    >
+    <div aria-hidden className="pointer-events-none fixed inset-0 z-[2] overflow-hidden">
       <div
         ref={ref}
         className="absolute h-[760px] w-[760px] rounded-full opacity-75 blur-3xl will-change-transform"
@@ -92,10 +89,7 @@ export function ScrollAurora() {
   }, []);
 
   return (
-    <div
-      aria-hidden
-      className="pointer-events-none fixed inset-0 z-[2] overflow-hidden"
-    >
+    <div aria-hidden className="pointer-events-none fixed inset-0 z-[2] overflow-hidden">
       <div
         ref={aRef}
         className="absolute -top-36 -left-24 h-[82vh] w-[82vh] rounded-full opacity-80 blur-3xl animate-aurora-drift-slow"
@@ -137,7 +131,6 @@ export function Reveal({
   className?: string;
   as?: keyof React.JSX.IntrinsicElements;
 }) {
-
   const ref = useRef<HTMLElement | null>(null);
   const [shown, setShown] = useState(false);
 

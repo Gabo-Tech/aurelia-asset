@@ -90,8 +90,7 @@ const nl: Translation = {
     backend: {
       greeting:
         'Hoi! Ik ben je financiële assistent. Vertel me over een uitgave (bijv. "Ik gaf 12 uit aan lunch"), vraag hoeveel je hebt uitgegeven, of vraag om spaartips.',
-      help:
-        "Ik kan:\n• Uitgaven registreren die je beschrijft (ik bevestig eerst)\n• Je uitgaven samenvatten per periode of categorie\n• Recente transacties tonen\n• Je budgetstatus rapporteren\n• Spaartips geven op basis van je gegevens\nAlles draait op je apparaat.",
+      help: "Ik kan:\n• Uitgaven registreren die je beschrijft (ik bevestig eerst)\n• Je uitgaven samenvatten per periode of categorie\n• Recente transacties tonen\n• Je budgetstatus rapporteren\n• Spaartips geven op basis van je gegevens\nAlles draait op je apparaat.",
       thanks: "Graag gedaan! Laat het weten als je nog iets nodig hebt rond je financiën.",
       positive: "Blij dat ik kon helpen! Vraag me gerust over uitgaven, budgetten of sparen.",
       goodbye: "Tot later! Ik ben er als je je geld wilt checken.",
@@ -136,7 +135,8 @@ const nl: Translation = {
           "Ongeveer {{pct}}% van je vermogen zit in cash/liquiditeit ({{liquidity}} liquide vs {{invested}} belegd). Is het noodfonds op orde, overweeg dan een deel te beleggen.",
         balancedAllocation:
           "Je verdeling lijkt in balans — {{invested}} belegd en {{liquid}} in cash/liquide posities.",
-        overBudget: "Je zit over budget op {{categories}}. Doe het rustiger aan voor de rest van de maand.",
+        overBudget:
+          "Je zit over budget op {{categories}}. Doe het rustiger aan voor de rest van de maand.",
         onTrack:
           'Je zit binnen je "{{plan}}"-budget — mooi. Houd dit tempo en je eindigt onder {{limit}}.',
         goalOnTrack:
@@ -198,31 +198,65 @@ const nl: Translation = {
       badge: "Geen account. Geen tracking. Je gegevens blijven bij jou.",
       titleStart: "Jouw geld,",
       titleHighlight: "eindelijk op één rustige plek",
-      subtitle: "Zie alles wat je bezit, begrijp waar je geld echt heengaat en plan wat komt - in één elegante tracker die nooit vraagt wie je bent.",
+      subtitle:
+        "Zie alles wat je bezit, begrijp waar je geld echt heengaat en plan wat komt - in één elegante tracker die nooit vraagt wie je bent.",
       ctaPrimary: "Open je tracker",
       ctaSecondary: "Zie wat je krijgt",
       screenshotAlt: "Elegant Portfolio Tracker dashboard met allocatie en kasstroom",
     },
-    proof: { zeroAccounts: "Je gegevens blijven bij jou", offline: "Werkt op elk apparaat", multiCurrency: "Elke valuta die je gebruikt", openSource: "Open source, te controleren" },
+    proof: {
+      zeroAccounts: "Je gegevens blijven bij jou",
+      offline: "Werkt op elk apparaat",
+      multiCurrency: "Elke valuta die je gebruikt",
+      openSource: "Open source, te controleren",
+    },
     features: {
       heading: "Alles wat je nodig hebt om je geld in de hand te hebben",
-      subheading: "Volg wat je bezit, zie waar het naartoe stroomt en plan wat komt - zonder een spreadsheet in zicht.",
+      subheading:
+        "Volg wat je bezit, zie waar het naartoe stroomt en plan wat komt - zonder een spreadsheet in zicht.",
       items: {
-        assets: { title: "Al je vermogen, één weergave", body: "Aandelen, ETF's, crypto, metalen, cash en eigen posities naast elkaar, omgerekend naar de valuta waarin je echt denkt." },
-        performance: { title: "Weet hoe je er echt voor staat", body: "Live koersen, historische grafieken en tijdgewogen rendementen tonen of je portefeuille groeit - niet alleen beweegt." },
-        sankey: { title: "Zie waar je geld heenstroomt", body: "Je inkomsten, uitgaven, spaargeld en beleggingen bewegen door een Sankey-diagram dat je naar wens kunt herschikken." },
-        categories: { title: "Plan de komende maanden", body: "Budgetten, spaardoelen, aflossingsschema's en een prognose van 24 maanden maken van vandaag de toekomst die je bouwt." },
-        private: { title: "Echt privé, standaard", body: "Alles wordt versleuteld op je apparaat opgeslagen. Geen account, geen cloud, geen analytics op wat je bezit." },
-        elegant: { title: "Elegant op elk scherm", body: "Een rustige, afleidingsvrije interface voor desktop, tablet en telefoon - met native apps en zes talen, inclusief Valencià." },
+        assets: {
+          title: "Al je vermogen, één weergave",
+          body: "Aandelen, ETF's, crypto, metalen, cash en eigen posities naast elkaar, omgerekend naar de valuta waarin je echt denkt.",
+        },
+        performance: {
+          title: "Weet hoe je er echt voor staat",
+          body: "Live koersen, historische grafieken en tijdgewogen rendementen tonen of je portefeuille groeit - niet alleen beweegt.",
+        },
+        sankey: {
+          title: "Zie waar je geld heenstroomt",
+          body: "Je inkomsten, uitgaven, spaargeld en beleggingen bewegen door een Sankey-diagram dat je naar wens kunt herschikken.",
+        },
+        categories: {
+          title: "Plan de komende maanden",
+          body: "Budgetten, spaardoelen, aflossingsschema's en een prognose van 24 maanden maken van vandaag de toekomst die je bouwt.",
+        },
+        private: {
+          title: "Echt privé, standaard",
+          body: "Alles wordt versleuteld op je apparaat opgeslagen. Geen account, geen cloud, geen analytics op wat je bezit.",
+        },
+        elegant: {
+          title: "Elegant op elk scherm",
+          body: "Een rustige, afleidingsvrije interface voor desktop, tablet en telefoon - met native apps en zes talen, inclusief Valencià.",
+        },
       },
     },
     how: {
       heading: "Van nul naar helderheid in 60 seconden",
       cta: "Probeer het nu - gratis",
       steps: {
-        one: { title: "Open het", body: "Geen registratie of download nodig. De tracker laadt direct en draait volledig op je apparaat." },
-        two: { title: "Voeg toe wat je bezit en uitgeeft", body: "Zoek een ticker, boek een salaris, voeg een creditcard of een termijnplan toe - in je eigen categorieën en valuta." },
-        three: { title: "Zie je hele plaatje tot leven komen", body: "Allocatie, vermogen, kasstroom en prognose werken in realtime bij terwijl koersen en het leven veranderen." },
+        one: {
+          title: "Open het",
+          body: "Geen registratie of download nodig. De tracker laadt direct en draait volledig op je apparaat.",
+        },
+        two: {
+          title: "Voeg toe wat je bezit en uitgeeft",
+          body: "Zoek een ticker, boek een salaris, voeg een creditcard of een termijnplan toe - in je eigen categorieën en valuta.",
+        },
+        three: {
+          title: "Zie je hele plaatje tot leven komen",
+          body: "Allocatie, vermogen, kasstroom en prognose werken in realtime bij terwijl koersen en het leven veranderen.",
+        },
       },
     },
     comparison: {
@@ -243,10 +277,22 @@ const nl: Translation = {
     faq: {
       heading: "Jouw vragen, beantwoord",
       items: {
-        free: { q: "Is het echt gratis?", a: "Ja. Elke functie is voor altijd gratis, zonder registratie, advertenties of premium-laag. De app draait in je browser of als native app op je apparaat." },
-        storage: { q: "Waar staan mijn gegevens?", a: "Alleen op je apparaat, versleuteld met AES-GCM. Niets wordt geüpload, gesynchroniseerd of gedeeld. Je kunt op elk moment een volledige back-up exporteren en op een ander apparaat herstellen." },
-        assets: { q: "Wat kan ik volgen?", a: "Aandelen, ETF's, crypto, edelmetalen, cashrekeningen en elke eigen positie - met live koersen van een publieke bron of je eigen Finnhub-sleutel." },
-        account: { q: "Heb ik een account nodig?", a: "Nooit. Open de app en begin. Geen login, geen e-mail, geen telemetrie - en je neemt je gegevens met één klik mee." },
+        free: {
+          q: "Is het echt gratis?",
+          a: "Ja. Elke functie is voor altijd gratis, zonder registratie, advertenties of premium-laag. De app draait in je browser of als native app op je apparaat.",
+        },
+        storage: {
+          q: "Waar staan mijn gegevens?",
+          a: "Alleen op je apparaat, versleuteld met AES-GCM. Niets wordt geüpload, gesynchroniseerd of gedeeld. Je kunt op elk moment een volledige back-up exporteren en op een ander apparaat herstellen.",
+        },
+        assets: {
+          q: "Wat kan ik volgen?",
+          a: "Aandelen, ETF's, crypto, edelmetalen, cashrekeningen en elke eigen positie - met live koersen van een publieke bron of je eigen Finnhub-sleutel.",
+        },
+        account: {
+          q: "Heb ik een account nodig?",
+          a: "Nooit. Open de app en begin. Geen login, geen e-mail, geen telemetrie - en je neemt je gegevens met één klik mee.",
+        },
       },
     },
     cta: {
@@ -257,11 +303,13 @@ const nl: Translation = {
     },
     downloads: {
       heading: "Neem hem overal mee",
-      subheading: "Dezelfde privé-tracker, verpakt als native app voor elk apparaat dat je gebruikt.",
+      subheading:
+        "Dezelfde privé-tracker, verpakt als native app voor elk apparaat dat je gebruikt.",
       web: "Of open hem direct in de browser",
       soon: "Binnenkort",
       comingSoon: "Binnenkort",
-      unsignedNotice: "Alle builds zijn niet ondertekend en worden direct verspreid. Je systeem kan de eerste keer een waarschuwing tonen - dat is normaal.",
+      unsignedNotice:
+        "Alle builds zijn niet ondertekend en worden direct verspreid. Je systeem kan de eerste keer een waarschuwing tonen - dat is normaal.",
       platforms: {
         windows: "Windows",
         mac: "macOS",
@@ -284,10 +332,11 @@ const nl: Translation = {
     footer: { brand: "Elegante Portfolio Tracker", madeBy: "Gemaakt door", sourceCode: "Broncode" },
     meta: {
       title: "Privé Portfolio Tracker - Aandelen, Crypto & ETFs",
-      description: "Volg elk aandeel, elke ETF, crypto, metaal en euro die je bezit in één privé-tracker. Zie allocatie, kasstroom, prognose en vermogen - zonder registratie, zonder cloud, voor altijd gratis.",
-      keywords: "portfolio tracker, vermogenstracker, privé financiële app, aandelen tracker, crypto portfolio, ETF tracker, sankey kasstroom, budgetplanner, spaardoelen, offline portefeuille",
+      description:
+        "Volg elk aandeel, elke ETF, crypto, metaal en euro die je bezit in één privé-tracker. Zie allocatie, kasstroom, prognose en vermogen - zonder registratie, zonder cloud, voor altijd gratis.",
+      keywords:
+        "portfolio tracker, vermogenstracker, privé financiële app, aandelen tracker, crypto portfolio, ETF tracker, sankey kasstroom, budgetplanner, spaardoelen, offline portefeuille",
     },
-
   },
   dashboard: {
     metaTitle: "Dashboard - Portfolio Tracker",
@@ -332,7 +381,8 @@ const nl: Translation = {
     dialog: {
       editTitle: "Belegging bewerken",
       addTitle: "Belegging toevoegen",
-      description: "Zoek een marktasset of voeg een eigen belegging toe (bijv. Quanloop, private equity).",
+      description:
+        "Zoek een marktasset of voeg een eigen belegging toe (bijv. Quanloop, private equity).",
       searchFailed: "Zoeken mislukt — probeer een andere proxy in Instellingen",
       qtyGtZero: "Aantal moet > 0 zijn",
       nameRequired: "Naam is verplicht",
@@ -370,7 +420,8 @@ const nl: Translation = {
     txDialog: {
       editTitle: "Transactie bewerken",
       addTitle: "Transactie toevoegen",
-      description: "Registreer een koop of verkoop. Het aantal van de belegging wordt herberekend op basis van je transacties.",
+      description:
+        "Registreer een koop of verkoop. Het aantal van de belegging wordt herberekend op basis van je transacties.",
       pickHolding: "Kies een belegging",
       pickHoldingError: "Kies een belegging",
       qtyGtZero: "Aantal moet > 0 zijn",
@@ -465,7 +516,8 @@ const nl: Translation = {
     frequency: "Frequentie",
     untilOptional: "Tot (optioneel)",
     percentToggle: "Gebruik percentage van een andere post (bijv. belasting)",
-    transferIntro: "Verplaats geld tussen rekeningen zonder de totalen voor inkomsten of uitgaven te beïnvloeden. Bv. een deel van een belegging verkopen om een creditcard te betalen, of cardschuld aflossen vanuit liquiditeit.",
+    transferIntro:
+      "Verplaats geld tussen rekeningen zonder de totalen voor inkomsten of uitgaven te beïnvloeden. Bv. een deel van een belegging verkopen om een creditcard te betalen, of cardschuld aflossen vanuit liquiditeit.",
     from: "Van",
     to: "Naar",
     addIncomeBtn: "Inkomen toevoegen",
@@ -519,7 +571,8 @@ const nl: Translation = {
   cards: {
     title: "Creditcards",
     add: "Kaart toevoegen",
-    empty: "Nog geen kaarten. Voeg er een toe om schuld van creditcardaankopen te volgen en af te lossen met overdrachten.",
+    empty:
+      "Nog geen kaarten. Voeg er een toe om schuld van creditcardaankopen te volgen en af te lossen met overdrachten.",
     balanceOwed: "Openstaand saldo",
     limit: "Limiet",
     available: "Beschikbaar",
@@ -534,7 +587,8 @@ const nl: Translation = {
     overLimit: "boven limiet",
     newCard: "Nieuwe creditcard",
     editCard: "Creditcard bewerken",
-    dialogDescription: "Volg saldo en beschikbaar krediet. Kosten en betalingen komen uit je kasstroomitems.",
+    dialogDescription:
+      "Volg saldo en beschikbaar krediet. Kosten en betalingen komen uit je kasstroomitems.",
     name: "Naam",
     namePlaceholder: "Amex Gold",
     currency: "Valuta",
@@ -549,7 +603,8 @@ const nl: Translation = {
     cardUpdated: "Kaart bijgewerkt",
     cardRemoved: "Kaart verwijderd",
     payTitle: "{{name}} betalen",
-    payDesc: "Registreert een overdracht die het openstaande saldo van deze kaart verlaagt. Huidige schuld:",
+    payDesc:
+      "Registreert een overdracht die het openstaande saldo van deze kaart verlaagt. Huidige schuld:",
     payFrom: "Betalen vanaf",
     amount: "Bedrag",
     recordPayment: "Betaling registreren",
@@ -578,17 +633,21 @@ const nl: Translation = {
     description: "API-opties en gegevensbeheer.",
     api: {
       title: "API & betrouwbaarheid",
-      description: "CoinGecko en Yahoo Finance werken zonder sleutels. Finnhub is een optionele fallback.",
+      description:
+        "CoinGecko en Yahoo Finance werken zonder sleutels. Finnhub is een optionele fallback.",
       displayCurrency: "Weergavevaluta",
-      displayCurrencyHelp: "Alle waarden in de app worden omgezet naar deze valuta via live wisselkoersen (6 uur gecached).",
+      displayCurrencyHelp:
+        "Alle waarden in de app worden omgezet naar deze valuta via live wisselkoersen (6 uur gecached).",
       privacyMode: "Privémodus",
-      privacyModeHelp: "Verberg hoeveelheden en geldbedragen in de hele app (het oogje in de header doet hetzelfde).",
+      privacyModeHelp:
+        "Verberg hoeveelheden en geldbedragen in de hele app (het oogje in de header doet hetzelfde).",
       useCorsProxy: "CORS-proxy gebruiken",
       useCorsProxyHelp: "Schakel in als Yahoo Finance-verzoeken in je browser worden geblokkeerd.",
       corsProxyUrl: "CORS-proxy-URL",
       finnhubKey: "Finnhub API-sleutel (optioneel)",
       finnhubPlaceholder: "plak sleutel van finnhub.io",
-      finnhubFootnote: "Gratis op finnhub.io. Gebruikt als fallback voor aandelen wanneer Yahoo faalt.",
+      finnhubFootnote:
+        "Gratis op finnhub.io. Gebruikt als fallback voor aandelen wanneer Yahoo faalt.",
       saved: "Opgeslagen",
       clearPriceCache: "Prijsgeschiedenis vernieuwen",
       clearPriceCacheHelp:
@@ -602,7 +661,8 @@ const nl: Translation = {
       enabled: "AI-assistent tonen",
       enabledHelp: "Verberg de assistent in het navigatiemenu om ruimte vrij te maken.",
       voiceOutput: "Antwoorden hardop voorlezen",
-      voiceOutputHelp: "Leest de antwoorden van de assistent voor met tekst-naar-spraak op het apparaat.",
+      voiceOutputHelp:
+        "Leest de antwoorden van de assistent voor met tekst-naar-spraak op het apparaat.",
       llmModel: "Taalmodel (GGUF)",
       llmModelHelp:
         "bijv. Qwen2.5-1.5B-Instruct Q4_K_M. Zonder model wordt de ingebouwde assistent gebruikt.",
@@ -641,13 +701,15 @@ const nl: Translation = {
     },
     data: {
       title: "Gegevens",
-      description: "Alle staat staat in de localStorage van je browser. Maak een back-up of verplaats het wanneer je wilt.",
+      description:
+        "Alle staat staat in de localStorage van je browser. Maak een back-up of verplaats het wanneer je wilt.",
       exportJson: "Volledige staat exporteren (JSON)",
       exportCsv: "Beleggingen exporteren (CSV)",
       importJson: "JSON importeren",
       reset: "Alle gegevens wissen",
       resetTitle: "Alles verwijderen?",
-      resetDesc: "Dit verwijdert alle beleggingen, kasstroomitems en instellingen van deze browser. Exporteer eerst een back-up als je deze wilt bewaren.",
+      resetDesc:
+        "Dit verwijdert alle beleggingen, kasstroomitems en instellingen van deze browser. Exporteer eerst een back-up als je deze wilt bewaren.",
       resetConfirm: "Ja, verwijder",
       imported: "Gegevens geïmporteerd",
       importFailed: "Kon niet importeren",
@@ -663,7 +725,8 @@ const nl: Translation = {
       copyFailed: "Kopiëren mislukt",
       copyJson: "JSON naar klembord kopiëren",
       pasteJson: "JSON plakken om te importeren",
-      pasteJsonDesc: "Plak hieronder een eerder geëxporteerd JSON. Dit vervangt je huidige gegevens.",
+      pasteJsonDesc:
+        "Plak hieronder een eerder geëxporteerd JSON. Dit vervangt je huidige gegevens.",
       pasteFromClipboard: "Plakken vanuit klembord",
       clipboardReadFailed: "Kon klembord niet lezen",
     },
@@ -701,7 +764,8 @@ const nl: Translation = {
     entriesNoneInRange: "Geen items in geselecteerd bereik",
     entriesEditAria: "Item bewerken",
     entriesDeleteAria: "Item verwijderen",
-    entriesDeleteRecurringConfirm: "Het volledige terugkerende item en alle voorkomens verwijderen?",
+    entriesDeleteRecurringConfirm:
+      "Het volledige terugkerende item en alle voorkomens verwijderen?",
     entriesUpdated: "Item bijgewerkt",
     entriesPdfExported: "PDF geëxporteerd",
     entriesPdfTitle: "Cashflow rapport",
@@ -715,7 +779,8 @@ const nl: Translation = {
     entriesOf: "van",
     mcTrigger: "Categorieën",
     mcTitle: "Categorieën beheren",
-    mcDesc: "Organiseer inkomstenbronnen en uitgavencategorieën. Sparen en Beleggingen zijn uitgavencategorieën met eigen kleur.",
+    mcDesc:
+      "Organiseer inkomstenbronnen en uitgavencategorieën. Sparen en Beleggingen zijn uitgavencategorieën met eigen kleur.",
     mcAddNew: "Nieuwe toevoegen",
     mcNamePlaceholder: "Naam categorie",
     mcAdd: "Toevoegen",
@@ -811,42 +876,120 @@ const nl: Translation = {
     skip: "Overslaan",
     progress: "{{current}} van {{total}}",
     restartTitle: "Onboarding-rondleiding",
-    restartDesc: "Speel de begeleide rondleiding op elk moment opnieuw af om je geheugen op te frissen.",
+    restartDesc:
+      "Speel de begeleide rondleiding op elk moment opnieuw af om je geheugen op te frissen.",
     restartButton: "Start rondleiding",
     steps: {
-      welcome: { title: "Welkom bij je financiële hub", body: "Laten we een korte rondleiding doen door de app zodat je elke sectie optimaal benut. Je kunt deze rondleiding altijd overslaan of opnieuw afspelen vanuit Instellingen." },
-      sidebar: { title: "Hoofdnavigatie", body: "Gebruik deze zijbalk om te wisselen tussen Dashboard, Beleggingen, Prestaties, Kasstroom en Instellingen." },
-      mobileNav: { title: "Snelle navigatie", body: "Op de telefoon gebruik je de onderbalk om tussen hoofdsecties te wisselen." },
-      theme: { title: "Licht & donker", body: "Wissel tussen licht en donker thema. De app onthoudt je keuze." },
-      privacy: { title: "Privacymodus", body: "Verberg alle bedragen met één klik - ideaal voor schermdelen of grafieken in het openbaar." },
-      dashStats: { title: "Je belangrijkste cijfers", body: "Portefeuillewaarde, vermogen en de laatste 30 dagen kasstroom in één oogopslag." },
-      dashAllocation: { title: "Activaverdeling", body: "Zie hoe je portefeuille is verdeeld. Wissel activa in de legenda of toon alle labels." },
-      dashBreakdown: { title: "Uitsplitsing per activum", body: "Gedetailleerde lijst van elke belegging met huidig gewicht in de portefeuille." },
-      holdingsAdd: { title: "Belegging toevoegen", body: "Volg aandelen, ETF's, crypto, contanten, metalen en meer. Prijzen worden waar mogelijk automatisch opgehaald." },
-      holdingsFilters: { title: "Zoeken en filteren", body: "Vind elke belegging op naam, symbool of type." },
-      holdingsTable: { title: "Je beleggingen", body: "Bekijk aantal, prijs en waarde van elke positie. Klik op een rij om te bewerken of te verwijderen." },
-      holdingsCharts: { title: "Verdeelgrafieken", body: "Visualiseer hoe je geld verdeeld is over activaklassen en horizons (lang vs kort)." },
-      holdingsTx: { title: "Aan- en verkopen", body: "Registreer elke transactie. De app houdt je aantallen automatisch up-to-date." },
-      perfPeriod: { title: "Kies een periode", body: "Vergelijk je portefeuille over 24 uur, een week, een maand, een jaar of langer." },
-      perfAssets: { title: "Activa wisselen", body: "Toon of verberg individuele activa om alleen te vergelijken wat jij wilt." },
-      perfChart: { title: "Portefeuillewaarde over tijd", body: "Beweeg over de grafiek om de exacte waarde op elk moment te zien." },
-      perfReturns: { title: "Rendement per activum", body: "Bekijk start- en eindprijs en totale verandering voor elke belegging in de periode." },
-      cfAdd: { title: "Inkomen, uitgaven & overboekingen toevoegen", body: "Registreer eenmalige of terugkerende boekingen, markeer bedragen als percentages (handig voor belasting), en betaal met cash of creditcard." },
-      cfSankey: { title: "Geldstroomdiagram", body: "Zie hoe je geld stroomt van inkomstenbronnen naar uitgaven, sparen en beleggen. Sleep rijen om ze te herordenen." },
-      cfEntries: { title: "Al je boekingen", body: "Filter op type, categorie en periode, bewerk boekingen en exporteer een PDF met saldografiek." },
-      cfCards: { title: "Creditcards & schuld", body: "Beheer kaartlimieten, saldi en schuldaflossingen. Met de kaart betaalde uitgaven verschijnen ook in het diagram." },
-      setApi: { title: "API & weergave", body: "Kies je weergavemunteenheid, schakel een CORS-proxy in indien nodig en voeg je Finnhub API-sleutel toe voor rijkere prijsdata." },
-      setLanguage: { title: "Taal", body: "Wissel tussen Engels, Spaans, Catalaans/Valenciaans, Portugees, Nederlands en Duits. Je keuze wordt opgeslagen en is exporteerbaar." },
-      setData: { title: "Backup & herstel", body: "Exporteer je gegevens als JSON of CSV, importeer een eerdere backup of reset alles." },
-      finish: { title: "Helemaal klaar!", body: "Dat was het. Je kunt deze rondleiding altijd opnieuw afspelen via Instellingen. Veel succes!" },
+      welcome: {
+        title: "Welkom bij je financiële hub",
+        body: "Laten we een korte rondleiding doen door de app zodat je elke sectie optimaal benut. Je kunt deze rondleiding altijd overslaan of opnieuw afspelen vanuit Instellingen.",
+      },
+      sidebar: {
+        title: "Hoofdnavigatie",
+        body: "Gebruik deze zijbalk om te wisselen tussen Dashboard, Beleggingen, Prestaties, Kasstroom en Instellingen.",
+      },
+      mobileNav: {
+        title: "Snelle navigatie",
+        body: "Op de telefoon gebruik je de onderbalk om tussen hoofdsecties te wisselen.",
+      },
+      theme: {
+        title: "Licht & donker",
+        body: "Wissel tussen licht en donker thema. De app onthoudt je keuze.",
+      },
+      privacy: {
+        title: "Privacymodus",
+        body: "Verberg alle bedragen met één klik - ideaal voor schermdelen of grafieken in het openbaar.",
+      },
+      dashStats: {
+        title: "Je belangrijkste cijfers",
+        body: "Portefeuillewaarde, vermogen en de laatste 30 dagen kasstroom in één oogopslag.",
+      },
+      dashAllocation: {
+        title: "Activaverdeling",
+        body: "Zie hoe je portefeuille is verdeeld. Wissel activa in de legenda of toon alle labels.",
+      },
+      dashBreakdown: {
+        title: "Uitsplitsing per activum",
+        body: "Gedetailleerde lijst van elke belegging met huidig gewicht in de portefeuille.",
+      },
+      holdingsAdd: {
+        title: "Belegging toevoegen",
+        body: "Volg aandelen, ETF's, crypto, contanten, metalen en meer. Prijzen worden waar mogelijk automatisch opgehaald.",
+      },
+      holdingsFilters: {
+        title: "Zoeken en filteren",
+        body: "Vind elke belegging op naam, symbool of type.",
+      },
+      holdingsTable: {
+        title: "Je beleggingen",
+        body: "Bekijk aantal, prijs en waarde van elke positie. Klik op een rij om te bewerken of te verwijderen.",
+      },
+      holdingsCharts: {
+        title: "Verdeelgrafieken",
+        body: "Visualiseer hoe je geld verdeeld is over activaklassen en horizons (lang vs kort).",
+      },
+      holdingsTx: {
+        title: "Aan- en verkopen",
+        body: "Registreer elke transactie. De app houdt je aantallen automatisch up-to-date.",
+      },
+      perfPeriod: {
+        title: "Kies een periode",
+        body: "Vergelijk je portefeuille over 24 uur, een week, een maand, een jaar of langer.",
+      },
+      perfAssets: {
+        title: "Activa wisselen",
+        body: "Toon of verberg individuele activa om alleen te vergelijken wat jij wilt.",
+      },
+      perfChart: {
+        title: "Portefeuillewaarde over tijd",
+        body: "Beweeg over de grafiek om de exacte waarde op elk moment te zien.",
+      },
+      perfReturns: {
+        title: "Rendement per activum",
+        body: "Bekijk start- en eindprijs en totale verandering voor elke belegging in de periode.",
+      },
+      cfAdd: {
+        title: "Inkomen, uitgaven & overboekingen toevoegen",
+        body: "Registreer eenmalige of terugkerende boekingen, markeer bedragen als percentages (handig voor belasting), en betaal met cash of creditcard.",
+      },
+      cfSankey: {
+        title: "Geldstroomdiagram",
+        body: "Zie hoe je geld stroomt van inkomstenbronnen naar uitgaven, sparen en beleggen. Sleep rijen om ze te herordenen.",
+      },
+      cfEntries: {
+        title: "Al je boekingen",
+        body: "Filter op type, categorie en periode, bewerk boekingen en exporteer een PDF met saldografiek.",
+      },
+      cfCards: {
+        title: "Creditcards & schuld",
+        body: "Beheer kaartlimieten, saldi en schuldaflossingen. Met de kaart betaalde uitgaven verschijnen ook in het diagram.",
+      },
+      setApi: {
+        title: "API & weergave",
+        body: "Kies je weergavemunteenheid, schakel een CORS-proxy in indien nodig en voeg je Finnhub API-sleutel toe voor rijkere prijsdata.",
+      },
+      setLanguage: {
+        title: "Taal",
+        body: "Wissel tussen Engels, Spaans, Catalaans/Valenciaans, Portugees, Nederlands en Duits. Je keuze wordt opgeslagen en is exporteerbaar.",
+      },
+      setData: {
+        title: "Backup & herstel",
+        body: "Exporteer je gegevens als JSON of CSV, importeer een eerdere backup of reset alles.",
+      },
+      finish: {
+        title: "Helemaal klaar!",
+        body: "Dat was het. Je kunt deze rondleiding altijd opnieuw afspelen via Instellingen. Veel succes!",
+      },
     },
   },
   planning: {
     title: "Planning",
-    description: "Budgetten, doelen, prognoses en leningen - allemaal afgeleid van je bestaande cashflow.",
+    description:
+      "Budgetten, doelen, prognoses en leningen - allemaal afgeleid van je bestaande cashflow.",
     head: {
       title: "Planning · Budgetten, Doelen, Prognose, Leningen",
-      description: "Plan je financiën: maandelijkse budgetten, spaardoelen, cashflow-prognoses en afbetalingsschema's.",
+      description:
+        "Plan je financiën: maandelijkse budgetten, spaardoelen, cashflow-prognoses en afbetalingsschema's.",
     },
     tabs: { budgets: "Budgetten", goals: "Spaardoelen", forecast: "Prognose", loans: "Leningen" },
     budgets: {
@@ -885,7 +1028,8 @@ const nl: Translation = {
       pieTitle: "Budgetuitsplitsing",
       pieEmpty: "Voeg items toe om de uitsplitsing te zien",
       editPlan: "Plan bewerken",
-      planDialogDesc: "Geef dit budget een duidelijke naam zodat je het van je andere budgetten kunt onderscheiden.",
+      planDialogDesc:
+        "Geef dit budget een duidelijke naam zodat je het van je andere budgetten kunt onderscheiden.",
       planName: "Naam",
       planNamePlaceholder: "bijv. Japanreis 2026",
       planDescription: "Beschrijving (optioneel)",
@@ -915,9 +1059,11 @@ const nl: Translation = {
       liquidityForecast: "Liquiditeitsprognose",
       months: "Maanden",
       projectedBalance: "Verwacht saldo",
-      runway: "Met je huidige terugkerende uitgaven heb je ~{{months}} maanden runway vanaf de liquiditeit van vandaag.",
+      runway:
+        "Met je huidige terugkerende uitgaven heb je ~{{months}} maanden runway vanaf de liquiditeit van vandaag.",
       recurringTitle: "Terugkerende abonnementen & inkomsten",
-      recurringEmpty: "Geen terugkerende posten. Markeer inkomsten/uitgaven als terugkerend op de Cashflow-pagina.",
+      recurringEmpty:
+        "Geen terugkerende posten. Markeer inkomsten/uitgaven als terugkerend op de Cashflow-pagina.",
       perMo: "{{amount}}/mnd",
       newScenarioName: "Nieuw scenario",
       noScenariosHint:
@@ -968,7 +1114,14 @@ const nl: Translation = {
       extraShort: "Extra: {{amount}}/mnd",
       extraLabel: "Extra/mnd",
       meta: "{{principal}} tegen {{apr}}% JKP · {{months}} mnd · start {{date}}",
-      tbl: { n: "#", date: "Datum", payment: "Betaling", interest: "Rente", principal: "Hoofdsom", balance: "Saldo" },
+      tbl: {
+        n: "#",
+        date: "Datum",
+        payment: "Betaling",
+        interest: "Rente",
+        principal: "Hoofdsom",
+        balance: "Saldo",
+      },
     },
   },
 };

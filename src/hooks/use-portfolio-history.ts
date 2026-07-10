@@ -12,9 +12,7 @@ const MAX_TTL = 24 * 60 * 60 * 1000;
 const INTRA_TTL = 5 * 60 * 1000;
 
 function holdingsKey(holdings: Holding[]) {
-  return holdings
-    .map((h) => `${h.id}:${h.symbol}:${h.coinGeckoId ?? ""}:${h.quantity}`)
-    .join("|");
+  return holdings.map((h) => `${h.id}:${h.symbol}:${h.coinGeckoId ?? ""}:${h.quantity}`).join("|");
 }
 
 /** Full ("Max") history for every holding, fetched once and shared. */

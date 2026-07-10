@@ -30,9 +30,7 @@ export function amortize(loan: Loan): AmortSummary {
   const n = Math.max(1, Math.floor(loan.termMonths));
   const P = Math.max(0, loan.principal);
   const basePayment =
-    monthlyRate === 0
-      ? P / n
-      : (P * monthlyRate) / (1 - Math.pow(1 + monthlyRate, -n));
+    monthlyRate === 0 ? P / n : (P * monthlyRate) / (1 - Math.pow(1 + monthlyRate, -n));
 
   const rows: AmortRow[] = [];
   let balance = P;

@@ -1,9 +1,4 @@
-import {
-  GROUP_COLORS,
-  type CashflowEntry,
-  type Category,
-  type CategoryGroup,
-} from "@/lib/types";
+import { GROUP_COLORS, type CashflowEntry, type Category, type CategoryGroup } from "@/lib/types";
 import type { SankeyDatum } from "@/components/sankey-chart";
 
 export type SankeyLayoutMode = "classic" | "staged";
@@ -68,12 +63,7 @@ function resolveCategoryName(
   return raw;
 }
 
-function uniqueLeafName(
-  desc: string,
-  category: string,
-  used: Set<string>,
-  labels: SankeyLabels,
-) {
+function uniqueLeafName(desc: string, category: string, used: Set<string>, labels: SankeyLabels) {
   const d = desc.trim();
   const candidates = d
     ? [d, `${d} · ${category}`, `${category} · ${d}`]
@@ -242,7 +232,12 @@ export function buildClassicSankey(ctx: ClassicSankeyContext): SankeyDatum | nul
       .reduce((s, t) => s + (valuesTop.get(t.id) ?? 0), 0);
   const saved = Math.max(0, totalIntoPool - totalOutOfPool);
   if (saved > 0) {
-    pushNode({ name: SAVED, kind: "saved", fill: prefs.nodeColors[SAVED] ?? SAVED_COLOR, group: "savings" });
+    pushNode({
+      name: SAVED,
+      kind: "saved",
+      fill: prefs.nodeColors[SAVED] ?? SAVED_COLOR,
+      group: "savings",
+    });
     addLink(POOL, SAVED, saved);
   }
 
@@ -343,10 +338,7 @@ export function buildStagedSankey(ctx: StagedSankeyContext): SankeyDatum | null 
     });
 
     if (showCategories) {
-      const orderedIncomeCats = applyOrder(
-        Array.from(incomeByCategory.keys()),
-        prefs.incomeOrder,
-      );
+      const orderedIncomeCats = applyOrder(Array.from(incomeByCategory.keys()), prefs.incomeOrder);
       for (const cat of orderedIncomeCats) {
         const v = incomeByCategory.get(cat) ?? 0;
         const catName = pushNode({
@@ -461,10 +453,7 @@ export function buildStagedSankey(ctx: StagedSankeyContext): SankeyDatum | null 
     if (!catMap) continue;
 
     if (showCategories) {
-      const orderedCats = applyOrder(
-        Array.from(catMap.keys()),
-        prefs.expenseOrder,
-      );
+      const orderedCats = applyOrder(Array.from(catMap.keys()), prefs.expenseOrder);
       for (const cat of orderedCats) {
         const v = catMap.get(cat) ?? 0;
         const catName = pushNode({

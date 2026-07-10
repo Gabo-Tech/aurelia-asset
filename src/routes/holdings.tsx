@@ -25,7 +25,17 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Card, CardContent } from "@/components/ui/card";
-import { Plus, MoreVertical, RefreshCw, ArrowUpDown, Trash2, Pencil, Loader2, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import {
+  Plus,
+  MoreVertical,
+  RefreshCw,
+  ArrowUpDown,
+  Trash2,
+  Pencil,
+  Loader2,
+  ArrowUpRight,
+  ArrowDownRight,
+} from "lucide-react";
 import { PageHeader } from "@/components/app-shell";
 import { useTranslation } from "react-i18next";
 import i18n from "@/i18n";
@@ -93,8 +103,7 @@ function HoldingsPage() {
       if (typeFilter !== "all" && h.type !== typeFilter) return false;
       if (search) {
         const q = search.toLowerCase();
-        if (!h.symbol.toLowerCase().includes(q) && !h.name.toLowerCase().includes(q))
-          return false;
+        if (!h.symbol.toLowerCase().includes(q) && !h.name.toLowerCase().includes(q)) return false;
       }
       return true;
     });
@@ -111,8 +120,7 @@ function HoldingsPage() {
         const dir = sort.dir === "asc" ? 1 : -1;
         const av = a[sort.key];
         const bv = b[sort.key];
-        if (typeof av === "string" && typeof bv === "string")
-          return av.localeCompare(bv) * dir;
+        if (typeof av === "string" && typeof bv === "string") return av.localeCompare(bv) * dir;
         return ((av as number) - (bv as number)) * dir;
       });
   }, [state.holdings, search, typeFilter, sort, total, toDisplay]);
@@ -122,7 +130,7 @@ function HoldingsPage() {
 
   function toggleSort(key: SortKey) {
     setSort((s) =>
-      s.key === key ? { key, dir: s.dir === "asc" ? "desc" : "asc" } : { key, dir: "desc" }
+      s.key === key ? { key, dir: s.dir === "asc" ? "desc" : "asc" } : { key, dir: "desc" },
     );
   }
 
@@ -140,7 +148,7 @@ function HoldingsPage() {
               priceCurrency: q.currency ?? h.priceCurrency ?? "USD",
               lastPriceAt: Date.now(),
             });
-        })
+        }),
       );
       toast.success(t("holdings.refreshed"));
     } catch {
@@ -190,7 +198,13 @@ function HoldingsPage() {
               }}
               className="max-w-xs"
             />
-            <Select value={typeFilter} onValueChange={(v) => { setTypeFilter(v); setPage(0); }}>
+            <Select
+              value={typeFilter}
+              onValueChange={(v) => {
+                setTypeFilter(v);
+                setPage(0);
+              }}
+            >
               <SelectTrigger className="w-40">
                 <SelectValue placeholder={t("more.hType")} />
               </SelectTrigger>
@@ -215,13 +229,42 @@ function HoldingsPage() {
                 <TableHeader>
                   <TableRow className="bg-muted/30 hover:bg-muted/30">
                     <TableHead className="w-10"></TableHead>
-                    <SortHead label={t("more.hSymbol")} k="symbol" sort={sort} onClick={toggleSort} />
+                    <SortHead
+                      label={t("more.hSymbol")}
+                      k="symbol"
+                      sort={sort}
+                      onClick={toggleSort}
+                    />
                     <TableHead>{t("more.hName")}</TableHead>
                     <SortHead label={t("more.hType")} k="type" sort={sort} onClick={toggleSort} />
-                    <SortHead label={t("more.hQuantity")} k="quantity" sort={sort} onClick={toggleSort} className="text-right" />
-                    <SortHead label={t("more.hPrice")} k="currentPrice" sort={sort} onClick={toggleSort} className="text-right" />
-                    <SortHead label={t("more.hValue")} k="marketValue" sort={sort} onClick={toggleSort} className="text-right" />
-                    <SortHead label="%" k="pct" sort={sort} onClick={toggleSort} className="text-right" />
+                    <SortHead
+                      label={t("more.hQuantity")}
+                      k="quantity"
+                      sort={sort}
+                      onClick={toggleSort}
+                      className="text-right"
+                    />
+                    <SortHead
+                      label={t("more.hPrice")}
+                      k="currentPrice"
+                      sort={sort}
+                      onClick={toggleSort}
+                      className="text-right"
+                    />
+                    <SortHead
+                      label={t("more.hValue")}
+                      k="marketValue"
+                      sort={sort}
+                      onClick={toggleSort}
+                      className="text-right"
+                    />
+                    <SortHead
+                      label="%"
+                      k="pct"
+                      sort={sort}
+                      onClick={toggleSort}
+                      className="text-right"
+                    />
                     <TableHead className="w-10"></TableHead>
                   </TableRow>
                 </TableHeader>
@@ -249,7 +292,9 @@ function HoldingsPage() {
                       <TableCell className="text-right tabular-nums">
                         {formatMoney(h.currentPrice, h.priceCurrency || "USD")}
                         {h.manualPrice != null && (
-                          <span className="ml-1 text-[10px] text-muted-foreground">{t("more.hManual")}</span>
+                          <span className="ml-1 text-[10px] text-muted-foreground">
+                            {t("more.hManual")}
+                          </span>
                         )}
                       </TableCell>
                       <TableCell className="text-right tabular-nums font-medium">
@@ -261,7 +306,12 @@ function HoldingsPage() {
                       <TableCell>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={`Actions for ${h.name || h.symbol}`}>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              aria-label={`Actions for ${h.name || h.symbol}`}
+                            >
                               <MoreVertical className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
@@ -315,7 +365,12 @@ function HoldingsPage() {
                 Page {page + 1} of {pageCount}
               </div>
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage((p) => p - 1)}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={page === 0}
+                  onClick={() => setPage((p) => p - 1)}
+                >
                   Previous
                 </Button>
                 <Button
@@ -332,13 +387,20 @@ function HoldingsPage() {
         </CardContent>
       </Card>
 
-      <div data-tour="holdings-charts"><HoldingsCharts /></div>
-      <div data-tour="holdings-tx"><TransactionsPanel /></div>
+      <div data-tour="holdings-charts">
+        <HoldingsCharts />
+      </div>
+      <div data-tour="holdings-tx">
+        <TransactionsPanel />
+      </div>
 
       <HoldingDialog open={open} onOpenChange={setOpen} editing={editing} />
       <TransactionDialog
         open={txOpen}
-        onOpenChange={(b) => { setTxOpen(b); if (!b) setTxHoldingId(undefined); }}
+        onOpenChange={(b) => {
+          setTxOpen(b);
+          if (!b) setTxHoldingId(undefined);
+        }}
         defaultHoldingId={txHoldingId}
       />
     </>
@@ -364,7 +426,7 @@ function SortHead({
         onClick={() => onClick(k)}
         className={cn(
           "inline-flex items-center gap-1 text-xs uppercase tracking-wider text-muted-foreground hover:text-foreground",
-          sort.key === k && "text-foreground"
+          sort.key === k && "text-foreground",
         )}
       >
         {label}

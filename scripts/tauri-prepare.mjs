@@ -2,11 +2,7 @@
  * Post-build step for Tauri: generate index.html and copy static assets
  * needed when serving the TanStack Start client bundle without a server.
  */
-import {
-  copyFileSync,
-  readdirSync,
-  writeFileSync,
-} from "node:fs";
+import { copyFileSync, readdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -29,7 +25,9 @@ function copyLogo() {
 function fallbackIndexHtml() {
   const entry = findAsset("index-");
   const styles = findAsset("styles-");
-  const driverCss = readdirSync(assetsDir).find((f) => f.startsWith("driver-") && f.endsWith(".css"));
+  const driverCss = readdirSync(assetsDir).find(
+    (f) => f.startsWith("driver-") && f.endsWith(".css"),
+  );
   const themeScript = `(function(){try{var t=localStorage.getItem('ept_theme');if(t!=='light'&&t!=='dark'){t='dark';}var r=document.documentElement;r.classList.toggle('dark',t==='dark');r.style.colorScheme=t;var m=document.querySelector('meta[name="theme-color"]');if(m){m.setAttribute('content',t==='dark'?'#0B0B0C':'#FDFBF9');}}catch(e){document.documentElement.classList.add('dark');}})();`;
 
   return `<!DOCTYPE html>

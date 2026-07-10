@@ -124,7 +124,12 @@ export function ChartFrame({ children, filename = "chart", title, className, ext
                 <div className="truncate text-sm font-medium">{title ?? filename}</div>
                 <div className="flex items-center gap-1.5">
                   {extras}
-                  <ToolButton onClick={screenshot} icon={Camera} label="Save as PNG" disabled={shooting} />
+                  <ToolButton
+                    onClick={screenshot}
+                    icon={Camera}
+                    label="Save as PNG"
+                    disabled={shooting}
+                  />
                   <ToolButton onClick={() => setFull(false)} icon={X} label="Close" />
                 </div>
               </div>

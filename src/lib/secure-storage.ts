@@ -81,11 +81,7 @@ export async function encryptString(plaintext: string): Promise<string> {
   const key = await getEncryptionKey();
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const ct = new Uint8Array(
-    await crypto.subtle.encrypt(
-      { name: "AES-GCM", iv },
-      key,
-      new TextEncoder().encode(plaintext),
-    ),
+    await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, new TextEncoder().encode(plaintext)),
   );
   const buf = new Uint8Array(iv.length + ct.length);
   buf.set(iv, 0);

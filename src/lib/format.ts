@@ -1,11 +1,7 @@
 /** Mask string for private values. */
 export const MASK = "••••";
 
-export function formatMoney(
-  n: number,
-  currency = "USD",
-  opts: { compact?: boolean } = {},
-) {
+export function formatMoney(n: number, currency = "USD", opts: { compact?: boolean } = {}) {
   if (!isFinite(n)) n = 0;
   const compact = !!opts.compact && Math.abs(n) >= 1000;
   try {
@@ -19,7 +15,6 @@ export function formatMoney(
   } catch {
     return `${currency} ${n.toFixed(2)}`;
   }
-
 }
 
 export function maskMoney(

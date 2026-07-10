@@ -142,10 +142,7 @@ export const Route = createFileRoute("/")({
   component: LandingPage,
 });
 
-
 function LandingPage() {
-
-
   return (
     <div className="relative min-h-screen overflow-hidden bg-background text-foreground">
       <ScrollAurora />
@@ -153,19 +150,32 @@ function LandingPage() {
       <div className="relative z-10 [&_section]:relative [&_section]:z-10 [&_section]:bg-background/70 [&_section]:backdrop-blur-[1px] [&_header]:bg-background/70">
         <SiteHeader />
         <Hero />
-        <Reveal><SocialProof /></Reveal>
-        <Reveal delay={60}><Features /></Reveal>
-        <Reveal delay={60}><HowItWorks /></Reveal>
-        <Reveal delay={60}><Comparison /></Reveal>
-        <Reveal delay={60}><Downloads /></Reveal>
-        <Reveal delay={60}><FAQ /></Reveal>
-        <Reveal delay={60}><FinalCTA /></Reveal>
+        <Reveal>
+          <SocialProof />
+        </Reveal>
+        <Reveal delay={60}>
+          <Features />
+        </Reveal>
+        <Reveal delay={60}>
+          <HowItWorks />
+        </Reveal>
+        <Reveal delay={60}>
+          <Comparison />
+        </Reveal>
+        <Reveal delay={60}>
+          <Downloads />
+        </Reveal>
+        <Reveal delay={60}>
+          <FAQ />
+        </Reveal>
+        <Reveal delay={60}>
+          <FinalCTA />
+        </Reveal>
         <SiteFooter />
       </div>
     </div>
   );
 }
-
 
 function SiteHeader() {
   const { t } = useTranslation();
@@ -189,9 +199,15 @@ function SiteHeader() {
           </div>
         </Link>
         <nav className="hidden items-center gap-7 text-sm text-muted-foreground md:flex">
-          <a href="#features" className="hover:text-foreground">{t("landing.nav.features")}</a>
-          <a href="#how" className="hover:text-foreground">{t("landing.nav.how")}</a>
-          <a href="#faq" className="hover:text-foreground">{t("landing.nav.faq")}</a>
+          <a href="#features" className="hover:text-foreground">
+            {t("landing.nav.features")}
+          </a>
+          <a href="#how" className="hover:text-foreground">
+            {t("landing.nav.how")}
+          </a>
+          <a href="#faq" className="hover:text-foreground">
+            {t("landing.nav.faq")}
+          </a>
         </nav>
         <Link
           to="/dashboard"
@@ -210,29 +226,47 @@ function Hero() {
     <section className="relative overflow-hidden border-b border-border/50">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_50%_at_50%_0%,hsl(var(--primary)/0.18),transparent_70%)]" />
       <div className="relative mx-auto max-w-6xl px-4 py-20 text-center sm:px-6 sm:py-28">
-        <div className="mx-auto inline-flex animate-fade-in items-center gap-2 rounded-full border border-border/60 bg-card/60 px-3 py-1 text-xs text-muted-foreground" style={{ animationDelay: "0ms", animationFillMode: "both" }}>
+        <div
+          className="mx-auto inline-flex animate-fade-in items-center gap-2 rounded-full border border-border/60 bg-card/60 px-3 py-1 text-xs text-muted-foreground"
+          style={{ animationDelay: "0ms", animationFillMode: "both" }}
+        >
           <ShieldCheck className="h-3.5 w-3.5 text-primary" />
           {t("landing.hero.badge")}
         </div>
-        <h1 className="mx-auto mt-6 max-w-3xl animate-fade-in text-4xl font-semibold tracking-tight sm:text-6xl" style={{ animationDelay: "120ms", animationDuration: "700ms", animationFillMode: "both" }}>
+        <h1
+          className="mx-auto mt-6 max-w-3xl animate-fade-in text-4xl font-semibold tracking-tight sm:text-6xl"
+          style={{ animationDelay: "120ms", animationDuration: "700ms", animationFillMode: "both" }}
+        >
           {t("landing.hero.titleStart")}{" "}
           <span className="bg-gradient-to-br from-primary via-primary to-foreground bg-clip-text text-transparent">
             {t("landing.hero.titleHighlight")}
           </span>
           .
         </h1>
-        <p className="mx-auto mt-5 max-w-2xl animate-fade-in text-base text-muted-foreground sm:text-lg" style={{ animationDelay: "240ms", animationDuration: "700ms", animationFillMode: "both" }}>
+        <p
+          className="mx-auto mt-5 max-w-2xl animate-fade-in text-base text-muted-foreground sm:text-lg"
+          style={{ animationDelay: "240ms", animationDuration: "700ms", animationFillMode: "both" }}
+        >
           {t("landing.hero.subtitle")}
         </p>
 
-        <div className="mt-10 flex animate-fade-in flex-col items-center justify-center gap-4 sm:flex-row sm:flex-wrap" style={{ animationDelay: "360ms", animationDuration: "700ms", animationFillMode: "both" }}>
+        <div
+          className="mt-10 flex animate-fade-in flex-col items-center justify-center gap-4 sm:flex-row sm:flex-wrap"
+          style={{ animationDelay: "360ms", animationDuration: "700ms", animationFillMode: "both" }}
+        >
           <Link
             to="/dashboard"
             aria-label={t("landing.hero.ctaPrimary")}
             className="group relative inline-flex items-center gap-2.5 overflow-hidden rounded-2xl bg-primary px-8 py-4 text-base font-semibold text-primary-foreground shadow-2xl shadow-primary/30 ring-1 ring-primary/40 transition-all hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-primary/40 sm:text-lg"
           >
-            <span aria-hidden className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
-            <span className="pointer-events-none absolute -inset-1 -z-10 rounded-2xl bg-primary/40 opacity-70 blur-xl animate-pulse" aria-hidden />
+            <span
+              aria-hidden
+              className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700 group-hover:translate-x-full"
+            />
+            <span
+              className="pointer-events-none absolute -inset-1 -z-10 rounded-2xl bg-primary/40 opacity-70 blur-xl animate-pulse"
+              aria-hidden
+            />
             {t("landing.hero.ctaPrimary")}
             <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
           </Link>
@@ -244,7 +278,10 @@ function Hero() {
           </a>
         </div>
 
-        <div className="mx-auto mt-14 max-w-5xl animate-fade-in" style={{ animationDelay: "480ms", animationDuration: "900ms", animationFillMode: "both" }}>
+        <div
+          className="mx-auto mt-14 max-w-5xl animate-fade-in"
+          style={{ animationDelay: "480ms", animationDuration: "900ms", animationFillMode: "both" }}
+        >
           <div className="rounded-2xl border border-border/60 bg-card/40 p-2 shadow-2xl shadow-primary/5">
             <img
               src={ASSETS.hero}
@@ -254,7 +291,6 @@ function Hero() {
             />
           </div>
         </div>
-
       </div>
     </section>
   );
@@ -272,7 +308,10 @@ function SocialProof() {
     <section className="border-b border-border/50 bg-card/20">
       <div className="mx-auto grid max-w-6xl grid-cols-2 gap-6 px-4 py-8 sm:grid-cols-4 sm:px-6">
         {items.map((it) => (
-          <div key={it.label} className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+          <div
+            key={it.label}
+            className="flex items-center justify-center gap-2 text-sm text-muted-foreground"
+          >
             <it.icon className="h-4 w-4 text-primary" />
             {it.label}
           </div>
@@ -285,25 +324,54 @@ function SocialProof() {
 function Features() {
   const { t } = useTranslation();
   const features = [
-    { icon: Wallet, title: t("landing.features.items.assets.title"), body: t("landing.features.items.assets.body") },
-    { icon: LineChart, title: t("landing.features.items.performance.title"), body: t("landing.features.items.performance.body") },
-    { icon: ArrowLeftRight, title: t("landing.features.items.sankey.title"), body: t("landing.features.items.sankey.body") },
-    { icon: PiggyBank, title: t("landing.features.items.categories.title"), body: t("landing.features.items.categories.body") },
-    { icon: ShieldCheck, title: t("landing.features.items.private.title"), body: t("landing.features.items.private.body") },
-    { icon: Sparkles, title: t("landing.features.items.elegant.title"), body: t("landing.features.items.elegant.body") },
+    {
+      icon: Wallet,
+      title: t("landing.features.items.assets.title"),
+      body: t("landing.features.items.assets.body"),
+    },
+    {
+      icon: LineChart,
+      title: t("landing.features.items.performance.title"),
+      body: t("landing.features.items.performance.body"),
+    },
+    {
+      icon: ArrowLeftRight,
+      title: t("landing.features.items.sankey.title"),
+      body: t("landing.features.items.sankey.body"),
+    },
+    {
+      icon: PiggyBank,
+      title: t("landing.features.items.categories.title"),
+      body: t("landing.features.items.categories.body"),
+    },
+    {
+      icon: ShieldCheck,
+      title: t("landing.features.items.private.title"),
+      body: t("landing.features.items.private.body"),
+    },
+    {
+      icon: Sparkles,
+      title: t("landing.features.items.elegant.title"),
+      body: t("landing.features.items.elegant.body"),
+    },
   ];
 
   return (
     <section id="features" className="border-b border-border/50">
       <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
         <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">{t("landing.features.heading")}</h2>
+          <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+            {t("landing.features.heading")}
+          </h2>
           <p className="mt-3 text-muted-foreground">{t("landing.features.subheading")}</p>
         </div>
 
         <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {features.map((f) => (
-            <article key={f.title} className="rounded-2xl border border-border/60 bg-card/40 p-6 transition-colors hover:border-border">
+            <article
+              key={f.title}
+              className="rounded-2xl border border-border/60 bg-card/40 p-6 transition-colors hover:border-border"
+            >
               <div className="grid h-10 w-10 place-items-center rounded-xl bg-primary/15 text-primary">
                 <f.icon className="h-5 w-5" />
               </div>
@@ -328,11 +396,16 @@ function HowItWorks() {
     <section id="how" className="border-b border-border/50 bg-card/20">
       <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
         <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">{t("landing.how.heading")}</h2>
+          <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+            {t("landing.how.heading")}
+          </h2>
         </div>
         <ol className="mt-12 grid gap-5 md:grid-cols-3">
           {steps.map((s) => (
-            <li key={s.n} className="relative rounded-2xl border border-border/60 bg-background/50 p-6">
+            <li
+              key={s.n}
+              className="relative rounded-2xl border border-border/60 bg-background/50 p-6"
+            >
               <div className="text-xs font-semibold tracking-widest text-primary">{s.n}</div>
               <h3 className="mt-2 text-lg font-semibold">{s.title}</h3>
               <p className="mt-2 text-sm text-muted-foreground">{s.body}</p>
@@ -340,7 +413,10 @@ function HowItWorks() {
           ))}
         </ol>
         <div className="mt-10 text-center">
-          <Link to="/dashboard" className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90">
+          <Link
+            to="/dashboard"
+            className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+          >
             {t("landing.how.cta")} <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
@@ -363,7 +439,9 @@ function Comparison() {
     <section className="border-b border-border/50">
       <div className="mx-auto max-w-4xl px-4 py-20 sm:px-6">
         <div className="text-center">
-          <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">{t("landing.comparison.heading")}</h2>
+          <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+            {t("landing.comparison.heading")}
+          </h2>
           <p className="mt-3 text-muted-foreground">{t("landing.comparison.subheading")}</p>
         </div>
         <div className="mt-10 overflow-hidden rounded-2xl border border-border/60">
@@ -380,7 +458,9 @@ function Comparison() {
                 <tr key={r.label}>
                   <td className="px-4 py-3">{r.label}</td>
                   <td className="px-4 py-3 text-center">{r.us ? "✓" : "-"}</td>
-                  <td className="px-4 py-3 text-center text-muted-foreground">{r.them ? "✓" : "-"}</td>
+                  <td className="px-4 py-3 text-center text-muted-foreground">
+                    {r.them ? "✓" : "-"}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -403,14 +483,21 @@ function FAQ() {
     <section id="faq" className="border-b border-border/50 bg-card/20">
       <div className="mx-auto max-w-3xl px-4 py-20 sm:px-6">
         <div className="text-center">
-          <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">{t("landing.faq.heading")}</h2>
+          <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+            {t("landing.faq.heading")}
+          </h2>
         </div>
         <div className="mt-10 space-y-3">
           {faqs.map((f) => (
-            <details key={f.q} className="group rounded-xl border border-border/60 bg-background/60 px-5 py-4">
+            <details
+              key={f.q}
+              className="group rounded-xl border border-border/60 bg-background/60 px-5 py-4"
+            >
               <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-sm font-medium">
                 {f.q}
-                <span className="text-muted-foreground transition-transform group-open:rotate-45">+</span>
+                <span className="text-muted-foreground transition-transform group-open:rotate-45">
+                  +
+                </span>
               </summary>
               <p className="mt-3 text-sm text-muted-foreground">{f.a}</p>
             </details>
@@ -422,13 +509,7 @@ function FAQ() {
 }
 
 type PlatformKey =
-  | "windows"
-  | "mac"
-  | "linuxDeb"
-  | "linuxRpm"
-  | "linuxAppImage"
-  | "android"
-  | "ios";
+  "windows" | "mac" | "linuxDeb" | "linuxRpm" | "linuxAppImage" | "android" | "ios";
 
 const DOWNLOAD_PLATFORMS: Array<{
   key: PlatformKey;
@@ -474,7 +555,6 @@ const DOWNLOAD_PLATFORMS: Array<{
   { key: "ios", icon: Apple, assetGlob: ".ipa", comingSoon: true },
 ];
 
-
 function Downloads() {
   const { t } = useTranslation();
   const fetchRepo = useServerFn(getGithubRepo);
@@ -506,8 +586,7 @@ function Downloads() {
             const Icon = d.icon;
             const label = t(`landing.downloads.platforms.${d.key}`);
             const note = t(`landing.downloads.notes.${d.key}`, { defaultValue: "" });
-            const releaseHref =
-              d.releaseAsset ? releaseDownloadUrl(d.releaseAsset) : null;
+            const releaseHref = d.releaseAsset ? releaseDownloadUrl(d.releaseAsset) : null;
             const href = releaseHref ?? releaseBase ?? githubSourceUrl();
             const cls =
               "relative flex flex-col items-center justify-center rounded-2xl border border-border/60 bg-card/40 p-6 text-center transition-colors hover:border-primary/60 hover:bg-card";
@@ -527,24 +606,15 @@ function Downloads() {
               );
             }
             return (
-              <a
-                key={d.key}
-                href={href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={cls}
-              >
+              <a key={d.key} href={href} target="_blank" rel="noopener noreferrer" className={cls}>
                 <Icon className="h-7 w-7 text-primary" />
                 <div className="mt-3 text-sm font-semibold">{label}</div>
                 {note && (
-                  <div className="mt-1 text-[10px] leading-tight text-muted-foreground">
-                    {note}
-                  </div>
+                  <div className="mt-1 text-[10px] leading-tight text-muted-foreground">{note}</div>
                 )}
               </a>
             );
           })}
-
         </div>
         <p className="mt-6 text-center text-xs text-muted-foreground">
           {t("landing.downloads.unsignedNotice")}
@@ -560,16 +630,20 @@ function Downloads() {
   );
 }
 
-
 function FinalCTA() {
   const { t } = useTranslation();
   return (
     <section className="border-b border-border/50">
       <div className="mx-auto max-w-4xl px-4 py-24 text-center sm:px-6">
-        <h2 className="text-3xl font-semibold tracking-tight sm:text-5xl">{t("landing.cta.heading")}</h2>
+        <h2 className="text-3xl font-semibold tracking-tight sm:text-5xl">
+          {t("landing.cta.heading")}
+        </h2>
         <p className="mx-auto mt-4 max-w-xl text-muted-foreground">{t("landing.cta.subheading")}</p>
         <div className="mt-8">
-          <Link to="/dashboard" className="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3.5 text-base font-medium text-primary-foreground shadow-lg shadow-primary/20 hover:bg-primary/90">
+          <Link
+            to="/dashboard"
+            className="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3.5 text-base font-medium text-primary-foreground shadow-lg shadow-primary/20 hover:bg-primary/90"
+          >
             {t("landing.cta.button")} <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
@@ -596,12 +670,20 @@ function SiteFooter() {
             height={28}
           />
 
-          <span>{t("landing.footer.brand")} · © {new Date().getFullYear()}</span>
+          <span>
+            {t("landing.footer.brand")} · © {new Date().getFullYear()}
+          </span>
         </div>
         <div className="flex items-center gap-5">
-          <Link to="/dashboard" className="hover:text-foreground">{t("landing.openApp")}</Link>
-          <a href="#features" className="hover:text-foreground">{t("landing.nav.features")}</a>
-          <a href="#faq" className="hover:text-foreground">{t("landing.nav.faq")}</a>
+          <Link to="/dashboard" className="hover:text-foreground">
+            {t("landing.openApp")}
+          </Link>
+          <a href="#features" className="hover:text-foreground">
+            {t("landing.nav.features")}
+          </a>
+          <a href="#faq" className="hover:text-foreground">
+            {t("landing.nav.faq")}
+          </a>
           <a
             href={githubSourceUrl()}
             target="_blank"

@@ -31,11 +31,35 @@ import {
   DialogTrigger,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { Trash2, Plus, Palette, RotateCcw, Settings as SettingsIcon, Pencil, Download, ChevronDown } from "lucide-react";
+import {
+  Trash2,
+  Plus,
+  Palette,
+  RotateCcw,
+  Settings as SettingsIcon,
+  Pencil,
+  Download,
+  ChevronDown,
+} from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { CategoryPieCard, type PieEntry } from "@/components/category-pie-card";
 import { toast } from "sonner";
-import { format, startOfWeek, startOfMonth, startOfYear, endOfWeek, endOfMonth, endOfYear, isWithinInterval, parseISO, eachDayOfInterval, addWeeks, addMonths, addYears, subMonths } from "date-fns";
+import {
+  format,
+  startOfWeek,
+  startOfMonth,
+  startOfYear,
+  endOfWeek,
+  endOfMonth,
+  endOfYear,
+  isWithinInterval,
+  parseISO,
+  eachDayOfInterval,
+  addWeeks,
+  addMonths,
+  addYears,
+  subMonths,
+} from "date-fns";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -80,7 +104,13 @@ export const Route = createFileRoute("/cashflow")({
   component: CashflowPage,
 });
 
-import { GROUP_COLORS, type Category, type CategoryGroup, type CashflowEntry, type RecurrenceFrequency } from "@/lib/types";
+import {
+  GROUP_COLORS,
+  type Category,
+  type CategoryGroup,
+  type CashflowEntry,
+  type RecurrenceFrequency,
+} from "@/lib/types";
 import {
   buildClassicSankey,
   buildStagedSankey,
@@ -92,7 +122,10 @@ import { CreditCardsManager } from "@/components/credit-cards-manager";
 /** Expand recurring cashflow entries into individual occurrences up to `until`.
  *  Each occurrence keeps the original id (with a date suffix) and a `parentId`
  *  pointing to the source entry so the UI can edit/remove the rule. */
-export function expandCashflows(entries: CashflowEntry[], until: Date = new Date()): (CashflowEntry & { parentId: string; isOccurrence: boolean })[] {
+export function expandCashflows(
+  entries: CashflowEntry[],
+  until: Date = new Date(),
+): (CashflowEntry & { parentId: string; isOccurrence: boolean })[] {
   const out: (CashflowEntry & { parentId: string; isOccurrence: boolean })[] = [];
   for (const e of entries) {
     // Installment plans expand into N scheduled child charges.
@@ -165,7 +198,11 @@ export function liquidityImpact(entry: CashflowEntry, valueInDisplay: number): n
 }
 
 /** Signed change to a specific card's balance owed. */
-export function cardDebtImpact(entry: CashflowEntry, cardId: string, valueInDisplay: number): number {
+export function cardDebtImpact(
+  entry: CashflowEntry,
+  cardId: string,
+  valueInDisplay: number,
+): number {
   const ref = `credit:${cardId}` as const;
   if (entry.kind === "expense" && entry.paymentMethod === ref) return valueInDisplay;
   if (entry.kind === "transfer") {
@@ -202,10 +239,14 @@ export function valuesByEntry(
     fixed.set(e.id, v);
     const bk = bucketKey(e);
     if (e.kind === "income") baseIncomeByBucket.set(bk, (baseIncomeByBucket.get(bk) ?? 0) + v);
-    else if (e.kind === "expense") baseExpenseByBucket.set(bk, (baseExpenseByBucket.get(bk) ?? 0) + v);
+    else if (e.kind === "expense")
+      baseExpenseByBucket.set(bk, (baseExpenseByBucket.get(bk) ?? 0) + v);
     const parentId = (e as CashflowEntry & { parentId?: string }).parentId ?? e.id;
     let bm = fixedByParentByBucket.get(bk);
-    if (!bm) { bm = new Map(); fixedByParentByBucket.set(bk, bm); }
+    if (!bm) {
+      bm = new Map();
+      fixedByParentByBucket.set(bk, bm);
+    }
     bm.set(parentId, (bm.get(parentId) ?? 0) + v);
   }
   const out = new Map<string, number>();
@@ -230,10 +271,7 @@ export function valuesByEntry(
 }
 
 /** Build a human label for what a percent entry is subscribed to. */
-function describePercentOf(
-  entry: CashflowEntry,
-  cashflows: CashflowEntry[],
-): string {
+function describePercentOf(entry: CashflowEntry, cashflows: CashflowEntry[]): string {
   const target = entry.percentOf ?? "all-income";
   if (target === "all-income") return "all income";
   if (target === "all-expense") return "all expenses";
@@ -289,9 +327,16 @@ async function loadPrefs(): Promise<Prefs> {
   }
 }
 
-
 function CashflowPage() {
-  const { state, addCashflow, updateCashflow, removeCashflow, addCategory, updateCategory, removeCategory } = useStore();
+  const {
+    state,
+    addCashflow,
+    updateCashflow,
+    removeCashflow,
+    addCategory,
+    updateCategory,
+    removeCategory,
+  } = useStore();
   const { mask, toDisplay, currency, privacy, MASK } = useMoney();
   const { cashflows, categories } = state;
   const { t } = useTranslation();
@@ -308,7 +353,6 @@ function CashflowPage() {
     if (!prefsLoaded) return;
     void secureSet(PREF_KEY, JSON.stringify(prefs));
   }, [prefs, prefsLoaded]);
-
 
   // Resolve the color/group for a given category name.
   const catByName = useMemo(() => {
@@ -331,7 +375,10 @@ function CashflowPage() {
     const now = new Date();
     switch (sankeyPeriod) {
       case "week":
-        return { start: startOfWeek(now, { weekStartsOn: 1 }), end: endOfWeek(now, { weekStartsOn: 1 }) };
+        return {
+          start: startOfWeek(now, { weekStartsOn: 1 }),
+          end: endOfWeek(now, { weekStartsOn: 1 }),
+        };
       case "month":
         return { start: startOfMonth(now), end: endOfMonth(now) };
       case "year":
@@ -352,14 +399,19 @@ function CashflowPage() {
   // Expand recurring entries within the active interval (or up to today for "all").
   const expandedToToday = useMemo(() => {
     const horizon = sankeyInterval
-      ? (sankeyInterval.end > new Date() ? sankeyInterval.end : new Date())
+      ? sankeyInterval.end > new Date()
+        ? sankeyInterval.end
+        : new Date()
       : new Date();
     const all = expandCashflows(cashflows, horizon);
     if (!sankeyInterval) return all;
     return all.filter((c) => isWithinInterval(new Date(c.date), sankeyInterval));
   }, [cashflows, sankeyInterval]);
 
-  const valuesTop = useMemo(() => valuesByEntry(expandedToToday, toDisplay), [expandedToToday, toDisplay]);
+  const valuesTop = useMemo(
+    () => valuesByEntry(expandedToToday, toDisplay),
+    [expandedToToday, toDisplay],
+  );
 
   const totals = useMemo(() => {
     let income = 0;
@@ -377,7 +429,9 @@ function CashflowPage() {
       totalIncome: t("cashflow.sankey.totalIncome", { defaultValue: "Total Income" }),
       totalExpenses: t("cashflow.sankey.totalExpenses", { defaultValue: "Total Expenses" }),
       totalSavings: t("cashflow.sankey.totalSavings", { defaultValue: "Total Savings" }),
-      totalInvestments: t("cashflow.sankey.totalInvestments", { defaultValue: "Total Investments" }),
+      totalInvestments: t("cashflow.sankey.totalInvestments", {
+        defaultValue: "Total Investments",
+      }),
       saved: t("cashflow.sankey.saved", { defaultValue: "Saved" }),
       other: t("cashflow.other", { defaultValue: "Other" }),
       cashPool: t("cashflow.cashPool", { defaultValue: "Cash Pool" }),
@@ -425,8 +479,6 @@ function CashflowPage() {
     state.creditCards,
     state.holdings,
   ]);
-
-
 
   // Unique node names for the color customizer.
   const colorableNodes = useMemo(() => {
@@ -482,17 +534,28 @@ function CashflowPage() {
   }, [expandedToToday, valuesTop, catByName, t]);
   const [breakdownOpen, setBreakdownOpen] = useState(false);
 
-
   return (
     <>
       <PageHeader title={t("cashflow.title")} description={t("cashflow.description")} />
 
       <div className="grid grid-cols-3 gap-2 sm:gap-5">
-        <StatCard label={t("cashflow.income")} value={privacy ? MASK : formatMoney(totals.income, currency)} tone="success" />
-        <StatCard label={t("cashflow.expenses")} value={privacy ? MASK : formatMoney(totals.expense, currency)} tone="destructive" />
+        <StatCard
+          label={t("cashflow.income")}
+          value={privacy ? MASK : formatMoney(totals.income, currency)}
+          tone="success"
+        />
+        <StatCard
+          label={t("cashflow.expenses")}
+          value={privacy ? MASK : formatMoney(totals.expense, currency)}
+          tone="destructive"
+        />
         <StatCard
           label={t("cashflow.net")}
-          value={privacy ? MASK : `${totals.net >= 0 ? "+" : "-"}${formatMoney(Math.abs(totals.net), currency)}`}
+          value={
+            privacy
+              ? MASK
+              : `${totals.net >= 0 ? "+" : "-"}${formatMoney(Math.abs(totals.net), currency)}`
+          }
           tone={totals.net >= 0 ? "success" : "destructive"}
         />
       </div>
@@ -518,18 +581,25 @@ function CashflowPage() {
             }}
           />
         </div>
-        <div data-tour="cf-cards"><CreditCardsManager /></div>
+        <div data-tour="cf-cards">
+          <CreditCardsManager />
+        </div>
       </div>
 
       <Card className="border-border/60 min-w-0 mt-6 sm:mt-8">
-        <CardHeader className="px-3 sm:px-6 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 space-y-0" data-tour="cf-sankey">
+        <CardHeader
+          className="px-3 sm:px-6 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 space-y-0"
+          data-tour="cf-sankey"
+        >
           <div className="min-w-0">
             <CardTitle>{t("cashflow.flow")}</CardTitle>
             <div className="mt-1 text-xs text-muted-foreground truncate">{sankeyPeriodLabel}</div>
           </div>
           <div className="flex flex-wrap items-center gap-2 sm:flex-col sm:items-end sm:shrink-0">
             <Select value={sankeyPeriod} onValueChange={(v) => setSankeyPeriod(v as SankeyPeriod)}>
-              <SelectTrigger className="h-8 w-[140px] text-xs"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="h-8 w-[140px] text-xs">
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="week">{t("more.entriesThisWeek")}</SelectItem>
                 <SelectItem value="month">{t("more.entriesThisMonth")}</SelectItem>
@@ -540,8 +610,18 @@ function CashflowPage() {
             </Select>
             {sankeyPeriod === "custom" && (
               <div className="flex gap-1">
-                <Input type="date" className="h-8 w-[130px] text-xs" value={sankeyFrom} onChange={(e) => setSankeyFrom(e.target.value)} />
-                <Input type="date" className="h-8 w-[130px] text-xs" value={sankeyTo} onChange={(e) => setSankeyTo(e.target.value)} />
+                <Input
+                  type="date"
+                  className="h-8 w-[130px] text-xs"
+                  value={sankeyFrom}
+                  onChange={(e) => setSankeyFrom(e.target.value)}
+                />
+                <Input
+                  type="date"
+                  className="h-8 w-[130px] text-xs"
+                  value={sankeyTo}
+                  onChange={(e) => setSankeyTo(e.target.value)}
+                />
               </div>
             )}
             <AlertDialog>
@@ -553,10 +633,15 @@ function CashflowPage() {
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>{t("cashflow.resetLastMonthTitle", { defaultValue: "Delete last month's entries?" })}</AlertDialogTitle>
+                  <AlertDialogTitle>
+                    {t("cashflow.resetLastMonthTitle", {
+                      defaultValue: "Delete last month's entries?",
+                    })}
+                  </AlertDialogTitle>
                   <AlertDialogDescription>
                     {t("cashflow.resetLastMonthDesc", {
-                      defaultValue: "This permanently removes every cashflow entry dated in {{range}}. Recurring rules are kept.",
+                      defaultValue:
+                        "This permanently removes every cashflow entry dated in {{range}}. Recurring rules are kept.",
                       range: `${format(startOfMonth(subMonths(new Date(), 1)), "MMM d, yyyy")} – ${format(endOfMonth(subMonths(new Date(), 1)), "MMM d, yyyy")}`,
                     })}
                   </AlertDialogDescription>
@@ -612,9 +697,7 @@ function CashflowPage() {
                   onReorder={(kind, names) =>
                     setPrefs((p) => ({
                       ...p,
-                      ...(kind === "income"
-                        ? { incomeOrder: names }
-                        : { expenseOrder: names }),
+                      ...(kind === "income" ? { incomeOrder: names } : { expenseOrder: names }),
                     }))
                   }
                 />
@@ -627,7 +710,6 @@ function CashflowPage() {
           </ChartFrame>
         </CardContent>
       </Card>
-
 
       <Collapsible open={breakdownOpen} onOpenChange={setBreakdownOpen}>
         <CollapsibleTrigger asChild>
@@ -660,19 +742,18 @@ function CashflowPage() {
       </Collapsible>
 
       <div>
-
-      <EntriesPanel
-        cashflows={cashflows}
-        categories={categories}
-        subscribeOptions={subscribeOptions}
-        currency={currency}
-        privacy={privacy}
-        MASK={MASK}
-        mask={mask}
-        toDisplay={toDisplay}
-        onRemove={removeCashflow}
-        onUpdate={updateCashflow}
-      />
+        <EntriesPanel
+          cashflows={cashflows}
+          categories={categories}
+          subscribeOptions={subscribeOptions}
+          currency={currency}
+          privacy={privacy}
+          MASK={MASK}
+          mask={mask}
+          toDisplay={toDisplay}
+          onRemove={removeCashflow}
+          onUpdate={updateCashflow}
+        />
       </div>
     </>
   );
@@ -735,7 +816,10 @@ function EntriesPanel({
     const now = new Date();
     switch (period) {
       case "week":
-        return { start: startOfWeek(now, { weekStartsOn: 1 }), end: endOfWeek(now, { weekStartsOn: 1 }) };
+        return {
+          start: startOfWeek(now, { weekStartsOn: 1 }),
+          end: endOfWeek(now, { weekStartsOn: 1 }),
+        };
       case "month":
         return { start: startOfMonth(now), end: endOfMonth(now) };
       case "year":
@@ -774,7 +858,8 @@ function EntriesPanel({
 
   // Available categories for current kind filter
   const availableCategories = useMemo(() => {
-    const list = kindFilter === "all" ? categories : categories.filter((c) => c.kind === kindFilter);
+    const list =
+      kindFilter === "all" ? categories : categories.filter((c) => c.kind === kindFilter);
     return list;
   }, [categories, kindFilter]);
 
@@ -796,7 +881,8 @@ function EntriesPanel({
     const days = eachDayOfInterval({ start, end });
     type Entry = { name: string; kind: "income" | "expense"; value: number };
     const byDay = new Map<string, { income: number; expense: number; entries: Entry[] }>();
-    for (const d of days) byDay.set(format(d, "yyyy-MM-dd"), { income: 0, expense: 0, entries: [] });
+    for (const d of days)
+      byDay.set(format(d, "yyyy-MM-dd"), { income: 0, expense: 0, entries: [] });
     for (const c of filtered) {
       if (c.kind === "transfer") continue;
       const key = format(new Date(c.date), "yyyy-MM-dd");
@@ -866,7 +952,11 @@ function EntriesPanel({
       doc.setFontSize(11);
       const sumY = 110;
       doc.text(`${t("cashflow.pdfIncome")}: ${formatMoney(totals.income, currency)}`, margin, sumY);
-      doc.text(`${t("cashflow.pdfExpenses")}: ${formatMoney(totals.expense, currency)}`, margin + 180, sumY);
+      doc.text(
+        `${t("cashflow.pdfExpenses")}: ${formatMoney(totals.expense, currency)}`,
+        margin + 180,
+        sumY,
+      );
       doc.text(
         `${t("cashflow.pdfNet")}: ${totals.net >= 0 ? "+" : "-"}${formatMoney(Math.abs(totals.net), currency)}`,
         margin + 360,
@@ -898,7 +988,9 @@ function EntriesPanel({
           const y = yFor(v);
           doc.setDrawColor(235);
           doc.line(chartLeft, y, chartLeft + chartW, y);
-          doc.text(formatMoney(v, currency, { compact: true }), chartLeft - 4, y + 3, { align: "right" });
+          doc.text(formatMoney(v, currency, { compact: true }), chartLeft - 4, y + 3, {
+            align: "right",
+          });
         }
 
         const GREEN: [number, number, number] = [34, 197, 94];
@@ -962,13 +1054,15 @@ function EntriesPanel({
 
       autoTable(doc, {
         startY: chartBottom + 40,
-        head: [[
-          t("cashflow.pdfDate"),
-          t("cashflow.pdfType"),
-          t("cashflow.pdfSourceCategory"),
-          t("cashflow.pdfAmount"),
-          t("cashflow.pdfInCurrency", { currency }),
-        ]],
+        head: [
+          [
+            t("cashflow.pdfDate"),
+            t("cashflow.pdfType"),
+            t("cashflow.pdfSourceCategory"),
+            t("cashflow.pdfAmount"),
+            t("cashflow.pdfInCurrency", { currency }),
+          ],
+        ],
         body: rows,
         styles: { fontSize: 9, cellPadding: 4 },
         headStyles: { fillColor: [30, 41, 59], textColor: 255 },
@@ -1006,7 +1100,10 @@ function EntriesPanel({
 
   return (
     <Card className="border-border/60 mt-5">
-      <CardHeader className="flex-row items-center justify-between space-y-0 gap-2 flex-wrap" data-tour="cf-entries">
+      <CardHeader
+        className="flex-row items-center justify-between space-y-0 gap-2 flex-wrap"
+        data-tour="cf-entries"
+      >
         <CardTitle>{t("cashflow.entries")}</CardTitle>
         <Button size="sm" variant="outline" onClick={exportPdf} className="gap-1.5">
           <Download className="h-3.5 w-3.5" /> {t("cashflow.exportPdf")}
@@ -1018,7 +1115,9 @@ function EntriesPanel({
           <div>
             <Label className="text-xs">{t("more.entriesFiltersType")}</Label>
             <Select value={kindFilter} onValueChange={(v) => setKindFilter(v as typeof kindFilter)}>
-              <SelectTrigger className="h-9 mt-1.5"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="h-9 mt-1.5">
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">{t("more.entriesAll")}</SelectItem>
                 <SelectItem value="income">{t("more.entriesIncome")}</SelectItem>
@@ -1029,11 +1128,15 @@ function EntriesPanel({
           <div>
             <Label className="text-xs">{t("more.entriesFiltersCategory")}</Label>
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="h-9 mt-1.5"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="h-9 mt-1.5">
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">{t("more.entriesAllCategories")}</SelectItem>
                 {availableCategories.map((c) => (
-                  <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
+                  <SelectItem key={c.id} value={c.name}>
+                    {c.name}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -1041,7 +1144,9 @@ function EntriesPanel({
           <div>
             <Label className="text-xs">{t("more.entriesFiltersPeriod")}</Label>
             <Select value={period} onValueChange={(v) => setPeriod(v as PeriodKey)}>
-              <SelectTrigger className="h-9 mt-1.5"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="h-9 mt-1.5">
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="week">{t("more.entriesThisWeek")}</SelectItem>
                 <SelectItem value="month">{t("more.entriesThisMonth")}</SelectItem>
@@ -1055,16 +1160,25 @@ function EntriesPanel({
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <Label className="text-xs">{t("more.entriesFiltersFrom")}</Label>
-                <Input type="date" className="h-9 mt-1.5" value={customFrom} onChange={(e) => setCustomFrom(e.target.value)} />
+                <Input
+                  type="date"
+                  className="h-9 mt-1.5"
+                  value={customFrom}
+                  onChange={(e) => setCustomFrom(e.target.value)}
+                />
               </div>
               <div>
                 <Label className="text-xs">{t("more.entriesFiltersTo")}</Label>
-                <Input type="date" className="h-9 mt-1.5" value={customTo} onChange={(e) => setCustomTo(e.target.value)} />
+                <Input
+                  type="date"
+                  className="h-9 mt-1.5"
+                  value={customTo}
+                  onChange={(e) => setCustomTo(e.target.value)}
+                />
               </div>
             </div>
           )}
         </div>
-
 
         {/* Summary chips */}
         <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground mb-3">
@@ -1073,14 +1187,19 @@ function EntriesPanel({
             {t("more.entriesIncomeLabel")}: {privacy ? MASK : formatMoney(totals.income, currency)}
           </span>
           <span className="rounded-md bg-destructive/15 text-destructive px-2 py-1">
-            {t("more.entriesExpensesLabel")}: {privacy ? MASK : formatMoney(totals.expense, currency)}
+            {t("more.entriesExpensesLabel")}:{" "}
+            {privacy ? MASK : formatMoney(totals.expense, currency)}
           </span>
-          <span className={`rounded-md px-2 py-1 ${totals.net >= 0 ? "bg-success/15 text-success" : "bg-destructive/15 text-destructive"}`}>
-            {t("more.entriesNetLabel")}: {privacy ? MASK : `${totals.net >= 0 ? "+" : "-"}${formatMoney(Math.abs(totals.net), currency)}`}
+          <span
+            className={`rounded-md px-2 py-1 ${totals.net >= 0 ? "bg-success/15 text-success" : "bg-destructive/15 text-destructive"}`}
+          >
+            {t("more.entriesNetLabel")}:{" "}
+            {privacy
+              ? MASK
+              : `${totals.net >= 0 ? "+" : "-"}${formatMoney(Math.abs(totals.net), currency)}`}
           </span>
           <span className="ml-auto">{t("more.entriesCount", { count: filtered.length })}</span>
         </div>
-
 
         {/* Evolution chart */}
         {chartData.length > 0 ? (
@@ -1104,9 +1223,26 @@ function EntriesPanel({
                       </linearGradient>
                     </defs>
                     <CartesianGrid stroke="#e5e7eb" strokeDasharray="3 3" opacity={0.15} />
-                    <XAxis dataKey="label" tick={{ fontSize: 11, fill: "#e5e7eb" }} stroke="#e5e7eb" strokeOpacity={0.5} minTickGap={20} />
-                    <YAxis tick={{ fontSize: 11, fill: "#e5e7eb" }} stroke="#e5e7eb" strokeOpacity={0.5} tickFormatter={(v) => formatMoney(v, currency, { compact: true })} width={70} />
-                    <ReferenceLine y={0} stroke="#e5e7eb" strokeOpacity={0.4} strokeDasharray="2 2" />
+                    <XAxis
+                      dataKey="label"
+                      tick={{ fontSize: 11, fill: "#e5e7eb" }}
+                      stroke="#e5e7eb"
+                      strokeOpacity={0.5}
+                      minTickGap={20}
+                    />
+                    <YAxis
+                      tick={{ fontSize: 11, fill: "#e5e7eb" }}
+                      stroke="#e5e7eb"
+                      strokeOpacity={0.5}
+                      tickFormatter={(v) => formatMoney(v, currency, { compact: true })}
+                      width={70}
+                    />
+                    <ReferenceLine
+                      y={0}
+                      stroke="#e5e7eb"
+                      strokeOpacity={0.4}
+                      strokeDasharray="2 2"
+                    />
                     <RTooltip
                       content={({ active, payload }) => {
                         if (!active || !payload || !payload.length) return null;
@@ -1116,7 +1252,9 @@ function EntriesPanel({
                             <div className="font-medium text-foreground">{d.label}</div>
                             <div className="mt-1 text-muted-foreground">
                               {t("more.entriesBalance")}:{" "}
-                              <span className={`font-medium tabular-nums ${d.balance >= 0 ? "text-success" : "text-destructive"}`}>
+                              <span
+                                className={`font-medium tabular-nums ${d.balance >= 0 ? "text-success" : "text-destructive"}`}
+                              >
                                 {privacy ? MASK : formatMoney(d.balance, currency)}
                               </span>
                             </div>
@@ -1148,12 +1286,13 @@ function EntriesPanel({
                                       {e.kind === "income" ? "+" : e.kind === "expense" ? "−" : "↔"}
                                       {privacy ? MASK : formatMoney(e.value, currency)}
                                     </span>
-
                                   </div>
                                 ))}
                               </div>
                             ) : (
-                              <div className="mt-1 text-muted-foreground italic">{t("more.entriesNoActivity")}</div>
+                              <div className="mt-1 text-muted-foreground italic">
+                                {t("more.entriesNoActivity")}
+                              </div>
                             )}
                           </div>
                         );
@@ -1173,7 +1312,6 @@ function EntriesPanel({
               })()}
             </ResponsiveContainer>
           </div>
-
         ) : (
           <div className="h-32 grid place-items-center text-sm text-muted-foreground border border-dashed border-border/50 rounded-md mb-4">
             {t("more.entriesNoChart")}
@@ -1181,7 +1319,9 @@ function EntriesPanel({
         )}
 
         {filtered.length === 0 ? (
-          <div className="py-10 text-center text-sm text-muted-foreground">{t("more.entriesEmpty")}</div>
+          <div className="py-10 text-center text-sm text-muted-foreground">
+            {t("more.entriesEmpty")}
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -1216,7 +1356,11 @@ function EntriesPanel({
                                     : "bg-muted text-muted-foreground"
                               }`}
                             >
-                              {c.kind === "income" ? t("more.entriesIncome") : c.kind === "expense" ? t("more.entriesExpense") : c.kind}
+                              {c.kind === "income"
+                                ? t("more.entriesIncome")
+                                : c.kind === "expense"
+                                  ? t("more.entriesExpense")
+                                  : c.kind}
                             </span>
                             {c.kind === "expense" && c.paymentMethod?.startsWith("credit:") && (
                               <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-orange-500/15 text-orange-500">
@@ -1247,7 +1391,10 @@ function EntriesPanel({
                                 : c.category}
                           </div>
                           {c.description && (
-                            <div className="text-[11px] text-muted-foreground truncate max-w-[28ch]" title={c.description}>
+                            <div
+                              className="text-[11px] text-muted-foreground truncate max-w-[28ch]"
+                              title={c.description}
+                            >
                               {c.description}
                             </div>
                           )}
@@ -1425,10 +1572,14 @@ function EditEntryDialog({
           <div>
             <Label className="text-xs">{kind === "income" ? "Source" : "Category"}</Label>
             <Select value={name} onValueChange={setName}>
-              <SelectTrigger className="mt-1.5"><SelectValue placeholder="Select…" /></SelectTrigger>
+              <SelectTrigger className="mt-1.5">
+                <SelectValue placeholder="Select…" />
+              </SelectTrigger>
               <SelectContent>
                 {visibleCategories.map((c) => (
-                  <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
+                  <SelectItem key={c.id} value={c.name}>
+                    {c.name}
+                  </SelectItem>
                 ))}
                 {name && !visibleCategories.find((c) => c.name === name) && (
                   <SelectItem value={name}>{name}</SelectItem>
@@ -1479,10 +1630,14 @@ function EditEntryDialog({
               <div>
                 <Label className="text-xs">Currency</Label>
                 <Select value={entryCurrency} onValueChange={setEntryCurrency}>
-                  <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="mt-1.5">
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent className="max-h-72">
                     {CURRENCIES.map((c) => (
-                      <SelectItem key={c.code} value={c.code}>{c.code} · {c.name}</SelectItem>
+                      <SelectItem key={c.code} value={c.code}>
+                        {c.code} · {c.name}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -1491,7 +1646,12 @@ function EditEntryDialog({
           </div>
           <div>
             <Label className="text-xs">{recurring ? "Start date" : "Date"}</Label>
-            <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="mt-1.5" />
+            <Input
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              className="mt-1.5"
+            />
           </div>
           <div>
             <Label className="text-xs">Description (optional)</Label>
@@ -1518,8 +1678,13 @@ function EditEntryDialog({
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <Label className="text-xs">Frequency</Label>
-                  <Select value={frequency} onValueChange={(v) => setFrequency(v as RecurrenceFrequency)}>
-                    <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
+                  <Select
+                    value={frequency}
+                    onValueChange={(v) => setFrequency(v as RecurrenceFrequency)}
+                  >
+                    <SelectTrigger className="mt-1.5">
+                      <SelectValue />
+                    </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="weekly">Weekly</SelectItem>
                       <SelectItem value="monthly">Monthly</SelectItem>
@@ -1529,14 +1694,21 @@ function EditEntryDialog({
                 </div>
                 <div>
                   <Label className="text-xs">Until (optional)</Label>
-                  <Input type="date" value={until} onChange={(e) => setUntil(e.target.value)} className="mt-1.5" />
+                  <Input
+                    type="date"
+                    value={until}
+                    onChange={(e) => setUntil(e.target.value)}
+                    className="mt-1.5"
+                  />
                 </div>
               </div>
             )}
           </div>
         </div>
         <div className="flex justify-end gap-2 mt-2">
-          <Button variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button variant="ghost" onClick={onClose}>
+            Cancel
+          </Button>
           <Button onClick={submit}>Save changes</Button>
         </div>
       </DialogContent>
@@ -1566,8 +1738,12 @@ function SankeyControls({
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="staged">{t("cashflow.sankey.layoutStaged", { defaultValue: "Grouped" })}</SelectItem>
-          <SelectItem value="classic">{t("cashflow.sankey.layoutClassic", { defaultValue: "Accounts" })}</SelectItem>
+          <SelectItem value="staged">
+            {t("cashflow.sankey.layoutStaged", { defaultValue: "Grouped" })}
+          </SelectItem>
+          <SelectItem value="classic">
+            {t("cashflow.sankey.layoutClassic", { defaultValue: "Accounts" })}
+          </SelectItem>
         </SelectContent>
       </Select>
       {prefs.layoutMode === "staged" && (
@@ -1632,12 +1808,7 @@ function SankeyControls({
         <PopoverContent align="end" className="w-72">
           <div className="flex items-center justify-between">
             <div className="text-xs font-medium">{t("more.skNodeColors")}</div>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 gap-1 text-xs"
-              onClick={resetColors}
-            >
+            <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={resetColors}>
               <RotateCcw className="h-3 w-3" /> {t("more.skReset")}
             </Button>
           </div>
@@ -1680,7 +1851,9 @@ function StatCard({
   return (
     <Card className="border-border/60">
       <CardContent className="p-3 sm:p-5">
-        <div className="text-[10px] sm:text-xs uppercase tracking-wider sm:normal-case sm:tracking-normal text-muted-foreground">{label}</div>
+        <div className="text-[10px] sm:text-xs uppercase tracking-wider sm:normal-case sm:tracking-normal text-muted-foreground">
+          {label}
+        </div>
         <div
           className={`mt-1 sm:mt-2 text-base sm:text-2xl font-semibold tracking-tight truncate ${
             tone === "success" ? "text-success" : "text-destructive"
@@ -1708,7 +1881,12 @@ type FormVals = {
   paymentMethod?: string;
   fromAccount?: string;
   toAccount?: string;
-  installmentPlan?: { total: number; count: number; frequency: "weekly" | "monthly"; firstDueDate: string };
+  installmentPlan?: {
+    total: number;
+    count: number;
+    frequency: "weekly" | "monthly";
+    firstDueDate: string;
+  };
 };
 
 function AddForm({
@@ -1733,9 +1911,16 @@ function AddForm({
   const holdings = storeState.holdings;
   const creditCards = storeState.creditCards ?? [];
   const accountOptions = useMemo(() => {
-    const opts: { value: string; label: string }[] = [{ value: "liquidity", label: t("cashflow.liquidityCash") }];
-    for (const h of holdings) opts.push({ value: `holding:${h.id}`, label: `${t("cashflow.holdingPrefix")} · ${h.symbol || h.name}` });
-    for (const c of creditCards) opts.push({ value: `credit:${c.id}`, label: `${t("cashflow.cardPrefix")} · ${c.name}` });
+    const opts: { value: string; label: string }[] = [
+      { value: "liquidity", label: t("cashflow.liquidityCash") },
+    ];
+    for (const h of holdings)
+      opts.push({
+        value: `holding:${h.id}`,
+        label: `${t("cashflow.holdingPrefix")} · ${h.symbol || h.name}`,
+      });
+    for (const c of creditCards)
+      opts.push({ value: `credit:${c.id}`, label: `${t("cashflow.cardPrefix")} · ${c.name}` });
     return opts;
   }, [holdings, creditCards, t]);
 
@@ -1812,9 +1997,10 @@ function AddForm({
       amount: a,
       currency: entryCurrency,
       date: new Date(date).toISOString(),
-      recurrence: recurring && !installmentPlan
-        ? { frequency, ...(until ? { until: new Date(until).toISOString() } : {}) }
-        : undefined,
+      recurrence:
+        recurring && !installmentPlan
+          ? { frequency, ...(until ? { until: new Date(until).toISOString() } : {}) }
+          : undefined,
       amountKind: isPercent ? "percent" : "fixed",
       percentOf: isPercent ? percentOf : undefined,
       description: desc || undefined,
@@ -1840,7 +2026,10 @@ function AddForm({
 
   return (
     <Card className="border-border/60">
-      <CardHeader className="flex-row items-center justify-between space-y-0 gap-2 flex-wrap" data-tour="cf-add">
+      <CardHeader
+        className="flex-row items-center justify-between space-y-0 gap-2 flex-wrap"
+        data-tour="cf-add"
+      >
         <CardTitle>{t("cashflow.addEntry")}</CardTitle>
         <CategoriesManager
           categories={categories}
@@ -1883,12 +2072,16 @@ function AddForm({
               {kind === "expense" && (
                 <Field label={t("cashflow.paidWith")}>
                   <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
                     <SelectContent>
                       {accountOptions
                         .filter((o) => o.value === "liquidity" || o.value.startsWith("credit:"))
                         .map((o) => (
-                          <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                          <SelectItem key={o.value} value={o.value}>
+                            {o.label}
+                          </SelectItem>
                         ))}
                     </SelectContent>
                   </Select>
@@ -1908,11 +2101,22 @@ function AddForm({
                   {useInstallments && (
                     <div className="grid grid-cols-3 gap-3">
                       <Field label={t("cashflow.payments")}>
-                        <Input type="number" min={1} max={120} value={instCount} onChange={(e) => setInstCount(e.target.value)} />
+                        <Input
+                          type="number"
+                          min={1}
+                          max={120}
+                          value={instCount}
+                          onChange={(e) => setInstCount(e.target.value)}
+                        />
                       </Field>
                       <Field label={t("cashflow.every")}>
-                        <Select value={instFreq} onValueChange={(v) => setInstFreq(v as "weekly" | "monthly")}>
-                          <SelectTrigger><SelectValue /></SelectTrigger>
+                        <Select
+                          value={instFreq}
+                          onValueChange={(v) => setInstFreq(v as "weekly" | "monthly")}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="weekly">{t("cashflow.weekOpt")}</SelectItem>
                             <SelectItem value="monthly">{t("cashflow.monthOpt")}</SelectItem>
@@ -1920,7 +2124,11 @@ function AddForm({
                         </Select>
                       </Field>
                       <Field label={t("cashflow.firstDue")}>
-                        <Input type="date" value={instStart} onChange={(e) => setInstStart(e.target.value)} />
+                        <Input
+                          type="date"
+                          value={instStart}
+                          onChange={(e) => setInstStart(e.target.value)}
+                        />
                       </Field>
                     </div>
                   )}
@@ -1940,8 +2148,13 @@ function AddForm({
                   {recurring && (
                     <div className="grid grid-cols-2 gap-3">
                       <Field label={t("cashflow.frequency")}>
-                        <Select value={frequency} onValueChange={(v) => setFrequency(v as RecurrenceFrequency)}>
-                          <SelectTrigger><SelectValue /></SelectTrigger>
+                        <Select
+                          value={frequency}
+                          onValueChange={(v) => setFrequency(v as RecurrenceFrequency)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="weekly">{t("cashflow.weekly")}</SelectItem>
                             <SelectItem value="monthly">{t("cashflow.monthly")}</SelectItem>
@@ -1950,7 +2163,11 @@ function AddForm({
                         </Select>
                       </Field>
                       <Field label={t("cashflow.untilOptional")}>
-                        <Input type="date" value={until} onChange={(e) => setUntil(e.target.value)} />
+                        <Input
+                          type="date"
+                          value={until}
+                          onChange={(e) => setUntil(e.target.value)}
+                        />
                       </Field>
                     </div>
                   )}
@@ -1959,26 +2176,32 @@ function AddForm({
             </TabsContent>
           ) : (
             <TabsContent value="transfer" className="mt-4 space-y-3">
-              <p className="text-xs text-muted-foreground">
-                {t("cashflow.transferIntro")}
-              </p>
+              <p className="text-xs text-muted-foreground">{t("cashflow.transferIntro")}</p>
               <div className="grid grid-cols-2 gap-3">
                 <Field label={t("cashflow.from")}>
                   <Select value={fromAccount} onValueChange={setFromAccount}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
                     <SelectContent>
                       {accountOptions.map((o) => (
-                        <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                        <SelectItem key={o.value} value={o.value}>
+                          {o.label}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </Field>
                 <Field label={t("cashflow.to")}>
                   <Select value={toAccount} onValueChange={setToAccount}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
                     <SelectContent>
                       {accountOptions.map((o) => (
-                        <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                        <SelectItem key={o.value} value={o.value}>
+                          {o.label}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -1986,14 +2209,24 @@ function AddForm({
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 <Field label={t("common.amount")}>
-                  <Input type="number" step="any" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" />
+                  <Input
+                    type="number"
+                    step="any"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    placeholder="0.00"
+                  />
                 </Field>
                 <Field label={t("common.currency")}>
                   <Select value={entryCurrency} onValueChange={setEntryCurrency}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
                     <SelectContent className="max-h-72">
                       {CURRENCIES.map((c) => (
-                        <SelectItem key={c.code} value={c.code}>{c.code} · {c.name}</SelectItem>
+                        <SelectItem key={c.code} value={c.code}>
+                          {c.code} · {c.name}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -2003,7 +2236,13 @@ function AddForm({
                 </Field>
               </div>
               <Field label={t("cashflow.descriptionLabel")}>
-                <Input type="text" maxLength={200} value={description} onChange={(e) => setDescription(e.target.value)} placeholder={t("cashflow.transferDescPlaceholder")} />
+                <Input
+                  type="text"
+                  maxLength={200}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder={t("cashflow.transferDescPlaceholder")}
+                />
               </Field>
             </TabsContent>
           )}
@@ -2117,7 +2356,9 @@ function PercentTargetPicker({
   ]);
   return (
     <Select value={value} onValueChange={onChange}>
-      <SelectTrigger className={className}><SelectValue /></SelectTrigger>
+      <SelectTrigger className={className}>
+        <SelectValue />
+      </SelectTrigger>
       <SelectContent className="max-h-72">
         <SelectItem value="all-income">All income (total)</SelectItem>
         <SelectItem value="all-expense">All expenses (total)</SelectItem>
@@ -2127,7 +2368,9 @@ function PercentTargetPicker({
           </div>
         )}
         {incomes.map((o) => (
-          <SelectItem key={o.id} value={o.id}>{o.label}</SelectItem>
+          <SelectItem key={o.id} value={o.id}>
+            {o.label}
+          </SelectItem>
         ))}
         {expenses.length > 0 && (
           <div className="px-2 pt-2 pb-1 text-[10px] uppercase tracking-wider text-muted-foreground">
@@ -2135,17 +2378,15 @@ function PercentTargetPicker({
           </div>
         )}
         {expenses.map((o) => (
-          <SelectItem key={o.id} value={o.id}>{o.label}</SelectItem>
+          <SelectItem key={o.id} value={o.id}>
+            {o.label}
+          </SelectItem>
         ))}
-        {!known.has(value) && (
-          <SelectItem value={value}>(deleted entry)</SelectItem>
-        )}
+        {!known.has(value) && <SelectItem value={value}>(deleted entry)</SelectItem>}
       </SelectContent>
     </Select>
   );
 }
-
-
 
 /* ---------- Category picker (select + inline "new") ---------- */
 
@@ -2167,7 +2408,9 @@ function CategoryPicker({
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState("");
   const [group, setGroup] = useState<CategoryGroup>(kind === "income" ? "income" : "expense");
-  const [color, setColor] = useState<string>(GROUP_COLORS[kind === "income" ? "income" : "expense"]);
+  const [color, setColor] = useState<string>(
+    GROUP_COLORS[kind === "income" ? "income" : "expense"],
+  );
 
   useEffect(() => {
     setGroup(kind === "income" ? "income" : "expense");
@@ -2320,21 +2563,14 @@ function CategoriesManager({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-8 gap-1.5 text-xs"
-          title={t("more.mcTitle")}
-        >
+        <Button variant="ghost" size="sm" className="h-8 gap-1.5 text-xs" title={t("more.mcTitle")}>
           <SettingsIcon className="h-3.5 w-3.5" /> {t("more.mcTrigger")}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>{t("more.mcTitle")}</DialogTitle>
-          <DialogDescription>
-            {t("more.mcDesc")}
-          </DialogDescription>
+          <DialogDescription>{t("more.mcDesc")}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -2419,9 +2655,7 @@ function CategoryList({
   if (!list.length) return null;
   return (
     <div>
-      <div className="text-xs uppercase tracking-wider text-muted-foreground mb-1.5">
-        {title}
-      </div>
+      <div className="text-xs uppercase tracking-wider text-muted-foreground mb-1.5">{title}</div>
       <div className="space-y-1.5 max-h-56 overflow-y-auto pr-1">
         {list.map((c) => (
           <div
@@ -2499,5 +2733,3 @@ function CategoryList({
     </div>
   );
 }
-
-

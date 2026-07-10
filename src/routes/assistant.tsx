@@ -83,8 +83,6 @@ function AssistantPage() {
     }
   }, [assistantEnabled, navigate]);
 
-  if (!assistantEnabled) return null;
-
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [pipeline, setPipeline] = useState<Pipeline>("idle");
@@ -145,9 +143,7 @@ function AssistantPage() {
       if (!alive) return;
       setVoiceCaps(detectVoiceCapabilities(caps));
       setEngineLabel(
-        caps.llm
-          ? caps.model || t("assistant.localLlm")
-          : t("assistant.onDeviceEngine"),
+        caps.llm ? caps.model || t("assistant.localLlm") : t("assistant.onDeviceEngine"),
       );
     })();
     return () => {
@@ -338,6 +334,8 @@ function AssistantPage() {
 
   const busy = pipeline === "thinking" || pipeline === "transcribing";
 
+  if (!assistantEnabled) return null;
+
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-1 min-h-0 flex-col">
       <PageHeader
@@ -458,8 +456,12 @@ function AssistantPage() {
             "h-11 w-11 shrink-0 rounded-full",
             pipeline === "listening" && "animate-pulse",
           )}
-          title={pipeline === "listening" ? t("assistant.stopRecording") : t("assistant.startRecording")}
-          aria-label={pipeline === "listening" ? t("assistant.stopRecording") : t("assistant.startRecording")}
+          title={
+            pipeline === "listening" ? t("assistant.stopRecording") : t("assistant.startRecording")
+          }
+          aria-label={
+            pipeline === "listening" ? t("assistant.stopRecording") : t("assistant.startRecording")
+          }
         >
           {pipeline === "listening" ? (
             <Square className="h-4 w-4 fill-current" />
@@ -592,7 +594,12 @@ function MessageBubble({
                 <Check className="h-3.5 w-3.5" />
                 {confirmLabel}
               </Button>
-              <Button size="sm" variant="outline" className="h-9 min-w-[5.5rem]" onClick={onDismiss}>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-9 min-w-[5.5rem]"
+                onClick={onDismiss}
+              >
                 {cancelLabel}
               </Button>
             </div>

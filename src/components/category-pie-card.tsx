@@ -46,7 +46,8 @@ export function CategoryPieCard({
   const byCategory = useMemo(() => {
     const map = new Map<string, { name: string; value: number; color?: string }>();
     for (const e of entries) {
-      const key = e.category || t("cashflow.breakdown.uncategorized", { defaultValue: "Uncategorized" });
+      const key =
+        e.category || t("cashflow.breakdown.uncategorized", { defaultValue: "Uncategorized" });
       const cur = map.get(key);
       if (cur) cur.value += e.amount;
       else map.set(key, { name: key, value: e.amount, color: e.color });
@@ -59,8 +60,16 @@ export function CategoryPieCard({
   const drillData = useMemo(() => {
     if (!drill) return [];
     return entries
-      .filter((e) => (e.category || t("cashflow.breakdown.uncategorized", { defaultValue: "Uncategorized" })) === drill)
-      .map((e) => ({ name: e.label || t("cashflow.unnamed", { defaultValue: "(unnamed)" }), value: e.amount, color: e.color }))
+      .filter(
+        (e) =>
+          (e.category ||
+            t("cashflow.breakdown.uncategorized", { defaultValue: "Uncategorized" })) === drill,
+      )
+      .map((e) => ({
+        name: e.label || t("cashflow.unnamed", { defaultValue: "(unnamed)" }),
+        value: e.amount,
+        color: e.color,
+      }))
       .sort((a, b) => b.value - a.value);
   }, [drill, entries, t]);
 
@@ -82,8 +91,7 @@ export function CategoryPieCard({
 
   const displayTotal = drill ? drillData.reduce((s, x) => s + x.value, 0) : total;
 
-  const colorAt = (idx: number, explicit?: string) =>
-    explicit ?? palette[idx % palette.length];
+  const colorAt = (idx: number, explicit?: string) => explicit ?? palette[idx % palette.length];
 
   const isEmpty = entries.length === 0 || total === 0;
 
@@ -174,8 +182,6 @@ export function CategoryPieCard({
                     itemStyle={{ color: "var(--popover-foreground)" }}
                     labelStyle={{ color: "var(--popover-foreground)" }}
                   />
-
-
                 </PieChart>
               </ResponsiveContainer>
             </div>

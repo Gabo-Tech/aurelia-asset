@@ -42,11 +42,18 @@ function buildQuantityByDate(
   holdings: Array<{ id: string; quantity: number; openingQuantity?: number }>,
   transactions: Array<{ holdingId: string; kind: "buy" | "sell"; date: string; quantity: number }>,
 ) {
-  const txsByHolding: Record<string, Array<{ day: number; kind: "buy" | "sell"; quantity: number }>> = {};
+  const txsByHolding: Record<
+    string,
+    Array<{ day: number; kind: "buy" | "sell"; quantity: number }>
+  > = {};
   for (const h of holdings) txsByHolding[h.id] = [];
   for (const t of transactions) {
     if (txsByHolding[t.holdingId]) {
-      txsByHolding[t.holdingId].push({ day: toUtcDayMs(t.date), kind: t.kind, quantity: t.quantity });
+      txsByHolding[t.holdingId].push({
+        day: toUtcDayMs(t.date),
+        kind: t.kind,
+        quantity: t.quantity,
+      });
     }
   }
   for (const id of Object.keys(txsByHolding)) txsByHolding[id].sort((a, b) => a.day - b.day);
@@ -54,7 +61,7 @@ function buildQuantityByDate(
   const qty: Record<string, number> = {};
   const idx: Record<string, number> = {};
   for (const h of holdings) {
-    qty[h.id] = txsByHolding[h.id].length > 0 ? h.openingQuantity ?? 0 : h.quantity;
+    qty[h.id] = txsByHolding[h.id].length > 0 ? (h.openingQuantity ?? 0) : h.quantity;
     idx[h.id] = 0;
   }
 
@@ -84,9 +91,8 @@ export function HoldingsCharts() {
   const [hidden, setHidden] = useState<Set<string>>(new Set());
   const visibleHoldings = useMemo(
     () => state.holdings.filter((h) => !hidden.has(h.id)),
-    [state.holdings, hidden]
+    [state.holdings, hidden],
   );
-
 
   const fxByHolding = useMemo(() => {
     const m: Record<string, number> = {};
@@ -107,7 +113,9 @@ export function HoldingsCharts() {
       };
       for (const h of visibleHoldings) {
         const quantity = quantities.get(d.date)?.[h.id] ?? h.quantity;
-        const nativePrice = d.perAssetPrice?.[h.id] ?? (h.quantity ? (d.perAsset[h.id] ?? 0) / h.quantity : h.currentPrice);
+        const nativePrice =
+          d.perAssetPrice?.[h.id] ??
+          (h.quantity ? (d.perAsset[h.id] ?? 0) / h.quantity : h.currentPrice);
         const v = nativePrice * quantity * (fxByHolding[h.id] ?? 1);
         row[h.symbol] = Math.round(v * 100) / 100;
       }
@@ -118,10 +126,14 @@ export function HoldingsCharts() {
   // Per-asset Invested (cumulative cost basis) and Value over time.
   const investedSeries = useMemo(() => {
     if (!data || !data.length) return [];
-    const txsByHolding: Record<string, Array<(typeof state.transactions)[number] & { day: number }>> = {};
+    const txsByHolding: Record<
+      string,
+      Array<(typeof state.transactions)[number] & { day: number }>
+    > = {};
     for (const h of visibleHoldings) txsByHolding[h.id] = [];
     for (const t of state.transactions) {
-      if (txsByHolding[t.holdingId]) txsByHolding[t.holdingId].push({ ...t, day: toUtcDayMs(t.date) });
+      if (txsByHolding[t.holdingId])
+        txsByHolding[t.holdingId].push({ ...t, day: toUtcDayMs(t.date) });
     }
     for (const id of Object.keys(txsByHolding)) {
       txsByHolding[id].sort((a, b) => a.day - b.day);
@@ -131,8 +143,11 @@ export function HoldingsCharts() {
     const idx: Record<string, number> = {};
     for (const h of visibleHoldings) {
       const hasTransactions = txsByHolding[h.id].length > 0;
-      qty[h.id] = hasTransactions ? h.openingQuantity ?? 0 : h.quantity;
-      cum[h.id] = qty[h.id] > 0 && !hasTransactions ? qty[h.id] * h.currentPrice * (fxByHolding[h.id] ?? 1) : 0;
+      qty[h.id] = hasTransactions ? (h.openingQuantity ?? 0) : h.quantity;
+      cum[h.id] =
+        qty[h.id] > 0 && !hasTransactions
+          ? qty[h.id] * h.currentPrice * (fxByHolding[h.id] ?? 1)
+          : 0;
       idx[h.id] = 0;
     }
     return data.map((d) => {
@@ -160,7 +175,9 @@ export function HoldingsCharts() {
           idx[h.id]++;
         }
         const inv = Math.round(cum[h.id] * 100) / 100;
-        const nativePrice = d.perAssetPrice?.[h.id] ?? (h.quantity ? (d.perAsset[h.id] ?? 0) / h.quantity : h.currentPrice);
+        const nativePrice =
+          d.perAssetPrice?.[h.id] ??
+          (h.quantity ? (d.perAsset[h.id] ?? 0) / h.quantity : h.currentPrice);
         const val = Math.round(nativePrice * qty[h.id] * (fxByHolding[h.id] ?? 1) * 100) / 100;
         row[`inv_${h.id}`] = inv;
         row[`val_${h.id}`] = val;
@@ -173,8 +190,6 @@ export function HoldingsCharts() {
       return row;
     });
   }, [data, state.transactions, visibleHoldings, fxByHolding, currency, rates, period]);
-
-
 
   if (!state.holdings.length) return null;
 
@@ -203,9 +218,12 @@ export function HoldingsCharts() {
             const next = v as "stacked" | "invested";
             setTab(next);
             if (next === "invested") {
-              const firstVisible = state.holdings.find((h) => !hidden.has(h.id)) ?? state.holdings[0];
+              const firstVisible =
+                state.holdings.find((h) => !hidden.has(h.id)) ?? state.holdings[0];
               if (firstVisible) {
-                setHidden(new Set(state.holdings.filter((h) => h.id !== firstVisible.id).map((h) => h.id)));
+                setHidden(
+                  new Set(state.holdings.filter((h) => h.id !== firstVisible.id).map((h) => h.id)),
+                );
               }
             }
           }}
@@ -226,7 +244,9 @@ export function HoldingsCharts() {
                   key={h.id}
                   onClick={() => {
                     if (tab === "invested") {
-                      setHidden(new Set(state.holdings.filter((x) => x.id !== h.id).map((x) => x.id)));
+                      setHidden(
+                        new Set(state.holdings.filter((x) => x.id !== h.id).map((x) => x.id)),
+                      );
                     } else {
                       setHidden((prev) => {
                         const next = new Set(prev);
@@ -240,7 +260,7 @@ export function HoldingsCharts() {
                     "inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs font-medium transition-colors",
                     off
                       ? "border-border/60 bg-muted text-muted-foreground opacity-60"
-                      : "border-border bg-card text-foreground hover:bg-accent"
+                      : "border-border bg-card text-foreground hover:bg-accent",
                   )}
                 >
                   <span
@@ -253,7 +273,12 @@ export function HoldingsCharts() {
             })}
             {state.holdings.length > 1 && tab === "stacked" && (
               <div className="ml-auto flex items-center gap-1.5">
-                <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => setHidden(new Set())}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 px-2 text-xs"
+                  onClick={() => setHidden(new Set())}
+                >
                   {t("more.pcShowAll")}
                 </Button>
                 <Button
@@ -268,10 +293,11 @@ export function HoldingsCharts() {
             )}
           </div>
 
-
-
           <TabsContent value="stacked" className="mt-4">
-            <ChartFrame filename="holdings-stacked" title={`${t("more.pcValuePerAsset")} · ${period}`}>
+            <ChartFrame
+              filename="holdings-stacked"
+              title={`${t("more.pcValuePerAsset")} · ${period}`}
+            >
               <div className="flex h-72 items-center justify-center sm:h-80">
                 {isLoading ? (
                   <Skeleton className="h-full w-full" />
@@ -285,17 +311,36 @@ export function HoldingsCharts() {
                   </div>
                 ) : (
                   <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={stackedData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                      <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" vertical={false} />
-                      <XAxis dataKey="label" stroke="var(--muted-foreground)" tick={{ fontSize: 11 }} minTickGap={30} />
+                    <AreaChart
+                      data={stackedData}
+                      margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+                    >
+                      <CartesianGrid
+                        stroke="var(--border)"
+                        strokeDasharray="3 3"
+                        vertical={false}
+                      />
+                      <XAxis
+                        dataKey="label"
+                        stroke="var(--muted-foreground)"
+                        tick={{ fontSize: 11 }}
+                        minTickGap={30}
+                      />
                       <YAxis
                         stroke="var(--muted-foreground)"
                         tick={{ fontSize: 11 }}
-                        tickFormatter={(v) => (privacy ? MASK : formatMoney(v as number, currency, { compact: true }))}
+                        tickFormatter={(v) =>
+                          privacy ? MASK : formatMoney(v as number, currency, { compact: true })
+                        }
                         width={60}
                       />
                       <Tooltip
-                        contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 10, fontSize: 12 }}
+                        contentStyle={{
+                          background: "var(--popover)",
+                          border: "1px solid var(--border)",
+                          borderRadius: 10,
+                          fontSize: 12,
+                        }}
                         formatter={(value: number) => mask(value)}
                       />
                       <Legend wrapperStyle={{ fontSize: 11 }} />
@@ -318,7 +363,10 @@ export function HoldingsCharts() {
           </TabsContent>
 
           <TabsContent value="invested" className="mt-4">
-            <ChartFrame filename="holdings-invested" title={`${t("more.pcInvestedVsValue")} · ${period}`}>
+            <ChartFrame
+              filename="holdings-invested"
+              title={`${t("more.pcInvestedVsValue")} · ${period}`}
+            >
               <div className="flex h-72 items-center justify-center sm:h-80">
                 {isLoading ? (
                   <Skeleton className="h-full w-full" />
@@ -340,9 +388,21 @@ export function HoldingsCharts() {
                   </div>
                 ) : (
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={investedSeries} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                      <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" vertical={false} />
-                      <XAxis dataKey="label" stroke="var(--muted-foreground)" tick={{ fontSize: 11 }} minTickGap={30} />
+                    <LineChart
+                      data={investedSeries}
+                      margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+                    >
+                      <CartesianGrid
+                        stroke="var(--border)"
+                        strokeDasharray="3 3"
+                        vertical={false}
+                      />
+                      <XAxis
+                        dataKey="label"
+                        stroke="var(--muted-foreground)"
+                        tick={{ fontSize: 11 }}
+                        minTickGap={30}
+                      />
                       <YAxis
                         stroke="var(--muted-foreground)"
                         tick={{ fontSize: 11 }}
@@ -350,13 +410,21 @@ export function HoldingsCharts() {
                         width={70}
                       />
                       <Tooltip
-                        contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 10, fontSize: 12 }}
+                        contentStyle={{
+                          background: "var(--popover)",
+                          border: "1px solid var(--border)",
+                          borderRadius: 10,
+                          fontSize: 12,
+                        }}
                         formatter={(value, _name, item) => {
                           const h = visibleHoldings[0];
                           const payload = (item as { payload?: Record<string, number> })?.payload;
                           const val = payload?.[`val_${h.id}`];
                           const valStr = typeof val === "number" ? `  ·  ${mask(val)}` : "";
-                          return [`${formatQuantity(Number(value))} ${h.symbol}${valStr}`, h.symbol];
+                          return [
+                            `${formatQuantity(Number(value))} ${h.symbol}${valStr}`,
+                            h.symbol,
+                          ];
                         }}
                       />
                       <Legend wrapperStyle={{ fontSize: 11 }} />
@@ -374,14 +442,23 @@ export function HoldingsCharts() {
               </div>
             </ChartFrame>
 
-            {state.transactions.length > 0 && investedSeries.length > 0 && visibleHoldings.length === 1 && (
-              <InvestedSummary
-                invested={Number(investedSeries[investedSeries.length - 1][`inv_${visibleHoldings[0].id}`]) || 0}
-                value={Number(investedSeries[investedSeries.length - 1][`val_${visibleHoldings[0].id}`]) || 0}
-              />
-            )}
+            {state.transactions.length > 0 &&
+              investedSeries.length > 0 &&
+              visibleHoldings.length === 1 && (
+                <InvestedSummary
+                  invested={
+                    Number(
+                      investedSeries[investedSeries.length - 1][`inv_${visibleHoldings[0].id}`],
+                    ) || 0
+                  }
+                  value={
+                    Number(
+                      investedSeries[investedSeries.length - 1][`val_${visibleHoldings[0].id}`],
+                    ) || 0
+                  }
+                />
+              )}
           </TabsContent>
-
         </Tabs>
       </CardContent>
     </Card>
@@ -402,10 +479,18 @@ function InvestedSummary({ invested, value }: { invested: number; value: number 
         <div className="text-xs text-muted-foreground">Value</div>
         <div className="tabular-nums font-medium">{mask(value)}</div>
       </div>
-      <div className={cn("rounded-md px-3 py-2", gain >= 0 ? "bg-success/15" : "bg-destructive/15")}>
+      <div
+        className={cn("rounded-md px-3 py-2", gain >= 0 ? "bg-success/15" : "bg-destructive/15")}
+      >
         <div className="text-xs text-muted-foreground">Gain</div>
-        <div className={cn("tabular-nums font-medium", gain >= 0 ? "text-success" : "text-destructive")}>
-          {gain >= 0 ? "+" : "−"}{mask(Math.abs(gain))} · {formatPct(pct)}
+        <div
+          className={cn(
+            "tabular-nums font-medium",
+            gain >= 0 ? "text-success" : "text-destructive",
+          )}
+        >
+          {gain >= 0 ? "+" : "−"}
+          {mask(Math.abs(gain))} · {formatPct(pct)}
         </div>
       </div>
     </div>

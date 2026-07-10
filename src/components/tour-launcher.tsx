@@ -3,10 +3,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { HelpCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import {
-  createTour,
-  markTourCompleted,
-} from "@/lib/tour/driver";
+import { createTour, markTourCompleted } from "@/lib/tour/driver";
 
 import type { Driver } from "driver.js";
 import { buildTourSteps } from "@/lib/tour/steps";
@@ -60,7 +57,6 @@ export function TourLauncher({ className }: { className?: string }) {
     autoStarted.current = true;
     // Tour only starts when the user clicks the tour button.
   }, []);
-
 
   useEffect(() => {
     function onStart() {

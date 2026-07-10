@@ -95,9 +95,7 @@ export async function searchStooq(query: string): Promise<SearchResult[]> {
       const parsed = parseQuoteCsv(csv);
       if (!parsed) continue;
       const symbol = parsed.symbol.replace(/\.US$/i, "");
-      const result: SearchResult[] = [
-        { symbol, name: `${symbol} market quote`, type: "stock" },
-      ];
+      const result: SearchResult[] = [{ symbol, name: `${symbol} market quote`, type: "stock" }];
       setCache(key, result, 10 * 60 * 1000);
       return result;
     } catch {}

@@ -8,23 +8,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import {
-  checkAdminPassword,
-  getSponsors,
-  saveSponsors,
-} from "@/lib/sponsors.functions";
-import {
-  DEFAULT_SPONSORS,
-  type Sponsor,
-  type SponsorsFile,
-} from "@/lib/sponsors-types";
+import { checkAdminPassword, getSponsors, saveSponsors } from "@/lib/sponsors.functions";
+import { DEFAULT_SPONSORS, type Sponsor, type SponsorsFile } from "@/lib/sponsors-types";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
-    meta: [
-      { title: "Admin - Sponsors" },
-      { name: "robots", content: "noindex, nofollow" },
-    ],
+    meta: [{ title: "Admin - Sponsors" }, { name: "robots", content: "noindex, nofollow" }],
   }),
   component: AdminPage,
 });
@@ -163,17 +152,8 @@ function AdminPage() {
             <h1 className="text-base font-semibold">Sponsors admin</h1>
           </div>
           <div className="flex items-center gap-2">
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => void hydrate()}
-              disabled={loading}
-            >
-              {loading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                "Reload"
-              )}
+            <Button size="sm" variant="ghost" onClick={() => void hydrate()} disabled={loading}>
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Reload"}
             </Button>
             <Button size="sm" variant="ghost" onClick={logout}>
               <LogOut className="h-4 w-4" />
@@ -199,10 +179,7 @@ function AdminPage() {
                 onChange={(e) =>
                   setFile((f) => ({
                     ...f,
-                    rotationSeconds: Math.max(
-                      3,
-                      Math.min(3600, Number(e.target.value) || 20),
-                    ),
+                    rotationSeconds: Math.max(3, Math.min(3600, Number(e.target.value) || 20)),
                   }))
                 }
                 className="mt-1 w-full sm:w-32"
@@ -216,9 +193,7 @@ function AdminPage() {
 
         <section className="rounded-xl border border-border bg-card p-4">
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-sm font-semibold">
-              Sponsors ({file.sponsors.length})
-            </h2>
+            <h2 className="text-sm font-semibold">Sponsors ({file.sponsors.length})</h2>
             <Button size="sm" variant="outline" onClick={addSponsor}>
               <Plus className="mr-1 h-4 w-4" /> Add sponsor
             </Button>
@@ -243,12 +218,7 @@ function AdminPage() {
         </section>
 
         <div className="sticky bottom-4 flex justify-end">
-          <Button
-            onClick={handleSave}
-            disabled={saving}
-            size="lg"
-            className="shadow-lg"
-          >
+          <Button onClick={handleSave} disabled={saving} size="lg" className="shadow-lg">
             {saving ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
@@ -284,12 +254,7 @@ function SponsorRow({
             {sponsor.active ? "Active" : "Paused"}
           </span>
         </div>
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={onRemove}
-          className="shrink-0"
-        >
+        <Button size="sm" variant="ghost" onClick={onRemove} className="shrink-0">
           <Trash2 className="h-4 w-4 text-destructive" />
         </Button>
       </div>
@@ -342,16 +307,12 @@ function SponsorRow({
             <Input
               type="date"
               value={sponsor.startDate ?? ""}
-              onChange={(e) =>
-                onChange({ startDate: e.target.value || undefined })
-              }
+              onChange={(e) => onChange({ startDate: e.target.value || undefined })}
             />
             <Input
               type="date"
               value={sponsor.endDate ?? ""}
-              onChange={(e) =>
-                onChange({ endDate: e.target.value || undefined })
-              }
+              onChange={(e) => onChange({ endDate: e.target.value || undefined })}
             />
           </div>
         </Field>

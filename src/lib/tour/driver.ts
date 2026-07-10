@@ -89,9 +89,7 @@ function scrollElementIntoSafeView(
   const inView = rect.top >= safeTop && rect.bottom <= safeBottom;
   if (inView) return;
   const targetY =
-    window.scrollY +
-    rect.top -
-    Math.max(topInset + 16, (viewportH - rect.height) / 2);
+    window.scrollY + rect.top - Math.max(topInset + 16, (viewportH - rect.height) / 2);
   window.scrollTo({ top: Math.max(0, targetY), behavior: "smooth" });
 }
 
@@ -138,15 +136,10 @@ function isVisibleElement(el: Element | null): el is HTMLElement {
 }
 
 function getVisibleElement(selector: string): HTMLElement | null {
-  return (
-    Array.from(document.querySelectorAll(selector)).find(isVisibleElement) ?? null
-  );
+  return Array.from(document.querySelectorAll(selector)).find(isVisibleElement) ?? null;
 }
 
-export async function waitForEl(
-  selector: string,
-  timeoutMs = 2500,
-): Promise<Element | null> {
+export async function waitForEl(selector: string, timeoutMs = 2500): Promise<Element | null> {
   if (typeof document === "undefined") return null;
   const existing = document.querySelector(selector);
   if (existing) return existing;
@@ -269,9 +262,7 @@ export function createTour(opts: {
 
   const driverSteps: DriveStep[] = steps.map((def) => ({
     ...def,
-    element: def.selector
-      ? (() => getVisibleElement(def.selector!) ?? document.body)
-      : undefined,
+    element: def.selector ? () => getVisibleElement(def.selector!) ?? document.body : undefined,
     popover: def.popover ? { ...def.popover } : undefined,
   }));
 
@@ -282,8 +273,7 @@ export function createTour(opts: {
     const popover = step?.popover;
     if (el && popover) {
       const requested =
-        (popover.side as "top" | "bottom" | "left" | "right" | undefined) ??
-        "bottom";
+        (popover.side as "top" | "bottom" | "left" | "right" | undefined) ?? "bottom";
       popover.side = pickBestSide(el, requested);
       const rect = el.getBoundingClientRect();
       const shouldStartAlign = mobile && rect.width > window.innerWidth * 0.8;
@@ -329,8 +319,7 @@ export function createTour(opts: {
     if (!el) return false;
     await waitForStableRect(el);
     const preferredSide =
-      (def.popover?.side as "top" | "bottom" | "left" | "right" | undefined) ??
-      "bottom";
+      (def.popover?.side as "top" | "bottom" | "left" | "right" | undefined) ?? "bottom";
     scrollElementIntoSafeView(el, preferredSide);
     await waitForScrollSettled();
     updateStepPlacement(idx);
@@ -422,4 +411,3 @@ export function createTour(opts: {
 
   return d;
 }
-

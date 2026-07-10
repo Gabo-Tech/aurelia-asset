@@ -65,10 +65,7 @@ export async function getYahooQuote(symbol: string): Promise<Quote> {
   return q;
 }
 
-export async function getYahooHistory(
-  symbol: string,
-  range: string,
-): Promise<PricePoint[]> {
+export async function getYahooHistory(symbol: string, range: string): Promise<PricePoint[]> {
   const key = `yh:hist:${symbol}:${range}`;
   const cached = getCache<{ t: number; p: number }[]>(key);
   if (cached) return cached.map((x) => ({ date: new Date(x.t), price: x.p }));

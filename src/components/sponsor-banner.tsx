@@ -27,11 +27,7 @@ function isSafeHttp(url: string | undefined | null): url is string {
   return typeof url === "string" && /^https?:\/\//i.test(url);
 }
 
-export function SponsorBanner({
-  fallback,
-  variant = "card",
-  className,
-}: Props) {
+export function SponsorBanner({ fallback, variant = "card", className }: Props) {
   const fetchSponsors = useServerFn(getSponsors);
   const { data } = useQuery({
     queryKey: ["sponsors"],
@@ -41,10 +37,7 @@ export function SponsorBanner({
   });
 
   const active = useMemo(
-    () =>
-      data
-        ? expandByWeight(activeSponsors(data).filter((s) => isSafeHttp(s.url)))
-        : [],
+    () => (data ? expandByWeight(activeSponsors(data).filter((s) => isSafeHttp(s.url))) : []),
     [data],
   );
   const rotationMs = Math.max(3, data?.rotationSeconds ?? 20) * 1000;
@@ -52,10 +45,7 @@ export function SponsorBanner({
   const [idx, setIdx] = useState(0);
   useEffect(() => {
     if (active.length <= 1) return;
-    const t = setInterval(
-      () => setIdx((i) => (i + 1) % active.length),
-      rotationMs,
-    );
+    const t = setInterval(() => setIdx((i) => (i + 1) % active.length), rotationMs);
     return () => clearInterval(t);
   }, [active.length, rotationMs]);
 
@@ -132,9 +122,7 @@ export function SponsorBanner({
         <span className="truncate font-semibold text-foreground group-hover:text-primary">
           {s.name}
         </span>
-        {s.tagline ? (
-          <span className="hidden truncate sm:inline">- {s.tagline}</span>
-        ) : null}
+        {s.tagline ? <span className="hidden truncate sm:inline">- {s.tagline}</span> : null}
       </a>
     );
   }
@@ -169,9 +157,7 @@ export function SponsorBanner({
             {s.name}
           </div>
           {s.tagline ? (
-            <div className="truncate text-[11px] text-muted-foreground">
-              {s.tagline}
-            </div>
+            <div className="truncate text-[11px] text-muted-foreground">{s.tagline}</div>
           ) : null}
         </div>
       </div>

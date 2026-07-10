@@ -58,9 +58,7 @@ function getGithubConfig() {
   const branch = (branchRaw?.trim() || "main").replace(/^\/+|\/+$/g, "");
   if (!token || !repo) return null;
   if (!REPO_RE.test(repo)) {
-    throw new Error(
-      `GITHUB_REPO is malformed. Expected "owner/repo", got "${repo}".`,
-    );
+    throw new Error(`GITHUB_REPO is malformed. Expected "owner/repo", got "${repo}".`);
   }
   return { token, repo, branch };
 }
@@ -136,10 +134,7 @@ async function fetchFromGithub(): Promise<{
   }
 }
 
-async function writeToGithub(
-  next: SponsorsFile,
-  prevSha: string | null,
-): Promise<void> {
+async function writeToGithub(next: SponsorsFile, prevSha: string | null): Promise<void> {
   const cfg = getGithubConfig();
   if (!cfg) throw new Error("GitHub storage is not configured.");
   const body = JSON.stringify(next, null, 2) + "\n";
@@ -234,9 +229,7 @@ export const saveSponsors = createServerFn({ method: "POST" })
 
 /** Password check for admin login. */
 export const checkAdminPassword = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) =>
-    z.object({ password: z.string() }).parse(data),
-  )
+  .inputValidator((data: unknown) => z.object({ password: z.string() }).parse(data))
   .handler(async ({ data }): Promise<{ ok: boolean }> => {
     if (!adminRateLimit(clientIp())) {
       throw new Error("Too many attempts. Try again later.");

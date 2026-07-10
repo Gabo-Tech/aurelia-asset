@@ -32,11 +32,11 @@ export async function finnhubQuote(symbol: string): Promise<number | null> {
 export async function finnhubHistory(
   symbol: string,
   fromUnix: number,
-  toUnix: number
+  toUnix: number,
 ): Promise<PricePoint[] | null> {
   const key = getFinnhubKey();
   const url = `https://finnhub.io/api/v1/stock/candle?symbol=${encodeURIComponent(
-    symbol
+    symbol,
   )}&resolution=D&from=${fromUnix}&to=${toUnix}${key ? `&token=${key}` : ""}`;
   try {
     const data = await call<{ s?: string; t?: number[]; c?: number[] }>(url, !!key);

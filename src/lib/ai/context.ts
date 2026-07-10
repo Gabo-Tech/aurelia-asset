@@ -196,8 +196,7 @@ export function buildFinanceContext(
   }
 
   const netWorth = portfolioTotal + liquidityBalance - cardDebt;
-  const savingsRate =
-    totalIncome > 0 ? (totalIncome - totalExpense) / totalIncome : null;
+  const savingsRate = totalIncome > 0 ? (totalIncome - totalExpense) / totalIncome : null;
 
   return {
     currency,
@@ -267,11 +266,7 @@ export function formatContextForPrompt(ctx: FinanceContext): string {
   }
   if (ctx.goals.length) {
     lines.push(
-      "Goals: " +
-        ctx.goals
-          .map((g) => `${g.name} ${m(g.current)}/${m(g.target)}`)
-          .join(", ") +
-        ".",
+      "Goals: " + ctx.goals.map((g) => `${g.name} ${m(g.current)}/${m(g.target)}`).join(", ") + ".",
     );
   }
   if (ctx.recent.length) {

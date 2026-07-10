@@ -90,11 +90,11 @@ const ca: Translation = {
       'Digues o escriu coses com "He gastat 45 en la compra a Mercadona ahir". Confirmaré abans de guardar, i tot es queda al teu dispositiu.',
     backend: {
       greeting:
-        'Hola! Sóc el teu assistent financer. Explica\'m una despesa (p. ex. "He gastat 12 en el dinar"), pregunta quant has gastat o demana consells d\'estalvi.',
-      help:
-        "Puc:\n• Registrar despeses que descrigues (confirmaré abans)\n• Resumir les teues despeses per període o categoria\n• Mostrar transaccions recents\n• Informar de l'estat del pressupost\n• Donar consells d'estalvi basats en les teues dades\nTot funciona al teu dispositiu.",
+        "Hola! Sóc el teu assistent financer. Explica'm una despesa (p. ex. \"He gastat 12 en el dinar\"), pregunta quant has gastat o demana consells d'estalvi.",
+      help: "Puc:\n• Registrar despeses que descrigues (confirmaré abans)\n• Resumir les teues despeses per període o categoria\n• Mostrar transaccions recents\n• Informar de l'estat del pressupost\n• Donar consells d'estalvi basats en les teues dades\nTot funciona al teu dispositiu.",
       thanks: "De res! Digues si necessites alguna cosa més amb les teues finances.",
-      positive: "M'alegra haver ajudat! Pregunta'm quan vulguis sobre despeses, pressupostos o estalvi.",
+      positive:
+        "M'alegra haver ajudat! Pregunta'm quan vulguis sobre despeses, pressupostos o estalvi.",
       goodbye: "Fins aviat! Estaré aquí quan vulgues revisar els teus diners.",
       ack: "Entès. En què més et puc ajudar?",
       howAreYou:
@@ -112,7 +112,7 @@ const ca: Translation = {
       processError:
         "Ho sent, no he pogut processar-ho ara. Torna-ho a provar o reformula la teua petició.",
       maxStepsReply:
-        "Açò és el que he trobat segons les teues dades. Pregunta\'m el que vulgues sobre les teues finances.",
+        "Açò és el que he trobat segons les teues dades. Pregunta'm el que vulgues sobre les teues finances.",
       advice: {
         disclaimer:
           "Només orientació educativa — no és assessorament financer professional. Analitzo les teues dades locals per suggerir idees; valora la teua situació i consulta un assessor qualificat per a decisions importants.",
@@ -137,11 +137,11 @@ const ca: Translation = {
           "Prop del {{pct}}% del teu patrimoni està en efectiu/liquiditat ({{liquidity}} líquid vs {{invested}} invertit). Si el fons d'emergència està cobert, considera invertir-ne una part.",
         balancedAllocation:
           "La teua distribució sembla equilibrada — {{invested}} invertit i {{liquid}} en efectiu/posicions líquides.",
-        overBudget: "T'has passat del pressupost en {{categories}}. Ves amb compte la resta del mes.",
+        overBudget:
+          "T'has passat del pressupost en {{categories}}. Ves amb compte la resta del mes.",
         onTrack:
           'Vas dins del pressupost "{{plan}}" — bé. Mantén el ritme i acabaràs per sota de {{limit}}.',
-        goalOnTrack:
-          'La meta "{{name}}" va al {{pct}}% ({{current}} de {{target}}) — bon progrés.',
+        goalOnTrack: 'La meta "{{name}}" va al {{pct}}% ({{current}} de {{target}}) — bon progrés.',
         goalBehind:
           'La meta "{{name}}" només al {{pct}}% ({{current}} de {{target}}). Uns {{monthly}}/mes tancarien la bretxa en un any.',
         keepTracking:
@@ -199,31 +199,65 @@ const ca: Translation = {
       badge: "Sense compte. Sense rastreig. Les teues dades es queden amb tu.",
       titleStart: "Els teus diners,",
       titleHighlight: "per fi en un lloc tranquil",
-      subtitle: "Veges tot el que tens, entén on va cada euro i planifica el que ve - en un gestor elegant que mai no et pregunta qui eres.",
+      subtitle:
+        "Veges tot el que tens, entén on va cada euro i planifica el que ve - en un gestor elegant que mai no et pregunta qui eres.",
       ctaPrimary: "Obrir el teu gestor",
       ctaSecondary: "Veure què obtens",
       screenshotAlt: "Panell del gestor elegant amb assignació i flux de caixa",
     },
-    proof: { zeroAccounts: "Les teues dades es queden amb tu", offline: "Funciona en qualsevol dispositiu", multiCurrency: "Totes les divises que uses", openSource: "Open source auditable" },
+    proof: {
+      zeroAccounts: "Les teues dades es queden amb tu",
+      offline: "Funciona en qualsevol dispositiu",
+      multiCurrency: "Totes les divises que uses",
+      openSource: "Open source auditable",
+    },
     features: {
       heading: "Tot el que necessites per tindre el control dels teus diners",
-      subheading: "Segueix el que tens, mira on flueix i planifica el que ve - sense cap full de càlcul.",
+      subheading:
+        "Segueix el que tens, mira on flueix i planifica el que ve - sense cap full de càlcul.",
       items: {
-        assets: { title: "Tot el teu patrimoni, una vista", body: "Accions, ETFs, cripto, metalls, efectiu i actius personalitzats l'un al costat de l'altre, convertits a la moneda amb què penses de veritat." },
-        performance: { title: "Sàpigues com et va de veritat", body: "Preus en directe, gràfics històrics i rendiments ponderats pel temps et diuen si la teua cartera creix, no només si es mou." },
-        sankey: { title: "Veges on flueixen els teus diners", body: "Els teus ingressos, despeses, estalvis i inversions animen un diagrama Sankey que pots reordenar i personalitzar com vulgues." },
-        categories: { title: "Planifica els mesos vinents", body: "Pressupostos, objectius d'estalvi, quadres d'amortització i una previsió a 24 mesos converteixen els números d'avui en el futur que construeixes." },
-        private: { title: "Realment privat, per defecte", body: "Tot es xifra i es guarda al teu dispositiu. Sense compte, sense núvol i sense analítica sobre el que tens." },
-        elegant: { title: "Elegant en qualsevol pantalla", body: "Una interfície tranquil·la i sense distraccions per a escriptori, tauleta i mòbil, amb apps natives i sis idiomes, inclòs el valencià." },
+        assets: {
+          title: "Tot el teu patrimoni, una vista",
+          body: "Accions, ETFs, cripto, metalls, efectiu i actius personalitzats l'un al costat de l'altre, convertits a la moneda amb què penses de veritat.",
+        },
+        performance: {
+          title: "Sàpigues com et va de veritat",
+          body: "Preus en directe, gràfics històrics i rendiments ponderats pel temps et diuen si la teua cartera creix, no només si es mou.",
+        },
+        sankey: {
+          title: "Veges on flueixen els teus diners",
+          body: "Els teus ingressos, despeses, estalvis i inversions animen un diagrama Sankey que pots reordenar i personalitzar com vulgues.",
+        },
+        categories: {
+          title: "Planifica els mesos vinents",
+          body: "Pressupostos, objectius d'estalvi, quadres d'amortització i una previsió a 24 mesos converteixen els números d'avui en el futur que construeixes.",
+        },
+        private: {
+          title: "Realment privat, per defecte",
+          body: "Tot es xifra i es guarda al teu dispositiu. Sense compte, sense núvol i sense analítica sobre el que tens.",
+        },
+        elegant: {
+          title: "Elegant en qualsevol pantalla",
+          body: "Una interfície tranquil·la i sense distraccions per a escriptori, tauleta i mòbil, amb apps natives i sis idiomes, inclòs el valencià.",
+        },
       },
     },
     how: {
       heading: "De zero a claredat en 60 segons",
       cta: "Prova-ho ja - gratis",
       steps: {
-        one: { title: "Obri'l", body: "Sense registre ni descàrrega. El gestor carrega a l'instant i funciona íntegrament al teu dispositiu." },
-        two: { title: "Afig el que tens i el que gastes", body: "Busca un ticker, apunta una nòmina, afig una targeta de crèdit o un pla a terminis - en les teues categories i divises." },
-        three: { title: "Mira com cobra vida tot el panorama", body: "Assignació, patrimoni, flux de caixa i previsió s'actualitzen en temps real mentre els preus i la vida canvien." },
+        one: {
+          title: "Obri'l",
+          body: "Sense registre ni descàrrega. El gestor carrega a l'instant i funciona íntegrament al teu dispositiu.",
+        },
+        two: {
+          title: "Afig el que tens i el que gastes",
+          body: "Busca un ticker, apunta una nòmina, afig una targeta de crèdit o un pla a terminis - en les teues categories i divises.",
+        },
+        three: {
+          title: "Mira com cobra vida tot el panorama",
+          body: "Assignació, patrimoni, flux de caixa i previsió s'actualitzen en temps real mentre els preus i la vida canvien.",
+        },
       },
     },
     comparison: {
@@ -244,25 +278,40 @@ const ca: Translation = {
     faq: {
       heading: "Les teues preguntes, respostes",
       items: {
-        free: { q: "És realment gratis?", a: "Sí. Totes les funcions són gratis per sempre, sense registre, sense anuncis i sense pla premium. L'app funciona al navegador o com a app nativa al teu dispositiu." },
-        storage: { q: "On viuen les meues dades?", a: "Només al teu dispositiu, xifrades amb AES-GCM. Res no es puja, sincronitza ni comparteix. Pots exportar una còpia completa quan vulgues i restaurar-la en un altre dispositiu." },
-        assets: { q: "Què puc seguir?", a: "Accions, ETFs, cripto, metalls preciosos, comptes d'efectiu i qualsevol actiu personalitzat, amb preus en directe d'una font pública o la teua pròpia clau de Finnhub." },
-        account: { q: "Cal un compte?", a: "Mai. Obri l'app i comença. Sense login, sense correu, sense telemetria - i t'endús les teues dades amb un clic quan vulgues." },
+        free: {
+          q: "És realment gratis?",
+          a: "Sí. Totes les funcions són gratis per sempre, sense registre, sense anuncis i sense pla premium. L'app funciona al navegador o com a app nativa al teu dispositiu.",
+        },
+        storage: {
+          q: "On viuen les meues dades?",
+          a: "Només al teu dispositiu, xifrades amb AES-GCM. Res no es puja, sincronitza ni comparteix. Pots exportar una còpia completa quan vulgues i restaurar-la en un altre dispositiu.",
+        },
+        assets: {
+          q: "Què puc seguir?",
+          a: "Accions, ETFs, cripto, metalls preciosos, comptes d'efectiu i qualsevol actiu personalitzat, amb preus en directe d'una font pública o la teua pròpia clau de Finnhub.",
+        },
+        account: {
+          q: "Cal un compte?",
+          a: "Mai. Obri l'app i comença. Sense login, sense correu, sense telemetria - i t'endús les teues dades amb un clic quan vulgues.",
+        },
       },
     },
     cta: {
       heading: "Recupera els teus diners en 60 segons.",
-      subheading: "Sense registre. Sense targeta. Només obri el gestor i comença a veure el que ja tens.",
+      subheading:
+        "Sense registre. Sense targeta. Només obri el gestor i comença a veure el que ja tens.",
       button: "Obrir el teu gestor",
       footnote: "Funciona en qualsevol navegador modern · Apps natives per a totes les plataformes",
     },
     downloads: {
       heading: "Emporta-te'l amb tu, arreu",
-      subheading: "El mateix gestor privat, empaquetat com a app nativa per a cada dispositiu que uses.",
+      subheading:
+        "El mateix gestor privat, empaquetat com a app nativa per a cada dispositiu que uses.",
       web: "O obre-la directament al navegador",
       soon: "Properament",
       comingSoon: "Pròximament",
-      unsignedNotice: "Totes les compilacions són sense signar i es distribueixen directament. El teu sistema pot mostrar un avís la primera vegada - és normal.",
+      unsignedNotice:
+        "Totes les compilacions són sense signar i es distribueixen directament. El teu sistema pot mostrar un avís la primera vegada - és normal.",
       platforms: {
         windows: "Windows",
         mac: "macOS",
@@ -285,10 +334,11 @@ const ca: Translation = {
     footer: { brand: "Gestor de cartera elegant", madeBy: "Fet per", sourceCode: "Codi font" },
     meta: {
       title: "Gestor de cartera privat - Accions, Cripto i ETFs",
-      description: "Segueix cada acció, ETF, cripto, metall i euro que tens en un gestor privat. Veges assignació, flux de caixa, previsió i patrimoni - sense registre, sense núvol, gratis per sempre.",
-      keywords: "gestor de cartera, patrimoni net, app privada de finances, seguiment d'accions, cartera cripto, seguiment ETF, sankey de flux de caixa, pressupostos, objectius d'estalvi, cartera offline",
+      description:
+        "Segueix cada acció, ETF, cripto, metall i euro que tens en un gestor privat. Veges assignació, flux de caixa, previsió i patrimoni - sense registre, sense núvol, gratis per sempre.",
+      keywords:
+        "gestor de cartera, patrimoni net, app privada de finances, seguiment d'accions, cartera cripto, seguiment ETF, sankey de flux de caixa, pressupostos, objectius d'estalvi, cartera offline",
     },
-
   },
   dashboard: {
     metaTitle: "Panell - Gestor de cartera",
@@ -333,7 +383,8 @@ const ca: Translation = {
     dialog: {
       editTitle: "Editar actiu",
       addTitle: "Afegir actiu",
-      description: "Cerca un actiu de mercat o afig un personalitzat (p. ex. Quanloop, capital privat).",
+      description:
+        "Cerca un actiu de mercat o afig un personalitzat (p. ex. Quanloop, capital privat).",
       searchFailed: "Cerca fallida — prova un altre proxy a Ajustos",
       qtyGtZero: "La quantitat ha de ser > 0",
       nameRequired: "El nom és obligatori",
@@ -371,7 +422,8 @@ const ca: Translation = {
     txDialog: {
       editTitle: "Editar transacció",
       addTitle: "Afegir transacció",
-      description: "Registra una compra o venda. La quantitat de l'actiu es recalcula a partir de les teues transaccions.",
+      description:
+        "Registra una compra o venda. La quantitat de l'actiu es recalcula a partir de les teues transaccions.",
       pickHolding: "Tria un actiu",
       pickHoldingError: "Tria un actiu",
       qtyGtZero: "La quantitat ha de ser > 0",
@@ -466,7 +518,8 @@ const ca: Translation = {
     frequency: "Freqüència",
     untilOptional: "Fins a (opcional)",
     percentToggle: "Usar un percentatge d'una altra entrada (p. ex. impostos)",
-    transferIntro: "Mou diners entre comptes sense afectar els totals d'ingressos o despeses. P. ex. vendre part d'una inversió per a pagar una targeta, o amortitzar deute de targeta des de la liquiditat.",
+    transferIntro:
+      "Mou diners entre comptes sense afectar els totals d'ingressos o despeses. P. ex. vendre part d'una inversió per a pagar una targeta, o amortitzar deute de targeta des de la liquiditat.",
     from: "Des de",
     to: "A",
     addIncomeBtn: "Afegir ingrés",
@@ -520,7 +573,8 @@ const ca: Translation = {
   cards: {
     title: "Targetes de crèdit",
     add: "Afegir targeta",
-    empty: "Encara no hi ha targetes. Afig-ne una per a registrar deute de compres a crèdit i amortitzar-la amb transferències.",
+    empty:
+      "Encara no hi ha targetes. Afig-ne una per a registrar deute de compres a crèdit i amortitzar-la amb transferències.",
     balanceOwed: "Saldo pendent",
     limit: "Límit",
     available: "Disponible",
@@ -535,7 +589,8 @@ const ca: Translation = {
     overLimit: "sobre el límit",
     newCard: "Nova targeta de crèdit",
     editCard: "Editar targeta de crèdit",
-    dialogDescription: "Registra saldo i crèdit disponible. Càrrecs i pagaments venen de les entrades de flux de caixa.",
+    dialogDescription:
+      "Registra saldo i crèdit disponible. Càrrecs i pagaments venen de les entrades de flux de caixa.",
     name: "Nom",
     namePlaceholder: "Amex Gold",
     currency: "Moneda",
@@ -579,13 +634,17 @@ const ca: Translation = {
     description: "Opcions d'API i gestió de dades.",
     api: {
       title: "API i fiabilitat",
-      description: "CoinGecko i Yahoo Finance funcionen sense claus. Finnhub és un suport opcional.",
+      description:
+        "CoinGecko i Yahoo Finance funcionen sense claus. Finnhub és un suport opcional.",
       displayCurrency: "Moneda de visualització",
-      displayCurrencyHelp: "Tots els valors es converteixen a esta moneda usant tipus de canvi en directe (caché de 6 hores).",
+      displayCurrencyHelp:
+        "Tots els valors es converteixen a esta moneda usant tipus de canvi en directe (caché de 6 hores).",
       privacyMode: "Mode privat",
-      privacyModeHelp: "Amaga quantitats i valors monetaris en tota l'app (la icona de l'ull a la capçalera fa el mateix).",
+      privacyModeHelp:
+        "Amaga quantitats i valors monetaris en tota l'app (la icona de l'ull a la capçalera fa el mateix).",
       useCorsProxy: "Usar proxy CORS",
-      useCorsProxyHelp: "Activa-ho si les peticions a Yahoo Finance estan bloquejades al teu navegador.",
+      useCorsProxyHelp:
+        "Activa-ho si les peticions a Yahoo Finance estan bloquejades al teu navegador.",
       corsProxyUrl: "URL del proxy CORS",
       finnhubKey: "Clau d'API de Finnhub (opcional)",
       finnhubPlaceholder: "apega la clau de finnhub.io",
@@ -605,12 +664,13 @@ const ca: Translation = {
       voiceOutput: "Llegir respostes en veu alta",
       voiceOutputHelp: "Llig les respostes de l'assistent amb síntesi de veu al dispositiu.",
       llmModel: "Model de llenguatge (GGUF)",
-      llmModelHelp:
-        "p. ex. Qwen2.5-1.5B-Instruct Q4_K_M. Sense un, s'usa l'assistent integrat.",
+      llmModelHelp: "p. ex. Qwen2.5-1.5B-Instruct Q4_K_M. Sense un, s'usa l'assistent integrat.",
       sttModel: "Carpeta del model de veu a text",
-      sttModelHelp: "Carpeta de model Sherpa-ONNX STT. Usa el reconeixedor del navegador com a suport.",
+      sttModelHelp:
+        "Carpeta de model Sherpa-ONNX STT. Usa el reconeixedor del navegador com a suport.",
       ttsModel: "Carpeta del model de text a veu",
-      ttsModelHelp: "Carpeta de model Sherpa-ONNX VITS/Piper. Usa la veu del navegador com a suport.",
+      ttsModelHelp:
+        "Carpeta de model Sherpa-ONNX VITS/Piper. Usa la veu del navegador com a suport.",
       webNote:
         "Estàs en la versió web. L'assistent funciona offline amb el motor integrat i la veu del navegador. Instal·la l'app d'escriptori/mòbil per a usar LLM local i models Sherpa-ONNX.",
       clearHistory: "Esborrar historial del xat",
@@ -642,13 +702,15 @@ const ca: Translation = {
     },
     data: {
       title: "Dades",
-      description: "Tot l'estat viu al localStorage del navegador. Fes còpia o mou-ho quan vulgues.",
+      description:
+        "Tot l'estat viu al localStorage del navegador. Fes còpia o mou-ho quan vulgues.",
       exportJson: "Exportar estat complet (JSON)",
       exportCsv: "Exportar actius (CSV)",
       importJson: "Importar JSON",
       reset: "Restablir totes les dades",
       resetTitle: "Esborrar tot?",
-      resetDesc: "Açò elimina tots els actius, entrades de flux de caixa i ajustos d'este navegador. Exporta una còpia abans si vols conservar-la.",
+      resetDesc:
+        "Açò elimina tots els actius, entrades de flux de caixa i ajustos d'este navegador. Exporta una còpia abans si vols conservar-la.",
       resetConfirm: "Sí, esborrar",
       imported: "Dades importades",
       importFailed: "No s'ha pogut importar",
@@ -664,7 +726,8 @@ const ca: Translation = {
       copyFailed: "Error en copiar",
       copyJson: "Copiar JSON al porta-retalls",
       pasteJson: "Apegar JSON per a importar",
-      pasteJsonDesc: "Apega a continuació un JSON exportat prèviament. Açò reemplaçarà les teues dades actuals.",
+      pasteJsonDesc:
+        "Apega a continuació un JSON exportat prèviament. Açò reemplaçarà les teues dades actuals.",
       pasteFromClipboard: "Apegar des del porta-retalls",
       clipboardReadFailed: "No s'ha pogut llegir el porta-retalls",
     },
@@ -716,7 +779,8 @@ const ca: Translation = {
     entriesOf: "de",
     mcTrigger: "Categories",
     mcTitle: "Gestiona categories",
-    mcDesc: "Organitza fonts d'ingrés i categories de despesa. Estalvis i Inversions són categories de despesa amb color propi.",
+    mcDesc:
+      "Organitza fonts d'ingrés i categories de despesa. Estalvis i Inversions són categories de despesa amb color propi.",
     mcAddNew: "Afig una nova",
     mcNamePlaceholder: "Nom de la categoria",
     mcAdd: "Afig",
@@ -798,7 +862,8 @@ const ca: Translation = {
     hManual: "man",
     hNoMatch: "Cap actiu coincideix amb els filtres.",
     perfReturnsByAsset: "Rendiments per actiu",
-    perfCouldntLoad: "No s'ha pogut carregar l'històric de preus. Prova d'activar el proxy CORS a Configuració.",
+    perfCouldntLoad:
+      "No s'ha pogut carregar l'històric de preus. Prova d'activar el proxy CORS a Configuració.",
     perfNoData: "Sense dades",
     perfAssets: "Actius",
     perfTotalLabel: "Total",
@@ -815,41 +880,123 @@ const ca: Translation = {
     restartDesc: "Torna a veure el tour guiat quan vulguis per refrescar la memòria.",
     restartButton: "Inicia el tour",
     steps: {
-      welcome: { title: "Benvingut al teu centre financer", body: "Fem un recorregut ràpid per l'app perquè trauis el màxim de cada secció. Pots saltar o repetir el tour des d'Ajusts." },
-      sidebar: { title: "Navegació principal", body: "Usa esta barra lateral per moure't entre Panell, Inversions, Rendiment, Flux de caixa i Ajusts." },
-      mobileNav: { title: "Navegació ràpida", body: "Al mòbil, usa la barra inferior per canviar entre les seccions principals." },
-      theme: { title: "Mode clar i fosc", body: "Canvia entre tema clar i fosc. L'app recorda la teua elecció." },
-      privacy: { title: "Mode privacitat", body: "Oculta tots els valors monetaris amb un clic, ideal per compartir pantalla o ensenyar gràfics en públic." },
-      dashStats: { title: "Les teues xifres clau", body: "Valor de la cartera, patrimoni net i els últims 30 dies de flux de caixa d'un cop d'ull." },
-      dashAllocation: { title: "Distribució d'actius", body: "Visualitza com es reparteix la teua cartera. Alterna actius en la llegenda o mostra totes les etiquetes." },
-      dashBreakdown: { title: "Desglossament per actiu", body: "Llista detallada de cada inversió amb el seu pes actual en la cartera." },
-      holdingsAdd: { title: "Afegir una inversió", body: "Registra accions, ETFs, cripto, efectiu, metalls i més. Els preus s'actualitzen automàticament quan és possible." },
-      holdingsFilters: { title: "Cerca i filtra", body: "Troba qualsevol inversió per nom, símbol o tipus." },
-      holdingsTable: { title: "Les teues inversions", body: "Mira la quantitat, preu i valor de cada posició. Toca una fila per editar-la o esborrar-la." },
-      holdingsCharts: { title: "Gràfics de distribució", body: "Visualitza com es reparteix el teu diner entre classes d'actius i terminis (llarg vs curt)." },
-      holdingsTx: { title: "Compres i vendes", body: "Registra cada transacció. L'app manté les quantitats sincronitzades automàticament." },
-      perfPeriod: { title: "Tria un període", body: "Compara la teua cartera en 24 hores, una setmana, un mes, un any o més." },
-      perfAssets: { title: "Alterna actius", body: "Mostra o oculta actius individuals per comparar només els que t'interessen." },
-      perfChart: { title: "Evolució de la cartera", body: "Passa el ratolí pel gràfic per veure el valor exacte en qualsevol moment del període." },
-      perfReturns: { title: "Rendibilitat per actiu", body: "Mira el preu inicial, el final i el canvi total de cada inversió en el període." },
-      cfAdd: { title: "Afegir ingressos, despeses i transferències", body: "Registra entrades úniques o recurrents, marca imports com a percentatges (genial per impostos) i paga en efectiu o amb targeta." },
-      cfSankey: { title: "Diagrama de flux de diners", body: "Observa com el teu diner passa de les fonts d'ingrés a despeses, estalvi i inversió. Arrossega per reordenar." },
-      cfEntries: { title: "Totes les teues entrades", body: "Filtra per tipus, categoria i període, edita registres i exporta un PDF amb el gràfic de balanç." },
-      cfCards: { title: "Targetes de crèdit i deute", body: "Gestiona límits, saldos i pagaments de les teues targetes. Les despeses amb targeta apareixen també al diagrama." },
-      setApi: { title: "API i opcions de visualització", body: "Tria la teua moneda, activa un proxy CORS si cal i afig la teua clau de Finnhub per a dades de preus més completes." },
-      setLanguage: { title: "Idioma", body: "Canvia entre anglès, espanyol, català/valencià, portuguès, neerlandès i alemany. La teua elecció es guarda i s'exporta." },
-      setData: { title: "Còpia i restauració", body: "Exporta les teues dades en JSON o CSV, importa una còpia prèvia o reinicia-ho tot des de zero." },
-      finish: { title: "Tot llest!", body: "Això és tot. Pots repetir este tour des d'Ajusts quan vulguis. A registrar!" },
+      welcome: {
+        title: "Benvingut al teu centre financer",
+        body: "Fem un recorregut ràpid per l'app perquè trauis el màxim de cada secció. Pots saltar o repetir el tour des d'Ajusts.",
+      },
+      sidebar: {
+        title: "Navegació principal",
+        body: "Usa esta barra lateral per moure't entre Panell, Inversions, Rendiment, Flux de caixa i Ajusts.",
+      },
+      mobileNav: {
+        title: "Navegació ràpida",
+        body: "Al mòbil, usa la barra inferior per canviar entre les seccions principals.",
+      },
+      theme: {
+        title: "Mode clar i fosc",
+        body: "Canvia entre tema clar i fosc. L'app recorda la teua elecció.",
+      },
+      privacy: {
+        title: "Mode privacitat",
+        body: "Oculta tots els valors monetaris amb un clic, ideal per compartir pantalla o ensenyar gràfics en públic.",
+      },
+      dashStats: {
+        title: "Les teues xifres clau",
+        body: "Valor de la cartera, patrimoni net i els últims 30 dies de flux de caixa d'un cop d'ull.",
+      },
+      dashAllocation: {
+        title: "Distribució d'actius",
+        body: "Visualitza com es reparteix la teua cartera. Alterna actius en la llegenda o mostra totes les etiquetes.",
+      },
+      dashBreakdown: {
+        title: "Desglossament per actiu",
+        body: "Llista detallada de cada inversió amb el seu pes actual en la cartera.",
+      },
+      holdingsAdd: {
+        title: "Afegir una inversió",
+        body: "Registra accions, ETFs, cripto, efectiu, metalls i més. Els preus s'actualitzen automàticament quan és possible.",
+      },
+      holdingsFilters: {
+        title: "Cerca i filtra",
+        body: "Troba qualsevol inversió per nom, símbol o tipus.",
+      },
+      holdingsTable: {
+        title: "Les teues inversions",
+        body: "Mira la quantitat, preu i valor de cada posició. Toca una fila per editar-la o esborrar-la.",
+      },
+      holdingsCharts: {
+        title: "Gràfics de distribució",
+        body: "Visualitza com es reparteix el teu diner entre classes d'actius i terminis (llarg vs curt).",
+      },
+      holdingsTx: {
+        title: "Compres i vendes",
+        body: "Registra cada transacció. L'app manté les quantitats sincronitzades automàticament.",
+      },
+      perfPeriod: {
+        title: "Tria un període",
+        body: "Compara la teua cartera en 24 hores, una setmana, un mes, un any o més.",
+      },
+      perfAssets: {
+        title: "Alterna actius",
+        body: "Mostra o oculta actius individuals per comparar només els que t'interessen.",
+      },
+      perfChart: {
+        title: "Evolució de la cartera",
+        body: "Passa el ratolí pel gràfic per veure el valor exacte en qualsevol moment del període.",
+      },
+      perfReturns: {
+        title: "Rendibilitat per actiu",
+        body: "Mira el preu inicial, el final i el canvi total de cada inversió en el període.",
+      },
+      cfAdd: {
+        title: "Afegir ingressos, despeses i transferències",
+        body: "Registra entrades úniques o recurrents, marca imports com a percentatges (genial per impostos) i paga en efectiu o amb targeta.",
+      },
+      cfSankey: {
+        title: "Diagrama de flux de diners",
+        body: "Observa com el teu diner passa de les fonts d'ingrés a despeses, estalvi i inversió. Arrossega per reordenar.",
+      },
+      cfEntries: {
+        title: "Totes les teues entrades",
+        body: "Filtra per tipus, categoria i període, edita registres i exporta un PDF amb el gràfic de balanç.",
+      },
+      cfCards: {
+        title: "Targetes de crèdit i deute",
+        body: "Gestiona límits, saldos i pagaments de les teues targetes. Les despeses amb targeta apareixen també al diagrama.",
+      },
+      setApi: {
+        title: "API i opcions de visualització",
+        body: "Tria la teua moneda, activa un proxy CORS si cal i afig la teua clau de Finnhub per a dades de preus més completes.",
+      },
+      setLanguage: {
+        title: "Idioma",
+        body: "Canvia entre anglès, espanyol, català/valencià, portuguès, neerlandès i alemany. La teua elecció es guarda i s'exporta.",
+      },
+      setData: {
+        title: "Còpia i restauració",
+        body: "Exporta les teues dades en JSON o CSV, importa una còpia prèvia o reinicia-ho tot des de zero.",
+      },
+      finish: {
+        title: "Tot llest!",
+        body: "Això és tot. Pots repetir este tour des d'Ajusts quan vulguis. A registrar!",
+      },
     },
   },
   planning: {
     title: "Planificació",
-    description: "Pressupostos, objectius, previsions i préstecs - tot derivat del teu flux de caixa.",
+    description:
+      "Pressupostos, objectius, previsions i préstecs - tot derivat del teu flux de caixa.",
     head: {
       title: "Planificació · Pressupostos, Objectius, Previsió, Préstecs",
-      description: "Planifica les teves finances: pressupostos mensuals, objectius d'estalvi, previsions de caixa i amortització de préstecs.",
+      description:
+        "Planifica les teves finances: pressupostos mensuals, objectius d'estalvi, previsions de caixa i amortització de préstecs.",
     },
-    tabs: { budgets: "Pressupostos", goals: "Objectius d'estalvi", forecast: "Previsió", loans: "Préstecs" },
+    tabs: {
+      budgets: "Pressupostos",
+      goals: "Objectius d'estalvi",
+      forecast: "Previsió",
+      loans: "Préstecs",
+    },
     budgets: {
       addTitle: "Afegir pressupost mensual",
       category: "Categoria",
@@ -916,9 +1063,11 @@ const ca: Translation = {
       liquidityForecast: "Previsió de liquiditat",
       months: "Mesos",
       projectedBalance: "Saldo projectat",
-      runway: "Amb la teua despesa recurrent actual tens ~{{months}} mesos d'autonomia des de la liquiditat d'avui.",
+      runway:
+        "Amb la teua despesa recurrent actual tens ~{{months}} mesos d'autonomia des de la liquiditat d'avui.",
       recurringTitle: "Subscripcions i ingressos recurrents",
-      recurringEmpty: "No es detecten entrades recurrents. Marca ingressos/despeses com a recurrents a Flux de caixa.",
+      recurringEmpty:
+        "No es detecten entrades recurrents. Marca ingressos/despeses com a recurrents a Flux de caixa.",
       perMo: "{{amount}}/mes",
       newScenarioName: "Nou escenari",
       noScenariosHint:
@@ -969,7 +1118,14 @@ const ca: Translation = {
       extraShort: "Extra: {{amount}}/mes",
       extraLabel: "Extra/mes",
       meta: "{{principal}} al {{apr}}% TAE · {{months}} mesos · comença {{date}}",
-      tbl: { n: "#", date: "Data", payment: "Quota", interest: "Interés", principal: "Capital", balance: "Saldo" },
+      tbl: {
+        n: "#",
+        date: "Data",
+        payment: "Quota",
+        interest: "Interés",
+        principal: "Capital",
+        balance: "Saldo",
+      },
     },
   },
 };

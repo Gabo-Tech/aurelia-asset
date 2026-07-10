@@ -23,27 +23,25 @@ export const LANG_STORAGE_KEY = "ept_lang";
 const SUPPORTED_CODES = ["en", "es", "pt", "nl", "de", "ca-valencia", "ca"];
 
 if (!i18n.isInitialized) {
-  i18n
-    .use(initReactI18next)
-    .init({
-      resources: {
-        en: { translation: en },
-        es: { translation: es },
-        pt: { translation: pt },
-        nl: { translation: nl },
-        de: { translation: de },
-        "ca-valencia": { translation: ca },
-        ca: { translation: ca },
-      },
-      // Always boot in English so SSR HTML matches the first client render.
-      // We swap to the user's preferred language right after hydration.
-      lng: "en",
-      fallbackLng: "en",
-      supportedLngs: SUPPORTED_CODES,
-      nonExplicitSupportedLngs: true,
-      interpolation: { escapeValue: false },
-      react: { useSuspense: false },
-    });
+  i18n.use(initReactI18next).init({
+    resources: {
+      en: { translation: en },
+      es: { translation: es },
+      pt: { translation: pt },
+      nl: { translation: nl },
+      de: { translation: de },
+      "ca-valencia": { translation: ca },
+      ca: { translation: ca },
+    },
+    // Always boot in English so SSR HTML matches the first client render.
+    // We swap to the user's preferred language right after hydration.
+    lng: "en",
+    fallbackLng: "en",
+    supportedLngs: SUPPORTED_CODES,
+    nonExplicitSupportedLngs: true,
+    interpolation: { escapeValue: false },
+    react: { useSuspense: false },
+  });
 
   if (typeof window !== "undefined") {
     setTimeout(() => {

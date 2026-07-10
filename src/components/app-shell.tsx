@@ -95,8 +95,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
           <nav className="flex-1 px-3 space-y-1" data-tour="sidebar-nav">
             {nav.map((item) => {
-              const active =
-                pathname === item.to || pathname.startsWith(item.to + "/");
+              const active = pathname === item.to || pathname.startsWith(item.to + "/");
               const Icon = item.icon;
               return (
                 <Link
@@ -106,7 +105,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                     "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
                     active
                       ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                      : "text-muted-foreground hover:text-foreground hover:bg-sidebar-accent/50"
+                      : "text-muted-foreground hover:text-foreground hover:bg-sidebar-accent/50",
                   )}
                 >
                   <Icon className="h-4 w-4" />
@@ -123,8 +122,14 @@ export function AppShell({ children }: { children: ReactNode }) {
         {/* Mobile top bar */}
         <header className="lg:hidden flex items-center justify-between px-4 py-3 border-b border-border/60 bg-sidebar/95 backdrop-blur sticky top-0 z-20">
           <Link to="/dashboard" className="flex items-center gap-2 min-w-0">
-            <img src={ASSETS.logo} alt="Logo" className="h-8 w-8 shrink-0 rounded-lg object-contain" />
-            <div className="truncate font-semibold text-sm">{brand} {brandTagline}</div>
+            <img
+              src={ASSETS.logo}
+              alt="Logo"
+              className="h-8 w-8 shrink-0 rounded-lg object-contain"
+            />
+            <div className="truncate font-semibold text-sm">
+              {brand} {brandTagline}
+            </div>
           </Link>
           <div className="flex items-center gap-1">
             <ThemeToggle />
@@ -135,7 +140,9 @@ export function AppShell({ children }: { children: ReactNode }) {
 
         {/* Main */}
         <main className="flex-1 min-w-0 pb-[calc(5.5rem+env(safe-area-inset-bottom))] lg:pb-12 flex flex-col min-h-[100dvh] lg:min-h-screen">
-          <div className="flex-1 flex flex-col min-h-0 px-4 sm:px-8 2xl:px-12 3xl:px-16 py-6 sm:py-10">{ready ? children : <PageLoader />}</div>
+          <div className="flex-1 flex flex-col min-h-0 px-4 sm:px-8 2xl:px-12 3xl:px-16 py-6 sm:py-10">
+            {ready ? children : <PageLoader />}
+          </div>
           <footer className="hidden lg:flex mt-8 border-t border-border/60 px-4 sm:px-8 py-4 flex-wrap items-center justify-between gap-3 text-[11px] text-muted-foreground/80">
             <span>{mounted ? t("shell.footerNote") : ""}</span>
             <div className="flex items-center gap-4">
@@ -164,8 +171,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           style={{ gridTemplateColumns: `repeat(${nav.length}, minmax(0, 1fr))` }}
         >
           {nav.map((item) => {
-            const active =
-              pathname === item.to || pathname.startsWith(item.to + "/");
+            const active = pathname === item.to || pathname.startsWith(item.to + "/");
             const Icon = item.icon;
             return (
               <Link
@@ -174,13 +180,15 @@ export function AppShell({ children }: { children: ReactNode }) {
                 aria-current={active ? "page" : undefined}
                 className={cn(
                   "relative flex flex-col items-center justify-center gap-0.5 py-2 min-h-[56px] min-w-0 px-0.5 text-[10px] font-medium transition-colors",
-                  active ? "text-primary" : "text-muted-foreground hover:text-foreground"
+                  active ? "text-primary" : "text-muted-foreground hover:text-foreground",
                 )}
               >
                 {active && (
                   <span className="absolute top-0 left-1/2 -translate-x-1/2 h-0.5 w-8 rounded-b-full bg-primary" />
                 )}
-                <Icon className={cn("h-5 w-5 shrink-0", active && "scale-110 transition-transform")} />
+                <Icon
+                  className={cn("h-5 w-5 shrink-0", active && "scale-110 transition-transform")}
+                />
                 <span className="max-w-full truncate leading-tight">{item.shortLabel}</span>
               </Link>
             );
@@ -204,12 +212,8 @@ export function PageHeader({
   return (
     <div className="mb-6 sm:mb-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
       <div className="min-w-0">
-        <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">
-          {title}
-        </h1>
-        {description ? (
-          <p className="mt-1 text-sm text-muted-foreground">{description}</p>
-        ) : null}
+        <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">{title}</h1>
+        {description ? <p className="mt-1 text-sm text-muted-foreground">{description}</p> : null}
       </div>
       {actions ? (
         <div className="flex flex-wrap items-center gap-2 sm:shrink-0">{actions}</div>
@@ -217,4 +221,3 @@ export function PageHeader({
     </div>
   );
 }
-

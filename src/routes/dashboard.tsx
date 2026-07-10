@@ -1,12 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import {
-  PieChart,
-  Pie,
-  Cell,
-  ResponsiveContainer,
-  Sector,
-} from "recharts";
+import { PieChart, Pie, Cell, ResponsiveContainer, Sector } from "recharts";
 import { useStore, useMoney } from "@/lib/store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -62,18 +56,18 @@ function Dashboard() {
         }))
         .filter((a) => a.value > 0)
         .sort((a, b) => b.value - a.value),
-    [holdings, toDisplay]
+    [holdings, toDisplay],
   );
 
   const visibleAllocation = useMemo(
     () => allocation.filter((a) => !hidden.has(a.id)),
-    [allocation, hidden]
+    [allocation, hidden],
   );
 
   const portfolioTotal = useMemo(() => allocation.reduce((s, a) => s + a.value, 0), [allocation]);
   const visibleTotal = useMemo(
     () => visibleAllocation.reduce((s, a) => s + a.value, 0),
-    [visibleAllocation]
+    [visibleAllocation],
   );
 
   const toggleAsset = (id: string) => {
@@ -135,7 +129,6 @@ function Dashboard() {
     return bal;
   }, [cashflows, toDisplay]);
 
-
   const topAlloc = allocation[0];
 
   if (!holdings.length) {
@@ -176,8 +169,8 @@ function Dashboard() {
               {topAlloc ? (
                 <>
                   {" · Top: "}
-                  <span className="text-foreground font-medium">{topAlloc.name}</span>{" "}
-                  ({formatPct((topAlloc.value / portfolioTotal) * 100, 1).replace("+", "")})
+                  <span className="text-foreground font-medium">{topAlloc.name}</span> (
+                  {formatPct((topAlloc.value / portfolioTotal) * 100, 1).replace("+", "")})
                 </>
               ) : null}
             </div>
@@ -186,9 +179,7 @@ function Dashboard() {
 
         <Card className="border-border/60">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Net worth
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Net worth</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl sm:text-3xl font-semibold tracking-tight break-words tabular-nums">
@@ -196,11 +187,7 @@ function Dashboard() {
             </div>
             <p className="mt-2 text-xs text-muted-foreground">
               Holdings{" "}
-              <span
-                className={
-                  cashflowBalance >= 0 ? "text-success" : "text-destructive"
-                }
-              >
+              <span className={cashflowBalance >= 0 ? "text-success" : "text-destructive"}>
                 {cashflowBalance >= 0 ? "+" : "−"}
                 {mask(Math.abs(cashflowBalance), currency)}
               </span>{" "}
@@ -261,10 +248,7 @@ function Dashboard() {
                       }`}
                       title={a.fullName}
                     >
-                      <span
-                        className="h-2 w-2 rounded-full"
-                        style={{ backgroundColor: a.color }}
-                      />
+                      <span className="h-2 w-2 rounded-full" style={{ backgroundColor: a.color }} />
                       <span className="font-medium">{a.name}</span>
                     </button>
                   );
@@ -442,8 +426,8 @@ function EmptyState() {
         </div>
         <h2 className="text-lg font-semibold">{t("more.dashNoHoldings")}</h2>
         <p className="text-sm text-muted-foreground mt-1 max-w-md mx-auto">
-          Add your first stock, ETF, crypto or metal to see allocation, performance and
-          beautiful charts.
+          Add your first stock, ETF, crypto or metal to see allocation, performance and beautiful
+          charts.
         </p>
         <Button asChild className="mt-5">
           <Link to="/holdings">

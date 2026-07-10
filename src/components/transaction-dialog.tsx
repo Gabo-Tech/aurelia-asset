@@ -56,7 +56,10 @@ export function TransactionDialog({ open, onOpenChange, editing, defaultHoldingI
       setQuantity(String(editing.quantity));
       setPrice(String(editing.pricePerUnit));
       setFees(editing.fees != null ? String(editing.fees) : "");
-      setCurrency(editing.currency || resolveDefaultCurrency(holdings, editing.holdingId, state.settings.displayCurrency));
+      setCurrency(
+        editing.currency ||
+          resolveDefaultCurrency(holdings, editing.holdingId, state.settings.displayCurrency),
+      );
       setNotes(editing.notes ?? "");
     } else {
       const hid = defaultHoldingId || holdings[0]?.id || "";
@@ -143,15 +146,24 @@ export function TransactionDialog({ open, onOpenChange, editing, defaultHoldingI
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label className="text-xs">{t("holdings.txDialog.date")}</Label>
-              <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="mt-1.5" />
+              <Input
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                className="mt-1.5"
+              />
             </div>
             <div>
               <Label className="text-xs">{t("common.currency")}</Label>
               <Select value={currency} onValueChange={setCurrency}>
-                <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="mt-1.5">
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent className="max-h-72">
                   {CURRENCIES.map((c) => (
-                    <SelectItem key={c.code} value={c.code}>{c.code}</SelectItem>
+                    <SelectItem key={c.code} value={c.code}>
+                      {c.code}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -161,11 +173,25 @@ export function TransactionDialog({ open, onOpenChange, editing, defaultHoldingI
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label className="text-xs">{t("holdings.quantity")}</Label>
-              <Input type="number" step="any" value={quantity} onChange={(e) => setQuantity(e.target.value)} placeholder="0.00" className="mt-1.5" />
+              <Input
+                type="number"
+                step="any"
+                value={quantity}
+                onChange={(e) => setQuantity(e.target.value)}
+                placeholder="0.00"
+                className="mt-1.5"
+              />
             </div>
             <div>
               <Label className="text-xs">{t("holdings.txDialog.pricePerUnit")}</Label>
-              <Input type="number" step="any" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="0.00" className="mt-1.5" />
+              <Input
+                type="number"
+                step="any"
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+                placeholder="0.00"
+                className="mt-1.5"
+              />
             </div>
           </div>
 
@@ -197,13 +223,24 @@ export function TransactionDialog({ open, onOpenChange, editing, defaultHoldingI
             </div>
             <div>
               <Label className="text-xs">{t("holdings.txDialog.feesOptional")}</Label>
-              <Input type="number" step="any" value={fees} onChange={(e) => setFees(e.target.value)} placeholder="0.00" className="mt-1.5" />
+              <Input
+                type="number"
+                step="any"
+                value={fees}
+                onChange={(e) => setFees(e.target.value)}
+                placeholder="0.00"
+                className="mt-1.5"
+              />
             </div>
           </div>
 
           <div>
             <Label className="text-xs">{t("holdings.txDialog.notesOptional")}</Label>
-            <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} className="mt-1.5 h-20" />
+            <Textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              className="mt-1.5 h-20"
+            />
           </div>
         </div>
 
@@ -211,9 +248,7 @@ export function TransactionDialog({ open, onOpenChange, editing, defaultHoldingI
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
             {t("common.cancel")}
           </Button>
-          <Button onClick={save}>
-            {editing ? t("common.save") : t("holdings.txDialog.add")}
-          </Button>
+          <Button onClick={save}>{editing ? t("common.save") : t("holdings.txDialog.add")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

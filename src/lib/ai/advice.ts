@@ -52,8 +52,7 @@ export function buildFinancialAdvice(ctx: FinanceContext): string {
       t("assistant.backend.advice.overspending", {
         amount: money(ctx, -month.net),
         category:
-          month.topExpenseCategories[0]?.name ??
-          t("assistant.backend.advice.unknownCategory"),
+          month.topExpenseCategories[0]?.name ?? t("assistant.backend.advice.unknownCategory"),
       }),
     );
   } else if (month.net > 0) {
@@ -69,7 +68,10 @@ export function buildFinancialAdvice(ctx: FinanceContext): string {
       tips.push(
         t("assistant.backend.advice.lowSavings", {
           rate: pct(w.savingsRate),
-          amount: money(ctx, Math.max(month.totalIncome * 0.15 - month.net, 0) || month.totalIncome * 0.05),
+          amount: money(
+            ctx,
+            Math.max(month.totalIncome * 0.15 - month.net, 0) || month.totalIncome * 0.05,
+          ),
         }),
       );
     } else if (w.savingsRate >= 0.2) {

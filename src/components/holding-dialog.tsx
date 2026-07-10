@@ -20,7 +20,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { PALETTE, type CustomPricePoint, type Holding, type HoldingHorizon, type SearchResult } from "@/lib/types";
+import {
+  PALETTE,
+  type CustomPricePoint,
+  type Holding,
+  type HoldingHorizon,
+  type SearchResult,
+} from "@/lib/types";
 import { CURRENCIES } from "@/lib/currency";
 import { searchAssets, fetchCurrentQuote } from "@/lib/finance";
 import { Loader2, Search, Upload, Info } from "lucide-react";
@@ -46,7 +52,7 @@ function parseCsvHistory(text: string): CustomPricePoint[] {
     const parts = line.split(/[,;\t]/).map((x) => x.trim());
     if (parts.length < 2) continue;
     const t = Date.parse(parts[0]);
-    const p = parseFloat(parts[1].replace(/[^0-9.\-]/g, ""));
+    const p = parseFloat(parts[1].replace(/[^0-9.-]/g, ""));
     if (!isFinite(t) || !isFinite(p)) continue;
     out.push({ t, p });
   }
@@ -88,13 +94,7 @@ export function HoldingDialog({ open, onOpenChange, editing }: Props) {
         coinGeckoId: editing.coinGeckoId,
       });
       setQuery(editing.symbol);
-      setMode(
-        editing.type === "crypto"
-          ? "crypto"
-          : editing.type === "other"
-            ? "custom"
-            : "stock",
-      );
+      setMode(editing.type === "crypto" ? "crypto" : editing.type === "other" ? "custom" : "stock");
       setQuantity(String(editing.quantity));
       setColor(editing.color);
       setManualPrice(editing.manualPrice != null ? String(editing.manualPrice) : "");
@@ -501,7 +501,6 @@ export function HoldingDialog({ open, onOpenChange, editing }: Props) {
           <p className="mt-1 text-xs text-muted-foreground">{t("holdings.dialog.horizonHint")}</p>
         </div>
 
-
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
             {t("common.cancel")}
@@ -569,8 +568,8 @@ function SearchBox({
       )}
       {!searching && query.trim() && results.length === 0 && (
         <p className="mt-2 text-xs text-muted-foreground">
-          No results. If this keeps happening, enable a different CORS proxy in Settings, or use
-          the <span className="text-foreground font-medium">Custom</span> tab.
+          No results. If this keeps happening, enable a different CORS proxy in Settings, or use the{" "}
+          <span className="text-foreground font-medium">Custom</span> tab.
         </p>
       )}
       <input type="hidden" data-mode={mode} />

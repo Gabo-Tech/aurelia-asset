@@ -68,8 +68,7 @@ export function BudgetPieCard({
     return big;
   }, [sorted, total]);
 
-  const colorAt = (idx: number, explicit?: string) =>
-    explicit ?? palette[idx % palette.length];
+  const colorAt = (idx: number, explicit?: string) => explicit ?? palette[idx % palette.length];
 
   const isEmpty = sorted.length === 0 || total === 0;
 
