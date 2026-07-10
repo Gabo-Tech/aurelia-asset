@@ -2,7 +2,7 @@
  * Post-build step for Tauri: generate index.html and copy static assets
  * needed when serving the TanStack Start client bundle without a server.
  */
-import { copyFileSync, readdirSync, writeFileSync } from "node:fs";
+import { copyFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -50,6 +50,8 @@ function fallbackIndexHtml() {
 
 async function main() {
   copyLogo();
+  // Release installers in public/downloads must not ship inside the desktop bundle.
+  rmSync(join(publicDir, "downloads"), { recursive: true, force: true });
   const html = fallbackIndexHtml();
   writeFileSync(join(publicDir, "index.html"), html, "utf8");
   console.log("[tauri-prepare] Wrote", join(publicDir, "index.html"));
