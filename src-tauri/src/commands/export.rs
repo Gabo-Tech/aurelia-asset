@@ -38,3 +38,23 @@ pub async fn save_export_file(
 
     Ok(path.to_string_lossy().into_owned())
 }
+
+#[tauri::command]
+pub async fn read_import_file(app: tauri::AppHandle) -> Result<Option<String>, String> {
+    let picked = app
+        .dialog()
+        .file()
+        .add_filter("JSON", &["json"])
+        .blocking_pick_file();
+
+    let Some(file) = picked else {
+        return Ok(None);
+    };
+
+    let path = file
+        .into_path()
+        .map_err(|_| "Selected path is not available on this platform".to_string())?;
+
+    let contents = std::fs::read_to_string(&path).map_err(|e| e.to_string())?;
+    Ok(Some(contents))
+}

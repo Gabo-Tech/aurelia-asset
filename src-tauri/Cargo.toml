@@ -44,6 +44,9 @@ tts = ["dep:sherpa-onnx"]
 # Convenience: enable everything.
 local-ai = ["llm", "stt", "tts"]
 
+[target.'cfg(target_os = "linux")'.dependencies]
+webkit2gtk = "=2.0.2"
+
 [profile.release]
 panic = "abort"
 codegen-units = 1

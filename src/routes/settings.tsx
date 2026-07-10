@@ -54,7 +54,7 @@ import {
   Circle,
 } from "lucide-react";
 import { clearPriceHistoryCache } from "@/lib/finance";
-import { isTauri } from "@/lib/export";
+import { isTauri, isMobilePlatform } from "@/lib/export";
 import { getAiCapabilities, type AiCapabilities } from "@/lib/ai/provider";
 import { aiConfigFromSettings } from "@/lib/ai/config";
 import { clearChatHistory } from "@/lib/ai/persistence";
@@ -451,6 +451,19 @@ function SettingsPage() {
     file.text().then((txt) => importFromText(txt));
   }
 
+  async function handleImportClick() {
+    if (isTauri() && !isMobilePlatform()) {
+      try {
+        const txt = await invoke<string | null>("read_import_file");
+        if (txt) await importFromText(txt);
+      } catch (e) {
+        toast.error(`${t("settings.data.importFailed")}: ${(e as Error).message}`);
+      }
+      return;
+    }
+    fileRef.current?.click();
+  }
+
   return (
     <>
       <PageHeader title={t("settings.title")} description={t("settings.description")} />
@@ -631,7 +644,7 @@ function SettingsPage() {
               <Button
                 variant="outline"
                 className="w-full justify-start"
-                onClick={() => fileRef.current?.click()}
+                onClick={() => void handleImportClick()}
               >
                 <Upload className="mr-2 h-4 w-4" /> {t("settings.data.importJson")}
               </Button>
@@ -837,14 +850,10 @@ function AiSettingsCard() {
       const path = await downloadModel(modelKind, setDownloadProgress);
       updateSettings({ [key]: path, aiModelSetup: "done" });
       toast.success(t("settings.ai.downloadReady"));
-      const nextCaps = await getAiCapabilities(
-        aiConfigFromSettings({ ...s, [key]: path }),
-      );
+      const nextCaps = await getAiCapabilities(aiConfigFromSettings({ ...s, [key]: path }));
       setCaps(nextCaps);
     } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : t("settings.ai.downloadFailed"),
-      );
+      toast.error(err instanceof Error ? err.message : t("settings.ai.downloadFailed"));
     } finally {
       setDownloadKind(null);
       setDownloadProgress(null);
@@ -969,94 +978,99 @@ function AiSettingsCard() {
 
         {s.aiAssistantEnabled !== false ? (
           <>
-        <div className="flex items-start justify-between gap-4 border-t border-border/40 pt-4">
-          <div>
-            <Label className="text-sm flex items-center gap-2">
-              <Volume2 className="h-4 w-4" />
-              {t("settings.ai.voiceOutput", { defaultValue: "Speak replies aloud" })}
-            </Label>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              {t("settings.ai.voiceOutputHelp", {
-                defaultValue: "Read the assistant's answers using on-device text-to-speech.",
-              })}
-            </p>
-          </div>
-          <Switch
-            checked={s.aiTtsEnabled !== false}
-            onCheckedChange={(v) => updateSettings({ aiTtsEnabled: v })}
-          />
-        </div>
+            <div className="flex items-start justify-between gap-4 border-t border-border/40 pt-4">
+              <div>
+                <Label className="text-sm flex items-center gap-2">
+                  <Volume2 className="h-4 w-4" />
+                  {t("settings.ai.voiceOutput", { defaultValue: "Speak replies aloud" })}
+                </Label>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {t("settings.ai.voiceOutputHelp", {
+                    defaultValue: "Read the assistant's answers using on-device text-to-speech.",
+                  })}
+                </p>
+              </div>
+              <Switch
+                checked={s.aiTtsEnabled !== false}
+                onCheckedChange={(v) => updateSettings({ aiTtsEnabled: v })}
+              />
+            </div>
 
-        {native ? (
-          <div className="space-y-3">
-            {modelRow(
-              t("settings.ai.llmModel", { defaultValue: "Language model (GGUF)" }),
-              t("settings.ai.llmModelHelp", {
-                defaultValue:
-                  "e.g. Qwen2.5-1.5B-Instruct Q4_K_M. Without one, the built-in assistant is used.",
-              }),
-              "aiLlmModelPath",
-              "file",
-              "llm",
-              caps.llm,
+            {native && !isMobilePlatform() ? (
+              <div className="space-y-3">
+                {modelRow(
+                  t("settings.ai.llmModel", { defaultValue: "Language model (GGUF)" }),
+                  t("settings.ai.llmModelHelp", {
+                    defaultValue:
+                      "e.g. Qwen2.5-1.5B-Instruct Q4_K_M. Without one, the built-in assistant is used.",
+                  }),
+                  "aiLlmModelPath",
+                  "file",
+                  "llm",
+                  caps.llm,
+                )}
+                {modelRow(
+                  t("settings.ai.sttModel", { defaultValue: "Speech-to-text model folder" }),
+                  t("settings.ai.sttModelHelp", {
+                    defaultValue:
+                      "A Sherpa-ONNX STT model folder. Falls back to the browser recognizer.",
+                  }),
+                  "aiSttModelDir",
+                  "dir",
+                  "stt",
+                  caps.stt,
+                )}
+                {modelRow(
+                  t("settings.ai.ttsModel", { defaultValue: "Text-to-speech model folder" }),
+                  t("settings.ai.ttsModelHelp", {
+                    defaultValue:
+                      "A Sherpa-ONNX VITS/Piper model folder. Falls back to the browser voice.",
+                  }),
+                  "aiTtsModelDir",
+                  "dir",
+                  "tts",
+                  caps.tts,
+                )}
+              </div>
+            ) : (
+              <p className="rounded-lg border border-border/50 bg-muted/30 p-3 text-xs text-muted-foreground">
+                {native && isMobilePlatform()
+                  ? t("settings.ai.mobileNote", {
+                      defaultValue:
+                        "On mobile, the assistant uses the built-in engine and your device's voice. Local LLM and Sherpa-ONNX model downloads are available on the desktop app.",
+                    })
+                  : t("settings.ai.webNote", {
+                      defaultValue:
+                        "You're on the web build. The assistant works offline with the built-in engine and your browser's voice. Install the desktop/mobile app to run local LLM and Sherpa-ONNX speech models.",
+                    })}
+              </p>
             )}
-            {modelRow(
-              t("settings.ai.sttModel", { defaultValue: "Speech-to-text model folder" }),
-              t("settings.ai.sttModelHelp", {
-                defaultValue:
-                  "A Sherpa-ONNX STT model folder. Falls back to the browser recognizer.",
-              }),
-              "aiSttModelDir",
-              "dir",
-              "stt",
-              caps.stt,
-            )}
-            {modelRow(
-              t("settings.ai.ttsModel", { defaultValue: "Text-to-speech model folder" }),
-              t("settings.ai.ttsModelHelp", {
-                defaultValue:
-                  "A Sherpa-ONNX VITS/Piper model folder. Falls back to the browser voice.",
-              }),
-              "aiTtsModelDir",
-              "dir",
-              "tts",
-              caps.tts,
-            )}
-          </div>
-        ) : (
-          <p className="rounded-lg border border-border/50 bg-muted/30 p-3 text-xs text-muted-foreground">
-            {t("settings.ai.webNote", {
-              defaultValue:
-                "You're on the web build. The assistant works offline with the built-in engine and your browser's voice. Install the desktop/mobile app to run local LLM and Sherpa-ONNX speech models.",
-            })}
-          </p>
-        )}
 
-        <div className="flex items-start justify-between gap-4 border-t border-border/40 pt-3">
-          <div>
-            <Label className="text-sm">
-              {t("settings.ai.clearHistory", { defaultValue: "Clear chat history" })}
-            </Label>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              {t("settings.ai.clearHistoryHelp", {
-                defaultValue: "Delete the saved AI conversation from this device.",
-              })}
-            </p>
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              void clearChatHistory();
-              toast.success(
-                t("settings.ai.historyCleared", { defaultValue: "Chat history cleared" }),
-              );
-            }}
-          >
-            <RotateCcw className="mr-2 h-4 w-4" />
-            {t("common.clear", { defaultValue: "Clear" })}
-          </Button>
-        </div>
+            <div className="flex items-start justify-between gap-4 border-t border-border/40 pt-3">
+              <div>
+                <Label className="text-sm">
+                  {t("settings.ai.clearHistory", { defaultValue: "Clear chat history" })}
+                </Label>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {t("settings.ai.clearHistoryHelp", {
+                    defaultValue: "Delete the saved AI conversation from this device.",
+                  })}
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  void clearChatHistory();
+                  toast.success(
+                    t("settings.ai.historyCleared", { defaultValue: "Chat history cleared" }),
+                  );
+                }}
+              >
+                <RotateCcw className="mr-2 h-4 w-4" />
+                {t("common.clear", { defaultValue: "Clear" })}
+              </Button>
+            </div>
           </>
         ) : null}
       </CardContent>

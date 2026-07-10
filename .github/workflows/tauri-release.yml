@@ -125,6 +125,9 @@ jobs:
         working-directory: src-tauri
         run: cargo tauri icon app-icon.png
 
+      - name: Patch Android manifest (microphone permissions)
+        run: npm run tauri:android:patch
+
       - name: Decode release keystore (if provided)
         id: keystore
         env:

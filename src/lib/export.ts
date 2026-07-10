@@ -6,6 +6,12 @@ export function isTauri(): boolean {
   return typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 }
 
+/** True on Android/iOS Tauri builds and mobile browsers. */
+export function isMobilePlatform(): boolean {
+  if (typeof navigator === "undefined") return false;
+  return /android|iphone|ipad|ipod/i.test(navigator.userAgent);
+}
+
 /** RFC 4180 CSV field escaping */
 export function escapeCsvField(value: unknown): string {
   const s = String(value ?? "");
@@ -89,7 +95,9 @@ export async function saveExportFile(
   filename: string,
   opts: { text?: string; blob?: Blob; bytes?: Uint8Array },
 ): Promise<ExportSaveMethod> {
-  if (isTauri()) {
+  const useNativeSave = isTauri() && !isMobilePlatform();
+
+  if (useNativeSave) {
     try {
       if (opts.bytes) return await saveViaTauri(filename, { bytes: opts.bytes });
       if (opts.text != null) return await saveViaTauri(filename, { text: opts.text });
@@ -126,7 +134,9 @@ export function stringifyExportJson(data: unknown): Promise<string> {
     const worker = new Worker(new URL("./export-json.worker.ts", import.meta.url), {
       type: "module",
     });
-    worker.onmessage = (ev: MessageEvent<{ ok: true; json: string } | { ok: false; error: string }>) => {
+    worker.onmessage = (
+      ev: MessageEvent<{ ok: true; json: string } | { ok: false; error: string }>,
+    ) => {
       worker.terminate();
       if (ev.data.ok) resolve(ev.data.json);
       else reject(new Error(ev.data.error));
@@ -139,7 +149,9 @@ export function stringifyExportJson(data: unknown): Promise<string> {
   });
 }
 
-export function redactStateForExport<T extends { settings?: { finnhubKey?: string } }>(state: T): T {
+export function redactStateForExport<T extends { settings?: { finnhubKey?: string } }>(
+  state: T,
+): T {
   if (!state.settings?.finnhubKey) return state;
   return {
     ...state,

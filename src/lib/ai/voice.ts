@@ -146,6 +146,10 @@ export class VoiceListener {
   }
 
   private async startNative(handlers: ListenHandlers) {
+    if (!navigator.mediaDevices?.getUserMedia) {
+      handlers.onError(t("assistant.backend.voice.recognitionUnavailable"));
+      return;
+    }
     try {
       this.stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const rec = new MediaRecorder(this.stream);
@@ -173,14 +177,22 @@ export class VoiceListener {
           if (clean) handlers.onFinal(clean);
           else handlers.onError("no-speech");
         } catch (err) {
-          handlers.onError(err instanceof Error ? err.message : t("assistant.backend.voice.transcriptionFailed"));
+          handlers.onError(
+            err instanceof Error ? err.message : t("assistant.backend.voice.transcriptionFailed"),
+          );
         }
       };
       this.mediaRecorder = rec;
       rec.start();
       this.armSilenceDetection();
-    } catch {
-      handlers.onError(t("assistant.backend.voice.micDenied"));
+    } catch (err) {
+      const msg =
+        err instanceof DOMException && err.name === "NotAllowedError"
+          ? t("assistant.backend.voice.micDenied")
+          : err instanceof Error
+            ? err.message
+            : t("assistant.backend.voice.micDenied");
+      handlers.onError(msg);
     }
   }
 
