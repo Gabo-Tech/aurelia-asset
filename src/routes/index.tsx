@@ -455,14 +455,14 @@ const DOWNLOAD_PLATFORMS: Array<{
     key: "linuxDeb",
     icon: Download,
     assetGlob: ".deb",
-    releaseAsset: "PortfolioTracker_0.1.1_amd64.deb",
+    releaseAsset: "Portfolio Tracker_0.1.1_amd64.deb",
     downloadAs: "PortfolioTracker_0.1.1_amd64.deb",
   },
   {
     key: "linuxRpm",
     icon: Download,
     assetGlob: ".rpm",
-    releaseAsset: "PortfolioTracker-0.1.1-1.x86_64.rpm",
+    releaseAsset: "Portfolio Tracker-0.1.1-1.x86_64.rpm",
     downloadAs: "PortfolioTracker-0.1.1-1.x86_64.rpm",
   },
   {
