@@ -28,6 +28,8 @@ src-tauri/gen/
 # Native binaries too large for GitHub (>100 MB); published via GitHub Releases
 public/downloads/*.apk
 public/downloads/*.AppImage
+public/downloads/*.deb
+public/downloads/*.rpm
 
 # Local AI runtime artifacts (downloaded, not committed)
 models/

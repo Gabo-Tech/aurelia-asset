@@ -469,8 +469,7 @@ const DOWNLOAD_PLATFORMS: Array<{
     key: "android",
     icon: Smartphone,
     assetGlob: ".apk",
-    releaseAsset: "portfolio-tracker.apk",
-    downloadAs: "portfolio-tracker.apk",
+    comingSoon: true,
   },
   { key: "ios", icon: Apple, assetGlob: ".ipa", comingSoon: true },
 ];
