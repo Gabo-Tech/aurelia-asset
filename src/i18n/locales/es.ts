@@ -891,28 +891,36 @@ const es: Translation = {
     restartButton: "Iniciar tour",
     steps: {
       welcome: {
-        title: "Bienvenido a tu centro financiero",
-        body: "Hagamos un recorrido rápido por la app para que aproveches al máximo cada sección. Puedes saltar o repetir este tour desde Ajustes.",
+        title: "Bienvenido a Aurelia Asset",
+        body: "Este recorrido rápido cubre cada sección — cartera, flujo de caja, planificación y más. Puedes saltarlo o repetirlo desde el icono de ayuda o Ajustes.",
       },
       sidebar: {
         title: "Navegación principal",
-        body: "Usa esta barra lateral para moverte entre Panel, Inversiones, Rendimiento, Flujo de caja y Ajustes.",
+        body: "Muévete entre Panel, Inversiones, Rendimiento, Flujo de caja, Planificación, Asistente y Ajustes desde esta barra.",
       },
       mobileNav: {
         title: "Navegación rápida",
-        body: "En el móvil, usa la barra inferior para cambiar entre las secciones principales.",
+        body: "Usa la barra inferior para cambiar de sección. En pantallas muy pequeñas, toca Más para llegar a Planificación, Asistente o Ajustes.",
+      },
+      tourLauncher: {
+        title: "Repetir este tour",
+        body: "Toca el icono de ayuda en cualquier momento para reiniciar el tour guiado. También puedes iniciarlo desde Ajustes.",
       },
       theme: {
         title: "Modo claro y oscuro",
-        body: "Cambia entre tema claro y oscuro. La app recuerda tu elección.",
+        body: "Cambia entre tema claro, oscuro o del sistema. Tu elección se guarda en este dispositivo.",
       },
       privacy: {
         title: "Modo privacidad",
-        body: "Oculta todos los valores monetarios con un clic, ideal para compartir pantalla o mostrar gráficos en público.",
+        body: "Oculta todos los valores monetarios con un toque — ideal para compartir pantalla o gráficos en público.",
       },
       dashStats: {
         title: "Tus cifras clave",
-        body: "Valor de la cartera, patrimonio neto y los últimos 30 días de flujo de caja de un vistazo.",
+        body: "Valor de la cartera, patrimonio neto (inversiones + liquidez − deuda de tarjetas) y los últimos 30 días de flujo de caja.",
+      },
+      dashQuickActions: {
+        title: "Acciones rápidas",
+        body: "Atajos para añadir un activo, registrar un movimiento, abrir Inversiones o ir a Rendimiento.",
       },
       dashAllocation: {
         title: "Distribución de activos",
@@ -924,71 +932,115 @@ const es: Translation = {
       },
       holdingsAdd: {
         title: "Añadir una inversión",
-        body: "Registra acciones, ETFs, cripto, efectivo, metales y más. Los precios se actualizan automáticamente cuando es posible.",
+        body: "Registra acciones, ETFs, cripto, efectivo, metales y activos personalizados. Los precios en vivo se obtienen cuando es posible.",
       },
       holdingsFilters: {
         title: "Buscar y filtrar",
-        body: "Encuentra cualquier inversión por nombre, símbolo o tipo.",
+        body: "Encuentra cualquier inversión por nombre, símbolo o tipo, y ordena la tabla a tu gusto.",
       },
       holdingsTable: {
         title: "Tus inversiones",
-        body: "Mira la cantidad, precio y valor de cada posición. Pulsa una fila para editarla o borrarla.",
+        body: "Mira cantidad, precio y valor de cada posición. Ábrela para editarla o registrar una compra/venta.",
       },
       holdingsCharts: {
-        title: "Gráficos de distribución",
-        body: "Visualiza cómo se reparte tu dinero entre clases de activos y plazos (largo vs corto).",
+        title: "Gráficos de inversiones",
+        body: "Visualiza el valor en el tiempo y la base de coste invertida para ver cómo crecen las posiciones.",
       },
       holdingsTx: {
         title: "Compras y ventas",
-        body: "Registra cada transacción. La app mantiene las cantidades sincronizadas automáticamente.",
+        body: "Registra cada transacción con comisiones. Las cantidades y el coste medio se sincronizan solos.",
       },
       perfPeriod: {
-        title: "Elige un periodo",
-        body: "Compara tu cartera en 24 horas, una semana, un mes, un año o más.",
+        title: "Periodo y escala",
+        body: "Compara de 1D a MAX. Cambia entre valor absoluto e indexado % para comparar rentabilidades con justicia.",
       },
       perfAssets: {
         title: "Alternar activos",
-        body: "Muestra u oculta activos individuales para comparar solo los que te interesan.",
+        body: "Muestra u oculta la línea total y activos individuales para centrarte en lo importante.",
       },
       perfChart: {
-        title: "Evolución de la cartera",
-        body: "Pasa el ratón por el gráfico para ver el valor exacto en cualquier momento del periodo.",
+        title: "Cartera en el tiempo",
+        body: "Pasa el ratón o toca el gráfico para ver valores exactos en el periodo elegido.",
       },
       perfReturns: {
         title: "Rentabilidad por activo",
-        body: "Mira el precio inicial, el final y el cambio total de cada inversión en el periodo.",
+        body: "Mira valor inicial, final y el cambio absoluto y porcentual de cada inversión.",
+      },
+      cfSummary: {
+        title: "Resumen de flujo",
+        body: "Ingresos, gastos y neto del mismo periodo que el diagrama de flujo de abajo.",
       },
       cfAdd: {
         title: "Añadir ingresos, gastos y transferencias",
-        body: "Registra entradas únicas o recurrentes, marca importes como porcentajes (genial para impuestos) y paga en efectivo o con tarjeta.",
-      },
-      cfSankey: {
-        title: "Diagrama de flujo de dinero",
-        body: "Observa cómo tu dinero pasa de las fuentes de ingreso a gastos, ahorro e inversión. Arrastra para reordenar.",
-      },
-      cfEntries: {
-        title: "Todas tus entradas",
-        body: "Filtra por tipo, categoría y periodo, edita registros y exporta un PDF con el gráfico de balance.",
+        body: "Registra entradas únicas o recurrentes, reglas de porcentaje, cuotas y pago en efectivo o con tarjeta.",
       },
       cfCards: {
         title: "Tarjetas de crédito y deuda",
-        body: "Gestiona límites, saldos y pagos de tus tarjetas. Los gastos con tarjeta aparecen también en el diagrama.",
+        body: "Gestiona límites y saldos, y paga tus tarjetas. Los gastos con tarjeta también aparecen en el diagrama.",
+      },
+      cfSankey: {
+        title: "Diagrama de flujo de dinero",
+        body: "Observa cómo el dinero pasa de ingresos a gastos, ahorro e inversión. Arrastra nodos para reordenar.",
+      },
+      cfBreakdown: {
+        title: "Desglose por categoría",
+        body: "Gráficos de pastel de ingresos, gastos e inversiones/ahorro para ver a dónde va el dinero.",
+      },
+      cfEntries: {
+        title: "Todas tus entradas",
+        body: "Filtra por tipo, categoría y periodo, edita registros o exporta un PDF con el gráfico de balance.",
+      },
+      planTabs: {
+        title: "Centro de planificación",
+        body: "Cuatro herramientas en un sitio: Previsión, Presupuestos, Objetivos y Préstamos — ligadas a tu flujo de caja.",
+      },
+      planForecast: {
+        title: "Previsión de flujo",
+        body: "Proyecta 24 meses a partir de entradas recurrentes. Crea escenarios, ajusta ingresos/gastos y marca un plan principal.",
+      },
+      planBudgets: {
+        title: "Presupuestos",
+        body: "Crea planes (mensual, vacaciones, proyecto…) con partidas por categoría y sigue el progreso frente al gasto real.",
+      },
+      planGoals: {
+        title: "Objetivos de ahorro",
+        body: "Define importe y fecha objetivo. Las barras de progreso y el ahorro mensual sugerido te mantienen en marcha.",
+      },
+      planLoans: {
+        title: "Préstamos",
+        body: "Añade préstamos y revisa tablas de amortización para conocer intereses y plazos de pago.",
+      },
+      assistantIntro: {
+        title: "Asistente de IA en el dispositivo",
+        body: "Chatea en local sobre gastos y presupuestos. Las propuestas de gasto requieren tu confirmación antes de guardarse.",
+      },
+      assistantChat: {
+        title: "Conversación",
+        body: "Pide resúmenes de gasto, estado del presupuesto o movimientos recientes. Confirma cualquier gasto que proponga el asistente.",
+      },
+      assistantInput: {
+        title: "Texto y voz",
+        body: "Escribe un mensaje o usa el micrófono. La voz se queda en el dispositivo cuando hay modelos disponibles.",
       },
       setApi: {
         title: "API y opciones de visualización",
-        body: "Elige tu moneda, activa un proxy CORS si lo necesitas y añade tu clave de Finnhub para datos de precios más completos.",
+        body: "Elige moneda, privacidad, proxy CORS si hace falta y una clave Finnhub opcional para precios más ricos.",
+      },
+      settingsAi: {
+        title: "Ajustes de IA",
+        body: "Muestra u oculta el Asistente en la navegación, controla la voz y gestiona modelos en el dispositivo — nada sale de aquí.",
       },
       setLanguage: {
         title: "Idioma",
-        body: "Cambia entre inglés, español, catalán/valencià, portugués, neerlandés y alemán. Tu elección se guarda y exporta.",
+        body: "Cambia entre inglés, español, catalán/valencià, portugués, neerlandés y alemán. Tu elección se guarda con las copias.",
       },
       setData: {
         title: "Copia y restauración",
-        body: "Exporta tus datos en JSON o CSV, importa una copia previa o restablece todo desde cero.",
+        body: "Tus datos se quedan en local. Exporta JSON o CSV, importa una copia o restablece todo desde cero.",
       },
       finish: {
         title: "¡Todo listo!",
-        body: "Eso es todo. Puedes repetir este tour desde Ajustes cuando quieras. ¡A registrar!",
+        body: "Explora desde el Panel hasta Ajustes a tu ritmo. Repite este tour cuando quieras desde el icono de ayuda o Ajustes. ¡A registrar!",
       },
     },
   },

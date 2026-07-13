@@ -1,0 +1,11 @@
+[[permission]]
+identifier = "allow-ai"
+description = "Allow on-device AI chat, STT, TTS, and model path picking"
+commands.allow = [
+  "ai_status",
+  "ai_chat",
+  "stt_transcribe",
+  "tts_speak",
+  "tts_stop",
+  "pick_model_path"
+]

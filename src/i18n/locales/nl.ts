@@ -882,28 +882,36 @@ const nl: Translation = {
     restartButton: "Start rondleiding",
     steps: {
       welcome: {
-        title: "Welkom bij je financiële hub",
-        body: "Laten we een korte rondleiding doen door de app zodat je elke sectie optimaal benut. Je kunt deze rondleiding altijd overslaan of opnieuw afspelen vanuit Instellingen.",
+        title: "Welkom bij Aurelia Asset",
+        body: "Deze korte rondleiding toont elke sectie — portefeuille, kasstroom, planning en meer. Sla over wanneer je wilt, of speel later opnieuw af via het hulpicoon of Instellingen.",
       },
       sidebar: {
         title: "Hoofdnavigatie",
-        body: "Gebruik deze zijbalk om te wisselen tussen Dashboard, Beleggingen, Prestaties, Kasstroom en Instellingen.",
+        body: "Wissel hier tussen Dashboard, Beleggingen, Prestaties, Kasstroom, Planning, Assistent en Instellingen.",
       },
       mobileNav: {
         title: "Snelle navigatie",
-        body: "Op de telefoon gebruik je de onderbalk om tussen hoofdsecties te wisselen.",
+        body: "Gebruik de onderbalk om van sectie te wisselen. Op heel kleine schermen tik je op Meer voor Planning, Assistent of Instellingen.",
+      },
+      tourLauncher: {
+        title: "Rondleiding opnieuw",
+        body: "Tik op elk moment op het hulpicoon om de rondleiding opnieuw te starten. Je kunt dat ook via Instellingen doen.",
       },
       theme: {
         title: "Licht & donker",
-        body: "Wissel tussen licht en donker thema. De app onthoudt je keuze.",
+        body: "Wissel tussen licht, donker of systeemthema. Je keuze wordt op dit apparaat onthouden.",
       },
       privacy: {
         title: "Privacymodus",
-        body: "Verberg alle bedragen met één klik - ideaal voor schermdelen of grafieken in het openbaar.",
+        body: "Verberg alle bedragen met één tik — ideaal voor schermdelen of openbare grafieken.",
       },
       dashStats: {
         title: "Je belangrijkste cijfers",
-        body: "Portefeuillewaarde, vermogen en de laatste 30 dagen kasstroom in één oogopslag.",
+        body: "Portefeuillewaarde, vermogen (beleggingen + liquiditeit − kaartschuld) en de laatste 30 dagen kasstroom.",
+      },
+      dashQuickActions: {
+        title: "Snelle acties",
+        body: "Snelkoppelingen om een activum toe te voegen, een kasstroomboking te loggen, Beleggingen te openen of naar Prestaties te gaan.",
       },
       dashAllocation: {
         title: "Activaverdeling",
@@ -915,71 +923,115 @@ const nl: Translation = {
       },
       holdingsAdd: {
         title: "Belegging toevoegen",
-        body: "Volg aandelen, ETF's, crypto, contanten, metalen en meer. Prijzen worden waar mogelijk automatisch opgehaald.",
+        body: "Volg aandelen, ETF's, crypto, contanten, metalen en eigen activa. Liveprijzen worden waar mogelijk opgehaald.",
       },
       holdingsFilters: {
         title: "Zoeken en filteren",
-        body: "Vind elke belegging op naam, symbool of type.",
+        body: "Vind elke belegging op naam, symbool of type en sorteer de tabel naar wens.",
       },
       holdingsTable: {
         title: "Je beleggingen",
-        body: "Bekijk aantal, prijs en waarde van elke positie. Klik op een rij om te bewerken of te verwijderen.",
+        body: "Bekijk aantal, prijs en waarde van elke positie. Open een rij om te bewerken of een aan-/verkoop te loggen.",
       },
       holdingsCharts: {
-        title: "Verdeelgrafieken",
-        body: "Visualiseer hoe je geld verdeeld is over activaklassen en horizons (lang vs kort).",
+        title: "Beleggingsgrafieken",
+        body: "Visualiseer waarde in de tijd en geïnvesteerde kostprijs om groei te zien.",
       },
       holdingsTx: {
         title: "Aan- en verkopen",
-        body: "Registreer elke transactie. De app houdt je aantallen automatisch up-to-date.",
+        body: "Registreer elke transactie inclusief kosten. Aantallen en kostprijs blijven automatisch synchroon.",
       },
       perfPeriod: {
-        title: "Kies een periode",
-        body: "Vergelijk je portefeuille over 24 uur, een week, een maand, een jaar of langer.",
+        title: "Periode & schaal",
+        body: "Vergelijk van 1D tot MAX. Wissel tussen absolute waarde en geïndexeerd % om rendementen eerlijk te vergelijken.",
       },
       perfAssets: {
         title: "Activa wisselen",
-        body: "Toon of verberg individuele activa om alleen te vergelijken wat jij wilt.",
+        body: "Toon of verberg de totaallijn en individuele activa om je te focussen op wat telt.",
       },
       perfChart: {
-        title: "Portefeuillewaarde over tijd",
-        body: "Beweeg over de grafiek om de exacte waarde op elk moment te zien.",
+        title: "Portefeuille over tijd",
+        body: "Beweeg over of tik op de grafiek om exacte waarden in de gekozen periode te zien.",
       },
       perfReturns: {
         title: "Rendement per activum",
-        body: "Bekijk start- en eindprijs en totale verandering voor elke belegging in de periode.",
+        body: "Bekijk startwaarde, eindwaarde en absolute én procentuele verandering per belegging.",
+      },
+      cfSummary: {
+        title: "Kasstroomoverzicht",
+        body: "Inkomen, uitgaven en netto voor dezelfde periode als het stroomdiagram hieronder.",
       },
       cfAdd: {
-        title: "Inkomen, uitgaven & overboekingen toevoegen",
-        body: "Registreer eenmalige of terugkerende boekingen, markeer bedragen als percentages (handig voor belasting), en betaal met cash of creditcard.",
-      },
-      cfSankey: {
-        title: "Geldstroomdiagram",
-        body: "Zie hoe je geld stroomt van inkomstenbronnen naar uitgaven, sparen en beleggen. Sleep rijen om ze te herordenen.",
-      },
-      cfEntries: {
-        title: "Al je boekingen",
-        body: "Filter op type, categorie en periode, bewerk boekingen en exporteer een PDF met saldografiek.",
+        title: "Inkomen, uitgaven & overboekingen",
+        body: "Registreer eenmalige of terugkerende boekingen, percentage-regels, termijnen en betaling met cash of kaart.",
       },
       cfCards: {
         title: "Creditcards & schuld",
-        body: "Beheer kaartlimieten, saldi en schuldaflossingen. Met de kaart betaalde uitgaven verschijnen ook in het diagram.",
+        body: "Beheer limieten en saldi en los kaarten af. Met de kaart betaalde uitgaven verschijnen ook in het diagram.",
+      },
+      cfSankey: {
+        title: "Geldstroomdiagram",
+        body: "Zie hoe geld stroomt van inkomsten naar uitgaven, sparen en beleggen. Sleep knooppunten om te herordenen.",
+      },
+      cfBreakdown: {
+        title: "Uitsplitsing per categorie",
+        body: "Taartdiagrammen voor inkomen, uitgaven en beleggingen/sparen zodat je ziet waar het geld naartoe gaat.",
+      },
+      cfEntries: {
+        title: "Al je boekingen",
+        body: "Filter op type, categorie en periode, bewerk boekingen of exporteer een PDF met saldografiek.",
+      },
+      planTabs: {
+        title: "Planningshub",
+        body: "Vier tools op één plek: Prognose, Budgetten, Doelen en Leningen — gekoppeld aan je kasstroomgegevens.",
+      },
+      planForecast: {
+        title: "Kasstroomprognose",
+        body: "Projecteer 24 maanden op basis van terugkerende boekingen. Maak scenario's, pas inkomen/uitgaven aan en stel een hoofdplan in.",
+      },
+      planBudgets: {
+        title: "Budgetten",
+        body: "Bouw plannen (maandelijks, vakantie, project…) met categorielijnen en volg de voortgang tegen echte uitgaven.",
+      },
+      planGoals: {
+        title: "Spaardoelen",
+        body: "Stel een doelbedrag en -datum in. Voortgangsbalken en voorgesteld maandsparen houden je op koers.",
+      },
+      planLoans: {
+        title: "Leningen",
+        body: "Voeg leningen toe en bekijk aflossingstabellen zodat je rente en looptijd kent.",
+      },
+      assistantIntro: {
+        title: "On-device AI-assistent",
+        body: "Chat lokaal over uitgaven en budgetten. Voorstellen voor uitgaven vragen eerst jouw bevestiging voordat iets wordt opgeslagen.",
+      },
+      assistantChat: {
+        title: "Gesprek",
+        body: "Vraag om uitgavensamenvattingen, budgetstatus of recente transacties. Bevestig elke voorgestelde uitgave.",
+      },
+      assistantInput: {
+        title: "Tekst & spraak",
+        body: "Typ een bericht of gebruik de microfoon. Spraak blijft on-device wanneer modellen beschikbaar zijn.",
       },
       setApi: {
         title: "API & weergave",
-        body: "Kies je weergavemunteenheid, schakel een CORS-proxy in indien nodig en voeg je Finnhub API-sleutel toe voor rijkere prijsdata.",
+        body: "Kies weergavemunteenheid, privacydefaults, CORS-proxy indien nodig en optioneel een Finnhub-sleutel voor rijkere prijzen.",
+      },
+      settingsAi: {
+        title: "AI-instellingen",
+        body: "Toon of verberg de Assistent in de navigatie, stel spraakuitvoer in en beheer on-device-modellen — niets verlaat dit apparaat.",
       },
       setLanguage: {
         title: "Taal",
-        body: "Wissel tussen Engels, Spaans, Catalaans/Valenciaans, Portugees, Nederlands en Duits. Je keuze wordt opgeslagen en is exporteerbaar.",
+        body: "Wissel tussen Engels, Spaans, Catalaans/Valenciaans, Portugees, Nederlands en Duits. Je keuze wordt met backups opgeslagen.",
       },
       setData: {
         title: "Backup & herstel",
-        body: "Exporteer je gegevens als JSON of CSV, importeer een eerdere backup of reset alles.",
+        body: "Je gegevens blijven lokaal. Exporteer JSON of CSV, importeer een backup of reset alles.",
       },
       finish: {
         title: "Helemaal klaar!",
-        body: "Dat was het. Je kunt deze rondleiding altijd opnieuw afspelen via Instellingen. Veel succes!",
+        body: "Verken Dashboard tot Instellingen in je eigen tempo. Speel deze rondleiding opnieuw af via het hulpicoon of Instellingen. Veel succes!",
       },
     },
   },

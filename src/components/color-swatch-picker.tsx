@@ -3,14 +3,16 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
 export const SWATCH_PALETTE = [
-  "#3b82f6",
-  "#10b981",
-  "#f59e0b",
-  "#a78bfa",
-  "#ef4444",
-  "#0ea5e9",
-  "#f472b6",
-  "#22c55e",
+  "#4a5243",
+  "#b7893a",
+  "#8c6a4a",
+  "#3e5871",
+  "#8c2e22",
+  "#c5a880",
+  "#8fa98a",
+  "#8fa1b8",
+  "#b48a6b",
+  "#a67c52",
 ];
 
 type Props = {
@@ -65,7 +67,7 @@ export function ColorSwatchPicker({
         <div className="mt-3 flex items-center gap-2">
           <Input
             type="color"
-            value={value ?? "#3b82f6"}
+            value={value ?? "#b7893a"}
             onChange={(e) => onChange(e.target.value)}
             className="h-8 w-14 cursor-pointer p-1"
           />

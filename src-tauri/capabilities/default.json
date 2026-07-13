@@ -11,6 +11,7 @@
     "dialog:default",
     "allow-save-export-file",
     "allow-read-import-file",
-    "allow-download-model"
+    "allow-download-model",
+    "allow-ai"
   ]
 }

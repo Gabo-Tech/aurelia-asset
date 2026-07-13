@@ -544,7 +544,7 @@ function CashflowPage() {
     <>
       <PageHeader title={t("cashflow.title")} description={t("cashflow.description")} />
 
-      <div className="grid grid-cols-3 gap-2 sm:gap-5">
+      <div className="grid grid-cols-3 gap-2 sm:gap-5" data-tour="cf-summary">
         <StatCard
           label={t("cashflow.income")}
           value={privacy ? MASK : formatMoney(totals.income, currency)}
@@ -587,7 +587,7 @@ function CashflowPage() {
             }}
           />
         </div>
-        <div data-tour="cf-cards">
+        <div>
           <CreditCardsManager />
         </div>
       </div>
@@ -732,14 +732,18 @@ function CashflowPage() {
 
       <Collapsible open={breakdownOpen} onOpenChange={setBreakdownOpen}>
         <CollapsibleTrigger asChild>
-          <Button variant="outline" className="w-full justify-between">
+          <Button
+            variant="outline"
+            className="w-full justify-between"
+            data-tour="cf-breakdown-trigger"
+          >
             <span>{t("cashflow.breakdown.title", { defaultValue: "Breakdown by category" })}</span>
             <ChevronDown
               className={`h-4 w-4 transition-transform ${breakdownOpen ? "rotate-180" : ""}`}
             />
           </Button>
         </CollapsibleTrigger>
-        <CollapsibleContent className="mt-3">
+        <CollapsibleContent className="mt-3" data-tour="cf-breakdown">
           <div className="grid gap-3 md:grid-cols-3">
             <CategoryPieCard
               title={t("cashflow.breakdown.incomes", { defaultValue: "Incomes" })}
@@ -1235,31 +1239,31 @@ function EntriesPanel({
                   <LineChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
                     <defs>
                       <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0" stopColor="#22c55e" />
-                        <stop offset={zeroOffset} stopColor="#22c55e" />
-                        <stop offset={zeroOffset} stopColor="#ef4444" />
-                        <stop offset="1" stopColor="#ef4444" />
+                        <stop offset="0" stopColor="var(--success)" />
+                        <stop offset={zeroOffset} stopColor="var(--success)" />
+                        <stop offset={zeroOffset} stopColor="var(--destructive)" />
+                        <stop offset="1" stopColor="var(--destructive)" />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid stroke="#e5e7eb" strokeDasharray="3 3" opacity={0.15} />
+                    <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" opacity={0.5} />
                     <XAxis
                       dataKey="label"
-                      tick={{ fontSize: 11, fill: "#e5e7eb" }}
-                      stroke="#e5e7eb"
-                      strokeOpacity={0.5}
+                      tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
+                      stroke="var(--border)"
+                      strokeOpacity={0.8}
                       minTickGap={20}
                     />
                     <YAxis
-                      tick={{ fontSize: 11, fill: "#e5e7eb" }}
-                      stroke="#e5e7eb"
-                      strokeOpacity={0.5}
+                      tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
+                      stroke="var(--border)"
+                      strokeOpacity={0.8}
                       tickFormatter={(v) => formatMoney(v, currency, { compact: true })}
                       width={70}
                     />
                     <ReferenceLine
                       y={0}
-                      stroke="#e5e7eb"
-                      strokeOpacity={0.4}
+                      stroke="var(--muted-foreground)"
+                      strokeOpacity={0.35}
                       strokeDasharray="2 2"
                     />
                     <RTooltip
@@ -1267,7 +1271,7 @@ function EntriesPanel({
                         if (!active || !payload || !payload.length) return null;
                         const d = payload[0].payload as (typeof chartData)[number];
                         return (
-                          <div className="rounded-lg border border-border bg-popover px-3 py-2 text-xs shadow-md">
+                          <div className="rounded-xl border border-border bg-popover px-3 py-2 text-xs shadow-md">
                             <div className="font-medium text-foreground">{d.label}</div>
                             <div className="mt-1 text-muted-foreground">
                               {t("more.entriesBalance")}:{" "}
@@ -1868,13 +1872,13 @@ function StatCard({
   tone: "success" | "destructive";
 }) {
   return (
-    <Card className="border-border/60">
+    <Card className="border-border/60 shadow-sm">
       <CardContent className="p-3 sm:p-5">
-        <div className="text-[10px] sm:text-xs uppercase tracking-wider sm:normal-case sm:tracking-normal text-muted-foreground">
+        <div className="text-[10px] sm:text-xs uppercase tracking-wider sm:normal-case sm:tracking-normal text-muted-foreground font-medium">
           {label}
         </div>
         <div
-          className={`mt-1 sm:mt-2 text-base sm:text-2xl font-semibold tracking-tight truncate ${
+          className={`mt-1 sm:mt-2 text-base sm:text-2xl font-semibold tracking-tight truncate tabular-nums ${
             tone === "success" ? "text-success" : "text-destructive"
           }`}
           title={value}

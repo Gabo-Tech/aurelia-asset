@@ -2,18 +2,38 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Sector } from "recharts";
 import { useStore, useMoney } from "@/lib/store";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { formatPct } from "@/lib/format";
-import { ArrowUpRight, Wallet, TrendingUp, TrendingDown, PiggyBank } from "lucide-react";
+import {
+  ArrowUpRight,
+  Wallet,
+  TrendingUp,
+  TrendingDown,
+  PiggyBank,
+  Plus,
+  ArrowLeftRight,
+  ChevronRight,
+} from "lucide-react";
 import { PageHeader } from "@/components/app-shell";
 import { ChartFrame } from "@/components/chart-frame";
 import { expandCashflows, valuesByEntry, liquidityImpact, cardDebtImpact } from "@/routes/cashflow";
 import { useTranslation } from "react-i18next";
 import i18n from "@/i18n";
 import { SITE_URL } from "@/lib/site-config";
+import {
+  AppCard,
+  AppCardContent,
+  AppCardHeader,
+  AppCardTitle,
+  MetricHeroCard,
+  MetricTile,
+  FilterPillGroup,
+  EmptyState,
+  ResponsiveDialog,
+} from "@/components/design";
+import { MetricTile as StatTile } from "@/components/design/metric-tile";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => {
@@ -42,8 +62,8 @@ function Dashboard() {
   const [showAllLabels, setShowAllLabels] = useState(false);
   const [activeIdx, setActiveIdx] = useState<number | null>(null);
   const [hidden, setHidden] = useState<Set<string>>(new Set());
+  const [detailId, setDetailId] = useState<string | null>(null);
 
-  // Convert each holding's market value into the display currency once.
   const allocation = useMemo(
     () =>
       holdings
@@ -53,6 +73,9 @@ function Dashboard() {
           fullName: h.name,
           color: h.color,
           value: toDisplay(h.quantity * h.currentPrice, h.priceCurrency),
+          quantity: h.quantity,
+          currentPrice: h.currentPrice,
+          priceCurrency: h.priceCurrency,
         }))
         .filter((a) => a.value > 0)
         .sort((a, b) => b.value - a.value),
@@ -130,12 +153,19 @@ function Dashboard() {
   }, [cashflows, toDisplay]);
 
   const topAlloc = allocation[0];
+  const detail = detailId ? allocation.find((a) => a.id === detailId) : null;
 
   if (!holdings.length) {
     return (
       <>
         <PageHeader title={t("dashboard.title")} description={t("dashboard.description")} />
-        <EmptyState />
+        <EmptyState
+          icon={<Wallet className="h-8 w-8" />}
+          title={t("more.dashNoHoldings")}
+          description="Add your first stock, ETF, crypto or metal to see allocation, performance and beautiful charts."
+          actionLabel="Add a holding"
+          actionTo="/holdings"
+        />
       </>
     );
   }
@@ -146,25 +176,18 @@ function Dashboard() {
         title={t("dashboard.title")}
         description={t("dashboard.description")}
         actions={
-          <Button asChild>
+          <Button asChild className="hidden sm:inline-flex">
             <Link to="/holdings">{t("nav.holdings")}</Link>
           </Button>
         }
       />
 
-      <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4" data-tour="dash-stats">
-        <Card className="sm:col-span-2 relative overflow-hidden border-border/60">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent pointer-events-none" />
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              {t("dashboard.portfolioValue")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl sm:text-4xl xl:text-5xl font-semibold tracking-tight break-words tabular-nums">
-              {mask(portfolioTotal, currency)}
-            </div>
-            <div className="mt-2 text-sm text-muted-foreground">
+      <div className="grid gap-4 sm:gap-5 sm:grid-cols-2 xl:grid-cols-4" data-tour="dash-stats">
+        <MetricHeroCard
+          label={t("dashboard.portfolioValue")}
+          value={mask(portfolioTotal, currency)}
+          sub={
+            <>
               {holdings.length} {holdings.length === 1 ? "holding" : "holdings"}
               {topAlloc ? (
                 <>
@@ -173,54 +196,70 @@ function Dashboard() {
                   {formatPct((topAlloc.value / portfolioTotal) * 100, 1).replace("+", "")})
                 </>
               ) : null}
-            </div>
-          </CardContent>
-        </Card>
+            </>
+          }
+        />
 
-        <Card className="border-border/60">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Net worth</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl sm:text-3xl font-semibold tracking-tight break-words tabular-nums">
-              {mask(netWorth, currency)}
-            </div>
-            <p className="mt-2 text-xs text-muted-foreground">
+        <MetricTile
+          label="Net worth"
+          value={mask(netWorth, currency)}
+          sub={
+            <>
               Holdings{" "}
               <span className={cashflowBalance >= 0 ? "text-success" : "text-destructive"}>
                 {cashflowBalance >= 0 ? "+" : "−"}
                 {mask(Math.abs(cashflowBalance), currency)}
               </span>{" "}
               liquidity
-            </p>
-          </CardContent>
-        </Card>
+            </>
+          }
+        />
 
-        <Card className="border-border/60">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Cashflow · last 30 days
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div
-              className={`text-2xl sm:text-3xl font-semibold tracking-tight break-words tabular-nums ${
-                net30 >= 0 ? "text-success" : "text-destructive"
-              }`}
-            >
-              {net30 >= 0 ? "+" : "-"}
-              {mask(Math.abs(net30), currency)}
-            </div>
-            <p className="mt-2 text-xs text-muted-foreground">Net income − expenses</p>
-          </CardContent>
-        </Card>
+        <MetricTile
+          label="Cashflow · last 30 days"
+          value={`${net30 >= 0 ? "+" : "-"}${mask(Math.abs(net30), currency)}`}
+          tone={net30 >= 0 ? "success" : "destructive"}
+          sub="Net income − expenses"
+          icon={
+            net30 >= 0 ? (
+              <TrendingUp className="h-4 w-4 text-success" />
+            ) : (
+              <TrendingDown className="h-4 w-4 text-destructive" />
+            )
+          }
+        />
       </div>
 
-      <div className="mt-5 grid gap-5 lg:grid-cols-5">
-        <Card className="lg:col-span-3 border-border/60" data-tour="dash-allocation">
-          <CardHeader className="flex flex-col gap-4">
+      {/* Quick actions */}
+      <div
+        className="mt-4 flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        data-tour="dash-quick-actions"
+      >
+        <QuickAction to="/holdings" icon={<Plus className="h-4 w-4" />} label="Add asset" />
+        <QuickAction
+          to="/cashflow"
+          icon={<ArrowLeftRight className="h-4 w-4" />}
+          label="Add entry"
+        />
+        <QuickAction
+          to="/holdings"
+          icon={<Wallet className="h-4 w-4" />}
+          label={t("nav.holdings")}
+        />
+        <QuickAction
+          to="/performance"
+          icon={<TrendingUp className="h-4 w-4" />}
+          label={t("nav.short.performance")}
+        />
+      </div>
+
+      <div className="mt-5 grid gap-4 sm:gap-5 lg:grid-cols-5">
+        <AppCard className="lg:col-span-3" elevated data-tour="dash-allocation">
+          <AppCardHeader className="flex flex-col gap-4">
             <div className="flex flex-row items-center justify-between gap-4 flex-wrap">
-              <CardTitle>{t("dashboard.allocation")}</CardTitle>
+              <AppCardTitle className="text-base font-semibold text-foreground">
+                {t("dashboard.allocation")}
+              </AppCardTitle>
               <div className="flex items-center gap-2">
                 <Label htmlFor="all-labels" className="text-xs text-muted-foreground">
                   {t("dashboard.showAllLabels")}
@@ -233,54 +272,29 @@ function Dashboard() {
               </div>
             </div>
             {allocation.length > 1 && (
-              <div className="flex flex-wrap items-center gap-2">
-                {allocation.map((a) => {
-                  const isHidden = hidden.has(a.id);
-                  return (
-                    <button
-                      key={a.id}
-                      type="button"
-                      onClick={() => toggleAsset(a.id)}
-                      className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-1 text-xs transition-colors ${
-                        isHidden
-                          ? "border-border bg-transparent text-muted-foreground opacity-60"
-                          : "border-transparent bg-primary/10 text-foreground hover:bg-primary/20"
-                      }`}
-                      title={a.fullName}
-                    >
-                      <span className="h-2 w-2 rounded-full" style={{ backgroundColor: a.color }} />
-                      <span className="font-medium">{a.name}</span>
-                    </button>
-                  );
-                })}
-                <div className="ml-auto flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={showAll}
-                    className="text-xs text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
-                  >
-                    {t("more.pcShowAll")}
-                  </button>
-                  <span className="text-muted-foreground">·</span>
-                  <button
-                    type="button"
-                    onClick={hideAll}
-                    className="text-xs text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
-                  >
-                    {t("more.pcHideAll")}
-                  </button>
-                </div>
-              </div>
+              <FilterPillGroup
+                pills={allocation.map((a) => ({
+                  id: a.id,
+                  label: a.name,
+                  color: a.color,
+                  active: !hidden.has(a.id),
+                }))}
+                onToggle={toggleAsset}
+                onShowAll={showAll}
+                onHideAll={hideAll}
+                showAllLabel={t("more.pcShowAll")}
+                hideAllLabel={t("more.pcHideAll")}
+              />
             )}
-          </CardHeader>
-          <CardContent>
+          </AppCardHeader>
+          <AppCardContent>
             {visibleAllocation.length === 0 ? (
-              <div className="flex h-80 flex-col items-center justify-center text-center text-sm text-muted-foreground sm:h-96">
+              <div className="flex h-72 flex-col items-center justify-center text-center text-sm text-muted-foreground sm:h-80">
                 <p>All assets are hidden.</p>
                 <button
                   type="button"
                   onClick={showAll}
-                  className="mt-2 text-primary hover:underline"
+                  className="mt-2 min-h-11 text-primary hover:underline"
                 >
                   Show all assets
                 </button>
@@ -288,22 +302,22 @@ function Dashboard() {
             ) : (
               <ChartFrame filename="allocation" title="Allocation">
                 <div
-                  className="flex h-80 items-center justify-center sm:h-96 [&_svg]:overflow-visible"
+                  className="relative flex h-72 items-center justify-center sm:h-80 [&_svg]:overflow-visible"
                   onMouseLeave={() => setActiveIdx(null)}
                 >
                   <ResponsiveContainer width="100%" height="100%">
-                    <PieChart margin={{ top: 28, right: 60, bottom: 28, left: 60 }}>
+                    <PieChart margin={{ top: 20, right: 48, bottom: 20, left: 48 }}>
                       <Pie
                         data={visibleAllocation}
                         dataKey="value"
                         nameKey="name"
-                        innerRadius={0}
+                        innerRadius="52%"
                         outerRadius="78%"
-                        paddingAngle={0}
-                        stroke="var(--foreground)"
-                        strokeOpacity={0.3}
-                        strokeWidth={1.5}
-                        isAnimationActive={false}
+                        paddingAngle={1.5}
+                        stroke="var(--card)"
+                        strokeWidth={2}
+                        isAnimationActive
+                        animationDuration={300}
                         activeIndex={labelledIndexes}
                         activeShape={
                           labelledIndexes.length > 0
@@ -326,21 +340,36 @@ function Dashboard() {
                       </Pie>
                     </PieChart>
                   </ResponsiveContainer>
+                  <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+                    <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                      Total
+                    </div>
+                    <div className="font-display text-lg tabular-nums tracking-tight sm:text-xl">
+                      {mask(visibleTotal, currency)}
+                    </div>
+                  </div>
                 </div>
               </ChartFrame>
             )}
-          </CardContent>
-        </Card>
+          </AppCardContent>
+        </AppCard>
 
-        <Card className="lg:col-span-2 border-border/60" data-tour="dash-breakdown">
-          <CardHeader>
-            <CardTitle>{t("more.dashBreakdown")}</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
+        <AppCard className="lg:col-span-2" data-tour="dash-breakdown">
+          <AppCardHeader>
+            <AppCardTitle className="text-base font-semibold text-foreground">
+              {t("more.dashBreakdown")}
+            </AppCardTitle>
+          </AppCardHeader>
+          <AppCardContent className="space-y-1">
             {visibleAllocation.slice(0, 8).map((a) => {
               const pct = visibleTotal ? (a.value / visibleTotal) * 100 : 0;
               return (
-                <div key={a.id} className="flex items-center gap-3">
+                <button
+                  key={a.id}
+                  type="button"
+                  onClick={() => setDetailId(a.id)}
+                  className="flex w-full items-center gap-3 rounded-xl px-2 py-2.5 text-left transition-colors hover:bg-muted/60 active-press min-h-11"
+                >
                   <div
                     className="h-2.5 w-2.5 shrink-0 rounded-full"
                     style={{ backgroundColor: a.color }}
@@ -356,26 +385,28 @@ function Dashboard() {
                       {mask(a.value, currency)}
                     </div>
                   </div>
-                </div>
+                  <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/60" />
+                </button>
               );
             })}
-          </CardContent>
-        </Card>
+          </AppCardContent>
+        </AppCard>
       </div>
 
-      <div className="mt-5 grid gap-5 md:grid-cols-3">
-        <StatCard
+      {/* Desktop secondary stats */}
+      <div className="mt-5 hidden gap-5 md:grid md:grid-cols-3">
+        <StatTile
           icon={<Wallet className="h-4 w-4" />}
           label={t("more.dashHoldings")}
           value={String(holdings.length)}
         />
-        <StatCard
+        <StatTile
           icon={<TrendingUp className="h-4 w-4 text-success" />}
           label={t("dashboard.topAsset")}
           value={topAlloc ? topAlloc.name : "-"}
           sub={topAlloc ? mask(topAlloc.value, currency) : undefined}
         />
-        <StatCard
+        <StatTile
           icon={
             net30 >= 0 ? (
               <PiggyBank className="h-4 w-4 text-success" />
@@ -387,55 +418,54 @@ function Dashboard() {
           value={`${net30 >= 0 ? "+" : "-"}${mask(Math.abs(net30), currency)}`}
         />
       </div>
+
+      <ResponsiveDialog
+        open={!!detail}
+        onOpenChange={(open) => !open && setDetailId(null)}
+        title={detail?.fullName ?? detail?.name ?? ""}
+        description={detail?.name}
+        footer={
+          <Button asChild>
+            <Link to="/holdings">
+              {t("nav.holdings")} <ArrowUpRight className="ml-1 h-4 w-4" />
+            </Link>
+          </Button>
+        }
+      >
+        {detail ? (
+          <div className="space-y-3 py-2">
+            <div className="flex items-center gap-2">
+              <span className="h-3 w-3 rounded-full" style={{ backgroundColor: detail.color }} />
+              <span className="text-sm text-muted-foreground">{detail.name}</span>
+            </div>
+            <div className="font-display text-3xl tabular-nums tracking-tight">
+              {mask(detail.value, currency)}
+            </div>
+            <div className="text-sm text-muted-foreground">
+              {visibleTotal
+                ? `${((detail.value / visibleTotal) * 100).toFixed(1)}% of portfolio`
+                : null}
+            </div>
+          </div>
+        ) : null}
+      </ResponsiveDialog>
     </>
   );
 }
 
-function StatCard({
-  icon,
-  label,
-  value,
-  sub,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-  sub?: string;
-}) {
+function QuickAction({ to, icon, label }: { to: string; icon: React.ReactNode; label: string }) {
   return (
-    <Card className="border-border/60">
-      <CardContent className="p-5">
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          {icon}
-          {label}
-        </div>
-        <div className="mt-2 text-2xl font-semibold tracking-tight">{value}</div>
-        {sub && <div className="text-xs text-muted-foreground mt-1">{sub}</div>}
-      </CardContent>
-    </Card>
-  );
-}
-
-function EmptyState() {
-  const { t } = useTranslation();
-  return (
-    <Card className="border-dashed border-border/70">
-      <CardContent className="p-10 text-center">
-        <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-primary/15 text-primary mb-4">
-          <Wallet className="h-6 w-6" />
-        </div>
-        <h2 className="text-lg font-semibold">{t("more.dashNoHoldings")}</h2>
-        <p className="text-sm text-muted-foreground mt-1 max-w-md mx-auto">
-          Add your first stock, ETF, crypto or metal to see allocation, performance and beautiful
-          charts.
-        </p>
-        <Button asChild className="mt-5">
-          <Link to="/holdings">
-            Add a holding <ArrowUpRight className="ml-1 h-4 w-4" />
-          </Link>
-        </Button>
-      </CardContent>
-    </Card>
+    <Button
+      asChild
+      variant="outline"
+      size="sm"
+      className="h-11 shrink-0 gap-2 rounded-xl border-border/60 bg-card px-3 shadow-sm active-press"
+    >
+      <Link to={to}>
+        {icon}
+        {label}
+      </Link>
+    </Button>
   );
 }
 
@@ -476,7 +506,6 @@ function LabelledSector(
   const cos = Math.cos(-RAD * midAngle);
   const pct = total ? (payload.value / total) * 100 : 0;
 
-  // Stagger leader-line length for tiny adjacent slices to reduce overlap
   const tiny = pct < 3;
   const leaderOut = compact ? (tiny ? 28 : 18) : 16;
   const armOut = compact ? 22 : 18;
@@ -488,13 +517,10 @@ function LabelledSector(
   const ex = mx + (cos >= 0 ? 1 : -1) * armOut;
   const ey = my;
   const textAnchor = cos >= 0 ? "start" : "end";
-
-  // Skip labels for negligible slices in compact (show-all) mode
   const skipLabel = compact && pct < 0.6;
 
   return (
     <g style={{ pointerEvents: "none" }}>
-      {/* Slight outer ring on the slice for emphasis */}
       <Sector
         cx={cx}
         cy={cy}

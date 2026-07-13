@@ -104,22 +104,49 @@ function PlanningPage() {
     <div>
       <PageHeader title={t("planning.title")} description={t("planning.description")} />
       <Tabs defaultValue="forecast" className="w-full">
-        <TabsList className="flex flex-wrap h-auto">
-          <TabsTrigger value="forecast">{t("planning.tabs.forecast")}</TabsTrigger>
-          <TabsTrigger value="budgets">{t("planning.tabs.budgets")}</TabsTrigger>
-          <TabsTrigger value="goals">{t("planning.tabs.goals")}</TabsTrigger>
-          <TabsTrigger value="loans">{t("planning.tabs.loans")}</TabsTrigger>
+        <TabsList
+          className="flex h-auto w-full flex-nowrap justify-start gap-1 overflow-x-auto rounded-2xl bg-muted/80 p-1.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          data-tour="plan-tabs"
+        >
+          <TabsTrigger
+            value="forecast"
+            className="min-h-10 shrink-0 rounded-xl px-4 data-[state=active]:shadow-sm"
+            data-tour-tab="forecast"
+          >
+            {t("planning.tabs.forecast")}
+          </TabsTrigger>
+          <TabsTrigger
+            value="budgets"
+            className="min-h-10 shrink-0 rounded-xl px-4 data-[state=active]:shadow-sm"
+            data-tour-tab="budgets"
+          >
+            {t("planning.tabs.budgets")}
+          </TabsTrigger>
+          <TabsTrigger
+            value="goals"
+            className="min-h-10 shrink-0 rounded-xl px-4 data-[state=active]:shadow-sm"
+            data-tour-tab="goals"
+          >
+            {t("planning.tabs.goals")}
+          </TabsTrigger>
+          <TabsTrigger
+            value="loans"
+            className="min-h-10 shrink-0 rounded-xl px-4 data-[state=active]:shadow-sm"
+            data-tour-tab="loans"
+          >
+            {t("planning.tabs.loans")}
+          </TabsTrigger>
         </TabsList>
-        <TabsContent value="forecast" className="mt-6">
+        <TabsContent value="forecast" className="mt-6" data-tour="plan-forecast">
           <ForecastPanel />
         </TabsContent>
-        <TabsContent value="budgets" className="mt-6">
+        <TabsContent value="budgets" className="mt-6" data-tour="plan-budgets">
           <BudgetsPanel />
         </TabsContent>
-        <TabsContent value="goals" className="mt-6">
+        <TabsContent value="goals" className="mt-6" data-tour="plan-goals">
           <GoalsPanel />
         </TabsContent>
-        <TabsContent value="loans" className="mt-6">
+        <TabsContent value="loans" className="mt-6" data-tour="plan-loans">
           <LoansPanel />
         </TabsContent>
       </Tabs>

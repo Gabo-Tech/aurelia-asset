@@ -1,6 +1,13 @@
 /**
  * Post-build step for Tauri: generate index.html and copy static assets
  * needed when serving the TanStack Start client bundle without a server.
+ *
+ * Critical: TanStack Start's hydrate() requires window.$_TSR bootstrap data
+ * (normally injected by SSR). Without it the app throws "Invariant failed"
+ * and shows a blank/error screen in the Android/desktop WebView.
+ *
+ * Match ids are `route.id + interpolatedPath` (e.g. root → `__root__/`).
+ * SPA shell dehydrates only the root match and sets lastMatchId to that id.
  */
 import { copyFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -17,9 +24,38 @@ function findAsset(prefix) {
   return `/assets/${match}`;
 }
 
-function copyLogo() {
-  const icon = join(root, "src-tauri/icons/icon.png");
-  copyFileSync(icon, join(publicDir, "logo.png"));
+function copyBrandAssets() {
+  const icons = join(root, "src-tauri/icons");
+  const publicRoot = join(root, "public");
+  // Prefer committed public/ assets when present; fall back to Tauri icon set.
+  const copies = [
+    ["icon.png", "logo.png"],
+    ["icon.ico", "favicon.ico"],
+    ["32x32.png", "favicon-32x32.png"],
+    ["64x64.png", "favicon-64x64.png"],
+  ];
+  for (const [srcName, destName] of copies) {
+    const fromPublic = join(publicRoot, destName);
+    const fromIcons = join(icons, srcName);
+    try {
+      copyFileSync(fromPublic, join(publicDir, destName));
+    } catch {
+      copyFileSync(fromIcons, join(publicDir, destName));
+    }
+  }
+  for (const name of ["apple-touch-icon.png", "icon-192.png", "icon-512.png"]) {
+    try {
+      copyFileSync(join(publicRoot, name), join(publicDir, name));
+    } catch {
+      /* optional */
+    }
+  }
+}
+
+/** Minimal SPA-shell bootstrap so hydrate() enters SPA mode instead of throwing. */
+function tsrBootstrapScript() {
+  // Root match id = `__root__` + interpolatedPath `/` → `__root__/`
+  return `(function(){window.__TSS_TAURI_SPA__=true;if(window.$_TSR)return;var n=function(){};window.$_TSR={buffer:[],initialized:false,h:n,e:n,c:n,p:function(f){try{f()}catch(e){}},router:{manifest:undefined,dehydratedData:undefined,matches:[{i:'__root__/',s:'success',u:Date.now(),ssr:true}],lastMatchId:'__root__/'}};})();`;
 }
 
 function fallbackIndexHtml() {
@@ -38,8 +74,11 @@ function fallbackIndexHtml() {
   <title>Portfolio Tracker</title>
   <link rel="stylesheet" href="${styles}" />
   ${driverCss ? `<link rel="stylesheet" href="/assets/${driverCss}" />` : ""}
-  <link rel="icon" type="image/png" href="/logo.png" />
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
   <script>${themeScript}</script>
+  <script>${tsrBootstrapScript()}</script>
 </head>
 <body>
   <div id="root"></div>
@@ -49,12 +88,12 @@ function fallbackIndexHtml() {
 }
 
 async function main() {
-  copyLogo();
+  copyBrandAssets();
   // Release installers in public/downloads must not ship inside the desktop bundle.
   rmSync(join(publicDir, "downloads"), { recursive: true, force: true });
   const html = fallbackIndexHtml();
   writeFileSync(join(publicDir, "index.html"), html, "utf8");
-  console.log("[tauri-prepare] Wrote", join(publicDir, "index.html"));
+  console.log("[tauri-prepare] Wrote", join(publicDir, "index.html"), "(with $_TSR SPA bootstrap)");
 }
 
 main().catch((err) => {

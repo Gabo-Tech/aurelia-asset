@@ -102,7 +102,10 @@ export function TransactionsPanel() {
 
   return (
     <Card className="border-border/60 mt-5">
-      <CardHeader className="flex-row items-center justify-between space-y-0 gap-2 flex-wrap">
+      <CardHeader
+        className="flex-row items-center justify-between space-y-0 gap-2 flex-wrap"
+        data-tour="holdings-tx"
+      >
         <CardTitle>{t("more.tpTitle")}</CardTitle>
         <Button
           size="sm"

@@ -36,9 +36,8 @@ function NotFoundComponent() {
   );
 }
 
-function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
+function ErrorComponent({ error: _error, reset }: { error: Error; reset: () => void }) {
   const { t } = useTranslation();
-  console.error(error);
   const router = useRouter();
 
   return (
@@ -81,13 +80,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     ],
     links: [
       { rel: "stylesheet", href: appCss },
-      { rel: "icon", type: "image/png", href: ASSETS.favicon },
-      { rel: "apple-touch-icon", href: ASSETS.logo },
+      { rel: "icon", href: ASSETS.favicon, sizes: "any" },
+      { rel: "icon", type: "image/png", sizes: "32x32", href: ASSETS.favicon32 },
+      { rel: "icon", type: "image/png", sizes: "64x64", href: ASSETS.favicon64 },
+      { rel: "apple-touch-icon", sizes: "180x180", href: ASSETS.appleTouchIcon },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap",
       },
     ],
     scripts: [
@@ -98,19 +99,23 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           "@type": "Organization",
           name: "Portfolio Tracker",
           url: SITE_URL,
-          logo: SITE_URL + ASSETS.favicon,
+          logo: SITE_URL + ASSETS.logo,
           sameAs: ["https://solutions.gabo.rocks"],
         }),
       },
     ],
   }),
-  shellComponent: RootShell,
+  // Document shell is only for true SSR/hydrateRoot. Tauri uses createRoot(#root).
+  ...(typeof window === "undefined" ||
+  !(window as Window & { __TSS_TAURI_SPA__?: boolean }).__TSS_TAURI_SPA__
+    ? { shellComponent: RootShell }
+    : {}),
   component: RootComponent,
   notFoundComponent: NotFoundComponent,
   errorComponent: ErrorComponent,
 });
 
-const themeInitScript = `(function(){try{var t=localStorage.getItem('ept_theme');if(t!=='light'&&t!=='dark'){t='dark';}var r=document.documentElement;r.classList.toggle('dark',t==='dark');r.style.colorScheme=t;var m=document.querySelector('meta[name="theme-color"]');if(m){m.setAttribute('content',t==='dark'?'#0B0B0C':'#FDFBF9');}}catch(e){document.documentElement.classList.add('dark');}})();`;
+const themeInitScript = `(function(){try{var p=localStorage.getItem('ept_theme');if(p!=='light'&&p!=='dark'&&p!=='system'){p='system';}var t=p==='system'?(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'):p;var r=document.documentElement;r.classList.toggle('dark',t==='dark');r.style.colorScheme=t;var m=document.querySelector('meta[name="theme-color"]');if(m){m.setAttribute('content',t==='dark'?'#0A0A0B':'#FAF9F7');}}catch(e){document.documentElement.classList.add('dark');}})();`;
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
@@ -132,21 +137,57 @@ function RootComponent() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   // Landing page is standalone (no app shell).
   const isLanding = pathname === "/";
+  const isTauriSpa =
+    typeof window !== "undefined" &&
+    !!(window as Window & { __TSS_TAURI_SPA__?: boolean }).__TSS_TAURI_SPA__;
+
+  // #region agent log
+  if (typeof window !== "undefined") {
+    const w = window as Window & { __dbgRootLogged?: boolean; $_TSR?: unknown };
+    if (!w.__dbgRootLogged) {
+      w.__dbgRootLogged = true;
+      try {
+        const el = document.getElementById("dbg-hud") ?? document.createElement("pre");
+        if (!el.id) {
+          el.id = "dbg-hud";
+          el.setAttribute(
+            "style",
+            "position:fixed;z-index:99999;left:8px;right:8px;bottom:8px;max-height:40vh;overflow:auto;background:#111;color:#0f0;font:12px/1.3 monospace;padding:8px;border:1px solid #0f0;white-space:pre-wrap",
+          );
+          document.documentElement.appendChild(el);
+        }
+        el.textContent =
+          (el.textContent ? el.textContent + "\n" : "") +
+          `HD: react_root_render pathname=${pathname} hasTSR=${!!w.$_TSR} spa=${isTauriSpa}`;
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+  // #endregion
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <StoreProvider>
-        <FxProvider>
-          {isLanding ? (
-            <Outlet />
-          ) : (
-            <AppShell>
+    <>
+      {isTauriSpa ? (
+        <>
+          <HeadContent />
+          <Scripts />
+        </>
+      ) : null}
+      <QueryClientProvider client={queryClient}>
+        <StoreProvider>
+          <FxProvider>
+            {isLanding ? (
               <Outlet />
-            </AppShell>
-          )}
-          <Toaster position="top-right" richColors />
-        </FxProvider>
-      </StoreProvider>
-    </QueryClientProvider>
+            ) : (
+              <AppShell>
+                <Outlet />
+              </AppShell>
+            )}
+            <Toaster position="top-right" richColors />
+          </FxProvider>
+        </StoreProvider>
+      </QueryClientProvider>
+    </>
   );
 }

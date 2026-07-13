@@ -180,7 +180,7 @@ function LandingPage() {
 function SiteHeader() {
   const { t } = useTranslation();
   return (
-    <header className="sticky top-0 z-40 border-b border-border/50 bg-background/80 backdrop-blur">
+    <header className="sticky top-0 z-40 border-b border-border/50 glass">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
         <Link to="/" className="flex items-center gap-2">
           <img
@@ -211,7 +211,7 @@ function SiteHeader() {
         </nav>
         <Link
           to="/dashboard"
-          className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3.5 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+          className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90 active-press"
         >
           {t("landing.openApp")} <ArrowRight className="h-3.5 w-3.5" />
         </Link>
@@ -224,17 +224,17 @@ function Hero() {
   const { t } = useTranslation();
   return (
     <section className="relative overflow-hidden border-b border-border/50">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_50%_at_50%_0%,hsl(var(--primary)/0.18),transparent_70%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_50%_at_50%_0%,color-mix(in_srgb,var(--primary)_18%,transparent),transparent_70%)]" />
       <div className="relative mx-auto max-w-6xl px-4 py-20 text-center sm:px-6 sm:py-28">
         <div
-          className="mx-auto inline-flex animate-fade-in items-center gap-2 rounded-full border border-border/60 bg-card/60 px-3 py-1 text-xs text-muted-foreground"
+          className="mx-auto inline-flex animate-fade-in items-center gap-2 rounded-full border border-border/60 bg-card/60 px-3 py-1 text-xs text-muted-foreground shadow-sm"
           style={{ animationDelay: "0ms", animationFillMode: "both" }}
         >
           <ShieldCheck className="h-3.5 w-3.5 text-primary" />
           {t("landing.hero.badge")}
         </div>
         <h1
-          className="mx-auto mt-6 max-w-3xl animate-fade-in text-4xl font-semibold tracking-tight sm:text-6xl"
+          className="font-display mx-auto mt-6 max-w-3xl animate-fade-in text-4xl tracking-tight sm:text-6xl"
           style={{ animationDelay: "120ms", animationDuration: "700ms", animationFillMode: "both" }}
         >
           {t("landing.hero.titleStart")}{" "}
@@ -282,7 +282,7 @@ function Hero() {
           className="mx-auto mt-14 max-w-5xl animate-fade-in"
           style={{ animationDelay: "480ms", animationDuration: "900ms", animationFillMode: "both" }}
         >
-          <div className="rounded-2xl border border-border/60 bg-card/40 p-2 shadow-2xl shadow-primary/5">
+          <div className="rounded-2xl border border-border/60 bg-card/40 p-2 shadow-elevated">
             <img
               src={ASSETS.hero}
               alt={t("landing.hero.screenshotAlt")}
@@ -360,7 +360,7 @@ function Features() {
     <section id="features" className="border-b border-border/50">
       <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
         <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+          <h2 className="font-display text-3xl tracking-tight sm:text-4xl">
             {t("landing.features.heading")}
           </h2>
           <p className="mt-3 text-muted-foreground">{t("landing.features.subheading")}</p>
@@ -370,7 +370,7 @@ function Features() {
           {features.map((f) => (
             <article
               key={f.title}
-              className="rounded-2xl border border-border/60 bg-card/40 p-6 transition-colors hover:border-border"
+              className="rounded-2xl border border-border/60 bg-card p-6 shadow-sm transition-colors hover:border-border hover:shadow-md active-press"
             >
               <div className="grid h-10 w-10 place-items-center rounded-xl bg-primary/15 text-primary">
                 <f.icon className="h-5 w-5" />

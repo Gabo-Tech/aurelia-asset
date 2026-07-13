@@ -217,8 +217,7 @@ function AssistantPage() {
         });
         setPipeline("idle");
         void maybeSpeak(result.reply);
-      } catch (err) {
-        console.error(err);
+      } catch {
         appendMessage({
           id: uid(),
           role: "assistant",
@@ -376,7 +375,7 @@ function AssistantPage() {
       {/* Message list */}
       <div
         ref={scrollRef}
-        className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain rounded-xl border border-border/60 bg-card/30 p-3 sm:p-4"
+        className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain rounded-2xl border border-border/60 bg-card/40 p-3 shadow-sm sm:p-4"
         role="log"
         aria-live="polite"
         aria-relevant="additions"
@@ -384,25 +383,27 @@ function AssistantPage() {
         {messages.length === 0 ? (
           <EmptyState />
         ) : (
-          messages.map((m) => (
-            <MessageBubble
-              key={m.id}
-              message={m}
-              onConfirm={() => confirmExpense(m.id)}
-              onDismiss={() => dismissExpense(m.id)}
-              onRetry={() => {
-                // Retry: resend the previous user message.
-                const idx = messages.findIndex((x) => x.id === m.id);
-                const prevUser = [...messages.slice(0, idx)]
-                  .reverse()
-                  .find((x) => x.role === "user");
-                if (prevUser) void send(prevUser.content);
-              }}
-              confirmLabel={t("assistant.confirmAdd")}
-              cancelLabel={t("assistant.cancel")}
-              retryLabel={t("assistant.retry")}
-            />
-          ))
+          <div data-tour="assistant-chat" className="space-y-4">
+            {messages.map((m) => (
+              <MessageBubble
+                key={m.id}
+                message={m}
+                onConfirm={() => confirmExpense(m.id)}
+                onDismiss={() => dismissExpense(m.id)}
+                onRetry={() => {
+                  // Retry: resend the previous user message.
+                  const idx = messages.findIndex((x) => x.id === m.id);
+                  const prevUser = [...messages.slice(0, idx)]
+                    .reverse()
+                    .find((x) => x.role === "user");
+                  if (prevUser) void send(prevUser.content);
+                }}
+                confirmLabel={t("assistant.confirmAdd")}
+                cancelLabel={t("assistant.cancel")}
+                retryLabel={t("assistant.retry")}
+              />
+            ))}
+          </div>
         )}
         {pipeline === "thinking" && (
           <StatusRow
@@ -425,7 +426,10 @@ function AssistantPage() {
       </div>
 
       {/* Input bar — sticky on mobile so keyboard doesn't hide controls */}
-      <div className="sticky bottom-0 z-10 mt-3 flex items-end gap-2 border-t border-border/40 bg-background/95 pb-[max(0.25rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur supports-[backdrop-filter]:bg-background/85 sm:static sm:border-t-0 sm:bg-transparent sm:p-0 sm:backdrop-blur-none">
+      <div
+        className="sticky bottom-0 z-10 mt-3 flex items-end gap-2 border-t border-border/40 glass rounded-t-2xl px-1 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-3 sm:static sm:rounded-none sm:border-t-0 sm:bg-transparent sm:p-0 sm:backdrop-blur-none"
+        data-tour="assistant-input"
+      >
         <div className="relative flex-1">
           <Textarea
             value={input}
@@ -508,21 +512,41 @@ function StatusRow({ icon, label }: { icon: ReactNode; label: string }) {
 
 function EmptyState() {
   const { t } = useTranslation();
+  const suggestions = [
+    t("assistant.suggest1", { defaultValue: "I spent 45 on groceries yesterday" }),
+    t("assistant.suggest2", { defaultValue: "How is my portfolio allocated?" }),
+    t("assistant.suggest3", { defaultValue: "What did I spend last month?" }),
+  ];
   return (
-    <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
-      <div className="grid h-14 w-14 place-items-center rounded-2xl bg-primary/10 text-primary">
-        <Sparkles className="h-7 w-7" />
-      </div>
-      <div className="max-w-sm">
-        <h3 className="text-base font-semibold">
-          {t("assistant.emptyTitle", { defaultValue: "Your private money assistant" })}
-        </h3>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {t("assistant.emptyBody", {
-            defaultValue:
-              "Say or type things like “I spent 45 on groceries at Walmart yesterday”. I'll confirm before saving, and everything stays on your device.",
-          })}
-        </p>
+    <div className="flex h-full flex-col items-center justify-center gap-4 text-center px-2">
+      <div
+        data-tour="assistant-chat"
+        className="flex max-w-sm flex-col items-center gap-4"
+      >
+        <div className="grid h-14 w-14 place-items-center rounded-2xl bg-primary/10 text-primary shadow-sm">
+          <Sparkles className="h-7 w-7" />
+        </div>
+        <div>
+          <h3 className="text-base font-semibold tracking-tight">
+            {t("assistant.emptyTitle", { defaultValue: "Your private money assistant" })}
+          </h3>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {t("assistant.emptyBody", {
+              defaultValue:
+                "Say or type things like “I spent 45 on groceries at Walmart yesterday”. I'll confirm before saving, and everything stays on your device.",
+            })}
+          </p>
+        </div>
+        <div className="flex flex-wrap justify-center gap-2">
+          {suggestions.map((s) => (
+            <span
+              key={s}
+              className="rounded-full border border-border/60 bg-card px-3 py-1.5 text-xs text-muted-foreground shadow-sm"
+            >
+              {s}
+            </span>
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -564,10 +588,10 @@ function MessageBubble({
       <div className={cn("min-w-0 max-w-[85%]", isUser && "items-end")}>
         <div
           className={cn(
-            "whitespace-pre-wrap rounded-2xl px-3.5 py-2 text-sm leading-relaxed",
+            "whitespace-pre-wrap rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed shadow-sm",
             isUser
               ? "rounded-tr-sm bg-primary text-primary-foreground"
-              : "rounded-tl-sm bg-muted text-foreground",
+              : "rounded-tl-sm bg-muted/80 text-foreground border border-border/40",
             message.error && !isUser && "border border-destructive/40",
           )}
         >

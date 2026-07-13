@@ -174,8 +174,7 @@ export const getSponsors = createServerFn({ method: "GET" }).handler(
     try {
       const { data } = await fetchFromGithub();
       return data;
-    } catch (err) {
-      console.error("[sponsors] read failed:", err);
+    } catch {
       return DEFAULT_SPONSORS;
     }
   },

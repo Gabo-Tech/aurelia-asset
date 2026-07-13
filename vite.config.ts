@@ -11,6 +11,8 @@ export default defineConfig({
     // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
     // nitro/vite builds from this
     server: { entry: "server" },
+    // Resolved relative to src/. Wrong path falls back to default hydrateRoot(document).
+    client: { entry: "client" },
   },
   vite: {
     optimizeDeps: {

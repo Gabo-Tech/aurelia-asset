@@ -879,28 +879,36 @@ const en = {
     restartButton: "Start tour",
     steps: {
       welcome: {
-        title: "Welcome to your finance hub",
-        body: "Let's take a quick tour of the app so you can get the most out of every section. You can skip or replay this tour any time from Settings.",
+        title: "Welcome to Aurelia Asset",
+        body: "This quick tour walks through every section — portfolio, cashflow, planning, and more. Skip anytime, or replay later from the help icon or Settings.",
       },
       sidebar: {
         title: "Main navigation",
-        body: "Use this sidebar to jump between Dashboard, Holdings, Performance, Cashflow and Settings.",
+        body: "Jump between Dashboard, Holdings, Performance, Cashflow, Planning, Assistant, and Settings from this sidebar.",
       },
       mobileNav: {
         title: "Quick navigation",
-        body: "On phones, use the bottom bar to switch between the main sections.",
+        body: "Use the bottom bar to switch sections. On very small screens, tap More to reach Planning, Assistant, or Settings.",
+      },
+      tourLauncher: {
+        title: "Replay this tour",
+        body: "Tap the help icon anytime to restart the guided tour. You can also start it from Settings.",
       },
       theme: {
         title: "Light & dark mode",
-        body: "Toggle between light and dark themes. The app remembers your choice.",
+        body: "Switch between light, dark, or system theme. Your choice is remembered on this device.",
       },
       privacy: {
         title: "Privacy mode",
-        body: "Hide all monetary values with one click - perfect for screen sharing or showing off charts in public.",
+        body: "Hide all monetary values with one tap — ideal for screen sharing or public charts.",
       },
       dashStats: {
         title: "Your top-line numbers",
-        body: "Portfolio value, net worth and the last 30 days of cashflow at a glance.",
+        body: "Portfolio value, net worth (holdings + liquidity − card debt), and the last 30 days of cashflow.",
+      },
+      dashQuickActions: {
+        title: "Quick actions",
+        body: "Shortcuts to add an asset, log a cashflow entry, open Holdings, or jump to Performance.",
       },
       dashAllocation: {
         title: "Asset allocation",
@@ -912,71 +920,115 @@ const en = {
       },
       holdingsAdd: {
         title: "Add a holding",
-        body: "Track stocks, ETFs, crypto, cash, metals and more. Prices are fetched automatically when possible.",
+        body: "Track stocks, ETFs, crypto, cash, metals, and custom assets. Live prices are fetched when possible.",
       },
       holdingsFilters: {
         title: "Search & filter",
-        body: "Find any holding by name, symbol or type.",
+        body: "Find any holding by name, symbol, or type, and sort the table to match how you work.",
       },
       holdingsTable: {
         title: "Your holdings",
-        body: "See quantity, price and value for each position. Click a row to edit or delete it.",
+        body: "See quantity, price, and value for each position. Open a row to edit it or log a buy/sell.",
       },
       holdingsCharts: {
-        title: "Allocation charts",
-        body: "Visualise how your money is split across asset classes and horizons (long-term vs short-term).",
+        title: "Holdings charts",
+        body: "Visualise value over time and invested cost basis so you can see how positions grow.",
       },
       holdingsTx: {
         title: "Buys & sells",
-        body: "Log every transaction. The app keeps your quantities in sync automatically.",
+        body: "Log every transaction with fees. Quantities and cost basis stay in sync automatically.",
       },
       perfPeriod: {
-        title: "Pick a period",
-        body: "Compare your portfolio over 24 hours, a week, a month, a year or longer.",
+        title: "Pick a period & scale",
+        body: "Compare over 1D to MAX. Switch between absolute value and indexed % to compare returns fairly.",
       },
       perfAssets: {
         title: "Toggle assets",
-        body: "Show or hide individual assets to compare just the ones you care about.",
+        body: "Show or hide the total line and individual assets to focus on what matters.",
       },
       perfChart: {
-        title: "Portfolio value over time",
-        body: "Hover the chart to inspect the exact value at any point in the selected period.",
+        title: "Portfolio over time",
+        body: "Hover or tap the chart to inspect exact values across the selected period.",
       },
       perfReturns: {
         title: "Returns by asset",
-        body: "See start price, end price and total change for each holding in the period.",
+        body: "See start value, end value, and absolute and percentage change for each holding.",
+      },
+      cfSummary: {
+        title: "Cashflow snapshot",
+        body: "Income, expenses, and net for the same period as the flow diagram below.",
       },
       cfAdd: {
         title: "Add income, expenses & transfers",
-        body: "Log one-time or recurring entries, mark amounts as percentages (great for taxes), and pay with cash or a credit card.",
-      },
-      cfSankey: {
-        title: "Money flow diagram",
-        body: "Watch your money move from income sources to expenses, savings and investments. Drag rows to reorder them.",
-      },
-      cfEntries: {
-        title: "All your entries",
-        body: "Filter by type, category and period, edit entries, and export a PDF report with a balance chart.",
+        body: "Log one-time or recurring entries, use percent-of rules, installments, and pay from cash or a card.",
       },
       cfCards: {
         title: "Credit cards & debt",
-        body: "Track card limits, balances, and pay down debt. Card-paid expenses show up in the flow diagram too.",
+        body: "Track limits and balances, and pay down cards. Card-paid expenses appear in the flow diagram too.",
+      },
+      cfSankey: {
+        title: "Money flow diagram",
+        body: "Watch money move from income to expenses, savings, and investments. Drag nodes to reorder.",
+      },
+      cfBreakdown: {
+        title: "Category breakdown",
+        body: "Pie charts for income, expenses, and investments/savings so you see where money goes.",
+      },
+      cfEntries: {
+        title: "All your entries",
+        body: "Filter by type, category, and period, edit entries, or export a PDF with a balance chart.",
+      },
+      planTabs: {
+        title: "Planning hub",
+        body: "Four tools in one place: Forecast, Budgets, Goals, and Loans — all tied to your cashflow data.",
+      },
+      planForecast: {
+        title: "Cashflow forecast",
+        body: "Project the next 24 months from recurring entries. Create scenarios, adjust income/expenses, and set a main plan.",
+      },
+      planBudgets: {
+        title: "Budgets",
+        body: "Build plans (monthly, vacation, project…) with category line items and track progress against real spending.",
+      },
+      planGoals: {
+        title: "Savings goals",
+        body: "Set a target amount and date. Progress bars and suggested monthly savings keep you on track.",
+      },
+      planLoans: {
+        title: "Loans",
+        body: "Add loans and review amortization schedules so you know interest and payoff timelines.",
+      },
+      assistantIntro: {
+        title: "On-device AI assistant",
+        body: "Chat locally about spending and budgets. Expense proposals need your confirmation before anything is saved.",
+      },
+      assistantChat: {
+        title: "Conversation",
+        body: "Ask for spending summaries, budget status, or recent transactions. Confirm any expense the assistant proposes.",
+      },
+      assistantInput: {
+        title: "Text & voice",
+        body: "Type a message or use the mic. Voice stays on-device when models are available on your platform.",
       },
       setApi: {
         title: "API & display options",
-        body: "Choose your display currency, enable a CORS proxy if needed, and add your Finnhub API key for richer price data.",
+        body: "Choose display currency, privacy defaults, CORS proxy if needed, and optional Finnhub key for richer prices.",
+      },
+      settingsAi: {
+        title: "AI settings",
+        body: "Enable or hide the Assistant in navigation, toggle voice output, and manage on-device models — nothing leaves this device.",
       },
       setLanguage: {
         title: "Language",
-        body: "Switch between English, Spanish, Catalan/Valencià, Portuguese, Dutch and German. Your choice is saved and exportable.",
+        body: "Switch between English, Spanish, Catalan/Valencià, Portuguese, Dutch, and German. Your choice is saved with backups.",
       },
       setData: {
         title: "Backup & restore",
-        body: "Export your data as JSON or CSV, import a previous backup, or reset everything from scratch.",
+        body: "Your data stays local. Export JSON or CSV, import a backup, or reset everything from scratch.",
       },
       finish: {
         title: "You're all set!",
-        body: "That's it. You can replay this tour anytime from Settings. Happy tracking!",
+        body: "Explore Dashboard through Settings at your own pace. Replay this tour anytime from the help icon or Settings. Happy tracking!",
       },
     },
   },

@@ -882,28 +882,36 @@ const ca: Translation = {
     restartButton: "Inicia el tour",
     steps: {
       welcome: {
-        title: "Benvingut al teu centre financer",
-        body: "Fem un recorregut ràpid per l'app perquè trauis el màxim de cada secció. Pots saltar o repetir el tour des d'Ajusts.",
+        title: "Benvingut a Aurelia Asset",
+        body: "Este tour ràpid cobreix cada secció — cartera, flux de caixa, planificació i més. Pots saltar-lo o repetir-lo des de la icona d'ajuda o Ajusts.",
       },
       sidebar: {
         title: "Navegació principal",
-        body: "Usa esta barra lateral per moure't entre Panell, Inversions, Rendiment, Flux de caixa i Ajusts.",
+        body: "Mou-te entre Panell, Inversions, Rendiment, Flux de caixa, Planificació, Assistent i Ajusts des d'esta barra.",
       },
       mobileNav: {
         title: "Navegació ràpida",
-        body: "Al mòbil, usa la barra inferior per canviar entre les seccions principals.",
+        body: "Usa la barra inferior per canviar de secció. En pantalles molt petites, toca Més per arribar a Planificació, Assistent o Ajusts.",
+      },
+      tourLauncher: {
+        title: "Repetir este tour",
+        body: "Toca la icona d'ajuda en qualsevol moment per reiniciar el tour guiat. També el pots iniciar des d'Ajusts.",
       },
       theme: {
         title: "Mode clar i fosc",
-        body: "Canvia entre tema clar i fosc. L'app recorda la teua elecció.",
+        body: "Canvia entre tema clar, fosc o del sistema. La teua elecció es guarda en este dispositiu.",
       },
       privacy: {
         title: "Mode privacitat",
-        body: "Oculta tots els valors monetaris amb un clic, ideal per compartir pantalla o ensenyar gràfics en públic.",
+        body: "Oculta tots els valors monetaris amb un toc — ideal per compartir pantalla o gràfics en públic.",
       },
       dashStats: {
         title: "Les teues xifres clau",
-        body: "Valor de la cartera, patrimoni net i els últims 30 dies de flux de caixa d'un cop d'ull.",
+        body: "Valor de la cartera, patrimoni net (inversions + liquiditat − deute de targetes) i els últims 30 dies de flux de caixa.",
+      },
+      dashQuickActions: {
+        title: "Accions ràpides",
+        body: "Dreceres per afegir un actiu, registrar un moviment, obrir Inversions o anar a Rendiment.",
       },
       dashAllocation: {
         title: "Distribució d'actius",
@@ -915,71 +923,115 @@ const ca: Translation = {
       },
       holdingsAdd: {
         title: "Afegir una inversió",
-        body: "Registra accions, ETFs, cripto, efectiu, metalls i més. Els preus s'actualitzen automàticament quan és possible.",
+        body: "Registra accions, ETFs, cripto, efectiu, metalls i actius personalitzats. Els preus en viu s'obtenen quan és possible.",
       },
       holdingsFilters: {
         title: "Cerca i filtra",
-        body: "Troba qualsevol inversió per nom, símbol o tipus.",
+        body: "Troba qualsevol inversió per nom, símbol o tipus, i ordena la taula com vulgues.",
       },
       holdingsTable: {
         title: "Les teues inversions",
-        body: "Mira la quantitat, preu i valor de cada posició. Toca una fila per editar-la o esborrar-la.",
+        body: "Mira quantitat, preu i valor de cada posició. Obri-la per editar-la o registrar una compra/venda.",
       },
       holdingsCharts: {
-        title: "Gràfics de distribució",
-        body: "Visualitza com es reparteix el teu diner entre classes d'actius i terminis (llarg vs curt).",
+        title: "Gràfics d'inversions",
+        body: "Visualitza el valor en el temps i la base de cost invertida per veure com creixen les posicions.",
       },
       holdingsTx: {
         title: "Compres i vendes",
-        body: "Registra cada transacció. L'app manté les quantitats sincronitzades automàticament.",
+        body: "Registra cada transacció amb comissions. Les quantitats i el cost mitjà es sincronitzen sols.",
       },
       perfPeriod: {
-        title: "Tria un període",
-        body: "Compara la teua cartera en 24 hores, una setmana, un mes, un any o més.",
+        title: "Període i escala",
+        body: "Compara d'1D a MAX. Canvia entre valor absolut i % indexat per comparar rendibilitats amb justícia.",
       },
       perfAssets: {
         title: "Alterna actius",
-        body: "Mostra o oculta actius individuals per comparar només els que t'interessen.",
+        body: "Mostra o oculta la línia total i actius individuals per centrar-te en el que importa.",
       },
       perfChart: {
-        title: "Evolució de la cartera",
-        body: "Passa el ratolí pel gràfic per veure el valor exacte en qualsevol moment del període.",
+        title: "Cartera en el temps",
+        body: "Passa el ratolí o toca el gràfic per veure valors exactes en el període triat.",
       },
       perfReturns: {
         title: "Rendibilitat per actiu",
-        body: "Mira el preu inicial, el final i el canvi total de cada inversió en el període.",
+        body: "Mira valor inicial, final i el canvi absolut i percentual de cada inversió.",
+      },
+      cfSummary: {
+        title: "Resum del flux",
+        body: "Ingressos, despeses i net del mateix període que el diagrama de flux de sota.",
       },
       cfAdd: {
         title: "Afegir ingressos, despeses i transferències",
-        body: "Registra entrades úniques o recurrents, marca imports com a percentatges (genial per impostos) i paga en efectiu o amb targeta.",
-      },
-      cfSankey: {
-        title: "Diagrama de flux de diners",
-        body: "Observa com el teu diner passa de les fonts d'ingrés a despeses, estalvi i inversió. Arrossega per reordenar.",
-      },
-      cfEntries: {
-        title: "Totes les teues entrades",
-        body: "Filtra per tipus, categoria i període, edita registres i exporta un PDF amb el gràfic de balanç.",
+        body: "Registra entrades úniques o recurrents, regles de percentatge, quotes i pagament en efectiu o amb targeta.",
       },
       cfCards: {
         title: "Targetes de crèdit i deute",
-        body: "Gestiona límits, saldos i pagaments de les teues targetes. Les despeses amb targeta apareixen també al diagrama.",
+        body: "Gestiona límits i saldos, i paga les targetes. Les despeses amb targeta també apareixen al diagrama.",
+      },
+      cfSankey: {
+        title: "Diagrama de flux de diners",
+        body: "Observa com el diner passa d'ingressos a despeses, estalvi i inversió. Arrossega nodes per reordenar.",
+      },
+      cfBreakdown: {
+        title: "Desglossament per categoria",
+        body: "Gràfics de pastís d'ingressos, despeses i inversions/estalvi per veure on va el diner.",
+      },
+      cfEntries: {
+        title: "Totes les teues entrades",
+        body: "Filtra per tipus, categoria i període, edita registres o exporta un PDF amb el gràfic de balanç.",
+      },
+      planTabs: {
+        title: "Centre de planificació",
+        body: "Quatre eines en un lloc: Previsió, Pressupostos, Objectius i Préstecs — lligades al teu flux de caixa.",
+      },
+      planForecast: {
+        title: "Previsió de flux",
+        body: "Projecta 24 mesos a partir d'entrades recurrents. Crea escenaris, ajusta ingressos/despeses i marca un pla principal.",
+      },
+      planBudgets: {
+        title: "Pressupostos",
+        body: "Crea plans (mensual, vacances, projecte…) amb partides per categoria i segueix el progrés davant la despesa real.",
+      },
+      planGoals: {
+        title: "Objectius d'estalvi",
+        body: "Defineix import i data objectiu. Les barres de progrés i l'estalvi mensual suggerit et mantenen al dia.",
+      },
+      planLoans: {
+        title: "Préstecs",
+        body: "Afig préstecs i revisa taules d'amortització per conéixer interessos i terminis.",
+      },
+      assistantIntro: {
+        title: "Assistent d'IA al dispositiu",
+        body: "Xateja en local sobre despeses i pressupostos. Les propostes de despesa necessiten la teua confirmació abans de guardar-se.",
+      },
+      assistantChat: {
+        title: "Conversació",
+        body: "Demana resums de despesa, estat del pressupost o moviments recents. Confirma qualsevol despesa que propose l'assistent.",
+      },
+      assistantInput: {
+        title: "Text i veu",
+        body: "Escriu un missatge o usa el micròfon. La veu es queda al dispositiu quan hi ha models disponibles.",
       },
       setApi: {
         title: "API i opcions de visualització",
-        body: "Tria la teua moneda, activa un proxy CORS si cal i afig la teua clau de Finnhub per a dades de preus més completes.",
+        body: "Tria moneda, privacitat, proxy CORS si cal i una clau Finnhub opcional per a preus més rics.",
+      },
+      settingsAi: {
+        title: "Ajusts d'IA",
+        body: "Mostra o oculta l'Assistent a la navegació, controla la veu i gestiona models al dispositiu — res no ix d'ací.",
       },
       setLanguage: {
         title: "Idioma",
-        body: "Canvia entre anglès, espanyol, català/valencià, portuguès, neerlandès i alemany. La teua elecció es guarda i s'exporta.",
+        body: "Canvia entre anglès, espanyol, català/valencià, portuguès, neerlandès i alemany. La teua elecció es guarda amb les còpies.",
       },
       setData: {
         title: "Còpia i restauració",
-        body: "Exporta les teues dades en JSON o CSV, importa una còpia prèvia o reinicia-ho tot des de zero.",
+        body: "Les teues dades es queden en local. Exporta JSON o CSV, importa una còpia o reinicia-ho tot des de zero.",
       },
       finish: {
         title: "Tot llest!",
-        body: "Això és tot. Pots repetir este tour des d'Ajusts quan vulguis. A registrar!",
+        body: "Explora del Panell a Ajusts al teu ritme. Repeteix este tour quan vulguis des de la icona d'ajuda o Ajusts. A registrar!",
       },
     },
   },

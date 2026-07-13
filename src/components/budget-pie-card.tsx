@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ColorSwatchPicker } from "@/components/color-swatch-picker";
+import { CHART_PALETTE } from "@/lib/chart-theme";
 
 export type PieSlice = {
   id: string;
@@ -24,18 +25,7 @@ type Props = {
   onColorChange?: (sliceId: string, color: string | undefined) => void;
 };
 
-const DEFAULT_PALETTE = [
-  "#3b82f6",
-  "#10b981",
-  "#f59e0b",
-  "#a78bfa",
-  "#ef4444",
-  "#0ea5e9",
-  "#f472b6",
-  "#22c55e",
-  "#eab308",
-  "#8b5cf6",
-];
+const DEFAULT_PALETTE = [...CHART_PALETTE];
 
 const OTHER_THRESHOLD = 0.03;
 

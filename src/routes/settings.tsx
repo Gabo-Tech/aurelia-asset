@@ -37,6 +37,7 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { PageHeader } from "@/components/app-shell";
+import { LocalFirstBadge } from "@/components/design";
 import {
   Download,
   Upload,
@@ -471,8 +472,19 @@ function SettingsPage() {
     <>
       <PageHeader title={t("settings.title")} description={t("settings.description")} />
 
+      <div className="mb-5 flex flex-wrap items-center gap-2">
+        <LocalFirstBadge
+          label={t("settings.localFirst", { defaultValue: "On-device & encrypted" })}
+        />
+        <span className="text-xs text-muted-foreground">
+          {t("settings.localFirstHint", {
+            defaultValue: "Your portfolio never leaves this device.",
+          })}
+        </span>
+      </div>
+
       <div className="grid gap-5 lg:grid-cols-2">
-        <Card className="border-border/60" data-tour="settings-api">
+        <Card className="border-border/60 rounded-2xl shadow-sm" data-tour="settings-api">
           <CardHeader>
             <CardTitle>{t("settings.api.title")}</CardTitle>
             <CardDescription>{t("settings.api.description")}</CardDescription>
@@ -948,7 +960,7 @@ function AiSettingsCard() {
   };
 
   return (
-    <Card className="border-border/60">
+    <Card className="border-border/60" data-tour="settings-ai">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Sparkles className="h-4 w-4" />

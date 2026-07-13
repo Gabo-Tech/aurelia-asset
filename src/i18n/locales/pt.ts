@@ -887,104 +887,156 @@ const pt: Translation = {
     restartButton: "Iniciar tour",
     steps: {
       welcome: {
-        title: "Bem-vindo ao seu centro financeiro",
-        body: "Vamos fazer um tour rápido pelo app para você aproveitar ao máximo cada seção. Você pode pular ou repetir este tour em Configurações.",
+        title: "Bem-vindo ao Aurelia Asset",
+        body: "Este tour rápido percorre cada secção — carteira, fluxo de caixa, planeamento e mais. Pule quando quiser ou repita depois pelo ícone de ajuda ou Configurações.",
       },
       sidebar: {
         title: "Navegação principal",
-        body: "Use esta barra lateral para alternar entre Painel, Investimentos, Performance, Fluxo de caixa e Configurações.",
+        body: "Alterne entre Painel, Investimentos, Performance, Fluxo de caixa, Planeamento, Assistente e Configurações nesta barra.",
       },
       mobileNav: {
         title: "Navegação rápida",
-        body: "No celular, use a barra inferior para alternar entre as seções principais.",
+        body: "Use a barra inferior para mudar de secção. Em ecrãs muito pequenos, toque em Mais para Planeamento, Assistente ou Configurações.",
+      },
+      tourLauncher: {
+        title: "Repetir este tour",
+        body: "Toque no ícone de ajuda a qualquer momento para reiniciar o tour guiado. Também pode iniciá-lo em Configurações.",
       },
       theme: {
         title: "Modo claro e escuro",
-        body: "Alterne entre tema claro e escuro. O app lembra da sua escolha.",
+        body: "Alterne entre tema claro, escuro ou do sistema. A sua escolha fica guardada neste dispositivo.",
       },
       privacy: {
         title: "Modo privacidade",
-        body: "Oculte todos os valores com um clique, ideal para compartilhar tela ou mostrar gráficos em público.",
+        body: "Oculte todos os valores com um toque — ideal para partilhar ecrã ou gráficos em público.",
       },
       dashStats: {
-        title: "Seus números principais",
-        body: "Valor da carteira, patrimônio líquido e os últimos 30 dias de fluxo de caixa de relance.",
+        title: "Os seus números principais",
+        body: "Valor da carteira, património líquido (investimentos + liquidez − dívida de cartões) e os últimos 30 dias de fluxo de caixa.",
+      },
+      dashQuickActions: {
+        title: "Ações rápidas",
+        body: "Atalhos para adicionar um ativo, registar um movimento, abrir Investimentos ou ir à Performance.",
       },
       dashAllocation: {
         title: "Alocação de ativos",
-        body: "Veja como sua carteira está distribuída. Alterne ativos na legenda ou mostre todos os rótulos.",
+        body: "Veja como a sua carteira está distribuída. Alterne ativos na legenda ou mostre todos os rótulos.",
       },
       dashBreakdown: {
         title: "Detalhamento por ativo",
-        body: "Lista detalhada de cada investimento com seu peso atual na carteira.",
+        body: "Lista detalhada de cada investimento com o seu peso atual na carteira.",
       },
       holdingsAdd: {
         title: "Adicionar um ativo",
-        body: "Registre ações, ETFs, cripto, dinheiro, metais e mais. Preços são buscados automaticamente quando possível.",
+        body: "Registe ações, ETFs, cripto, dinheiro, metais e ativos personalizados. Preços em direto são obtidos quando possível.",
       },
       holdingsFilters: {
         title: "Buscar e filtrar",
-        body: "Encontre qualquer ativo por nome, símbolo ou tipo.",
+        body: "Encontre qualquer ativo por nome, símbolo ou tipo e ordene a tabela como preferir.",
       },
       holdingsTable: {
-        title: "Seus ativos",
-        body: "Veja quantidade, preço e valor de cada posição. Clique numa linha para editar ou apagar.",
+        title: "Os seus ativos",
+        body: "Veja quantidade, preço e valor de cada posição. Abra uma linha para editar ou registar compra/venda.",
       },
       holdingsCharts: {
-        title: "Gráficos de alocação",
-        body: "Visualize como seu dinheiro é dividido entre classes de ativos e prazos (longo vs curto).",
+        title: "Gráficos de investimentos",
+        body: "Visualize o valor ao longo do tempo e a base de custo investida para ver o crescimento.",
       },
       holdingsTx: {
         title: "Compras e vendas",
-        body: "Registre cada transação. O app mantém as quantidades sincronizadas automaticamente.",
+        body: "Registe cada transação com comissões. Quantidades e custo médio sincronizam automaticamente.",
       },
       perfPeriod: {
-        title: "Escolha um período",
-        body: "Compare sua carteira em 24 horas, uma semana, um mês, um ano ou mais.",
+        title: "Período e escala",
+        body: "Compare de 1D a MAX. Alterne entre valor absoluto e % indexado para comparar retornos de forma justa.",
       },
       perfAssets: {
         title: "Alternar ativos",
-        body: "Mostre ou oculte ativos individuais para comparar só os que te interessam.",
+        body: "Mostre ou oculte a linha total e ativos individuais para focar no que importa.",
       },
       perfChart: {
-        title: "Evolução da carteira",
-        body: "Passe o mouse no gráfico para ver o valor exato em qualquer momento do período.",
+        title: "Carteira ao longo do tempo",
+        body: "Passe o rato ou toque no gráfico para ver valores exatos no período escolhido.",
       },
       perfReturns: {
         title: "Retorno por ativo",
-        body: "Veja preço inicial, final e variação total de cada investimento no período.",
+        body: "Veja valor inicial, final e a variação absoluta e percentual de cada investimento.",
+      },
+      cfSummary: {
+        title: "Resumo do fluxo",
+        body: "Receitas, despesas e líquido do mesmo período do diagrama de fluxo abaixo.",
       },
       cfAdd: {
         title: "Adicionar receitas, despesas e transferências",
-        body: "Registre entradas únicas ou recorrentes, marque valores como porcentagens (ótimo para impostos) e pague em dinheiro ou cartão.",
-      },
-      cfSankey: {
-        title: "Diagrama de fluxo",
-        body: "Veja como seu dinheiro vai das fontes de receita para despesas, poupança e investimentos. Arraste para reordenar.",
-      },
-      cfEntries: {
-        title: "Todos os lançamentos",
-        body: "Filtre por tipo, categoria e período, edite lançamentos e exporte um PDF com o gráfico de saldo.",
+        body: "Registe entradas únicas ou recorrentes, regras de percentagem, prestações e pagamento em dinheiro ou cartão.",
       },
       cfCards: {
         title: "Cartões de crédito e dívidas",
-        body: "Gerencie limites, saldos e pagamentos dos seus cartões. Despesas no cartão também aparecem no diagrama.",
+        body: "Gerencie limites e saldos e pague cartões. Despesas no cartão também aparecem no diagrama.",
+      },
+      cfSankey: {
+        title: "Diagrama de fluxo",
+        body: "Veja como o dinheiro vai das receitas para despesas, poupança e investimentos. Arraste nós para reordenar.",
+      },
+      cfBreakdown: {
+        title: "Desdobramento por categoria",
+        body: "Gráficos circulares de receitas, despesas e investimentos/poupança para ver para onde vai o dinheiro.",
+      },
+      cfEntries: {
+        title: "Todos os lançamentos",
+        body: "Filtre por tipo, categoria e período, edite lançamentos ou exporte um PDF com o gráfico de saldo.",
+      },
+      planTabs: {
+        title: "Centro de planeamento",
+        body: "Quatro ferramentas num só sítio: Previsão, Orçamentos, Objetivos e Empréstimos — ligados ao seu fluxo de caixa.",
+      },
+      planForecast: {
+        title: "Previsão de fluxo",
+        body: "Projete 24 meses a partir de entradas recorrentes. Crie cenários, ajuste receitas/despesas e defina um plano principal.",
+      },
+      planBudgets: {
+        title: "Orçamentos",
+        body: "Crie planos (mensal, férias, projeto…) com linhas por categoria e acompanhe o progresso face ao gasto real.",
+      },
+      planGoals: {
+        title: "Objetivos de poupança",
+        body: "Defina valor e data-alvo. Barras de progresso e poupança mensal sugerida mantêm-no no rumo.",
+      },
+      planLoans: {
+        title: "Empréstimos",
+        body: "Adicione empréstimos e reveja tabelas de amortização para conhecer juros e prazos.",
+      },
+      assistantIntro: {
+        title: "Assistente de IA no dispositivo",
+        body: "Converse localmente sobre gastos e orçamentos. Propostas de despesa precisam da sua confirmação antes de serem guardadas.",
+      },
+      assistantChat: {
+        title: "Conversa",
+        body: "Peça resumos de gastos, estado do orçamento ou transações recentes. Confirme qualquer despesa proposta pelo assistente.",
+      },
+      assistantInput: {
+        title: "Texto e voz",
+        body: "Escreva uma mensagem ou use o microfone. A voz fica no dispositivo quando há modelos disponíveis.",
       },
       setApi: {
         title: "API e exibição",
-        body: "Escolha sua moeda, ative um proxy CORS se precisar e adicione sua chave Finnhub para dados de preços melhores.",
+        body: "Escolha moeda, privacidade, proxy CORS se precisar e uma chave Finnhub opcional para preços mais ricos.",
+      },
+      settingsAi: {
+        title: "Definições de IA",
+        body: "Mostre ou oculte o Assistente na navegação, controle a voz e gira modelos no dispositivo — nada sai daqui.",
       },
       setLanguage: {
         title: "Idioma",
-        body: "Alterne entre inglês, espanhol, catalão/valenciano, português, holandês e alemão. Sua escolha é salva e exportável.",
+        body: "Alterne entre inglês, espanhol, catalão/valenciano, português, neerlandês e alemão. A escolha é guardada com os backups.",
       },
       setData: {
         title: "Backup e restauração",
-        body: "Exporte seus dados em JSON ou CSV, importe um backup anterior ou redefina tudo do zero.",
+        body: "Os seus dados ficam locais. Exporte JSON ou CSV, importe um backup ou redefina tudo do zero.",
       },
       finish: {
         title: "Tudo pronto!",
-        body: "É isso. Você pode repetir este tour em Configurações quando quiser. Bom acompanhamento!",
+        body: "Explore do Painel às Configurações ao seu ritmo. Repita este tour quando quiser pelo ícone de ajuda ou Configurações. Bom acompanhamento!",
       },
     },
   },

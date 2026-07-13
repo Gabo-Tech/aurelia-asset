@@ -52,8 +52,7 @@ export function ChartFrame({ children, filename = "chart", title, className, ext
       const method = await saveExportFile(outName, { bytes });
       if (method === "cancelled") return;
       toast.success(t("chart.screenshotSaved", { defaultValue: "Screenshot saved" }));
-    } catch (e) {
-      console.error(e);
+    } catch {
       toast.error(t("chart.screenshotFailed", { defaultValue: "Couldn't capture screenshot" }));
     } finally {
       setShooting(false);
@@ -77,7 +76,7 @@ export function ChartFrame({ children, filename = "chart", title, className, ext
       disabled={disabled}
       title={label}
       aria-label={label}
-      className="grid h-8 w-8 place-items-center rounded-md border border-border/60 bg-card text-muted-foreground hover:text-foreground hover:bg-accent transition-colors disabled:opacity-50"
+      className="grid h-11 w-11 place-items-center rounded-xl border border-border/60 bg-card text-muted-foreground hover:text-foreground hover:bg-accent transition-colors disabled:opacity-50 active-press"
     >
       <Icon className="h-4 w-4" />
     </button>

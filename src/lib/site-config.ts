@@ -8,7 +8,13 @@ export const ASSETS = {
   logo: "/logo.png",
   hero: "/landing-hero.png",
   ogImage: "/og-image.png",
+  /** Classic multi-size ICO for broad browser support */
   favicon: "/favicon.ico",
+  favicon32: "/favicon-32x32.png",
+  favicon64: "/favicon-64x64.png",
+  appleTouchIcon: "/apple-touch-icon.png",
+  icon192: "/icon-192.png",
+  icon512: "/icon-512.png",
 } as const;
 
 /** AGPL source disclosure — default OSS repo when GITHUB_REPO is unset. */

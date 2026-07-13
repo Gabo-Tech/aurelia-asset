@@ -1,6 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { usePortfolioHistory } from "@/hooks/use-portfolio-history";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  usePortfolioHistory,
+  invalidatePortfolioPriceQueries,
+} from "@/hooks/use-portfolio-history";
 import {
   LineChart,
   Line,
@@ -25,6 +29,8 @@ import { formatPct, formatMoney, MASK } from "@/lib/format";
 import { convert } from "@/lib/finance/fx";
 import { cn } from "@/lib/utils";
 import { SITE_URL } from "@/lib/site-config";
+import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
+import { Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/performance")({
   head: () => {
@@ -49,10 +55,24 @@ function PerformancePage() {
   const { state } = useStore();
   const { t } = useTranslation();
   const { currency, rates, mask, privacy } = useMoney();
+  const queryClient = useQueryClient();
   const [period, setPeriod] = useState<PeriodId>("1M");
   const [hidden, setHidden] = useState<Set<string>>(new Set());
   const [hideTotal, setHideTotal] = useState(false);
   const [scaleMode, setScaleMode] = useState<"value" | "indexed">("value");
+
+  const {
+    bindRef,
+    pull,
+    refreshing: ptrRefreshing,
+    handlers,
+  } = usePullToRefresh({
+    onRefresh: async () => {
+      invalidatePortfolioPriceQueries(queryClient);
+      await queryClient.refetchQueries({ queryKey: ["asset-prices"] });
+    },
+    disabled: !state.holdings.length,
+  });
 
   const visibleKeys = useMemo(() => {
     const keys: string[] = [];
@@ -178,26 +198,44 @@ function PerformancePage() {
   }
 
   return (
-    <>
+    <div ref={bindRef} {...handlers} className="relative">
+      {(pull > 8 || ptrRefreshing) && (
+        <div
+          className="pointer-events-none absolute left-0 right-0 top-0 z-10 flex justify-center"
+          style={{ height: Math.max(pull, ptrRefreshing ? 40 : 0) }}
+        >
+          <Loader2
+            className={cn(
+              "mt-1 h-4 w-4 text-muted-foreground",
+              (ptrRefreshing || pull > 40) && "animate-spin",
+            )}
+          />
+        </div>
+      )}
       <PageHeader title={t("performance.title")} description={t("performance.description")} />
 
-      <div className="mb-4 flex flex-wrap gap-1.5" data-tour="perf-period">
+      <div
+        className="mb-4 flex gap-1.5 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        data-tour="perf-period"
+      >
         {PERIODS.map((p) => (
           <Button
             key={p.id}
             size="sm"
             variant={period === p.id ? "default" : "outline"}
             onClick={() => setPeriod(p.id)}
+            className={cn("h-10 shrink-0 rounded-full px-4", period === p.id && "shadow-sm")}
           >
             {p.label}
           </Button>
         ))}
-        <div className="ml-auto flex items-center gap-1">
+        <div className="ml-auto flex items-center gap-1 shrink-0">
           <Button
             size="sm"
             variant={scaleMode === "value" ? "default" : "outline"}
             onClick={() => setScaleMode("value")}
             title="Absolute value"
+            className="h-10 rounded-full px-3"
           >
             {currency}
           </Button>
@@ -206,6 +244,7 @@ function PerformancePage() {
             variant={scaleMode === "indexed" ? "default" : "outline"}
             onClick={() => setScaleMode("indexed")}
             title="Percent change from start of period"
+            className="h-10 rounded-full px-3"
           >
             %
           </Button>
@@ -278,12 +317,14 @@ function PerformancePage() {
         )}
       </div>
 
-      <Card className="border-border/60" data-tour="perf-chart">
+      <Card className="border-border/60 rounded-2xl shadow-sm" data-tour="perf-chart">
         <CardHeader className="flex flex-row items-baseline justify-between flex-wrap gap-2">
           <CardTitle>{t("more.perfPortfolioValue")}</CardTitle>
           {metrics && (
             <div className="text-right">
-              <div className="text-2xl font-semibold tabular-nums">{mask(metrics.last.total)}</div>
+              <div className="font-display text-2xl tracking-tight tabular-nums">
+                {mask(metrics.last.total)}
+              </div>
               <div
                 className={cn(
                   "text-sm font-medium",
@@ -299,7 +340,7 @@ function PerformancePage() {
           <ChartFrame filename="performance" title={`${t("more.perfPortfolioValue")} · ${period}`}>
             <div className="flex h-72 items-center justify-center sm:h-80">
               {isLoading ? (
-                <Skeleton className="h-full w-full" />
+                <Skeleton className="h-full w-full rounded-xl skeleton-shimmer" />
               ) : isError ? (
                 <div className="grid h-full place-items-center text-sm text-destructive">
                   {t("more.perfCouldntLoad")}
@@ -336,8 +377,9 @@ function PerformancePage() {
                       contentStyle={{
                         background: "var(--popover)",
                         border: "1px solid var(--border)",
-                        borderRadius: 10,
+                        borderRadius: 12,
                         fontSize: 12,
+                        boxShadow: "var(--shadow-md-value)",
                       }}
                       formatter={(value: number) =>
                         scaleMode === "indexed"
@@ -485,6 +527,6 @@ function PerformancePage() {
           </CardContent>
         </Card>
       )}
-    </>
+    </div>
   );
 }

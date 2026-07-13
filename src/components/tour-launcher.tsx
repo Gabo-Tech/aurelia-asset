@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { HelpCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createTour, markTourCompleted } from "@/lib/tour/driver";
+import { useStore } from "@/lib/store";
 
 import type { Driver } from "driver.js";
 import { buildTourSteps } from "@/lib/tour/steps";
@@ -19,11 +20,12 @@ function detectMobile() {
 async function startTour(
   t: ReturnType<typeof useTranslation>["t"],
   navigate: (path: string) => void,
+  assistantEnabled: boolean,
 ) {
   if (activeTourPending || activeTour?.isActive()) return;
   activeTourPending = true;
   const isMobile = detectMobile();
-  const steps = buildTourSteps(t, isMobile);
+  const steps = buildTourSteps(t, isMobile, { assistantEnabled });
   const tour = createTour({
     steps,
     navigate,
@@ -50,6 +52,8 @@ async function startTour(
 export function TourLauncher({ className }: { className?: string }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { state } = useStore();
+  const assistantEnabled = state.settings.aiAssistantEnabled !== false;
   const autoStarted = useRef(false);
 
   useEffect(() => {
@@ -60,7 +64,7 @@ export function TourLauncher({ className }: { className?: string }) {
 
   useEffect(() => {
     function onStart() {
-      startTour(t, (path) => navigate({ to: path as never }));
+      startTour(t, (path) => navigate({ to: path as never }), assistantEnabled);
     }
     window.addEventListener("app:start-tour", onStart);
     window.addEventListener("tour:start", onStart);
@@ -68,16 +72,16 @@ export function TourLauncher({ className }: { className?: string }) {
       window.removeEventListener("app:start-tour", onStart);
       window.removeEventListener("tour:start", onStart);
     };
-  }, [t, navigate]);
+  }, [t, navigate, assistantEnabled]);
 
   return (
     <button
       type="button"
-      onClick={() => startTour(t, (path) => navigate({ to: path as never }))}
+      onClick={() => startTour(t, (path) => navigate({ to: path as never }), assistantEnabled)}
       title={t("tour.start")}
       aria-label={t("tour.start")}
       className={cn(
-        "grid h-8 w-8 place-items-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-sidebar-accent/60 transition-colors",
+        "grid h-11 w-11 place-items-center rounded-xl text-muted-foreground hover:text-foreground hover:bg-sidebar-accent/60 transition-colors active-press",
         className,
       )}
       data-tour="tour-launcher"

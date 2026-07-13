@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
+import { CHART_PALETTE } from "@/lib/chart-theme";
+
 export type PieEntry = {
   id: string;
   label: string;
@@ -22,13 +24,7 @@ type Props = {
   palette?: string[];
 };
 
-const DEFAULT_PALETTE = [
-  "var(--chart-1)",
-  "var(--chart-2)",
-  "var(--chart-3)",
-  "var(--chart-4)",
-  "var(--chart-5)",
-];
+const DEFAULT_PALETTE = [...CHART_PALETTE];
 
 const OTHER_THRESHOLD = 0.03;
 

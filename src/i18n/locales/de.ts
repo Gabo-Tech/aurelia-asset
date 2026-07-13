@@ -890,32 +890,40 @@ const de: Translation = {
     restartButton: "Tour starten",
     steps: {
       welcome: {
-        title: "Willkommen in deinem Finanz-Hub",
-        body: "Lass uns einen kurzen Rundgang machen, damit du jeden Bereich optimal nutzt. Du kannst die Tour jederzeit über die Einstellungen überspringen oder neu starten.",
+        title: "Willkommen bei Aurelia Asset",
+        body: "Dieser kurze Rundgang zeigt jeden Bereich — Portfolio, Cashflow, Planung und mehr. Jederzeit überspringen oder später über das Hilfe-Icon bzw. die Einstellungen neu starten.",
       },
       sidebar: {
         title: "Hauptnavigation",
-        body: "Über diese Seitenleiste wechselst du zwischen Dashboard, Bestände, Performance, Cashflow und Einstellungen.",
+        body: "Wechsle hier zwischen Dashboard, Bestände, Performance, Cashflow, Planung, Assistent und Einstellungen.",
       },
       mobileNav: {
         title: "Schnellnavigation",
-        body: "Auf dem Handy wechselst du über die untere Leiste zwischen den Hauptbereichen.",
+        body: "Über die untere Leiste wechselst du die Bereiche. Auf sehr kleinen Bildschirmen öffnet „Mehr“ Planung, Assistent oder Einstellungen.",
+      },
+      tourLauncher: {
+        title: "Tour erneut starten",
+        body: "Tippe jederzeit auf das Hilfe-Icon, um die geführte Tour neu zu starten. Du kannst sie auch in den Einstellungen starten.",
       },
       theme: {
         title: "Hell & Dunkel",
-        body: "Wechsle zwischen hellem und dunklem Modus. Die App merkt sich deine Wahl.",
+        body: "Wechsle zwischen hell, dunkel oder System. Deine Wahl wird auf diesem Gerät gespeichert.",
       },
       privacy: {
         title: "Privatsphäre-Modus",
-        body: "Verberge alle Geldbeträge mit einem Klick - ideal für Bildschirmfreigaben oder öffentliche Präsentationen.",
+        body: "Verberge alle Geldbeträge mit einem Tippen — ideal für Bildschirmfreigaben oder öffentliche Charts.",
       },
       dashStats: {
         title: "Deine Kennzahlen",
-        body: "Portfoliowert, Reinvermögen und die letzten 30 Tage Cashflow auf einen Blick.",
+        body: "Portfoliowert, Reinvermögen (Bestände + Liquidität − Kartenschulden) und die letzten 30 Tage Cashflow.",
+      },
+      dashQuickActions: {
+        title: "Schnellaktionen",
+        body: "Shortcuts zum Hinzufügen eines Assets, einer Cashflow-Buchung, zu Beständen oder zur Performance.",
       },
       dashAllocation: {
         title: "Asset-Allokation",
-        body: "Sieh wie dein Portfolio verteilt ist. Schalte Assets in der Legende um oder zeige alle Labels.",
+        body: "Sieh, wie dein Portfolio verteilt ist. Schalte Assets in der Legende um oder zeige alle Labels.",
       },
       dashBreakdown: {
         title: "Aufschlüsselung",
@@ -923,71 +931,115 @@ const de: Translation = {
       },
       holdingsAdd: {
         title: "Position hinzufügen",
-        body: "Verfolge Aktien, ETFs, Krypto, Bargeld, Metalle und mehr. Preise werden wenn möglich automatisch geladen.",
+        body: "Verfolge Aktien, ETFs, Krypto, Bargeld, Metalle und eigene Assets. Live-Preise werden wenn möglich geladen.",
       },
       holdingsFilters: {
         title: "Suchen und filtern",
-        body: "Finde jede Position nach Name, Symbol oder Typ.",
+        body: "Finde jede Position nach Name, Symbol oder Typ und sortiere die Tabelle nach deinem Bedarf.",
       },
       holdingsTable: {
         title: "Deine Positionen",
-        body: "Sieh Menge, Preis und Wert jeder Position. Klicke eine Zeile, um sie zu bearbeiten oder zu löschen.",
+        body: "Sieh Menge, Preis und Wert jeder Position. Öffne eine Zeile zum Bearbeiten oder für Kauf/Verkauf.",
       },
       holdingsCharts: {
-        title: "Allokations-Charts",
-        body: "Visualisiere wie dein Geld auf Anlageklassen und Horizonte verteilt ist (langfristig vs kurzfristig).",
+        title: "Bestands-Charts",
+        body: "Visualisiere Wert über die Zeit und investierte Kostenbasis, um Wachstum zu erkennen.",
       },
       holdingsTx: {
         title: "Käufe & Verkäufe",
-        body: "Buche jede Transaktion. Die App hält deine Stückzahlen automatisch synchron.",
+        body: "Buche jede Transaktion inkl. Gebühren. Mengen und Kostenbasis bleiben automatisch synchron.",
       },
       perfPeriod: {
-        title: "Zeitraum wählen",
-        body: "Vergleiche dein Portfolio über 24 Stunden, eine Woche, einen Monat, ein Jahr oder länger.",
+        title: "Zeitraum & Skala",
+        body: "Vergleiche von 1T bis MAX. Wechsle zwischen absolutem Wert und indexiertem %, um Renditen fair zu vergleichen.",
       },
       perfAssets: {
         title: "Assets umschalten",
-        body: "Zeige oder verberge einzelne Assets, um nur das Wichtige zu vergleichen.",
+        body: "Zeige oder verberge die Gesamtkurve und einzelne Assets, um dich auf das Wesentliche zu konzentrieren.",
       },
       perfChart: {
-        title: "Portfoliowert über Zeit",
-        body: "Bewege die Maus über das Diagramm, um den exakten Wert zu jedem Zeitpunkt zu sehen.",
+        title: "Portfolio über Zeit",
+        body: "Bewege die Maus oder tippe auf das Diagramm, um exakte Werte im gewählten Zeitraum zu sehen.",
       },
       perfReturns: {
         title: "Rendite je Asset",
-        body: "Sieh Start- und Endpreis sowie die Gesamtveränderung jeder Position im Zeitraum.",
+        body: "Sieh Startwert, Endwert sowie absolute und prozentuale Veränderung jeder Position.",
+      },
+      cfSummary: {
+        title: "Cashflow-Überblick",
+        body: "Einnahmen, Ausgaben und Netto für denselben Zeitraum wie das Flussdiagramm darunter.",
       },
       cfAdd: {
         title: "Einnahmen, Ausgaben & Transfers",
-        body: "Erfasse einmalige oder wiederkehrende Buchungen, markiere Beträge als Prozente (ideal für Steuern) und zahle bar oder per Kreditkarte.",
-      },
-      cfSankey: {
-        title: "Geldfluss-Diagramm",
-        body: "Sieh wie dein Geld von Einnahmequellen zu Ausgaben, Sparen und Investitionen fließt. Ziehe Zeilen zum Sortieren.",
-      },
-      cfEntries: {
-        title: "Alle Buchungen",
-        body: "Filtere nach Typ, Kategorie und Zeitraum, bearbeite Einträge und exportiere ein PDF mit Saldochart.",
+        body: "Erfasse einmalige oder wiederkehrende Buchungen, Prozentregeln, Raten und Zahlung bar oder per Karte.",
       },
       cfCards: {
         title: "Kreditkarten & Schulden",
-        body: "Verwalte Kartenlimits, Salden und Tilgungen. Mit Karte gezahlte Ausgaben erscheinen auch im Diagramm.",
+        body: "Verwalte Limits und Salden und tilge Karten. Mit Karte gezahlte Ausgaben erscheinen auch im Diagramm.",
+      },
+      cfSankey: {
+        title: "Geldfluss-Diagramm",
+        body: "Sieh, wie Geld von Einnahmen zu Ausgaben, Sparen und Investitionen fließt. Ziehe Knoten zum Sortieren.",
+      },
+      cfBreakdown: {
+        title: "Kategorie-Aufschlüsselung",
+        body: "Kreisdiagramme für Einnahmen, Ausgaben und Investitionen/Sparen — so siehst du, wohin das Geld geht.",
+      },
+      cfEntries: {
+        title: "Alle Buchungen",
+        body: "Filtere nach Typ, Kategorie und Zeitraum, bearbeite Einträge oder exportiere ein PDF mit Saldochart.",
+      },
+      planTabs: {
+        title: "Planungs-Hub",
+        body: "Vier Tools an einem Ort: Prognose, Budgets, Ziele und Kredite — alle mit deinem Cashflow verknüpft.",
+      },
+      planForecast: {
+        title: "Cashflow-Prognose",
+        body: "Projiziere die nächsten 24 Monate aus wiederkehrenden Buchungen. Erstelle Szenarien und setze einen Hauptplan.",
+      },
+      planBudgets: {
+        title: "Budgets",
+        body: "Erstelle Pläne (Monat, Urlaub, Projekt…) mit Kategorie-Positionen und vergleiche sie mit echten Ausgaben.",
+      },
+      planGoals: {
+        title: "Sparziele",
+        body: "Setze Zielbetrag und Datum. Fortschrittsbalken und vorgeschlagene Monatsraten halten dich auf Kurs.",
+      },
+      planLoans: {
+        title: "Kredite",
+        body: "Füge Kredite hinzu und prüfe Tilgungspläne — Zinsen und Laufzeit auf einen Blick.",
+      },
+      assistantIntro: {
+        title: "On-Device-KI-Assistent",
+        body: "Chatte lokal über Ausgaben und Budgets. Vorschläge für Ausgaben brauchen deine Bestätigung, bevor etwas gespeichert wird.",
+      },
+      assistantChat: {
+        title: "Unterhaltung",
+        body: "Frage nach Ausgabenübersichten, Budgetstatus oder letzten Buchungen. Bestätige jede vorgeschlagene Ausgabe.",
+      },
+      assistantInput: {
+        title: "Text & Sprache",
+        body: "Schreibe eine Nachricht oder nutze das Mikrofon. Sprache bleibt on-device, wenn Modelle verfügbar sind.",
       },
       setApi: {
         title: "API & Anzeige",
-        body: "Wähle deine Anzeigewährung, aktiviere bei Bedarf einen CORS-Proxy und füge deinen Finnhub-API-Key für reichere Preisdaten hinzu.",
+        body: "Wähle Anzeigewährung, Privacy-Defaults, bei Bedarf CORS-Proxy und optional einen Finnhub-Key für reichere Preise.",
+      },
+      settingsAi: {
+        title: "KI-Einstellungen",
+        body: "Assistent in der Navigation ein- oder ausblenden, Sprachausgabe steuern und On-Device-Modelle verwalten — nichts verlässt dieses Gerät.",
       },
       setLanguage: {
         title: "Sprache",
-        body: "Wechsle zwischen Englisch, Spanisch, Katalanisch/Valencianisch, Portugiesisch, Niederländisch und Deutsch. Deine Wahl wird gespeichert und ist exportierbar.",
+        body: "Wechsle zwischen Englisch, Spanisch, Katalanisch/Valencianisch, Portugiesisch, Niederländisch und Deutsch. Die Wahl wird mit Backups gespeichert.",
       },
       setData: {
         title: "Sicherung & Wiederherstellung",
-        body: "Exportiere deine Daten als JSON oder CSV, importiere ein Backup oder setze alles zurück.",
+        body: "Deine Daten bleiben lokal. Exportiere JSON oder CSV, importiere ein Backup oder setze alles zurück.",
       },
       finish: {
         title: "Alles bereit!",
-        body: "Das war's. Du kannst die Tour jederzeit aus den Einstellungen erneut starten. Viel Erfolg!",
+        body: "Erkunde Dashboard bis Einstellungen in deinem Tempo. Starte die Tour jederzeit über das Hilfe-Icon oder die Einstellungen neu. Viel Erfolg!",
       },
     },
   },

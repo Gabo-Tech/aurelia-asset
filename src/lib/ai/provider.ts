@@ -134,16 +134,13 @@ export async function runAssistant(
   if (caps.llm) engines.push(createNativeLlmEngine(aiConfig));
   engines.push(createLocalNluEngine(ctx));
 
-  let lastError: unknown;
   for (const engine of engines) {
     try {
       return await runLoop(engine, system, userText, deps, history, ctx);
-    } catch (err) {
-      lastError = err;
+    } catch {
       // Fall through to the next engine (e.g. native → local NLU).
     }
   }
-  console.error("All AI engines failed", lastError);
   return {
     reply: t("assistant.backend.processError"),
     toolTrace: [],

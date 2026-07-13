@@ -141,10 +141,9 @@ export function HoldingDialog({ open, onOpenChange, editing }: Props) {
         if (mode === "stock" && r.length === 0) {
           // Not catastrophic; silent.
         }
-      } catch (e) {
+      } catch {
         setResults([]);
         toast.error(t("holdings.dialog.searchFailed"));
-        console.error(e);
       } finally {
         setSearching(false);
       }
