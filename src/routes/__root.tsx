@@ -141,31 +141,6 @@ function RootComponent() {
     typeof window !== "undefined" &&
     !!(window as Window & { __TSS_TAURI_SPA__?: boolean }).__TSS_TAURI_SPA__;
 
-  // #region agent log
-  if (typeof window !== "undefined") {
-    const w = window as Window & { __dbgRootLogged?: boolean; $_TSR?: unknown };
-    if (!w.__dbgRootLogged) {
-      w.__dbgRootLogged = true;
-      try {
-        const el = document.getElementById("dbg-hud") ?? document.createElement("pre");
-        if (!el.id) {
-          el.id = "dbg-hud";
-          el.setAttribute(
-            "style",
-            "position:fixed;z-index:99999;left:8px;right:8px;bottom:8px;max-height:40vh;overflow:auto;background:#111;color:#0f0;font:12px/1.3 monospace;padding:8px;border:1px solid #0f0;white-space:pre-wrap",
-          );
-          document.documentElement.appendChild(el);
-        }
-        el.textContent =
-          (el.textContent ? el.textContent + "\n" : "") +
-          `HD: react_root_render pathname=${pathname} hasTSR=${!!w.$_TSR} spa=${isTauriSpa}`;
-      } catch {
-        /* ignore */
-      }
-    }
-  }
-  // #endregion
-
   return (
     <>
       {isTauriSpa ? (
