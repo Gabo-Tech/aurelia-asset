@@ -162,8 +162,16 @@ function pickBestSide(el: HTMLElement, preferred: Side): Side {
   return ordered[0];
 }
 
-function rectsOverlap(a: DOMRect | { top: number; bottom: number; left: number; right: number }, b: DOMRect) {
-  return !(a.bottom + MIN_CLEARANCE <= b.top || b.bottom + MIN_CLEARANCE <= a.top || a.right <= b.left || b.right <= a.left);
+function rectsOverlap(
+  a: DOMRect | { top: number; bottom: number; left: number; right: number },
+  b: DOMRect,
+) {
+  return !(
+    a.bottom + MIN_CLEARANCE <= b.top ||
+    b.bottom + MIN_CLEARANCE <= a.top ||
+    a.right <= b.left ||
+    b.right <= a.left
+  );
 }
 
 /**

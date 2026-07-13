@@ -245,7 +245,10 @@ function HoldingsPage() {
           </div>
 
           {rows.length === 0 ? (
-            <div className="py-16 text-center text-sm text-muted-foreground" data-tour="holdings-table">
+            <div
+              className="py-16 text-center text-sm text-muted-foreground"
+              data-tour="holdings-table"
+            >
               {t("more.hNoMatch")}
             </div>
           ) : (

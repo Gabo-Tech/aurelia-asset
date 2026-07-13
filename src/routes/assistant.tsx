@@ -519,10 +519,7 @@ function EmptyState() {
   ];
   return (
     <div className="flex h-full flex-col items-center justify-center gap-4 text-center px-2">
-      <div
-        data-tour="assistant-chat"
-        className="flex max-w-sm flex-col items-center gap-4"
-      >
+      <div data-tour="assistant-chat" className="flex max-w-sm flex-col items-center gap-4">
         <div className="grid h-14 w-14 place-items-center rounded-2xl bg-primary/10 text-primary shadow-sm">
           <Sparkles className="h-7 w-7" />
         </div>

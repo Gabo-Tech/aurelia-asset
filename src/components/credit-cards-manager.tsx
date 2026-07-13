@@ -92,10 +92,7 @@ export function CreditCardsManager() {
 
   return (
     <div className="rounded-lg border border-border/60 p-3 sm:p-4">
-      <div
-        className="flex items-center justify-between gap-2 flex-wrap"
-        data-tour="cf-cards"
-      >
+      <div className="flex items-center justify-between gap-2 flex-wrap" data-tour="cf-cards">
         <div className="flex items-center gap-2">
           <CardIcon className="h-4 w-4 text-muted-foreground" />
           <h3 className="text-sm font-semibold">{t("cards.title")}</h3>

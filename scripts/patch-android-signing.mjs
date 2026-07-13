@@ -37,18 +37,14 @@ const SIGNING_CONFIGS = `
     }
 `;
 
-const SIGNING_LINE =
-  '            signingConfig = signingConfigs.getByName("release")';
+const SIGNING_LINE = '            signingConfig = signingConfigs.getByName("release")';
 
 let kts = readFileSync(gradlePath, "utf8");
 let changed = false;
 
 if (!kts.includes("import java.io.FileInputStream")) {
   if (kts.startsWith("import ")) {
-    kts = kts.replace(
-      /^(import [^\n]+\n)/,
-      `$1import java.io.FileInputStream\n`,
-    );
+    kts = kts.replace(/^(import [^\n]+\n)/, `$1import java.io.FileInputStream\n`);
   } else {
     kts = `import java.io.FileInputStream\n${kts}`;
   }
@@ -71,18 +67,12 @@ if (!kts.includes("import java.util.Properties")) {
 
 if (!kts.includes('signingConfigs.getByName("release")')) {
   if (!kts.includes("signingConfigs {")) {
-    kts = kts.replace(
-      /(\s+)(buildTypes \{)/,
-      `$1${SIGNING_CONFIGS.trim()}\n$1$2`,
-    );
+    kts = kts.replace(/(\s+)(buildTypes \{)/, `$1${SIGNING_CONFIGS.trim()}\n$1$2`);
     changed = true;
   }
 
   if (!kts.includes(SIGNING_LINE.trim())) {
-    kts = kts.replace(
-      /(getByName\("release"\) \{)/,
-      `$1\n${SIGNING_LINE}`,
-    );
+    kts = kts.replace(/(getByName\("release"\) \{)/, `$1\n${SIGNING_LINE}`);
     changed = true;
   }
 }

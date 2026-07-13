@@ -110,33 +110,17 @@ export function buildTourSteps(
 
     // Planning
     step("planTabs", '[data-tour="plan-tabs"]', "/planning", pageSide),
-    step(
-      "planForecast",
-      '[data-tour="plan-forecast"]',
-      "/planning",
-      contentTopSide,
-      () => activatePlanTab("forecast"),
+    step("planForecast", '[data-tour="plan-forecast"]', "/planning", contentTopSide, () =>
+      activatePlanTab("forecast"),
     ),
-    step(
-      "planBudgets",
-      '[data-tour="plan-budgets"]',
-      "/planning",
-      contentTopSide,
-      () => activatePlanTab("budgets"),
+    step("planBudgets", '[data-tour="plan-budgets"]', "/planning", contentTopSide, () =>
+      activatePlanTab("budgets"),
     ),
-    step(
-      "planGoals",
-      '[data-tour="plan-goals"]',
-      "/planning",
-      contentTopSide,
-      () => activatePlanTab("goals"),
+    step("planGoals", '[data-tour="plan-goals"]', "/planning", contentTopSide, () =>
+      activatePlanTab("goals"),
     ),
-    step(
-      "planLoans",
-      '[data-tour="plan-loans"]',
-      "/planning",
-      contentTopSide,
-      () => activatePlanTab("loans"),
+    step("planLoans", '[data-tour="plan-loans"]', "/planning", contentTopSide, () =>
+      activatePlanTab("loans"),
     ),
   ];
 
