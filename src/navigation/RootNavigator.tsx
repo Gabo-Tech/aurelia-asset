@@ -121,7 +121,27 @@ export function RootNavigator() {
   const assistantEnabled = useAppStore((s) => s.state.settings.aiAssistantEnabled !== false);
 
   return (
-    <NavigationContainer theme={navTheme}>
+    <NavigationContainer
+      theme={navTheme}
+      linking={{
+        prefixes: [
+          typeof window !== "undefined" && window.location?.origin
+            ? window.location.origin
+            : "",
+        ],
+        config: {
+          screens: {
+            Dashboard: "",
+            Cashflow: "Cashflow",
+            Holdings: "Holdings",
+            Performance: "Performance",
+            Planning: "Planning",
+            Assistant: "Assistant",
+            Settings: "Settings",
+          },
+        },
+      }}
+    >
       <Tab.Navigator
         screenOptions={({ route }) => ({
           headerShown: false,

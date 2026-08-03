@@ -492,11 +492,13 @@ export function CashflowScreen() {
           <Metric label="Expenses" value={mask(totals.expense)} />
           <Metric label="Net" value={mask(totals.net)} />
           <Metric label="Liquidity impact" value={mask(totals.liquidity)} />
-          <PrimaryButton label="Export period CSV" onPress={() => void exportCsv()} />
-          <PrimaryButton
-            label={t("cashflow.exportPdf", { defaultValue: "Export PDF" })}
-            onPress={() => void exportPdf()}
-          />
+          <View style={styles.buttonStack}>
+            <PrimaryButton label="Export period CSV" onPress={() => void exportCsv()} />
+            <PrimaryButton
+              label={t("cashflow.exportPdf", { defaultValue: "Export PDF" })}
+              onPress={() => void exportPdf()}
+            />
+          </View>
         </Card>
 
         <CreditCardsManager />
@@ -853,10 +855,12 @@ export function CashflowScreen() {
               ) : null}
             </>
           ) : null}
-          <PrimaryButton label={editingId ? "Save changes" : "Add entry"} onPress={onAdd} />
-          {editingId ? (
-            <PrimaryButton label="Cancel edit" onPress={resetForm} />
-          ) : null}
+          <View style={styles.buttonStack}>
+            <PrimaryButton label={editingId ? "Save changes" : "Add entry"} onPress={onAdd} />
+            {editingId ? (
+              <PrimaryButton label="Cancel edit" onPress={resetForm} />
+            ) : null}
+          </View>
         </Card>
 
         <Text style={styles.section}>Entries ({rows.length})</Text>
@@ -908,6 +912,7 @@ export function CashflowScreen() {
 }
 
 const styles = StyleSheet.create({
+  buttonStack: { gap: spacing.sm, marginTop: spacing.xs },
   pills: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: spacing.md },
   pill: {
     paddingHorizontal: 12,

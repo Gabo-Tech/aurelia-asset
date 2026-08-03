@@ -32,6 +32,6 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.bg },
+  root: { flex: 1, height: "100%", minHeight: "100%", backgroundColor: colors.bg },
   boot: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: colors.bg },
 });
