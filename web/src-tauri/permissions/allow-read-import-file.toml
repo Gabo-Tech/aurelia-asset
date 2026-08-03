@@ -1,0 +1,4 @@
+[[permission]]
+identifier = "allow-read-import-file"
+description = "Allow the read_import_file command for user-initiated JSON imports"
+commands.allow = ["read_import_file"]

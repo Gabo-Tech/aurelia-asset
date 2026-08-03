@@ -1,64 +1,32 @@
 /**
- * Engine selection and the tool-calling orchestration loop.
- *
- * `runAssistant` drives one user turn to completion:
- *   1. Injects the finance context + tool specs into a system prompt.
- *   2. Asks the engine for a turn.
- *   3. Executes any READ tool calls and feeds results back (looping).
- *   4. On a WRITE tool call (add/update), stops and returns a ProposedExpense
- *      for the UI to confirm (confirm-first policy).
- *   5. Otherwise returns the final natural-language reply.
- *
- * The native LLM (Tauri) is preferred when available; the local NLU engine is
- * always the fallback so the assistant works offline on every platform.
+ * Engine selection + tool-calling loop (ported from Tauri web client).
+ * Native LLM via llama.rn; always falls back to local NLU.
  */
 
-import { invoke } from "@tauri-apps/api/core";
-import { isTauri } from "@/lib/export";
 import { formatMoney } from "@/lib/format";
 import { t } from "@/lib/i18n-t";
-import type { AssistantResult, EngineMessage, LowLevelEngine, ModelTurn, ToolTrace } from "./types";
+import type { AssistantResult, EngineMessage, LowLevelEngine, ToolTrace } from "./types";
 import { TOOL_SPECS, runReadTool, resolveExpenseProposal, type ToolDeps } from "./tools";
 import { createLocalNluEngine } from "./nlu";
 import { isAdviceRequest, withAdviceDisclaimer } from "./advice";
 import { buildFinanceContext, formatContextForPrompt, type FinanceContext } from "./context";
-import { toConfigPayload, type AiConfig } from "./config";
+import type { AiConfig } from "./config";
+import { createNativeLlmEngine, getLlmReady, type AiCapabilities } from "@/platform/llm";
+import { getSpeechReady } from "@/platform/speech";
 
-export interface AiCapabilities {
-  llm: boolean;
-  stt: boolean;
-  tts: boolean;
-  llmEnabled?: boolean;
-  sttEnabled?: boolean;
-  ttsEnabled?: boolean;
-  model?: string;
-}
+export type { AiCapabilities };
 
-/** Query which on-device AI features are available, given the user's configured
- *  model paths. */
 export async function getAiCapabilities(cfg: AiConfig = {}): Promise<AiCapabilities> {
-  if (!isTauri()) return { llm: false, stt: false, tts: false };
-  try {
-    return await invoke<AiCapabilities>("ai_status", {
-      config: toConfigPayload(cfg),
-    });
-  } catch {
-    return { llm: false, stt: false, tts: false };
-  }
-}
-
-/** Native LLM engine backed by llama.cpp via a Tauri command. */
-function createNativeLlmEngine(cfg: AiConfig): LowLevelEngine {
+  const llm = await getLlmReady(cfg);
+  const speech = await getSpeechReady(cfg);
   return {
-    id: "native-llm",
-    label: t("assistant.localLlmQwen"),
-    async chat({ system, messages, tools }): Promise<ModelTurn> {
-      // The Rust side runs the model and returns a structured turn. Throws if
-      // the model is not loaded, which makes the orchestrator fall back.
-      return await invoke<ModelTurn>("ai_chat", {
-        req: { system, messages, tools, model_path: cfg.llmPath },
-      });
-    },
+    llm,
+    stt: speech.stt,
+    tts: speech.tts,
+    llmEnabled: true,
+    sttEnabled: true,
+    ttsEnabled: true,
+    model: cfg.llmPath?.split(/[/\\]/).pop(),
   };
 }
 
@@ -116,10 +84,6 @@ function isSameDay(a: Date, b: Date): boolean {
   );
 }
 
-/**
- * Run one assistant turn. `history` is the prior EngineMessage transcript
- * (excluding the new user message, which is appended here).
- */
 export async function runAssistant(
   userText: string,
   deps: ToolDeps,
@@ -138,7 +102,7 @@ export async function runAssistant(
     try {
       return await runLoop(engine, system, userText, deps, history, ctx);
     } catch {
-      // Fall through to the next engine (e.g. native → local NLU).
+      /* next engine */
     }
   }
   return {
@@ -155,7 +119,7 @@ async function runLoop(
   userText: string,
   deps: ToolDeps,
   history: EngineMessage[],
-  ctx: FinanceContext,
+  _ctx: FinanceContext,
 ): Promise<AssistantResult> {
   const messages: EngineMessage[] = [...history, { role: "user", content: userText }];
   const trace: ToolTrace[] = [];
@@ -166,8 +130,6 @@ async function runLoop(
     if (turn.toolCalls && turn.toolCalls.length > 0) {
       for (const call of turn.toolCalls) {
         const spec = TOOL_SPECS.find((s) => s.name === call.name);
-
-        // WRITE tools are gated behind user confirmation.
         if (spec?.kind === "write") {
           if (call.name === "add_transaction") {
             const { proposal, error } = resolveExpenseProposal(call.arguments, deps);
@@ -192,8 +154,6 @@ async function runLoop(
               engineId: engine.id,
             };
           }
-          // update_transaction: surface a gentle message; correction UI is a
-          // future enhancement, so we point the user to a fresh add for now.
           return {
             reply: t("assistant.backend.updateHint"),
             toolTrace: trace,
@@ -201,7 +161,6 @@ async function runLoop(
           };
         }
 
-        // READ tool: execute and feed the result back to the engine.
         const result = runReadTool(call, deps);
         trace.push({
           name: call.name,
@@ -214,10 +173,9 @@ async function runLoop(
           content: result.summary,
         });
       }
-      continue; // let the engine react to the tool results
+      continue;
     }
 
-    // Final natural-language answer.
     return {
       reply: finalizeAdviceReply(
         turn.content?.trim() || t("assistant.backend.done"),

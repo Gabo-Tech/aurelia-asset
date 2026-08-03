@@ -1,0 +1,4 @@
+[[permission]]
+identifier = "allow-download-model"
+description = "Allow downloading on-device AI model files into app data"
+commands.allow = ["download_model", "is_native_desktop"]

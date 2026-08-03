@@ -6,7 +6,7 @@
  * {@link MAX_PERSISTED} messages are kept to bound storage size.
  */
 
-import { secureGet, secureSet } from "@/lib/secure-storage";
+import { secureGet, secureSet } from "../secure-storage";
 import type { ChatMessage } from "./types";
 
 const CHAT_STORAGE_KEY = "ept_ai_chat_v1";

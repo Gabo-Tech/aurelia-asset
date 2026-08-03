@@ -8,7 +8,7 @@
  */
 
 import type { AppState, CashflowEntry, Category } from "@/lib/types";
-import { expandCashflows, valuesByEntry } from "@/routes/cashflow";
+import { expandCashflows, valuesByEntry } from "@/lib/cashflow-math";
 import { formatMoney } from "@/lib/format";
 import { t } from "@/lib/i18n-t";
 import {

@@ -1,56 +1,138 @@
-# Logs
-logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
 
-node_modules
+#
+# Android/IntelliJ
+build/
+.build-tools/
+# Bundle artifact
+bun.lock
+/coverage
+.cxx/
+!debug.keystore
+!default.mode1v3
+!default.mode2v3
+!default.pbxuser
+!default.perspectivev3
+DerivedData
+.dev.vars
 dist
 dist-ssr
-.output
-.vinxi
-.tanstack/**
-.nitro
-*.local
-
-# Environment secrets (never commit real values)
+.DS_Store
+# Editor directories and files
 .env
 .env.*
 !.env.example
-
-# Rust / Tauri build output
-src-tauri/target/
-src-tauri/gen/
-
+# Environment secrets (never commit real values)
+# fastlane
+**/fastlane/Preview.html
+**/fastlane/report.xml
+**/fastlane/screenshots
+**/fastlane/test_output
+# For more information about the recommended setup visit:
+.gradle
+*.hmap
+*.hprof
+# https://docs.fastlane.tools/best-practices/source-control/
+.idea
+*.iml
+*.ipa
+# It is recommended to not store the screenshots in the git repo. Instead, use fastlane to re-generate the
+*.jsbundle
+*.keystore
+keystore.properties
+.kotlin/
+lerna-debug.log*
+.llvm/
+*.local
+# Local AI runtime artifacts (downloaded, not committed)
+local.properties
+*.log
+logs
+# Logs
+.metro-health-check*
+*.mode1v3
+*.mode2v3
+models/
+*.moved-aside
 # Native binaries too large for GitHub (>100 MB); published via GitHub Releases
+native/sherpa-onnx/
+.nitro
+*.njsproj
+# node.js
+node_modules
+node_modules/
+npm-debug.log
+npm-debug.log*
+*.ntvs*
+# OSX
+.output
+*.pbxuser
+*.perspectivev3
+pnpm-debug.log*
+**/Pods/
 public/downloads/*.apk
 public/downloads/*.AppImage
 public/downloads/*.deb
 public/downloads/*.rpm
+web/public/downloads/*.apk
+web/public/downloads/*.AppImage
+web/public/downloads/*.deb
+web/public/downloads/*.rpm
+web/public/downloads/Portfolio*
 
-# Local AI runtime artifacts (downloaded, not committed)
-models/
-native/sherpa-onnx/
-.llvm/
-.build-tools/
+# Ruby / CocoaPods
+# Rust / Tauri build output
+# screenshots whenever they are needed.
+*.sln
 src-tauri/.cargo/config.toml
-
-# Wrangler / Cloudflare
-.wrangler/
-.dev.vars
-
-bun.lock
-
-# Editor directories and files
+src-tauri/gen/
+src-tauri/target/
+*.suo
+*.sw?
+.tanstack/**
+# Temporary files created by Metro to check the health of the file watcher
+# testing
+/vendor/bundle/
+.vinxi
 .vscode/*
 !.vscode/extensions.json
-.idea
-.DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+.wrangler/
+# Wrangler / Cloudflare
+*.xccheckout
+# Xcode
+**/.xcode.env.local
+xcuserdata
+*.xcuserstate
+.yarn/*
+# Yarn
+yarn-debug.log*
+yarn-error.log
+yarn-error.log*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+
+# Web package
+web/node_modules/
+web/.output/
+web/.tanstack/
+web/.wrangler/
+web/.llvm
+web/src-tauri/target/
+web/src-tauri/.cargo/config.toml
+web/src-tauri/gen/
+
+# Generated SPA copy for Android WebView (rebuild via npm run prepare:android-web)
+android/app/src/main/assets/web/
+
+# Convenience build copies
+dist/
+
+# Models (large)
+models/*.gguf
+*.gguf
+
+# RN
+*.keystore
+!debug.keystore

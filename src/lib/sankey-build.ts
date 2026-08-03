@@ -1,5 +1,11 @@
 import { GROUP_COLORS, type CashflowEntry, type Category, type CategoryGroup } from "@/lib/types";
-import type { SankeyBranch, SankeyDatum } from "@/components/sankey-chart";
+
+export type SankeyBranch = "main" | "credit" | "shared";
+
+export type SankeyDatum = {
+  nodes: { name: string; fill: string; kind?: string; group?: string; branch?: SankeyBranch }[];
+  links: { source: number; target: number; value: number; branch?: SankeyBranch }[];
+};
 
 export type SankeyLayoutMode = "classic" | "staged";
 

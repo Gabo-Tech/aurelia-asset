@@ -11,7 +11,12 @@
  */
 
 import type { AppState, Category } from "@/lib/types";
-import { expandCashflows, valuesByEntry, liquidityImpact, cardDebtImpact } from "@/routes/cashflow";
+import {
+  expandCashflows,
+  valuesByEntry,
+  liquidityImpact,
+  cardDebtImpact,
+} from "@/lib/cashflow-math";
 import { formatMoney } from "@/lib/format";
 import { startOfMonth, endOfMonth, isWithinInterval } from "date-fns";
 

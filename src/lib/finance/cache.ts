@@ -1,66 +1,67 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 type Entry<T> = { value: T; expires: number };
 
 const mem = new Map<string, Entry<unknown>>();
+const PREFIX = "ept_cache::";
 
 function lsKey(key: string) {
-  return `ept_cache::${key}`;
+  return PREFIX + key;
 }
 
 export function getCache<T>(key: string): T | null {
   const now = Date.now();
   const m = mem.get(key) as Entry<T> | undefined;
   if (m && m.expires > now) return m.value;
-  if (typeof window === "undefined") return null;
-  try {
-    const raw = window.localStorage.getItem(lsKey(key));
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as Entry<T>;
-    if (parsed.expires > now) {
-      mem.set(key, parsed as Entry<unknown>);
-      return parsed.value;
-    }
-    window.localStorage.removeItem(lsKey(key));
-  } catch {}
   return null;
 }
 
-/** Return cached value even if expired (stale-while-revalidate). */
 export function getCacheStale<T>(key: string): T | null {
   const m = mem.get(key) as Entry<T> | undefined;
-  if (m) return m.value;
-  if (typeof window === "undefined") return null;
-  try {
-    const raw = window.localStorage.getItem(lsKey(key));
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as Entry<T>;
-    mem.set(key, parsed as Entry<unknown>);
-    return parsed.value;
-  } catch {}
-  return null;
+  return m ? m.value : null;
 }
 
 export function setCache<T>(key: string, value: T, ttlMs: number) {
   const entry: Entry<T> = { value, expires: Date.now() + ttlMs };
   mem.set(key, entry as Entry<unknown>);
-  if (typeof window === "undefined") return;
-  try {
-    window.localStorage.setItem(lsKey(key), JSON.stringify(entry));
-  } catch {}
+  void AsyncStorage.setItem(lsKey(key), JSON.stringify(entry)).catch(() => {});
 }
 
-/** Drop all cache entries whose key starts with `prefix`. */
 export function bustCache(prefix: string) {
   for (const k of Array.from(mem.keys())) {
     if (k.startsWith(prefix)) mem.delete(k);
   }
-  if (typeof window === "undefined") return;
+  void AsyncStorage.getAllKeys()
+    .then((keys) => {
+      const ours = keys.filter((k) => k.startsWith(PREFIX + prefix) || k.startsWith(PREFIX));
+      const toRemove = keys.filter((k) => k.startsWith(PREFIX) && k.slice(PREFIX.length).startsWith(prefix));
+      return AsyncStorage.multiRemove(toRemove.length ? toRemove : ours.filter((k) => k.includes(prefix)));
+    })
+    .catch(() => {});
+}
+
+/** Warm in-memory cache from AsyncStorage (call once at app start). */
+export async function hydrateQuoteCache(): Promise<void> {
   try {
-    const full = `ept_cache::${prefix}`;
-    const toRemove: string[] = [];
-    for (let i = 0; i < window.localStorage.length; i++) {
-      const k = window.localStorage.key(i);
-      if (k && k.startsWith(full)) toRemove.push(k);
+    const keys = await AsyncStorage.getAllKeys();
+    const ours = keys.filter((k) => k.startsWith(PREFIX));
+    if (!ours.length) return;
+    const pairs = await AsyncStorage.multiGet(ours);
+    const now = Date.now();
+    for (const [k, raw] of pairs) {
+      if (!raw) continue;
+      try {
+        const parsed = JSON.parse(raw) as Entry<unknown>;
+        const key = k.slice(PREFIX.length);
+        mem.set(key, parsed);
+        if (parsed.expires <= now) {
+          void AsyncStorage.removeItem(k);
+        }
+      } catch {
+        /* skip */
+      }
     }
-    for (const k of toRemove) window.localStorage.removeItem(k);
-  } catch {}
+  } catch {
+    /* ignore */
+  }
 }

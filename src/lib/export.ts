@@ -1,18 +1,22 @@
-import { invoke } from "@tauri-apps/api/core";
+/**
+ * Local file import/export — replaces Tauri dialog + fs commands.
+ */
 
-export type ExportSaveMethod = "native" | "download" | "share" | "clipboard" | "cancelled";
+import { Platform } from "react-native";
+import Share from "react-native-share";
+import ReactNativeBlobUtil from "react-native-blob-util";
+import { pick, types, keepLocalCopy } from "@react-native-documents/picker";
 
-export function isTauri(): boolean {
-  return typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
+export type ExportSaveMethod = "native" | "share" | "download" | "clipboard" | "cancelled";
+
+export function isNativeApp(): boolean {
+  return Platform.OS !== "web";
 }
 
-/** True on Android/iOS Tauri builds and mobile browsers. */
 export function isMobilePlatform(): boolean {
-  if (typeof navigator === "undefined") return false;
-  return /android|iphone|ipad|ipod/i.test(navigator.userAgent);
+  return Platform.OS === "ios" || Platform.OS === "android";
 }
 
-/** RFC 4180 CSV field escaping */
 export function escapeCsvField(value: unknown): string {
   const s = String(value ?? "");
   if (/[",\n\r]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
@@ -27,126 +31,117 @@ export function datedFilename(stem: string, ext: string): string {
   return `${stem}-${new Date().toISOString().slice(0, 10)}.${ext}`;
 }
 
-async function saveViaTauri(
+function guessMime(filename: string): string {
+  const lower = filename.toLowerCase();
+  if (lower.endsWith(".json")) return "application/json";
+  if (lower.endsWith(".csv")) return "text/csv";
+  if (lower.endsWith(".png")) return "image/png";
+  if (lower.endsWith(".pdf")) return "application/pdf";
+  return "application/octet-stream";
+}
+
+/** Save text or bytes via share sheet / Downloads (Android) / temp file. */
+export async function saveExportFile(
   filename: string,
   opts: { text?: string; bytes?: Uint8Array },
 ): Promise<ExportSaveMethod> {
-  if (opts.bytes) {
-    let binary = "";
-    for (let i = 0; i < opts.bytes.length; i++) binary += String.fromCharCode(opts.bytes[i]!);
-    const bytes_base64 = btoa(binary);
-    await invoke<string>("save_export_file", { req: { filename, bytes_base64 } });
-    return "native";
-  }
-  if (opts.text != null) {
-    await invoke<string>("save_export_file", { req: { filename, contents: opts.text } });
-    return "native";
-  }
-  throw new Error("No export content provided");
-}
-
-/** Browser fallback: Web Share → anchor download → clipboard (text only). */
-export async function saveOrShare(
-  blob: Blob,
-  filename: string,
-  textContent?: string,
-): Promise<ExportSaveMethod> {
-  try {
-    const nav =
-      typeof navigator !== "undefined"
-        ? (navigator as Navigator & { canShare?: (d: ShareData) => boolean })
-        : undefined;
-    if (nav && typeof File !== "undefined" && nav.canShare) {
-      const file = new File([blob], filename, { type: blob.type });
-      const data: ShareData & { files?: File[] } = { files: [file], title: filename };
-      if (nav.canShare(data)) {
-        await nav.share(data);
-        return "share";
-      }
-    }
-  } catch {
-    // fall through
-  }
+  const mime = guessMime(filename);
+  const dirs = ReactNativeBlobUtil.fs.dirs;
+  const path = `${dirs.CacheDir}/${filename}`;
 
   try {
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    const supportsDownload = "download" in a;
-    a.href = url;
-    a.download = filename;
-    a.rel = "noopener";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 4000);
-    if (supportsDownload) return "download";
-  } catch {
-    // fall through
-  }
-
-  if (textContent && typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
-    await navigator.clipboard.writeText(textContent);
-    return "clipboard";
-  }
-  throw new Error("No available way to save the file on this device");
-}
-
-export async function saveExportFile(
-  filename: string,
-  opts: { text?: string; blob?: Blob; bytes?: Uint8Array },
-): Promise<ExportSaveMethod> {
-  const useNativeSave = isTauri() && !isMobilePlatform();
-
-  if (useNativeSave) {
-    try {
-      if (opts.bytes) return await saveViaTauri(filename, { bytes: opts.bytes });
-      if (opts.text != null) return await saveViaTauri(filename, { text: opts.text });
-      if (opts.blob) {
-        const bytes = new Uint8Array(await opts.blob.arrayBuffer());
-        return await saveViaTauri(filename, { bytes });
-      }
+    if (opts.bytes) {
+      const b64 = ReactNativeBlobUtil.base64.encode(
+        Array.from(opts.bytes)
+          .map((b) => String.fromCharCode(b))
+          .join(""),
+      );
+      await ReactNativeBlobUtil.fs.writeFile(path, b64, "base64");
+    } else if (opts.text != null) {
+      await ReactNativeBlobUtil.fs.writeFile(path, opts.text, "utf8");
+    } else {
       throw new Error("No export content provided");
-    } catch (e) {
-      const msg = (e as Error).message ?? String(e);
-      if (msg.includes("cancelled")) return "cancelled";
-      throw e;
     }
-  }
 
-  const text = opts.text ?? (opts.blob ? await opts.blob.text() : undefined);
-  const blob =
-    opts.blob ??
-    (opts.text != null
-      ? new Blob([opts.text], { type: "text/plain;charset=utf-8" })
-      : opts.bytes
-        ? new Blob([new Uint8Array(opts.bytes)])
-        : undefined);
-  if (!blob) throw new Error("No export content provided");
-  return saveOrShare(blob, filename, text);
+    if (Platform.OS === "android") {
+      try {
+        await ReactNativeBlobUtil.MediaCollection.copyToMediaStore(
+          {
+            name: filename,
+            parentFolder: "FinancialTracker",
+            mimeType: mime,
+          },
+          "Download",
+          path,
+        );
+        return "native";
+      } catch {
+        /* fall through to share */
+      }
+    }
+
+    await Share.open({
+      url: Platform.OS === "android" ? `file://${path}` : path,
+      type: mime,
+      filename,
+      failOnCancel: false,
+    });
+    return "share";
+  } catch (e) {
+    const msg = (e as Error)?.message ?? String(e);
+    if (/cancel/i.test(msg)) return "cancelled";
+    throw e;
+  }
 }
 
-/** Serialize large JSON off the main thread when available. */
-export function stringifyExportJson(data: unknown): Promise<string> {
-  if (typeof Worker === "undefined") {
-    return Promise.resolve(JSON.stringify(data, null, 2));
-  }
-  return new Promise((resolve, reject) => {
-    const worker = new Worker(new URL("./export-json.worker.ts", import.meta.url), {
-      type: "module",
+/** Pick a JSON (or any) document and return its UTF-8 text. */
+export async function readImportFile(): Promise<string | null> {
+  try {
+    const [file] = await pick({
+      type: [types.json, types.plainText, types.allFiles],
+      allowMultiSelection: false,
     });
-    worker.onmessage = (
-      ev: MessageEvent<{ ok: true; json: string } | { ok: false; error: string }>,
-    ) => {
-      worker.terminate();
-      if (ev.data.ok) resolve(ev.data.json);
-      else reject(new Error(ev.data.error));
-    };
-    worker.onerror = (err) => {
-      worker.terminate();
-      reject(err);
-    };
-    worker.postMessage(data);
-  });
+    if (!file) return null;
+
+    const [local] = await keepLocalCopy({
+      files: [
+        {
+          uri: file.uri,
+          fileName: file.name ?? "import.json",
+        },
+      ],
+      destination: "cachesDirectory",
+    });
+
+    if (local.status !== "success") return null;
+    const content = await ReactNativeBlobUtil.fs.readFile(local.localUri, "utf8");
+    return content;
+  } catch (e) {
+    const msg = (e as Error)?.message ?? String(e);
+    if (/cancel/i.test(msg)) return null;
+    throw e;
+  }
+}
+
+/** Pick a model file (GGUF) or return a directory-like path when possible. */
+export async function pickModelFile(): Promise<string | null> {
+  try {
+    const [file] = await pick({
+      type: [types.allFiles],
+      allowMultiSelection: false,
+    });
+    if (!file) return null;
+    const [local] = await keepLocalCopy({
+      files: [{ uri: file.uri, fileName: file.name ?? "model.bin" }],
+      destination: "documentDirectory",
+    });
+    if (local.status !== "success") return null;
+    return local.localUri;
+  } catch (e) {
+    const msg = (e as Error)?.message ?? String(e);
+    if (/cancel/i.test(msg)) return null;
+    throw e;
+  }
 }
 
 export function redactStateForExport<T extends { settings?: { finnhubKey?: string } }>(
@@ -169,10 +164,6 @@ export function exportMethodDescription(
       return t("settings.data.exportedNative", { defaultValue: `Saved ${filename}`, filename });
     case "share":
       return t("settings.data.exportedShare", { defaultValue: `Shared ${filename}`, filename });
-    case "clipboard":
-      return t("settings.data.exportedClipboard", {
-        defaultValue: "Copied to clipboard (download unavailable on this device)",
-      });
     case "cancelled":
       return t("settings.data.exportCancelled", { defaultValue: "Export cancelled" });
     default:

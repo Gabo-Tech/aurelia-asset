@@ -1,0 +1,177 @@
+/**
+ * Full-screen WebView shell that hosts the old website SPA and bridges
+ * Tauri IPC commands to React Native native modules.
+ */
+
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  ActivityIndicator,
+  NativeModules,
+  Platform,
+  StyleSheet,
+  Text,
+  View,
+  PermissionsAndroid,
+} from "react-native";
+import { WebView, type WebViewMessageEvent } from "react-native-webview";
+import { TAURI_SHIM_JS } from "@/bridge/tauriShim";
+import { dispatchCommand } from "@/bridge/commands";
+import { colors } from "@/theme/colors";
+
+// RN 0.86 + react-native-webview typings currently resolve props to `never`.
+const RNWebView = WebView as unknown as React.ComponentType<Record<string, unknown>>;
+
+const SERVER_PORT = 8765;
+
+type LocalWebServerNative = {
+  start: (port: number) => Promise<string>;
+  stop: () => Promise<void>;
+};
+
+const LocalWebServer = NativeModules.LocalWebServer as LocalWebServerNative | undefined;
+
+async function requestMicPermission() {
+  if (Platform.OS !== "android") return;
+  try {
+    await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.RECORD_AUDIO, {
+      title: "Microphone",
+      message: "Financial Tracker needs the microphone for voice input.",
+      buttonPositive: "OK",
+    });
+  } catch {
+    /* ignore */
+  }
+}
+
+export function WebShell() {
+  const webRef = useRef<{ injectJavaScript: (js: string) => void } | null>(null);
+  const [origin, setOrigin] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [booting, setBooting] = useState(true);
+
+  const emit = useCallback((event: string, payload: unknown) => {
+    const js = `window.__FT_BRIDGE_EMIT__ && window.__FT_BRIDGE_EMIT__(${JSON.stringify(
+      event,
+    )}, ${JSON.stringify(payload)}); true;`;
+    webRef.current?.injectJavaScript(js);
+  }, []);
+
+  const resolveInvoke = useCallback((id: string, ok: boolean, result?: unknown, err?: string) => {
+    const payload = ok ? { ok: true, result } : { ok: false, error: err || "error" };
+    const js = `window.__FT_BRIDGE_RESOLVE__ && window.__FT_BRIDGE_RESOLVE__(${JSON.stringify(
+      id,
+    )}, ${JSON.stringify(payload)}); true;`;
+    webRef.current?.injectJavaScript(js);
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    (async () => {
+      try {
+        if (!LocalWebServer) {
+          throw new Error("LocalWebServer native module is not linked");
+        }
+        await requestMicPermission();
+        const url = await LocalWebServer.start(SERVER_PORT);
+        if (cancelled) {
+          await LocalWebServer.stop();
+          return;
+        }
+        setOrigin(url.replace(/\/$/, ""));
+      } catch (e) {
+        if (!cancelled) {
+          setError(e instanceof Error ? e.message : String(e));
+        }
+      } finally {
+        if (!cancelled) setBooting(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      void LocalWebServer?.stop();
+    };
+  }, []);
+
+  const onMessage = useCallback(
+    (ev: WebViewMessageEvent) => {
+      let msg: { type?: string; id?: string; cmd?: string; args?: Record<string, unknown> };
+      try {
+        msg = JSON.parse(ev.nativeEvent.data);
+      } catch {
+        return;
+      }
+      if (msg.type !== "invoke" || !msg.id || !msg.cmd) return;
+      const { id, cmd, args = {} } = msg;
+      void (async () => {
+        try {
+          const result = await dispatchCommand(cmd, args, emit);
+          resolveInvoke(id, true, result);
+        } catch (e) {
+          resolveInvoke(id, false, undefined, e instanceof Error ? e.message : String(e));
+        }
+      })();
+    },
+    [emit, resolveInvoke],
+  );
+
+  const injectedBefore = useMemo(() => TAURI_SHIM_JS, []);
+
+  if (booting) {
+    return (
+      <View style={styles.boot}>
+        <ActivityIndicator size="large" color={colors.accent} />
+        <Text style={styles.bootText}>Starting Financial Tracker…</Text>
+      </View>
+    );
+  }
+
+  if (error || !origin) {
+    return (
+      <View style={styles.boot}>
+        <Text style={styles.errorTitle}>Could not start the app</Text>
+        <Text style={styles.errorBody}>{error || "Unknown error"}</Text>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.root}>
+      <RNWebView
+        ref={webRef}
+        source={{ uri: `${origin}/` }}
+        style={styles.webview}
+        originWhitelist={["*"]}
+        javaScriptEnabled
+        domStorageEnabled
+        allowFileAccess
+        allowUniversalAccessFromFileURLs
+        mixedContentMode="always"
+        mediaPlaybackRequiresUserAction={false}
+        allowsInlineMediaPlayback
+        mediaCapturePermissionGrantType="grant"
+        setSupportMultipleWindows={false}
+        injectedJavaScriptBeforeContentLoaded={injectedBefore}
+        onMessage={onMessage}
+        geolocationEnabled={false}
+      />
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  root: { flex: 1, backgroundColor: colors.bg },
+  webview: { flex: 1, backgroundColor: colors.bg },
+  boot: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.bg,
+    padding: 24,
+    gap: 12,
+  },
+  bootText: { color: colors.muted, fontSize: 14 },
+  errorTitle: { color: colors.text, fontSize: 16, fontWeight: "600", textAlign: "center" },
+  errorBody: { color: colors.muted, fontSize: 13, textAlign: "center" },
+});

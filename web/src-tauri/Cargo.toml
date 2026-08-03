@@ -1,0 +1,55 @@
+[package]
+name = "portfolio-tracker"
+version = "0.1.2"
+description = "Privacy-first personal finance and portfolio tracker"
+authors = ["GABO"]
+license = "AGPL-3.0-or-later"
+edition = "2021"
+rust-version = "1.77"
+
+[lib]
+name = "portfolio_tracker_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-dialog = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+base64 = "0.22"
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "stream"] }
+futures-util = "0.3"
+tar = "0.4"
+bzip2 = "0.5"
+sha2 = "0.10"
+
+# On-device AI backends. Optional and gated by features so the default build
+# stays light. Enabling any of these requires clang (llama.cpp bindgen) and,
+# for speech, the onnxruntime toolchain. See src/commands/ai.rs for details.
+encoding_rs = { version = "0.8", optional = true }
+llama-cpp-2 = { version = "0.1", optional = true }
+sherpa-onnx = { version = "0.1", optional = true }
+
+[features]
+default = []
+# Real local LLM inference (Qwen-2.5 GGUF via llama.cpp).
+llm = ["dep:llama-cpp-2", "dep:encoding_rs"]
+# Sherpa-ONNX speech-to-text.
+stt = ["dep:sherpa-onnx"]
+# Sherpa-ONNX text-to-speech.
+tts = ["dep:sherpa-onnx"]
+# Convenience: enable everything.
+local-ai = ["llm", "stt", "tts"]
+
+[target.'cfg(target_os = "linux")'.dependencies]
+webkit2gtk = "=2.0.2"
+
+[profile.release]
+panic = "abort"
+codegen-units = 1
+lto = true
+opt-level = "s"
+strip = true

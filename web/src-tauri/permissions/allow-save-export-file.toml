@@ -1,0 +1,4 @@
+[[permission]]
+identifier = "allow-save-export-file"
+description = "Allow the save_export_file command for user-initiated data exports"
+commands.allow = ["save_export_file"]
