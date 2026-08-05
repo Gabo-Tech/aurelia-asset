@@ -23,7 +23,7 @@ export async function loadChatHistory(): Promise<ChatMessage[]> {
     // never re-render a stale confirm card.
     return parsed
       .filter((m) => m && typeof m.content === "string" && typeof m.role === "string")
-      .map((m: ChatMessage) => ({ ...m, pendingExpense: undefined }));
+      .map((m: ChatMessage) => ({ ...m, pendingChange: undefined, pendingExpense: undefined }));
   } catch {
     return [];
   }
@@ -46,4 +46,9 @@ export async function clearChatHistory(): Promise<void> {
   } catch {
     // Ignore: clearing is best-effort.
   }
+}
+
+/** Drain pending chat writes (paired with app-state flush on background). */
+export async function flushChatPersist(): Promise<void> {
+  // Web uses direct secureSet writes; no buffered queue to drain.
 }

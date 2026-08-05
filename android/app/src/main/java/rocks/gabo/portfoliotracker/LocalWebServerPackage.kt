@@ -7,7 +7,7 @@ import com.facebook.react.uimanager.ViewManager
 
 class LocalWebServerPackage : ReactPackage {
   override fun createNativeModules(reactContext: ReactApplicationContext): List<NativeModule> =
-    listOf(LocalWebServerModule(reactContext))
+    listOf(LocalWebServerModule(reactContext), WavPlayerModule(reactContext))
 
   override fun createViewManagers(reactContext: ReactApplicationContext): List<ViewManager<*, *>> =
     emptyList()

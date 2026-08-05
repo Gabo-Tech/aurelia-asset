@@ -53,7 +53,35 @@ type Manifest = {
   filename: string;
 };
 
-function manifestFor(kind: ModelKind): Manifest {
+function ttsManifestByLocale(locale?: string): Manifest {
+  const lang = (locale || "en").slice(0, 2).toLowerCase();
+  const byLang: Record<string, Manifest> = {
+    de: {
+      url: "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-piper-de_DE-thorsten-high.tar.bz2",
+      archive: true,
+      filename: "vits-piper-de_DE-thorsten-high.tar.bz2",
+    },
+    es: {
+      url: "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-piper-es_ES-sharvard-medium.tar.bz2",
+      archive: true,
+      filename: "vits-piper-es_ES-sharvard-medium.tar.bz2",
+    },
+    pt: {
+      url: "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-piper-pt_BR-edresson-medium.tar.bz2",
+      archive: true,
+      filename: "vits-piper-pt_BR-edresson-medium.tar.bz2",
+    },
+  };
+  return (
+    byLang[lang] || {
+      url: "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-piper-en_US-lessac-medium.tar.bz2",
+      archive: true,
+      filename: "vits-piper-en_US-lessac-medium.tar.bz2",
+    }
+  );
+}
+
+function manifestFor(kind: ModelKind, locale?: string): Manifest {
   switch (kind) {
     case "llm":
       return {
@@ -63,16 +91,18 @@ function manifestFor(kind: ModelKind): Manifest {
       };
     case "stt":
       return {
-        url: "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-whisper-tiny.en.tar.bz2",
+        url:
+          locale && !locale.toLowerCase().startsWith("en")
+            ? "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-whisper-tiny.tar.bz2"
+            : "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-whisper-tiny.en.tar.bz2",
         archive: true,
-        filename: "sherpa-onnx-whisper-tiny.en.tar.bz2",
+        filename:
+          locale && !locale.toLowerCase().startsWith("en")
+            ? "sherpa-onnx-whisper-tiny.tar.bz2"
+            : "sherpa-onnx-whisper-tiny.en.tar.bz2",
       };
     case "tts":
-      return {
-        url: "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-piper-en_US-lessac-medium.tar.bz2",
-        archive: true,
-        filename: "vits-piper-en_US-lessac-medium.tar.bz2",
-      };
+      return ttsManifestByLocale(locale);
   }
 }
 
@@ -111,10 +141,11 @@ export async function looksLikeTtsDir(dir: string): Promise<boolean> {
   if (!(await RNFS.exists(dir))) return false;
   const entries = await RNFS.readDir(dir);
   const names = entries.map((e) => e.name.toLowerCase());
-  return (
+  const hasOnnx =
     names.some((n) => n.includes("tokens") && n.endsWith(".txt")) &&
-    names.some((n) => n.endsWith(".onnx"))
-  );
+    names.some((n) => n.endsWith(".onnx"));
+  if (!hasOnnx) return false;
+  return !!(await findEspeakDataDir(dir));
 }
 
 /** Find Piper/espeak phoneme data directory under a TTS model folder. */
@@ -304,6 +335,7 @@ export async function clearInstalledModel(kind: ModelKind): Promise<void> {
 export async function downloadModel(
   kind: ModelKind,
   onProgress?: (progress: ModelDownloadProgress) => void,
+  locale?: string,
 ): Promise<string> {
   const gen = ++installGeneration;
   const stillActive = () => gen === installGeneration;
@@ -314,7 +346,7 @@ export async function downloadModel(
     return existing;
   }
 
-  const m = manifestFor(kind);
+  const m = manifestFor(kind, locale);
   const root = modelsRoot();
   const destDir = `${root}/${kind}`;
   const tmpDir = `${root}/.tmp`;
@@ -422,10 +454,11 @@ export async function downloadModel(
 export async function downloadAllModels(
   kinds: ModelKind[],
   onProgress?: (kind: ModelKind, progress: ModelDownloadProgress) => void,
+  locale?: string,
 ): Promise<Record<ModelKind, string>> {
   const out = {} as Record<ModelKind, string>;
   for (const kind of kinds) {
-    out[kind] = await downloadModel(kind, (p) => onProgress?.(kind, p));
+    out[kind] = await downloadModel(kind, (p) => onProgress?.(kind, p), locale);
   }
   return out;
 }

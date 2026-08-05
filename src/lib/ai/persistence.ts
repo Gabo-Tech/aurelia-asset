@@ -24,7 +24,7 @@ export async function loadChatHistory(): Promise<ChatMessage[]> {
     // never re-render a stale confirm card.
     return parsed
       .filter((m) => m && typeof m.content === "string" && typeof m.role === "string")
-      .map((m: ChatMessage) => ({ ...m, pendingExpense: undefined }));
+      .map((m: ChatMessage) => ({ ...m, pendingChange: undefined }));
   } catch {
     return [];
   }

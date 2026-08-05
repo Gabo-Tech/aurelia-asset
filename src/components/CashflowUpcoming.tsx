@@ -230,7 +230,7 @@ const styles = StyleSheet.create({
     gap: 10,
     paddingVertical: 10,
     paddingHorizontal: 12,
-    backgroundColor: colors.card,
+    backgroundColor: colors.surface,
     borderRadius: 10,
     marginBottom: 6,
     borderWidth: 1,

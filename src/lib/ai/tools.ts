@@ -7,7 +7,15 @@
  * before anything is written (confirm-first policy).
  */
 
-import type { AppState, CashflowEntry, Category } from "@/lib/types";
+import type {
+  AppState,
+  BudgetItem,
+  CashflowEntry,
+  Category,
+  Holding,
+  Loan,
+  SavingsGoal,
+} from "@/lib/types";
 import { expandCashflows, valuesByEntry } from "@/lib/cashflow-math";
 import { formatMoney } from "@/lib/format";
 import { t } from "@/lib/i18n-t";
@@ -20,8 +28,18 @@ import {
   subMonths,
   isWithinInterval,
 } from "date-fns";
-import type { ProposedExpense, ToolSpec, ToolCall } from "./types";
+import type { ProposedAction, ProposedChange, ToolSpec, ToolCall } from "./types";
 import { buildFinanceContext } from "./context";
+
+type ProposedExpense = {
+  amount: number;
+  currency: string;
+  categoryName: string;
+  categoryId?: string;
+  description?: string;
+  date: string;
+  paymentMethod?: string;
+};
 
 export const TOOL_SPECS: ToolSpec[] = [
   {
@@ -54,6 +72,18 @@ export const TOOL_SPECS: ToolSpec[] = [
     },
   },
   {
+    name: "delete_transaction",
+    kind: "write",
+    description: "Delete one matching transaction.",
+    parameters: {
+      type: "object",
+      properties: {
+        match: { type: "string", description: "Text that identifies the row (date/category/description)." },
+      },
+      required: ["match"],
+    },
+  },
+  {
     name: "get_spending_summary",
     kind: "read",
     description: "Return total spending and top categories for a period.",
@@ -73,6 +103,18 @@ export const TOOL_SPECS: ToolSpec[] = [
     },
   },
   {
+    name: "find_transactions",
+    kind: "read",
+    description: "Find transactions by fuzzy text and return candidate ids.",
+    parameters: {
+      type: "object",
+      properties: {
+        match: { type: "string", description: "Date/category/description text." },
+        limit: { type: "number", description: "Max matches to return." },
+      },
+    },
+  },
+  {
     name: "get_recent_transactions",
     kind: "read",
     description: "List the most recent transactions.",
@@ -81,6 +123,121 @@ export const TOOL_SPECS: ToolSpec[] = [
       properties: {
         limit: { type: "number", description: "How many to return (default 10)." },
       },
+    },
+  },
+  {
+    name: "create_budget",
+    kind: "write",
+    description: "Create a budget plan with line items.",
+    parameters: {
+      type: "object",
+      properties: {
+        name: { type: "string", description: "Budget plan name." },
+        items: { type: "string", description: "JSON array of budget items with label, amount, optional category." },
+      },
+      required: ["name"],
+    },
+  },
+  {
+    name: "update_budget_item",
+    kind: "write",
+    description: "Update one budget line item in the main plan.",
+    parameters: {
+      type: "object",
+      properties: {
+        match: { type: "string", description: "Item label to find." },
+        amount: { type: "number", description: "New amount." },
+        label: { type: "string", description: "New label." },
+      },
+      required: ["match"],
+    },
+  },
+  {
+    name: "add_goal",
+    kind: "write",
+    description: "Create a savings goal.",
+    parameters: {
+      type: "object",
+      properties: {
+        name: { type: "string", description: "Goal name." },
+        targetAmount: { type: "number", description: "Target amount." },
+        currentAmount: { type: "number", description: "Current saved amount." },
+        targetDate: { type: "string", description: "Optional ISO date." },
+      },
+      required: ["name", "targetAmount"],
+    },
+  },
+  {
+    name: "update_goal",
+    kind: "write",
+    description: "Update one savings goal.",
+    parameters: {
+      type: "object",
+      properties: {
+        match: { type: "string", description: "Goal name to match." },
+        targetAmount: { type: "number", description: "New target amount." },
+        currentAmount: { type: "number", description: "New current amount." },
+      },
+      required: ["match"],
+    },
+  },
+  {
+    name: "add_loan",
+    kind: "write",
+    description: "Create a loan entry.",
+    parameters: {
+      type: "object",
+      properties: {
+        name: { type: "string", description: "Loan name." },
+        principal: { type: "number", description: "Principal amount." },
+        apr: { type: "number", description: "Annual percentage rate." },
+        termMonths: { type: "number", description: "Term in months." },
+        startDate: { type: "string", description: "ISO date." },
+      },
+      required: ["name", "principal", "apr", "termMonths"],
+    },
+  },
+  {
+    name: "add_holding",
+    kind: "write",
+    description: "Create a holding.",
+    parameters: {
+      type: "object",
+      properties: {
+        symbol: { type: "string", description: "Ticker/symbol." },
+        name: { type: "string", description: "Holding name." },
+        type: { type: "string", description: "Asset type." },
+        quantity: { type: "number", description: "Quantity." },
+        currentPrice: { type: "number", description: "Current price." },
+      },
+      required: ["symbol", "name", "type", "quantity", "currentPrice"],
+    },
+  },
+  {
+    name: "update_holding",
+    kind: "write",
+    description: "Update one holding.",
+    parameters: {
+      type: "object",
+      properties: {
+        match: { type: "string", description: "Holding symbol or name." },
+        quantity: { type: "number", description: "New quantity." },
+        currentPrice: { type: "number", description: "New price." },
+      },
+      required: ["match"],
+    },
+  },
+  {
+    name: "add_category",
+    kind: "write",
+    description: "Create a category.",
+    parameters: {
+      type: "object",
+      properties: {
+        name: { type: "string", description: "Category name." },
+        kind: { type: "string", description: "expense or income." },
+      },
+      required: ["name", "kind"],
     },
   },
   {
@@ -229,6 +386,21 @@ export interface ToolRunResult {
   data: unknown;
 }
 
+export interface ApplyStore {
+  addCashflow: (c: Omit<CashflowEntry, "id">) => void;
+  updateCashflow: (id: string, patch: Partial<CashflowEntry>) => void;
+  removeCashflow: (id: string) => void;
+  addBudgetPlan: (name: string) => { id: string };
+  addBudgetItem: (planId: string, item: Omit<BudgetItem, "id">) => void;
+  updateBudgetItem: (planId: string, itemId: string, patch: Partial<BudgetItem>) => void;
+  addGoal: (g: Omit<SavingsGoal, "id">) => void;
+  updateGoal: (id: string, patch: Partial<SavingsGoal>) => void;
+  addLoan: (l: Omit<Loan, "id">) => void;
+  addHolding: (h: Omit<Holding, "id">) => void;
+  updateHolding: (id: string, patch: Partial<Holding>) => void;
+  addCategory: (c: Omit<Category, "id">) => void;
+}
+
 /** Resolve `add_transaction` arguments into a confirmable proposal. Does NOT
  *  write to the store. */
 export function resolveExpenseProposal(
@@ -281,6 +453,179 @@ export function proposalToCashflow(p: ProposedExpense): Omit<CashflowEntry, "id"
     description: p.description || undefined,
     paymentMethod: (p.paymentMethod as CashflowEntry["paymentMethod"]) || "liquidity",
   };
+}
+
+function parseJsonItems(v: unknown): Array<Record<string, unknown>> {
+  if (Array.isArray(v)) return v.filter((x): x is Record<string, unknown> => !!x && typeof x === "object");
+  if (typeof v === "string") {
+    try {
+      const parsed = JSON.parse(v);
+      return Array.isArray(parsed)
+        ? parsed.filter((x): x is Record<string, unknown> => !!x && typeof x === "object")
+        : [];
+    } catch {
+      return [];
+    }
+  }
+  return [];
+}
+
+function findCashflow(state: AppState, match: string): CashflowEntry | undefined {
+  const q = match.trim().toLowerCase();
+  return [...state.cashflows]
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    .find(
+      (e) =>
+        (e.description || "").toLowerCase().includes(q) ||
+        (e.category || "").toLowerCase().includes(q) ||
+        e.date.slice(0, 10).includes(q),
+    );
+}
+
+export function resolveWriteTool(
+  call: ToolCall,
+  deps: ToolDeps,
+): { change?: ProposedChange; error?: string } {
+  if (call.name === "add_transaction") {
+    const { proposal, error } = resolveExpenseProposal(call.arguments, deps);
+    if (error || !proposal) return { error: error || "invalid-transaction" };
+    const payload = proposalToCashflow(proposal);
+    return {
+      change: {
+        actions: [{ kind: "cashflow.add", payload }],
+        preview: [
+          {
+            label: "Transaction",
+            after: `${payload.kind} ${formatMoney(payload.amount, payload.currency || deps.currency)} · ${payload.category || "Other"}`,
+          },
+        ],
+        summary: t("assistant.backend.expenseConfirm", {
+          amount: formatMoney(payload.amount, payload.currency || deps.currency),
+          category: payload.category || "Other",
+          when: new Date(payload.date).toLocaleDateString(deps.locale),
+        }),
+      },
+    };
+  }
+  if (call.name === "update_transaction") {
+    const match = typeof call.arguments.match === "string" ? call.arguments.match : "";
+    if (!match.trim()) return { error: "missing-match" };
+    const entry = findCashflow(deps.state, match);
+    if (!entry) return { error: "not-found" };
+    const patch: Partial<CashflowEntry> = {};
+    if (typeof call.arguments.amount === "number" && isFinite(call.arguments.amount)) patch.amount = Math.abs(call.arguments.amount);
+    if (typeof call.arguments.description === "string") patch.description = call.arguments.description.trim();
+    if (typeof call.arguments.category === "string") {
+      const cat = matchExpenseCategory(call.arguments.category, deps.state.categories);
+      patch.category = cat?.name || call.arguments.category.trim();
+    }
+    if (!Object.keys(patch).length) return { error: "empty-patch" };
+    return {
+      change: {
+        actions: [{ kind: "cashflow.update", id: entry.id, patch: patch as Record<string, unknown> }],
+        preview: [{ label: "Transaction update", before: `${entry.category} ${formatMoney(entry.amount, entry.currency || deps.currency)}`, after: `${patch.category || entry.category} ${formatMoney(patch.amount ?? entry.amount, entry.currency || deps.currency)}` }],
+        summary: t("assistant.backend.done"),
+      },
+    };
+  }
+  if (call.name === "delete_transaction") {
+    const match = typeof call.arguments.match === "string" ? call.arguments.match : "";
+    const entry = match ? findCashflow(deps.state, match) : undefined;
+    if (!entry) return { error: "not-found" };
+    return {
+      change: {
+        actions: [{ kind: "cashflow.delete", id: entry.id }],
+        preview: [{ label: "Delete transaction", before: `${entry.category || entry.description || "Transaction"} ${formatMoney(entry.amount, entry.currency || deps.currency)}`, after: "Deleted" }],
+        summary: "Transaction will be deleted after confirmation.",
+      },
+    };
+  }
+  if (call.name === "create_budget") {
+    const name = typeof call.arguments.name === "string" ? call.arguments.name.trim() : "";
+    if (!name) return { error: "missing-name" };
+    const itemsRaw = parseJsonItems(call.arguments.items);
+    const items = itemsRaw
+      .map((it) => ({
+        label: typeof it.label === "string" ? it.label.trim() : "",
+        amount: Number(it.amount),
+        categoryId:
+          typeof it.category === "string"
+            ? deps.state.categories.find((c) => c.name.toLowerCase() === String(it.category).toLowerCase())?.id
+            : undefined,
+      }))
+      .filter((it) => it.label && isFinite(it.amount) && it.amount > 0);
+    return {
+      change: {
+        actions: [{ kind: "budgetPlan.create", name, items }],
+        preview: items.map((it) => ({ label: it.label, after: formatMoney(it.amount, deps.currency) })),
+        summary: `Create budget "${name}" with ${items.length} item(s).`,
+      },
+    };
+  }
+  if (call.name === "update_budget_item") {
+    const plan = deps.state.budgetPlans.find((p) => p.id === deps.state.mainBudgetPlanId) || deps.state.budgetPlans[0];
+    if (!plan) return { error: "no-plan" };
+    const match = typeof call.arguments.match === "string" ? call.arguments.match.toLowerCase() : "";
+    const item = plan.items.find((x) => x.label.toLowerCase().includes(match));
+    if (!item) return { error: "item-not-found" };
+    const patch: Record<string, unknown> = {};
+    if (typeof call.arguments.label === "string" && call.arguments.label.trim()) patch.label = call.arguments.label.trim();
+    if (typeof call.arguments.amount === "number" && isFinite(call.arguments.amount)) patch.amount = Math.abs(call.arguments.amount);
+    if (!Object.keys(patch).length) return { error: "empty-patch" };
+    return {
+      change: {
+        actions: [{ kind: "budgetItem.upsert", planId: plan.id, itemId: item.id, item: patch }],
+        preview: [{ label: item.label, before: formatMoney(item.amount, item.currency || deps.currency), after: formatMoney(Number(patch.amount ?? item.amount), item.currency || deps.currency) }],
+        summary: "Budget item update ready.",
+      },
+    };
+  }
+  return { error: "unsupported-write-tool" };
+}
+
+export function applyProposedChange(change: ProposedChange, store: ApplyStore): void {
+  for (const action of change.actions) {
+    switch (action.kind) {
+      case "cashflow.add":
+        store.addCashflow(action.payload as Omit<CashflowEntry, "id">);
+        break;
+      case "cashflow.update":
+        store.updateCashflow(action.id, action.patch as Partial<CashflowEntry>);
+        break;
+      case "cashflow.delete":
+        store.removeCashflow(action.id);
+        break;
+      case "budgetPlan.create": {
+        const created = store.addBudgetPlan(action.name);
+        for (const it of action.items) {
+          store.addBudgetItem(created.id, it as Omit<BudgetItem, "id">);
+        }
+        break;
+      }
+      case "budgetItem.upsert":
+        if (action.itemId) store.updateBudgetItem(action.planId, action.itemId, action.item as Partial<BudgetItem>);
+        else store.addBudgetItem(action.planId, action.item as Omit<BudgetItem, "id">);
+        break;
+      case "goal.add":
+        store.addGoal(action.payload as Omit<SavingsGoal, "id">);
+        break;
+      case "goal.update":
+        store.updateGoal(action.id, action.patch as Partial<SavingsGoal>);
+        break;
+      case "loan.add":
+        store.addLoan(action.payload as Omit<Loan, "id">);
+        break;
+      case "holding.add":
+        store.addHolding(action.payload as Omit<Holding, "id">);
+        break;
+      case "holding.update":
+        store.updateHolding(action.id, action.patch as Partial<Holding>);
+        break;
+      case "category.add":
+        store.addCategory(action.payload as Omit<Category, "id">);
+        break;
+    }
+  }
 }
 
 /** Execute a read tool and return a summary + structured data. */
@@ -354,6 +699,34 @@ export function runReadTool(call: ToolCall, deps: ToolDeps): ToolRunResult {
             .join("; ")
         : t("assistant.backend.tools.noTransactions");
       return { summary, data: items };
+    }
+
+    case "find_transactions": {
+      const q = String(call.arguments.match || "").trim().toLowerCase();
+      const limit = Math.max(1, Math.min(20, Number(call.arguments.limit) || 5));
+      const matches = [...deps.state.cashflows]
+        .filter(
+          (e) =>
+            !q ||
+            (e.description || "").toLowerCase().includes(q) ||
+            (e.category || "").toLowerCase().includes(q) ||
+            e.date.slice(0, 10).includes(q),
+        )
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        .slice(0, limit)
+        .map((e) => ({
+          id: e.id,
+          date: e.date.slice(0, 10),
+          category: e.category || "Other",
+          amount: deps.toDisplay(e.amount, e.currency),
+          description: e.description || "",
+        }));
+      return {
+        summary: matches.length
+          ? matches.map((m) => `${m.id}: ${m.date} ${m.category} ${m.amount}`).join("; ")
+          : t("assistant.backend.tools.noTransactions"),
+        data: matches,
+      };
     }
 
     case "get_budget_status": {

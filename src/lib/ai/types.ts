@@ -15,27 +15,29 @@
 
 export type ChatRole = "user" | "assistant" | "system";
 
-/** A single expense the assistant proposes to add. Confirmed by the user before
- *  it is written to the store (confirm-first policy). Mirrors the resolved
- *  arguments of the `add_transaction` tool. */
-export interface ProposedExpense {
-  amount: number;
-  currency: string;
-  /** Existing expense category *name* (cashflow entries key on name, not id). */
-  categoryName: string;
-  /** Resolved category id when a confident match was found (UI hint only). */
-  categoryId?: string;
-  description?: string;
-  /** ISO date string (YYYY-MM-DDT..). */
-  date: string;
-  /** Account the charge is paid from. "liquidity" or `credit:<id>`. */
-  paymentMethod?: string;
-}
+export type ChangePreviewRow = {
+  label: string;
+  before?: string;
+  after: string;
+};
 
-/** Info shown on the "expense added" success indicator. */
-export interface CommittedExpense extends ProposedExpense {
-  /** Store id of the created cashflow entry, when available. */
-  entryId?: string;
+export type ProposedAction =
+  | { kind: "cashflow.add"; payload: Record<string, unknown> }
+  | { kind: "cashflow.update"; id: string; patch: Record<string, unknown> }
+  | { kind: "cashflow.delete"; id: string }
+  | { kind: "budgetPlan.create"; name: string; items: Record<string, unknown>[]; setMain?: boolean }
+  | { kind: "budgetItem.upsert"; planId: string; itemId?: string; item: Record<string, unknown> }
+  | { kind: "goal.add"; payload: Record<string, unknown> }
+  | { kind: "goal.update"; id: string; patch: Record<string, unknown> }
+  | { kind: "loan.add"; payload: Record<string, unknown> }
+  | { kind: "holding.add"; payload: Record<string, unknown> }
+  | { kind: "holding.update"; id: string; patch: Record<string, unknown> }
+  | { kind: "category.add"; payload: Record<string, unknown> };
+
+export interface ProposedChange {
+  actions: ProposedAction[];
+  preview: ChangePreviewRow[];
+  summary: string;
 }
 
 /** One entry of the transparency trace: which tool ran and what it returned. */
@@ -51,11 +53,8 @@ export interface ChatMessage {
   role: ChatRole;
   content: string;
   createdAt: number;
-  /** Assistant proposed an expense; render a confirm card. Cleared once the
-   *  user confirms or dismisses. */
-  pendingExpense?: ProposedExpense;
-  /** Expense was successfully written; render a success indicator. */
-  committedExpense?: CommittedExpense;
+  /** Assistant proposed one or more writes; confirm-first UX gate. */
+  pendingChange?: ProposedChange;
   /** Tools invoked while producing this message (for optional transparency). */
   toolTrace?: ToolTrace[];
   /** Marks an error/degraded reply so the UI can offer a retry. */
@@ -104,15 +103,21 @@ export interface EngineMessage {
 export interface LowLevelEngine {
   id: "native-llm" | "local-nlu";
   label: string;
-  chat(req: { system: string; messages: EngineMessage[]; tools: ToolSpec[] }): Promise<ModelTurn>;
+  chat(req: {
+    system: string;
+    messages: EngineMessage[];
+    tools: ToolSpec[];
+    signal?: AbortSignal;
+  }): Promise<ModelTurn>;
 }
 
 /** Final result of running the assistant on one user message. */
 export interface AssistantResult {
   reply: string;
-  /** Present when the assistant wants to add an expense (awaits confirmation). */
-  proposedExpense?: ProposedExpense;
+  /** Present when assistant proposes writes (awaits confirmation). */
+  proposedChange?: ProposedChange;
   toolTrace: ToolTrace[];
   engineId: LowLevelEngine["id"];
   error?: boolean;
+  degradedReason?: string;
 }

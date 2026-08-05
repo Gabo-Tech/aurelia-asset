@@ -6,20 +6,34 @@
 import { formatMoney } from "@/lib/format";
 import { t } from "@/lib/i18n-t";
 import type { AssistantResult, EngineMessage, LowLevelEngine, ToolTrace } from "./types";
-import { TOOL_SPECS, runReadTool, resolveExpenseProposal, type ToolDeps } from "./tools";
+import { TOOL_SPECS, runReadTool, resolveWriteTool, type ToolDeps } from "./tools";
 import { createLocalNluEngine } from "./nlu";
 import { isAdviceRequest, withAdviceDisclaimer } from "./advice";
 import { buildFinanceContext, formatContextForPrompt, type FinanceContext } from "./context";
 import type { AiConfig } from "./config";
-import { createNativeLlmEngine, getLlmReady, type AiCapabilities } from "@/platform/llm";
+import {
+  createNativeLlmEngine,
+  getLlmReady,
+  getLastLlmStatus,
+  type AiCapabilities,
+} from "@/platform/llm";
 import { getSpeechReady } from "@/platform/speech";
 
 export type { AiCapabilities };
 
+let cachedCaps: { key: string; caps: AiCapabilities } | null = null;
+
+function capsCacheKey(cfg: AiConfig): string {
+  return `${cfg.llmPath ?? ""}|${cfg.sttDir ?? ""}|${cfg.ttsDir ?? ""}`;
+}
+
 export async function getAiCapabilities(cfg: AiConfig = {}): Promise<AiCapabilities> {
+  const key = capsCacheKey(cfg);
+  if (cachedCaps?.key === key) return cachedCaps.caps;
+
   const llm = await getLlmReady(cfg);
   const speech = await getSpeechReady(cfg);
-  return {
+  const caps: AiCapabilities = {
     llm,
     stt: speech.stt,
     tts: speech.tts,
@@ -30,7 +44,12 @@ export async function getAiCapabilities(cfg: AiConfig = {}): Promise<AiCapabilit
     speechReason: speech.reason,
     sttDetail: speech.sttDetail,
     ttsDetail: speech.ttsDetail,
+    llmDetail: getLastLlmStatus()
+      ? `gpu=${String(getLastLlmStatus()?.gpu)} reason=${getLastLlmStatus()?.reasonNoGpu || "none"}`
+      : undefined,
   };
+  cachedCaps = { key, caps };
+  return caps;
 }
 
 const MAX_STEPS = 4;
@@ -57,7 +76,8 @@ function buildSystemPrompt(ctx: FinanceContext): string {
     "",
     "Tools & logging:",
     "- Use tools to look up net worth, portfolio, spending, budget, goals, and loans when asked.",
-    "- Call add_transaction when the user describes an expense; always confirm before saving.",
+    "- Use read tools for facts; use write tools when user asks to add/edit/delete records.",
+    "- Every write is confirm-first: propose changes clearly before anything is saved.",
     "",
     "Base every answer on their real data. Be concise. Reply in the user's language (locale: " +
       ctx.locale +
@@ -106,6 +126,7 @@ export async function runAssistant(
   deps: ToolDeps,
   history: EngineMessage[],
   aiConfig: AiConfig = {},
+  signal?: AbortSignal,
 ): Promise<AssistantResult> {
   const ctx = buildFinanceContext(deps.state, deps.toDisplay, deps.currency, deps.locale);
   const system = buildSystemPrompt(ctx);
@@ -115,10 +136,14 @@ export async function runAssistant(
   if (caps.llm) engines.push(createNativeLlmEngine(aiConfig));
   engines.push(createLocalNluEngine(ctx));
 
+  let lastError: string | undefined;
   for (const engine of engines) {
     try {
-      return await runLoop(engine, system, userText, deps, history, ctx);
-    } catch {
+      const result = await runLoop(engine, system, userText, deps, history, ctx, signal);
+      if (engine.id === "local-nlu" && lastError) result.degradedReason = lastError;
+      return result;
+    } catch (e) {
+      lastError = e instanceof Error ? e.message : String(e);
       /* next engine */
     }
   }
@@ -127,6 +152,7 @@ export async function runAssistant(
     toolTrace: [],
     engineId: "local-nlu",
     error: true,
+    degradedReason: lastError,
   };
 }
 
@@ -137,42 +163,31 @@ async function runLoop(
   deps: ToolDeps,
   history: EngineMessage[],
   _ctx: FinanceContext,
+  signal?: AbortSignal,
 ): Promise<AssistantResult> {
   const messages: EngineMessage[] = [...history, { role: "user", content: userText }];
   const trace: ToolTrace[] = [];
 
   for (let step = 0; step < MAX_STEPS; step++) {
-    const turn = await engine.chat({ system, messages, tools: TOOL_SPECS });
+    const tools = pickToolsForTurn(userText);
+    const turn = await engine.chat({ system, messages, tools, signal });
 
     if (turn.toolCalls && turn.toolCalls.length > 0) {
       for (const call of turn.toolCalls) {
         const spec = TOOL_SPECS.find((s) => s.name === call.name);
         if (spec?.kind === "write") {
-          if (call.name === "add_transaction") {
-            const { proposal, error } = resolveExpenseProposal(call.arguments, deps);
-            if (error || !proposal) {
-              return {
-                reply: t("assistant.backend.expenseParseError"),
-                toolTrace: trace,
-                engineId: engine.id,
-                error: true,
-              };
-            }
+          const { change, error } = resolveWriteTool(call, deps);
+          if (error || !change) {
             return {
-              reply: confirmationText(
-                proposal.amount,
-                proposal.currency,
-                proposal.categoryName,
-                proposal.date,
-                deps.locale,
-              ),
-              proposedExpense: proposal,
+              reply: t("assistant.backend.expenseParseError"),
               toolTrace: trace,
               engineId: engine.id,
+              error: true,
             };
           }
           return {
-            reply: t("assistant.backend.updateHint"),
+            reply: change.summary,
+            proposedChange: change,
             toolTrace: trace,
             engineId: engine.id,
           };
@@ -209,6 +224,22 @@ async function runLoop(
     toolTrace: trace,
     engineId: engine.id,
   };
+}
+
+function pickToolsForTurn(userText: string) {
+  const q = userText.toLowerCase();
+  const always = ["add_transaction", "get_spending_summary", "get_recent_transactions"];
+  const budget = /\bbudget|plan|spend/.test(q)
+    ? ["get_budget_status", "create_budget", "update_budget_item"]
+    : [];
+  const wealth = /\bnet worth|portfolio|holding|asset|invest|loan|goal|debt/.test(q)
+    ? ["get_net_worth", "get_portfolio", "get_goals_status", "get_loans_status"]
+    : [];
+  const edit = /\bedit|update|fix|change|delete|remove|correct/.test(q)
+    ? ["update_transaction", "delete_transaction", "find_transactions"]
+    : [];
+  const set = new Set([...always, ...budget, ...wealth, ...edit]);
+  return TOOL_SPECS.filter((s) => set.has(s.name));
 }
 
 export type { ToolDeps };

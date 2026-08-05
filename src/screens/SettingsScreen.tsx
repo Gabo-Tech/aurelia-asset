@@ -78,6 +78,7 @@ export function SettingsScreen() {
   const [sttStatus, setSttStatus] = useState("…");
   const [ttsStatus, setTtsStatus] = useState("…");
   const [sherpaNote, setSherpaNote] = useState<string | null>(null);
+  const [llmNote, setLlmNote] = useState<string | null>(null);
   /** Bumped on cancel so late download progress callbacks are ignored. */
   const downloadGenRef = useRef(0);
 
@@ -112,6 +113,7 @@ export function SettingsScreen() {
     setSttStatus(stt.label);
     setTtsStatus(tts.label);
     setSherpaNote(caps.speechReason && !caps.stt && !caps.tts ? caps.speechReason : null);
+    setLlmNote(caps.llmDetail || null);
   }
 
   useEffect(() => {
@@ -252,7 +254,7 @@ export function SettingsScreen() {
     try {
       const path = await downloadModel(kind, (p: ModelDownloadProgress) => {
         applyDownloadProgress(gen, p);
-      });
+      }, i18n.language);
       if (gen !== downloadGenRef.current) return;
       const entry = MODEL_MANIFEST.find((m) => m.kind === kind)!;
       updateSettings({ [entry.settingsKey]: path, aiModelSetup: "done" });
@@ -282,7 +284,7 @@ export function SettingsScreen() {
         const kind = kinds[i]!;
         setDlStepLabel(`${kind.toUpperCase()} ${i + 1}/${kinds.length}`);
         setDlProgress({ kind, received: 0, phase: "downloading" });
-        const path = await downloadModel(kind, (p) => applyDownloadProgress(gen, p));
+        const path = await downloadModel(kind, (p) => applyDownloadProgress(gen, p), i18n.language);
         if (gen !== downloadGenRef.current) return;
         const entry = MODEL_MANIFEST.find((m) => m.kind === kind)!;
         updateSettings({ [entry.settingsKey]: path, aiModelSetup: "done" });
@@ -309,7 +311,7 @@ export function SettingsScreen() {
         const kind = kinds[i]!;
         setDlStepLabel(`${kind.toUpperCase()} ${i + 1}/${kinds.length}`);
         setDlProgress({ kind, received: 0, phase: "downloading" });
-        const path = await downloadModel(kind, (p) => applyDownloadProgress(gen, p));
+        const path = await downloadModel(kind, (p) => applyDownloadProgress(gen, p), i18n.language);
         if (gen !== downloadGenRef.current) return;
         const entry = MODEL_MANIFEST.find((m) => m.kind === kind)!;
         updateSettings({ [entry.settingsKey]: path, aiModelSetup: "done" });
@@ -525,8 +527,16 @@ export function SettingsScreen() {
                 <Text style={[styles.meta, { color: colors.danger }]}>{sherpaNote}</Text>
               ) : null}
               <Text style={styles.meta}>LLM: {state.settings.aiLlmModelPath || "not set"}</Text>
+              {llmNote ? <Text style={styles.meta}>LLM runtime: {llmNote}</Text> : null}
               <Text style={styles.meta}>STT: {sttStatus}</Text>
               <Text style={styles.meta}>TTS: {ttsStatus}</Text>
+              {!i18n.language.startsWith("en") &&
+              ((state.settings.aiSttModelDir || "").includes(".en") ||
+                (state.settings.aiTtsModelDir || "").includes("en_US")) ? (
+                <Text style={[styles.meta, { color: colors.danger }]}>
+                  Installed speech models are English-only but UI language is {i18n.language}.
+                </Text>
+              ) : null}
               {dlProgress ? (
                 <View style={styles.progressBox}>
                   <ProgressBar progress={downloadProgressRatio(dlProgress)} />

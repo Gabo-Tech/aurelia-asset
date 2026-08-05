@@ -14,6 +14,9 @@ import { getSpeechReady, stopSpeech, synthesizeSpeech, transcribePcm } from "@/p
 export type SttBackend = "native" | "webspeech" | "none";
 export type TtsBackend = "native" | "webspeech" | "none";
 
+const STOP_TIMEOUT_MS = 2500;
+const SESSION_WATCHDOG_MS = 25000;
+
 export interface VoiceCapabilities {
   stt: SttBackend;
   tts: TtsBackend;
@@ -94,7 +97,10 @@ export class VoiceListener {
   private chunks: string[] = [];
   private stopped = false;
   private finishing = false;
+  private ended = false;
+  private timedOut = false;
   private silenceTimer: ReturnType<typeof setInterval> | null = null;
+  private watchdogTimer: ReturnType<typeof setTimeout> | null = null;
   private lastVoiceAt = 0;
   private subscription: { remove: () => void } | null = null;
   private handlers: ListenHandlers | null = null;
@@ -102,13 +108,39 @@ export class VoiceListener {
 
   constructor(
     private backend: SttBackend,
-    _locale: string,
+    private locale: string,
     private sttModelDir?: string,
   ) {}
+
+  private clearTimers() {
+    if (this.silenceTimer) {
+      clearInterval(this.silenceTimer);
+      this.silenceTimer = null;
+    }
+    if (this.watchdogTimer) {
+      clearTimeout(this.watchdogTimer);
+      this.watchdogTimer = null;
+    }
+  }
+
+  private emitEndOnce() {
+    if (this.ended) return;
+    this.ended = true;
+    this.handlers?.onEnd?.();
+  }
+
+  private async stopStreamWithTimeout(): Promise<void> {
+    await Promise.race([
+      LiveAudioStream.stop().catch(() => undefined),
+      new Promise<void>((resolve) => setTimeout(resolve, STOP_TIMEOUT_MS)),
+    ]);
+  }
 
   async start(handlers: ListenHandlers): Promise<void> {
     this.stopped = false;
     this.finishing = false;
+    this.ended = false;
+    this.timedOut = false;
     this.chunks = [];
     this.handlers = handlers;
     if (this.backend !== "native" || !this.sttModelDir) {
@@ -153,6 +185,12 @@ export class VoiceListener {
           void this.finish();
         }
       }, 200);
+      this.watchdogTimer = setTimeout(() => {
+        if (this.stopped || this.finishing) return;
+        this.timedOut = true;
+        handlers.onError("session-timeout");
+        void this.finish();
+      }, SESSION_WATCHDOG_MS);
     } catch (err) {
       handlers.onError(err instanceof Error ? err.message : String(err));
     }
@@ -163,19 +201,12 @@ export class VoiceListener {
     this.finishing = true;
     this.stopped = true;
     const handlers = this.handlers;
-    if (this.silenceTimer) {
-      clearInterval(this.silenceTimer);
-      this.silenceTimer = null;
-    }
+    this.clearTimers();
     this.subscription?.remove();
     this.subscription = null;
-    try {
-      await LiveAudioStream.stop();
-    } catch {
-      /* ignore */
-    }
-    handlers?.onEnd?.();
-    if (!handlers) return;
+    this.emitEndOnce();
+    await this.stopStreamWithTimeout();
+    if (!handlers || this.timedOut) return;
     try {
       const samples = int16Base64ChunksToFloat32(this.chunks);
       this.chunks = [];
@@ -183,7 +214,7 @@ export class VoiceListener {
         handlers.onError("no-speech");
         return;
       }
-      const text = await transcribePcm(samples, this.sampleRate, this.sttModelDir!);
+      const text = await transcribePcm(samples, this.sampleRate, this.sttModelDir!, this.locale);
       if (text) handlers.onFinal(text);
       else handlers.onError("no-speech");
     } catch (err) {
@@ -204,31 +235,26 @@ export class VoiceListener {
   cancel() {
     this.stopped = true;
     this.finishing = true;
-    if (this.silenceTimer) {
-      clearInterval(this.silenceTimer);
-      this.silenceTimer = null;
-    }
+    this.clearTimers();
     this.subscription?.remove();
     this.subscription = null;
     this.chunks = [];
+    this.emitEndOnce();
+    void this.stopStreamWithTimeout();
     this.handlers = null;
-    try {
-      void LiveAudioStream.stop();
-    } catch {
-      /* ignore */
-    }
   }
 }
 
 export async function speak(
   text: string,
   backend: TtsBackend,
-  _locale: string,
+  locale: string,
   ttsModelDir?: string,
 ): Promise<void> {
   const clean = text.replace(/[•*_#`>]/g, "").trim();
   if (!clean || backend !== "native" || !ttsModelDir) return;
-  await synthesizeSpeech(clean, ttsModelDir);
+  const res = await synthesizeSpeech(clean, ttsModelDir, locale);
+  if (!res.played) throw new Error("tts-playback-failed");
 }
 
 export async function stopSpeaking(_backend: TtsBackend) {

@@ -127,6 +127,10 @@ function extractDescription(text: string): string | undefined {
 
 type Intent =
   | { type: "expense"; call: ToolCall }
+  | { type: "update_tx"; call: ToolCall }
+  | { type: "delete_tx"; call: ToolCall }
+  | { type: "create_budget"; call: ToolCall }
+  | { type: "add_goal"; call: ToolCall }
   | { type: "summary"; call: ToolCall }
   | { type: "recent"; call: ToolCall }
   | { type: "budget"; call: ToolCall }
@@ -188,7 +192,10 @@ function classify(text: string, ctx: FinanceContext): Intent {
     return { type: "loans", call: { name: "get_loans_status", arguments: {} } };
   }
 
-  if (/\b(budget|presupuesto|or[cç]amento|budget|pressupost)\b/.test(lower))
+  if (
+    /\b(budget|presupuesto|or[cç]amento|budget|pressupost)\b/.test(lower) &&
+    !/\b(create|make|generate|build)\b/.test(lower)
+  )
     return { type: "budget", call: { name: "get_budget_status", arguments: {} } };
 
   if (
@@ -226,6 +233,41 @@ function classify(text: string, ctx: FinanceContext): Intent {
       call: {
         name: "get_spending_summary",
         arguments: { period, ...(cat ? { category: cat } : {}) },
+      },
+    };
+  }
+
+  if (/\b(delete|remove)\b/.test(lower) && /\b(transaction|expense|entry)\b/.test(lower)) {
+    const match = extractDescription(t) || lower.replace(/.*(?:delete|remove)\s*/i, "").trim();
+    return { type: "delete_tx", call: { name: "delete_transaction", arguments: { match } } };
+  }
+
+  if (/\b(update|change|fix|correct)\b/.test(lower) && /\b(transaction|expense|entry)\b/.test(lower)) {
+    const money = parseMoney(t, ctx.currency);
+    const match = extractDescription(t) || "recent";
+    return {
+      type: "update_tx",
+      call: {
+        name: "update_transaction",
+        arguments: { match, ...(money ? { amount: money.amount } : {}) },
+      },
+    };
+  }
+
+  if (/\b(create|make|generate|build)\b/.test(lower) && /\b(budget|plan)\b/.test(lower)) {
+    return {
+      type: "create_budget",
+      call: { name: "create_budget", arguments: { name: "AI Budget", items: "[]" } },
+    };
+  }
+
+  if (/\b(goal|save)\b/.test(lower) && /\b(by|before|target)\b/.test(lower)) {
+    const money = parseMoney(t, ctx.currency);
+    return {
+      type: "add_goal",
+      call: {
+        name: "add_goal",
+        arguments: { name: "Savings Goal", targetAmount: money?.amount ?? 1000, currentAmount: 0 },
       },
     };
   }
@@ -300,6 +342,10 @@ export function createLocalNluEngine(ctx: FinanceContext): LowLevelEngine {
 
       switch (intent.type) {
         case "expense":
+        case "update_tx":
+        case "delete_tx":
+        case "create_budget":
+        case "add_goal":
           return { toolCalls: [intent.call] };
         case "summary":
         case "recent":

@@ -1,16 +1,6 @@
 /**
- * Engine selection and the tool-calling orchestration loop.
- *
- * `runAssistant` drives one user turn to completion:
- *   1. Injects the finance context + tool specs into a system prompt.
- *   2. Asks the engine for a turn.
- *   3. Executes any READ tool calls and feeds results back (looping).
- *   4. On a WRITE tool call (add/update), stops and returns a ProposedExpense
- *      for the UI to confirm (confirm-first policy).
- *   5. Otherwise returns the final natural-language reply.
- *
- * The native LLM (Tauri) is preferred when available; the local NLU engine is
- * always the fallback so the assistant works offline on every platform.
+ * Engine selection + tool-calling loop (ported from Tauri web client).
+ * Native LLM via Tauri invoke; always falls back to local NLU.
  */
 
 import { invoke } from "@tauri-apps/api/core";
@@ -18,7 +8,7 @@ import { isTauri } from "@/lib/export";
 import { formatMoney } from "@/lib/format";
 import { t } from "@/lib/i18n-t";
 import type { AssistantResult, EngineMessage, LowLevelEngine, ModelTurn, ToolTrace } from "./types";
-import { TOOL_SPECS, runReadTool, resolveExpenseProposal, type ToolDeps } from "./tools";
+import { TOOL_SPECS, runReadTool, resolveWriteTool, type ToolDeps } from "./tools";
 import { createLocalNluEngine } from "./nlu";
 import { isAdviceRequest, withAdviceDisclaimer } from "./advice";
 import { buildFinanceContext, formatContextForPrompt, type FinanceContext } from "./context";
@@ -32,29 +22,44 @@ export interface AiCapabilities {
   sttEnabled?: boolean;
   ttsEnabled?: boolean;
   model?: string;
+  speechReason?: string;
+  sttDetail?: string;
+  ttsDetail?: string;
+  llmDetail?: string;
 }
 
-/** Query which on-device AI features are available, given the user's configured
- *  model paths. */
+let cachedCaps: { key: string; caps: AiCapabilities } | null = null;
+
+function capsCacheKey(cfg: AiConfig): string {
+  return `${cfg.llmPath ?? ""}|${cfg.sttDir ?? ""}|${cfg.ttsDir ?? ""}`;
+}
+
 export async function getAiCapabilities(cfg: AiConfig = {}): Promise<AiCapabilities> {
-  if (!isTauri()) return { llm: false, stt: false, tts: false };
+  const key = capsCacheKey(cfg);
+  if (cachedCaps?.key === key) return cachedCaps.caps;
+  if (!isTauri()) {
+    const caps = { llm: false, stt: false, tts: false };
+    cachedCaps = { key, caps };
+    return caps;
+  }
   try {
-    return await invoke<AiCapabilities>("ai_status", {
+    const caps = await invoke<AiCapabilities>("ai_status", {
       config: toConfigPayload(cfg),
     });
+    cachedCaps = { key, caps };
+    return caps;
   } catch {
-    return { llm: false, stt: false, tts: false };
+    const caps = { llm: false, stt: false, tts: false };
+    cachedCaps = { key, caps };
+    return caps;
   }
 }
 
-/** Native LLM engine backed by llama.cpp via a Tauri command. */
 function createNativeLlmEngine(cfg: AiConfig): LowLevelEngine {
   return {
     id: "native-llm",
     label: t("assistant.localLlmQwen"),
     async chat({ system, messages, tools }): Promise<ModelTurn> {
-      // The Rust side runs the model and returns a structured turn. Throws if
-      // the model is not loaded, which makes the orchestrator fall back.
       return await invoke<ModelTurn>("ai_chat", {
         req: { system, messages, tools, model_path: cfg.llmPath },
       });
@@ -86,7 +91,8 @@ function buildSystemPrompt(ctx: FinanceContext): string {
     "",
     "Tools & logging:",
     "- Use tools to look up net worth, portfolio, spending, budget, goals, and loans when asked.",
-    "- Call add_transaction when the user describes an expense; always confirm before saving.",
+    "- Use read tools for facts; use write tools when user asks to add/edit/delete records.",
+    "- Every write is confirm-first: propose changes clearly before anything is saved.",
     "",
     "Base every answer on their real data. Be concise. Reply in the user's language (locale: " +
       ctx.locale +
@@ -130,15 +136,12 @@ function isSameDay(a: Date, b: Date): boolean {
   );
 }
 
-/**
- * Run one assistant turn. `history` is the prior EngineMessage transcript
- * (excluding the new user message, which is appended here).
- */
 export async function runAssistant(
   userText: string,
   deps: ToolDeps,
   history: EngineMessage[],
   aiConfig: AiConfig = {},
+  signal?: AbortSignal,
 ): Promise<AssistantResult> {
   const ctx = buildFinanceContext(deps.state, deps.toDisplay, deps.currency, deps.locale);
   const system = buildSystemPrompt(ctx);
@@ -148,11 +151,15 @@ export async function runAssistant(
   if (caps.llm) engines.push(createNativeLlmEngine(aiConfig));
   engines.push(createLocalNluEngine(ctx));
 
+  let lastError: string | undefined;
   for (const engine of engines) {
     try {
-      return await runLoop(engine, system, userText, deps, history, ctx);
-    } catch {
-      // Fall through to the next engine (e.g. native → local NLU).
+      const result = await runLoop(engine, system, userText, deps, history, ctx, signal);
+      if (engine.id === "local-nlu" && lastError) result.degradedReason = lastError;
+      return result;
+    } catch (e) {
+      lastError = e instanceof Error ? e.message : String(e);
+      /* next engine */
     }
   }
   return {
@@ -160,6 +167,7 @@ export async function runAssistant(
     toolTrace: [],
     engineId: "local-nlu",
     error: true,
+    degradedReason: lastError,
   };
 }
 
@@ -169,53 +177,37 @@ async function runLoop(
   userText: string,
   deps: ToolDeps,
   history: EngineMessage[],
-  ctx: FinanceContext,
+  _ctx: FinanceContext,
+  signal?: AbortSignal,
 ): Promise<AssistantResult> {
   const messages: EngineMessage[] = [...history, { role: "user", content: userText }];
   const trace: ToolTrace[] = [];
 
   for (let step = 0; step < MAX_STEPS; step++) {
-    const turn = await engine.chat({ system, messages, tools: TOOL_SPECS });
+    const tools = pickToolsForTurn(userText);
+    const turn = await engine.chat({ system, messages, tools, signal });
 
     if (turn.toolCalls && turn.toolCalls.length > 0) {
       for (const call of turn.toolCalls) {
         const spec = TOOL_SPECS.find((s) => s.name === call.name);
-
-        // WRITE tools are gated behind user confirmation.
         if (spec?.kind === "write") {
-          if (call.name === "add_transaction") {
-            const { proposal, error } = resolveExpenseProposal(call.arguments, deps);
-            if (error || !proposal) {
-              return {
-                reply: t("assistant.backend.expenseParseError"),
-                toolTrace: trace,
-                engineId: engine.id,
-                error: true,
-              };
-            }
+          const { change, error } = resolveWriteTool(call, deps);
+          if (error || !change) {
             return {
-              reply: confirmationText(
-                proposal.amount,
-                proposal.currency,
-                proposal.categoryName,
-                proposal.date,
-                deps.locale,
-              ),
-              proposedExpense: proposal,
+              reply: t("assistant.backend.expenseParseError"),
               toolTrace: trace,
               engineId: engine.id,
+              error: true,
             };
           }
-          // update_transaction: surface a gentle message; correction UI is a
-          // future enhancement, so we point the user to a fresh add for now.
           return {
-            reply: t("assistant.backend.updateHint"),
+            reply: change.summary,
+            proposedChange: change,
             toolTrace: trace,
             engineId: engine.id,
           };
         }
 
-        // READ tool: execute and feed the result back to the engine.
         const result = runReadTool(call, deps);
         trace.push({
           name: call.name,
@@ -228,10 +220,9 @@ async function runLoop(
           content: result.summary,
         });
       }
-      continue; // let the engine react to the tool results
+      continue;
     }
 
-    // Final natural-language answer.
     return {
       reply: finalizeAdviceReply(
         turn.content?.trim() || t("assistant.backend.done"),
@@ -248,6 +239,22 @@ async function runLoop(
     toolTrace: trace,
     engineId: engine.id,
   };
+}
+
+function pickToolsForTurn(userText: string) {
+  const q = userText.toLowerCase();
+  const always = ["add_transaction", "get_spending_summary", "get_recent_transactions"];
+  const budget = /\bbudget|plan|spend/.test(q)
+    ? ["get_budget_status", "create_budget", "update_budget_item"]
+    : [];
+  const wealth = /\bnet worth|portfolio|holding|asset|invest|loan|goal|debt/.test(q)
+    ? ["get_net_worth", "get_portfolio", "get_goals_status", "get_loans_status"]
+    : [];
+  const edit = /\bedit|update|fix|change|delete|remove|correct/.test(q)
+    ? ["update_transaction", "delete_transaction", "find_transactions"]
+    : [];
+  const set = new Set([...always, ...budget, ...wealth, ...edit]);
+  return TOOL_SPECS.filter((s) => set.has(s.name));
 }
 
 export type { ToolDeps };

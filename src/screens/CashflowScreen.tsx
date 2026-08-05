@@ -958,7 +958,7 @@ export function CashflowScreen() {
                         <Pressable
                           key={mode}
                           onPress={() => {
-                            setWhenSchedule(mode);
+                            setWhenSchedule(mode as "recurring" | "one-time" | "installments");
                             setInstallments(mode === "installments");
                           }}
                           style={[

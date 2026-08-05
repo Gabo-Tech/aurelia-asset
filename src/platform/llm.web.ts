@@ -16,10 +16,19 @@ export type AiCapabilities = {
   speechReason?: string;
   sttDetail?: string;
   ttsDetail?: string;
+  llmDetail?: string;
 };
 
 export async function getLlmReady(_cfg: AiConfig): Promise<boolean> {
   return false;
+}
+
+export function getLastLlmStatus(): null {
+  return null;
+}
+
+export async function warmLlm(_cfg: AiConfig): Promise<void> {
+  /* noop */
 }
 
 export function createNativeLlmEngine(_cfg: AiConfig): LowLevelEngine {

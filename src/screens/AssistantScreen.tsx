@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ScrollView,
   Text,
@@ -6,7 +6,6 @@ import {
   TextInput,
   View,
   Pressable,
-  ActivityIndicator,
   Switch,
   Keyboard,
   type KeyboardEvent,
@@ -16,8 +15,9 @@ import { Screen, Header, PrimaryButton, SecondaryButton, EmptyState, chipLabelSt
 import { useStore, useMoney } from "@/lib/store";
 import { runAssistant, getAiCapabilities } from "@/lib/ai/provider";
 import { aiConfigFromSettings } from "@/lib/ai/config";
+import { warmLlm } from "@/platform/llm";
 import { loadChatHistory, saveChatHistory, clearChatHistory } from "@/lib/ai/persistence";
-import { proposalToCashflow } from "@/lib/ai/tools";
+import { applyProposedChange } from "@/lib/ai/tools";
 import {
   detectVoiceCapabilities,
   speak,
@@ -66,6 +66,7 @@ export function AssistantScreen() {
   const [partial, setPartial] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [busy, setBusy] = useState(false);
+  const [loadingModel, setLoadingModel] = useState(false);
   const [listening, setListening] = useState(false);
   const [caps, setCaps] = useState({
     llm: false,
@@ -79,6 +80,7 @@ export function AssistantScreen() {
   const [voiceError, setVoiceError] = useState<string | null>(null);
   const listenerRef = useRef<VoiceListener | null>(null);
   const scrollRef = useRef<ScrollView>(null);
+  const runAbortRef = useRef<AbortController | null>(null);
   const [keyboardPad, setKeyboardPad] = useState(0);
 
   const aiConfig = aiConfigFromSettings(state.settings);
@@ -114,15 +116,37 @@ export function AssistantScreen() {
   }, [state.settings.aiLlmModelPath, state.settings.aiSttModelDir, state.settings.aiTtsModelDir]);
 
   useEffect(() => {
+    if (!aiConfig.llmPath) {
+      setLoadingModel(false);
+      return;
+    }
+    let cancelled = false;
+    setLoadingModel(true);
+    void warmLlm(aiConfig)
+      .catch(() => undefined)
+      .finally(() => {
+        if (!cancelled) setLoadingModel(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [aiConfig.llmPath]);
+
+  useEffect(() => {
     return () => {
       listenerRef.current?.cancel();
       void stopSpeaking(voiceCaps.tts);
     };
   }, [voiceCaps.tts]);
 
-  const history: EngineMessage[] = messages
-    .filter((m) => m.role === "user" || m.role === "assistant")
-    .map((m) => ({ role: m.role as "user" | "assistant", content: m.content }));
+  const history: EngineMessage[] = useMemo(
+    () =>
+      messages
+        .filter((m) => m.role === "user" || m.role === "assistant")
+        .map((m) => ({ role: m.role as "user" | "assistant", content: m.content }))
+        .slice(-10),
+    [messages],
+  );
 
   const maybeSpeak = useCallback(
     async (text: string) => {
@@ -157,6 +181,10 @@ export function AssistantScreen() {
       setMessages((m) => [...m, userMsg]);
       setBusy(true);
       try {
+        if (aiConfig.llmPath) {
+          await warmLlm(aiConfig);
+        }
+        runAbortRef.current = new AbortController();
         const result = await runAssistant(
           text,
           {
@@ -169,13 +197,14 @@ export function AssistantScreen() {
           },
           history,
           aiConfig,
+          runAbortRef.current.signal,
         );
         const assistantMsg: ChatMessage = {
           role: "assistant",
           content: result.reply,
           id: String(Date.now() + 1),
           createdAt: Date.now(),
-          pendingExpense: result.proposedExpense,
+          pendingChange: result.proposedChange,
           toolTrace: result.toolTrace,
           error: result.error,
         };
@@ -184,9 +213,13 @@ export function AssistantScreen() {
           void saveChatHistory(next);
           return next;
         });
+        if (result.degradedReason) {
+          setVoiceError(`Local model unavailable (${result.degradedReason}); using built-in mode.`);
+        }
         void maybeSpeak(result.reply);
         setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 50);
       } finally {
+        runAbortRef.current = null;
         setBusy(false);
       }
     },
@@ -207,6 +240,8 @@ export function AssistantScreen() {
 
   const toggleListen = useCallback(async () => {
     if (listening) {
+      setListening(false);
+      setPartial(t("assistant.transcribing", { defaultValue: "Transcribing…" }));
       listenerRef.current?.stop();
       return;
     }
@@ -240,6 +275,17 @@ export function AssistantScreen() {
               defaultValue: "No speech detected. Tap the mic and try again.",
             }),
           );
+        } else if (msg === "session-timeout") {
+          setPartial(
+            t("assistant.sessionTimeout", {
+              defaultValue: "Voice input timed out. Tap the mic and try again.",
+            }),
+          );
+          setVoiceError(
+            t("assistant.sessionTimeout", {
+              defaultValue: "Voice input timed out. Tap the mic and try again.",
+            }),
+          );
         } else {
           const detail = msg || caps.sttDetail || "";
           setPartial(
@@ -257,22 +303,35 @@ export function AssistantScreen() {
     });
   }, [listening, voiceCaps, i18n.language, aiConfig.sttDir, sendText, t, caps.sttDetail, caps.speechReason]);
 
-  function confirmExpense(msg: ChatMessage) {
-    if (!msg.pendingExpense) return;
-    addCashflow(proposalToCashflow(msg.pendingExpense));
+  function confirmChange(msg: ChatMessage) {
+    if (!msg.pendingChange) return;
+    applyProposedChange(msg.pendingChange, {
+      addCashflow,
+      updateCashflow: store.updateCashflow,
+      removeCashflow: store.removeCashflow,
+      addBudgetPlan: store.addBudgetPlan,
+      addBudgetItem: store.addBudgetItem,
+      updateBudgetItem: store.updateBudgetItem,
+      addGoal: store.addGoal,
+      updateGoal: store.updateGoal,
+      addLoan: store.addLoan,
+      addHolding: store.addHolding,
+      updateHolding: store.updateHolding,
+      addCategory: store.addCategory,
+    });
     setMessages((all) => {
       const next = all.map((m) =>
-        m.id === msg.id ? { ...m, pendingExpense: undefined, content: m.content + " ✓" } : m,
+        m.id === msg.id ? { ...m, pendingChange: undefined, content: m.content + " ✓" } : m,
       );
       void saveChatHistory(next);
       return next;
     });
   }
 
-  function dismissExpense(msg: ChatMessage) {
+  function dismissChange(msg: ChatMessage) {
     setMessages((all) => {
       const next = all.map((m) =>
-        m.id === msg.id ? { ...m, pendingExpense: undefined } : m,
+        m.id === msg.id ? { ...m, pendingChange: undefined } : m,
       );
       void saveChatHistory(next);
       return next;
@@ -387,15 +446,21 @@ export function AssistantScreen() {
                 }}
               />
             ) : null}
-            {m.pendingExpense ? (
+            {m.pendingChange ? (
               <View style={{ gap: 8, marginTop: 8 }}>
+                {m.pendingChange.preview.slice(0, 6).map((row) => (
+                  <Text key={`${m.id}-${row.label}-${row.after}`} style={styles.previewRow}>
+                    {row.label}: {row.before ? `${row.before} -> ` : ""}
+                    {row.after}
+                  </Text>
+                ))}
                 <PrimaryButton
-                  label={t("assistant.confirmAdd", { defaultValue: "Confirm expense" })}
-                  onPress={() => confirmExpense(m)}
+                  label={t("assistant.confirmAdd", { defaultValue: "Confirm change" })}
+                  onPress={() => confirmChange(m)}
                 />
                 <SecondaryButton
                   label={t("assistant.cancel", { defaultValue: "Dismiss" })}
-                  onPress={() => dismissExpense(m)}
+                  onPress={() => dismissChange(m)}
                 />
               </View>
             ) : null}
@@ -423,9 +488,13 @@ export function AssistantScreen() {
           onChangeText={setInput}
           editable={!busy && !listening}
         />
-        <Pressable style={styles.send} onPress={send} disabled={busy || listening}>
+        <Pressable
+          style={styles.send}
+          onPress={busy ? () => runAbortRef.current?.abort() : send}
+          disabled={listening}
+        >
           {busy ? (
-            <ActivityIndicator color="#fff" />
+            <Text style={styles.sendText}>{t("assistant.stop", { defaultValue: "Stop" })}</Text>
           ) : (
             <Text style={styles.sendText}>{t("assistant.sendBtn", { defaultValue: "Send" })}</Text>
           )}
@@ -484,6 +553,7 @@ const styles = StyleSheet.create({
     minHeight: 44,
   },
   sendText: { color: colors.onAccent, fontWeight: "600" },
+  previewRow: { color: colors.muted, fontSize: 12, lineHeight: 16 },
   mic: {
     width: 48,
     height: 48,

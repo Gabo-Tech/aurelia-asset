@@ -6,6 +6,7 @@ import { Platform } from "react-native";
 import RNFS from "react-native-fs";
 import type { AiConfig } from "@/lib/ai/config";
 import { looksLikeSttDir, looksLikeTtsDir, findEspeakDataDir } from "@/lib/ai/downloads";
+import { playWavFile, stopWavPlayback } from "@/platform/wavPlayer";
 
 type AsrModelType =
   | "whisper"
@@ -218,6 +219,7 @@ export async function transcribePcm(
   samples: Float32Array,
   sampleRate: number,
   modelDir: string,
+  _locale?: string,
 ): Promise<string> {
   const asr = await ensureAsr(modelDir);
   const res = await asr.recognizeFromSamples(sampleRate, Array.from(samples));
@@ -225,26 +227,37 @@ export async function transcribePcm(
   return (res.text || "").trim();
 }
 
-/** Speak text; Sherpa can play audio natively when playAudio is true. */
+/** Speak text; Android plays saved WAV via MediaPlayer (Sherpa AudioTrack can fail silently). */
 export async function synthesizeSpeech(
   text: string,
   modelDir: string,
+  _locale?: string,
 ): Promise<{ sampleRate: number; played: boolean; filePath?: string }> {
   const tts = await ensureTts(modelDir);
+  const streamOnDevice = Platform.OS === "ios";
   const res = await tts.generateSpeech(text, {
     speakerId: 0,
     speakingRate: 1,
-    playAudio: true,
+    playAudio: streamOnDevice,
   });
   if (!res.success) throw new Error("tts-failed");
+
+  let played = streamOnDevice;
+  if (!streamOnDevice) {
+    if (!res.filePath) throw new Error("tts-no-audio-file");
+    played = await playWavFile(res.filePath);
+    if (!played) throw new Error("tts-playback-failed");
+  }
+
   return {
     sampleRate: tts.getSampleRate(),
-    played: true,
+    played,
     filePath: res.filePath,
   };
 }
 
 export async function stopSpeech(): Promise<void> {
+  await stopWavPlayback();
   const mod = await loadSherpa();
   if (!mod) return;
   try {

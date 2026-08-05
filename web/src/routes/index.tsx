@@ -21,7 +21,7 @@ import {
   Download,
 } from "lucide-react";
 import { getGithubRepo } from "@/lib/repo.functions";
-import { ASSETS, DEFAULT_GITHUB_REPO, SITE_URL, githubSourceUrl } from "@/lib/site-config";
+import { ASSETS, SITE_URL, githubSourceUrl } from "@/lib/site-config";
 
 import { MouseGlow, ScrollAurora, Reveal } from "@/components/landing-ambient";
 import i18n from "@/i18n";
@@ -529,22 +529,22 @@ const DOWNLOAD_PLATFORMS: Array<{
     key: "linuxAppImage",
     icon: Download,
     assetGlob: ".AppImage",
-    releaseAsset: "Portfolio.Tracker_0.1.2_amd64.AppImage",
-    downloadAs: "PortfolioTracker_0.1.2_amd64.AppImage",
+    releaseAsset: "Aurelia_0.1.2_amd64.AppImage",
+    downloadAs: "Aurelia_0.1.2_amd64.AppImage",
   },
   {
     key: "linuxDeb",
     icon: Download,
     assetGlob: ".deb",
-    releaseAsset: "Portfolio.Tracker_0.1.2_amd64.deb",
-    downloadAs: "PortfolioTracker_0.1.2_amd64.deb",
+    releaseAsset: "Aurelia_0.1.2_amd64.deb",
+    downloadAs: "Aurelia_0.1.2_amd64.deb",
   },
   {
     key: "linuxRpm",
     icon: Download,
     assetGlob: ".rpm",
-    releaseAsset: "Portfolio.Tracker-0.1.2-1.x86_64.rpm",
-    downloadAs: "PortfolioTracker-0.1.2-1.x86_64.rpm",
+    releaseAsset: "Aurelia-0.1.2-1.x86_64.rpm",
+    downloadAs: "Aurelia-0.1.2-1.x86_64.rpm",
   },
   {
     key: "android",
@@ -567,10 +567,9 @@ function Downloads() {
   }, [fetchRepo]);
 
   const releaseBase = repo ? `https://github.com/${repo}/releases/latest` : null;
-  const releaseRepo = repo ?? DEFAULT_GITHUB_REPO;
 
-  function releaseDownloadUrl(filename: string) {
-    return `https://github.com/${releaseRepo}/releases/latest/download/${encodeURIComponent(filename)}`;
+  function siteDownloadUrl(filename: string) {
+    return `/downloads/${encodeURIComponent(filename)}`;
   }
 
   return (
@@ -587,7 +586,7 @@ function Downloads() {
             const Icon = d.icon;
             const label = t(`landing.downloads.platforms.${d.key}`);
             const note = t(`landing.downloads.notes.${d.key}`, { defaultValue: "" });
-            const releaseHref = d.releaseAsset ? releaseDownloadUrl(d.releaseAsset) : null;
+            const releaseHref = d.releaseAsset ? siteDownloadUrl(d.releaseAsset) : null;
             const href = releaseHref ?? releaseBase ?? githubSourceUrl();
             const cls =
               "relative flex flex-col items-center justify-center rounded-2xl border border-border/60 bg-card/40 p-6 text-center transition-colors hover:border-primary/60 hover:bg-card";
