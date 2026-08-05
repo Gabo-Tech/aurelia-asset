@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   ScrollView,
   Text,
@@ -6,7 +6,6 @@ import {
   Switch,
   View,
   Alert,
-  ActivityIndicator,
   TextInput,
   Platform,
 } from "react-native";
@@ -17,8 +16,11 @@ import {
   Card,
   PrimaryButton,
   SecondaryButton,
+  DangerButton,
   Chip,
   SectionHeader,
+  BusyOverlay,
+  ProgressBar,
 } from "@/components/ui";
 import { useStore, usePrivacy } from "@/lib/store";
 import {
@@ -36,10 +38,16 @@ import {
   cancelActiveDownload,
   clearInstalledModel,
   formatDownloadProgress,
+  downloadProgressRatio,
   totalDownloadSizeLabel,
+  looksLikeSttDir,
+  looksLikeTtsDir,
+  describeSpeechModelDir,
   type ModelDownloadProgress,
   type ModelKind,
 } from "@/lib/ai/downloads";
+import { getAiCapabilities } from "@/lib/ai/provider";
+import { aiConfigFromSettings } from "@/lib/ai/config";
 import { bustCache } from "@/lib/finance/cache";
 import { clearPriceHistoryCache } from "@/lib/finance";
 import { CURRENCIES } from "@/lib/currency";
@@ -58,21 +66,69 @@ export function SettingsScreen() {
   const { state, updateSettings, importState, reset } = useStore();
   const { privacy, toggle } = usePrivacy();
   const [busy, setBusy] = useState(false);
-  const [dlProgress, setDlProgress] = useState<string | null>(null);
+  const [busyTitle, setBusyTitle] = useState("Working…");
+  const [busySubtitle, setBusySubtitle] = useState<string | undefined>();
+  const [dlProgress, setDlProgress] = useState<ModelDownloadProgress | null>(null);
+  const [dlStepLabel, setDlStepLabel] = useState<string | null>(null);
   const [downloading, setDownloading] = useState<ModelKind | "all" | null>(null);
   const [finnhub, setFinnhub] = useState(state.settings.finnhubKey ?? "");
+  const [displayName, setDisplayName] = useState(state.settings.displayName ?? "");
   const [pasteValue, setPasteValue] = useState("");
   const [showPaste, setShowPaste] = useState(false);
+  const [sttStatus, setSttStatus] = useState("…");
+  const [ttsStatus, setTtsStatus] = useState("…");
+  const [sherpaNote, setSherpaNote] = useState<string | null>(null);
+  /** Bumped on cancel so late download progress callbacks are ignored. */
+  const downloadGenRef = useRef(0);
+
+  function isDownloadCancelledMsg(msg: string): boolean {
+    return /cancel/i.test(msg);
+  }
+
+  function clearDownloadUi() {
+    setDownloading(null);
+    setDlProgress(null);
+    setDlStepLabel(null);
+  }
+
+  function cancelDownload() {
+    downloadGenRef.current += 1;
+    cancelActiveDownload();
+    clearDownloadUi();
+  }
+
+  function applyDownloadProgress(gen: number, p: ModelDownloadProgress) {
+    if (gen !== downloadGenRef.current) return;
+    setDlProgress(p);
+  }
+
+  async function refreshVoiceStatus() {
+    if (isWeb) return;
+    const [stt, tts, caps] = await Promise.all([
+      describeSpeechModelDir("stt", state.settings.aiSttModelDir),
+      describeSpeechModelDir("tts", state.settings.aiTtsModelDir),
+      getAiCapabilities(aiConfigFromSettings(state.settings)),
+    ]);
+    setSttStatus(stt.label);
+    setTtsStatus(tts.label);
+    setSherpaNote(caps.speechReason && !caps.stt && !caps.tts ? caps.speechReason : null);
+  }
+
+  useEffect(() => {
+    void refreshVoiceStatus();
+  }, [state.settings.aiSttModelDir, state.settings.aiTtsModelDir]);
 
   async function applyBackupText(text: string) {
     const parsed = parseBackupJson(text);
-    importState(parsed.state);
+    await importState(parsed.state);
     if (parsed.language && SUPPORTED_LANGUAGES.some((l) => l.code === parsed.language)) {
       await i18n.changeLanguage(parsed.language);
     }
   }
 
   async function onExport() {
+    setBusyTitle("Exporting backup…");
+    setBusySubtitle("Building encrypted-compatible JSON");
     setBusy(true);
     try {
       const envelope = buildBackupEnvelope(state, { language: i18n.language?.slice(0, 2) });
@@ -83,10 +139,13 @@ export function SettingsScreen() {
       Alert.alert("Export failed", (e as Error).message);
     } finally {
       setBusy(false);
+      setBusySubtitle(undefined);
     }
   }
 
   async function onExportCsv() {
+    setBusyTitle("Exporting CSV…");
+    setBusySubtitle(undefined);
     setBusy(true);
     try {
       const rows: unknown[][] = [
@@ -112,16 +171,20 @@ export function SettingsScreen() {
   }
 
   async function onImport() {
+    setBusyTitle("Importing backup…");
+    setBusySubtitle("Reading file and saving locally");
     setBusy(true);
     try {
       const text = await readImportFile();
       if (!text) return;
+      setBusySubtitle("Decrypting write queue. Keep the app open.");
       await applyBackupText(text);
       Alert.alert("Import", t("settings.data.imported", { defaultValue: "Backup restored" }));
     } catch (e) {
       Alert.alert("Import failed", (e as Error).message);
     } finally {
       setBusy(false);
+      setBusySubtitle(undefined);
     }
   }
 
@@ -130,6 +193,8 @@ export function SettingsScreen() {
       Alert.alert("Import", "Paste a backup JSON first");
       return;
     }
+    setBusyTitle("Importing backup…");
+    setBusySubtitle("Saving locally. Keep the app open.");
     setBusy(true);
     try {
       await applyBackupText(pasteValue);
@@ -140,6 +205,7 @@ export function SettingsScreen() {
       Alert.alert("Import failed", (e as Error).message);
     } finally {
       setBusy(false);
+      setBusySubtitle(undefined);
     }
   }
 
@@ -150,55 +216,181 @@ export function SettingsScreen() {
 
   async function pickStt() {
     const path = await pickModelFile();
-    if (path) updateSettings({ aiSttModelDir: path.replace(/\/[^/]+$/, ""), aiModelSetup: "done" });
+    if (!path) return;
+    const dir = path.replace(/\/[^/]+$/, "");
+    if (!(await looksLikeSttDir(dir))) {
+      Alert.alert(
+        "Invalid STT folder",
+        "Prefer Download STT. A picked file only works if its parent folder already contains tokens.txt and the ONNX models.",
+      );
+      return;
+    }
+    updateSettings({ aiSttModelDir: dir, aiModelSetup: "done" });
+    Alert.alert("STT ready", dir);
   }
 
   async function pickTts() {
     const path = await pickModelFile();
-    if (path) updateSettings({ aiTtsModelDir: path.replace(/\/[^/]+$/, ""), aiModelSetup: "done" });
+    if (!path) return;
+    const dir = path.replace(/\/[^/]+$/, "");
+    if (!(await looksLikeTtsDir(dir))) {
+      Alert.alert(
+        "Invalid TTS folder",
+        "Prefer Download TTS. Parent folder needs tokens.txt, model.onnx, and espeak-ng-data.",
+      );
+      return;
+    }
+    updateSettings({ aiTtsModelDir: dir, aiModelSetup: "done" });
+    Alert.alert("TTS path set", dir);
   }
 
   async function onDownload(kind: ModelKind) {
+    const gen = ++downloadGenRef.current;
     setDownloading(kind);
-    setDlProgress("Starting…");
+    setDlStepLabel(null);
+    setDlProgress({ kind, received: 0, phase: "downloading" });
     try {
       const path = await downloadModel(kind, (p: ModelDownloadProgress) => {
-        setDlProgress(`${kind.toUpperCase()}: ${formatDownloadProgress(p)}`);
+        applyDownloadProgress(gen, p);
       });
+      if (gen !== downloadGenRef.current) return;
       const entry = MODEL_MANIFEST.find((m) => m.kind === kind)!;
       updateSettings({ [entry.settingsKey]: path, aiModelSetup: "done" });
-      Alert.alert("Downloaded", `${kind.toUpperCase()} ready`);
+      if (kind === "stt" || kind === "tts") {
+        const status = await describeSpeechModelDir(kind, path);
+        Alert.alert(status.ok ? "Downloaded" : "Downloaded with issues", status.label);
+      } else {
+        Alert.alert("Downloaded", `${kind.toUpperCase()} ready`);
+      }
+      void refreshVoiceStatus();
     } catch (e) {
-      Alert.alert("Download failed", (e as Error).message);
+      if (gen !== downloadGenRef.current) return;
+      const msg = (e as Error).message;
+      if (!isDownloadCancelledMsg(msg)) Alert.alert("Download failed", msg);
     } finally {
-      setDownloading(null);
-      setDlProgress(null);
+      if (gen === downloadGenRef.current) clearDownloadUi();
     }
   }
 
   async function onDownloadAll() {
+    const gen = ++downloadGenRef.current;
     setDownloading("all");
+    const kinds = MODEL_MANIFEST.map((m) => m.kind);
     try {
-      for (const entry of MODEL_MANIFEST) {
-        setDlProgress(`${entry.kind.toUpperCase()}…`);
-        const path = await downloadModel(entry.kind, (p) => {
-          setDlProgress(`${entry.kind.toUpperCase()}: ${formatDownloadProgress(p)}`);
-        });
+      for (let i = 0; i < kinds.length; i++) {
+        if (gen !== downloadGenRef.current) return;
+        const kind = kinds[i]!;
+        setDlStepLabel(`${kind.toUpperCase()} ${i + 1}/${kinds.length}`);
+        setDlProgress({ kind, received: 0, phase: "downloading" });
+        const path = await downloadModel(kind, (p) => applyDownloadProgress(gen, p));
+        if (gen !== downloadGenRef.current) return;
+        const entry = MODEL_MANIFEST.find((m) => m.kind === kind)!;
         updateSettings({ [entry.settingsKey]: path, aiModelSetup: "done" });
       }
+      if (gen !== downloadGenRef.current) return;
       Alert.alert("Downloaded", `All models ready (${totalDownloadSizeLabel()})`);
+      void refreshVoiceStatus();
     } catch (e) {
-      Alert.alert("Download failed", (e as Error).message);
+      if (gen !== downloadGenRef.current) return;
+      const msg = (e as Error).message;
+      if (!isDownloadCancelledMsg(msg)) Alert.alert("Download failed", msg);
     } finally {
-      setDownloading(null);
-      setDlProgress(null);
+      if (gen === downloadGenRef.current) clearDownloadUi();
     }
   }
 
+  async function onDownloadSpeechOnly() {
+    const gen = ++downloadGenRef.current;
+    setDownloading("all");
+    const kinds = ["stt", "tts"] as const;
+    try {
+      for (let i = 0; i < kinds.length; i++) {
+        if (gen !== downloadGenRef.current) return;
+        const kind = kinds[i]!;
+        setDlStepLabel(`${kind.toUpperCase()} ${i + 1}/${kinds.length}`);
+        setDlProgress({ kind, received: 0, phase: "downloading" });
+        const path = await downloadModel(kind, (p) => applyDownloadProgress(gen, p));
+        if (gen !== downloadGenRef.current) return;
+        const entry = MODEL_MANIFEST.find((m) => m.kind === kind)!;
+        updateSettings({ [entry.settingsKey]: path, aiModelSetup: "done" });
+      }
+      if (gen !== downloadGenRef.current) return;
+      Alert.alert("Downloaded", "STT + TTS ready (~170 MB)");
+      void refreshVoiceStatus();
+    } catch (e) {
+      if (gen !== downloadGenRef.current) return;
+      const msg = (e as Error).message;
+      if (!isDownloadCancelledMsg(msg)) Alert.alert("Download failed", msg);
+    } finally {
+      if (gen === downloadGenRef.current) clearDownloadUi();
+    }
+  }
+
+  const overlayVisible = busy || !!downloading;
+  const overlayTitle = busy
+    ? busyTitle
+    : dlStepLabel
+      ? `Downloading ${dlStepLabel}`
+      : downloading
+        ? `Downloading ${String(downloading).toUpperCase()}…`
+        : "Working…";
+  const overlaySubtitle = busy
+    ? busySubtitle
+    : dlProgress
+      ? formatDownloadProgress(dlProgress)
+      : "Keep the app open until this finishes";
+  const overlayProgress = busy ? undefined : downloadProgressRatio(dlProgress);
+
   return (
     <Screen>
-      <ScrollView>
-        <Header title={t("nav.settings", { defaultValue: "Settings" })} />
+      <BusyOverlay
+        visible={overlayVisible}
+        title={overlayTitle}
+        subtitle={overlaySubtitle}
+        progress={overlayProgress}
+        onCancel={downloading ? cancelDownload : undefined}
+        cancelLabel="Cancel download"
+      />
+      <ScrollView
+        style={{ flex: 1 }}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        automaticallyAdjustKeyboardInsets
+      >
+        <Header title={t("nav.settings")} subtitle={t("settings.subtitle")} />
+
+        <Card>
+          <Text style={styles.section}>{t("settings.about.title")}</Text>
+          <Text style={styles.meta}>{t("settings.about.body")}</Text>
+          <View style={{ height: 8 }} />
+          <SecondaryButton
+            label={t("nav.moreDesc.tourTitle")}
+            onPress={() => updateSettings({ onboardingSeen: false })}
+          />
+        </Card>
+
+        <Card>
+          <Text style={styles.section}>Profile</Text>
+          <Text style={styles.meta}>Name for the dashboard greeting</Text>
+          <TextInput
+            style={styles.input}
+            value={displayName}
+            onChangeText={setDisplayName}
+            placeholder="e.g. Gabriel"
+            placeholderTextColor={colors.muted}
+            autoCapitalize="words"
+            autoCorrect={false}
+          />
+          <PrimaryButton
+            label="Save name"
+            onPress={() => {
+              const trimmed = displayName.trim();
+              updateSettings({ displayName: trimmed || undefined });
+              setDisplayName(trimmed);
+              Alert.alert("Profile", trimmed ? `Greeting will say Hi ${trimmed}` : "Name cleared");
+            }}
+          />
+        </Card>
 
         <Card>
           <Text style={styles.section}>Privacy</Text>
@@ -206,6 +398,7 @@ export function SettingsScreen() {
             <Text style={styles.label}>Privacy mode</Text>
             <Switch value={privacy} onValueChange={toggle} />
           </View>
+          <Text style={styles.meta}>{t("settings.api.privacyModeHelp")}</Text>
         </Card>
 
         <Card>
@@ -295,9 +488,15 @@ export function SettingsScreen() {
           {!isWeb && state.settings.aiModelSetup === "pending" ? (
             <View style={styles.setupBanner}>
               <Text style={styles.meta}>
-                Optional: download on-device LLM + speech models (~1.2 GB). You can also pick files
-                later or use NLU without models.
+                Optional: download on-device LLM + speech models (~1.2 GB). For mic and speak
+                replies, download STT + TTS (~170 MB). NLU works without models.
               </Text>
+              <PrimaryButton
+                label="Download STT + TTS (~170 MB)"
+                onPress={() => void onDownloadSpeechOnly()}
+                disabled={!!downloading}
+              />
+              <View style={{ height: 8 }} />
               <PrimaryButton
                 label={`Download all (${totalDownloadSizeLabel()})`}
                 onPress={() => void onDownloadAll()}
@@ -317,13 +516,22 @@ export function SettingsScreen() {
             </Text>
           ) : (
             <>
+              {!state.settings.aiSttModelDir || !state.settings.aiTtsModelDir ? (
+                <Text style={styles.meta}>
+                  Download STT + TTS (~170 MB) to enable mic and speak replies on this device.
+                </Text>
+              ) : null}
+              {sherpaNote ? (
+                <Text style={[styles.meta, { color: colors.danger }]}>{sherpaNote}</Text>
+              ) : null}
               <Text style={styles.meta}>LLM: {state.settings.aiLlmModelPath || "not set"}</Text>
-              <Text style={styles.meta}>STT dir: {state.settings.aiSttModelDir || "not set"}</Text>
-              <Text style={styles.meta}>TTS dir: {state.settings.aiTtsModelDir || "not set"}</Text>
+              <Text style={styles.meta}>STT: {sttStatus}</Text>
+              <Text style={styles.meta}>TTS: {ttsStatus}</Text>
               {dlProgress ? (
                 <View style={styles.progressBox}>
-                  <ActivityIndicator color={colors.accent} />
-                  <Text style={styles.progressText}>{dlProgress}</Text>
+                  <ProgressBar progress={downloadProgressRatio(dlProgress)} />
+                  {dlStepLabel ? <Text style={styles.progressText}>{dlStepLabel}</Text> : null}
+                  <Text style={styles.progressText}>{formatDownloadProgress(dlProgress)}</Text>
                 </View>
               ) : null}
               <View style={{ height: 8 }} />
@@ -332,15 +540,21 @@ export function SettingsScreen() {
                   <SecondaryButton
                     label="Cancel download"
                     destructive
-                    onPress={() => {
-                      cancelActiveDownload();
-                      setDownloading(null);
-                      setDlProgress(null);
-                    }}
+                    onPress={cancelDownload}
                   />
                   <View style={{ height: 8 }} />
                 </>
               ) : null}
+              <PrimaryButton
+                label={
+                  downloading === "all"
+                    ? "Downloading…"
+                    : "Download STT + TTS (~170 MB)"
+                }
+                onPress={() => void onDownloadSpeechOnly()}
+                disabled={!!downloading}
+              />
+              <View style={{ height: 8 }} />
               <PrimaryButton
                 label={
                   downloading === "all"
@@ -354,6 +568,7 @@ export function SettingsScreen() {
               {MODEL_MANIFEST.map((m) => (
                 <View key={m.kind} style={{ marginBottom: 8 }}>
                   <PrimaryButton
+                    compact
                     label={
                       downloading === m.kind
                         ? `Downloading ${m.kind}…`
@@ -364,6 +579,7 @@ export function SettingsScreen() {
                   />
                   <View style={{ height: 6 }} />
                   <SecondaryButton
+                    compact
                     label={`Clear ${m.kind.toUpperCase()} path`}
                     onPress={() => {
                       void clearInstalledModel(m.kind).catch(() => undefined);
@@ -372,11 +588,14 @@ export function SettingsScreen() {
                   />
                 </View>
               ))}
+              <Text style={styles.meta}>
+                Prefer Download for STT/TTS (full folders). Pick is for advanced setups only.
+              </Text>
               <PrimaryButton label="Pick LLM (GGUF)" onPress={pickLlm} />
               <View style={{ height: 8 }} />
-              <PrimaryButton label="Pick STT model file" onPress={pickStt} />
+              <SecondaryButton label="Pick STT folder via file…" onPress={pickStt} />
               <View style={{ height: 8 }} />
-              <PrimaryButton label="Pick TTS model file" onPress={pickTts} />
+              <SecondaryButton label="Pick TTS folder via file…" onPress={pickTts} />
             </>
           )}
           <View style={styles.row}>
@@ -394,18 +613,27 @@ export function SettingsScreen() {
             JSON backups use the web-compatible envelope so browser exports restore correctly.
           </Text>
           <PrimaryButton
-            label={busy ? "…" : "Export JSON backup"}
+            label={busy ? "Working…" : "Export JSON backup"}
             onPress={onExport}
-            disabled={busy}
+            disabled={busy || !!downloading}
           />
           <View style={{ height: 8 }} />
-          <PrimaryButton label="Export cashflow CSV" onPress={onExportCsv} disabled={busy} />
+          <PrimaryButton
+            label="Export cashflow CSV"
+            onPress={onExportCsv}
+            disabled={busy || !!downloading}
+          />
           <View style={{ height: 8 }} />
-          <PrimaryButton label="Import JSON backup" onPress={onImport} disabled={busy} />
+          <PrimaryButton
+            label={busy ? "Working…" : "Import JSON backup"}
+            onPress={onImport}
+            disabled={busy || !!downloading}
+          />
           <View style={{ height: 8 }} />
           <PrimaryButton
             label={showPaste ? "Hide paste import" : "Paste JSON backup"}
             onPress={() => setShowPaste((v) => !v)}
+            disabled={busy || !!downloading}
           />
           {showPaste ? (
             <View style={{ marginTop: 8 }}>
@@ -422,19 +650,35 @@ export function SettingsScreen() {
               <PrimaryButton
                 label="Restore from paste"
                 onPress={() => void onPasteImport()}
-                disabled={busy}
+                disabled={busy || !!downloading}
               />
             </View>
           ) : null}
           <View style={{ height: 8 }} />
-          <PrimaryButton
+          <DangerButton
             label="Reset all data"
             onPress={() =>
               Alert.alert("Reset?", "This clears local finance data.", [
                 { text: "Cancel", style: "cancel" },
-                { text: "Reset", style: "destructive", onPress: () => reset() },
+                {
+                  text: "Reset",
+                  style: "destructive",
+                  onPress: () => {
+                    setBusyTitle("Resetting…");
+                    setBusySubtitle("Clearing and saving empty state");
+                    setBusy(true);
+                    void reset()
+                      .then(() => Alert.alert("Reset", "Local data cleared"))
+                      .catch((e) => Alert.alert("Reset failed", (e as Error).message))
+                      .finally(() => {
+                        setBusy(false);
+                        setBusySubtitle(undefined);
+                      });
+                  },
+                },
               ])
             }
+            disabled={busy || !!downloading}
           />
         </Card>
       </ScrollView>
@@ -454,13 +698,13 @@ const styles = StyleSheet.create({
   meta: { color: colors.muted, fontSize: 12, marginBottom: 4 },
   wrap: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   progressBox: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
+    flexDirection: "column",
+    alignItems: "stretch",
+    gap: 6,
     marginTop: 8,
     marginBottom: 4,
   },
-  progressText: { color: colors.accent, fontSize: 12, flex: 1 },
+  progressText: { color: colors.accent, fontSize: 12 },
   setupBanner: {
     marginBottom: 12,
     paddingBottom: 12,

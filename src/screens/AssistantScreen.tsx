@@ -8,9 +8,11 @@ import {
   Pressable,
   ActivityIndicator,
   Switch,
+  Keyboard,
+  type KeyboardEvent,
 } from "react-native";
 import { useTranslation } from "react-i18next";
-import { Screen, Header, PrimaryButton, SecondaryButton, EmptyState } from "@/components/ui";
+import { Screen, Header, PrimaryButton, SecondaryButton, EmptyState, chipLabelStyle, chipContainerStyle } from "@/components/ui";
 import { useStore, useMoney } from "@/lib/store";
 import { runAssistant, getAiCapabilities } from "@/lib/ai/provider";
 import { aiConfigFromSettings } from "@/lib/ai/config";
@@ -25,6 +27,35 @@ import {
 } from "@/lib/ai/voice";
 import type { ChatMessage, EngineMessage } from "@/lib/ai/types";
 import { colors, spacing } from "@/theme/colors";
+import Markdown from "react-native-markdown-display";
+
+const mdStyles = StyleSheet.create({
+  body: { color: colors.text, fontSize: 14, lineHeight: 20 },
+  paragraph: { marginTop: 0, marginBottom: 6 },
+  bullet_list: { marginBottom: 6 },
+  ordered_list: { marginBottom: 6 },
+  list_item: { marginBottom: 2 },
+  strong: { color: colors.text, fontWeight: "700" },
+  em: { color: colors.text },
+  code_inline: {
+    backgroundColor: colors.surfaceAlt,
+    color: colors.accent,
+    paddingHorizontal: 4,
+    borderRadius: 4,
+    fontSize: 13,
+  },
+  fence: {
+    backgroundColor: colors.surfaceAlt,
+    color: colors.text,
+    padding: 8,
+    borderRadius: 8,
+    fontSize: 12,
+  },
+  link: { color: colors.accent },
+  heading1: { color: colors.text, fontSize: 18, fontWeight: "700", marginBottom: 6 },
+  heading2: { color: colors.text, fontSize: 16, fontWeight: "700", marginBottom: 4 },
+  heading3: { color: colors.text, fontSize: 15, fontWeight: "700", marginBottom: 4 },
+});
 
 export function AssistantScreen() {
   const { t, i18n } = useTranslation();
@@ -36,19 +67,49 @@ export function AssistantScreen() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [busy, setBusy] = useState(false);
   const [listening, setListening] = useState(false);
-  const [caps, setCaps] = useState({ llm: false, stt: false, tts: false });
+  const [caps, setCaps] = useState({
+    llm: false,
+    stt: false,
+    tts: false,
+    speechReason: undefined as string | undefined,
+    sttDetail: undefined as string | undefined,
+    ttsDetail: undefined as string | undefined,
+  });
   const [voiceCaps, setVoiceCaps] = useState<VoiceCapabilities>({ stt: "none", tts: "none" });
+  const [voiceError, setVoiceError] = useState<string | null>(null);
   const listenerRef = useRef<VoiceListener | null>(null);
   const scrollRef = useRef<ScrollView>(null);
+  const [keyboardPad, setKeyboardPad] = useState(0);
 
   const aiConfig = aiConfigFromSettings(state.settings);
   const ttsEnabled = state.settings.aiTtsEnabled !== false;
 
   useEffect(() => {
+    const onShow = (e: KeyboardEvent) => {
+      setKeyboardPad(Math.max(0, e.endCoordinates?.height ?? 0));
+    };
+    const onHide = () => setKeyboardPad(0);
+    const showSub = Keyboard.addListener("keyboardDidShow", onShow);
+    const hideSub = Keyboard.addListener("keyboardDidHide", onHide);
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
+
+  useEffect(() => {
     void loadChatHistory().then(setMessages);
     void getAiCapabilities(aiConfig).then((c) => {
-      setCaps(c);
+      setCaps({
+        llm: c.llm,
+        stt: c.stt,
+        tts: c.tts,
+        speechReason: c.speechReason,
+        sttDetail: c.sttDetail,
+        ttsDetail: c.ttsDetail,
+      });
       setVoiceCaps(detectVoiceCapabilities({ stt: c.stt, tts: c.tts }));
+      setVoiceError(null);
     });
   }, [state.settings.aiLlmModelPath, state.settings.aiSttModelDir, state.settings.aiTtsModelDir]);
 
@@ -68,11 +129,17 @@ export function AssistantScreen() {
       if (!ttsEnabled || voiceCaps.tts === "none") return;
       try {
         await speak(text, voiceCaps.tts, i18n.language, aiConfig.ttsDir);
-      } catch {
-        /* ignore playback errors */
+        setVoiceError(null);
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        setVoiceError(
+          t("assistant.ttsError", {
+            defaultValue: "TTS failed. Re-download TTS in Settings if espeak-ng-data is missing.",
+          }) + (msg ? ` (${msg})` : ""),
+        );
       }
     },
-    [ttsEnabled, voiceCaps.tts, i18n.language, aiConfig.ttsDir],
+    [ttsEnabled, voiceCaps.tts, i18n.language, aiConfig.ttsDir, t],
   );
 
   const sendText = useCallback(
@@ -145,9 +212,11 @@ export function AssistantScreen() {
     }
     if (voiceCaps.stt === "none") {
       setPartial(
-        t("assistant.sttUnavailable", {
-          defaultValue: "Set an STT model folder in Settings to use voice input.",
-        }),
+        caps.sttDetail ||
+          caps.speechReason ||
+          t("assistant.sttUnavailable", {
+            defaultValue: "Download STT in Settings to use voice input.",
+          }),
       );
       return;
     }
@@ -172,17 +241,21 @@ export function AssistantScreen() {
             }),
           );
         } else {
+          const detail = msg || caps.sttDetail || "";
           setPartial(
             t("assistant.sttError", {
               defaultValue: "Couldn't capture audio. Check microphone permissions.",
-            }) + (msg ? ` (${msg})` : ""),
+            }) + (detail ? ` (${detail})` : ""),
           );
+          if (msg && !msg.includes("permission")) {
+            setVoiceError(detail || msg);
+          }
         }
       },
       onStart: () => setListening(true),
       onEnd: () => setListening(false),
     });
-  }, [listening, voiceCaps, i18n.language, aiConfig.sttDir, sendText, t]);
+  }, [listening, voiceCaps, i18n.language, aiConfig.sttDir, sendText, t, caps.sttDetail, caps.speechReason]);
 
   function confirmExpense(msg: ChatMessage) {
     if (!msg.pendingExpense) return;
@@ -218,10 +291,10 @@ export function AssistantScreen() {
   ];
 
   return (
-    <Screen>
+    <Screen avoidKeyboard={false}>
       <Header
         title={t("nav.assistant", { defaultValue: "Assistant" })}
-        subtitle={`LLM ${caps.llm ? "on" : "NLU"} · STT ${voiceCaps.stt} · TTS ${voiceCaps.tts}`}
+        subtitle={t("assistant.subtitle")}
       />
       <View style={styles.ttsRow}>
         <Text style={styles.ttsLabel}>
@@ -241,9 +314,11 @@ export function AssistantScreen() {
       ) : null}
       {voiceCaps.stt === "none" ? (
         <Text style={styles.banner}>
-          {t("assistant.sttUnavailable", {
-            defaultValue: "Voice input needs a Sherpa-ONNX STT model folder in Settings.",
-          })}
+          {caps.speechReason ||
+            caps.sttDetail ||
+            t("assistant.sttUnavailable", {
+              defaultValue: "Download STT in Settings to use voice input.",
+            })}
         </Text>
       ) : voiceCaps.stt === "webspeech" ? (
         <Text style={styles.banner}>
@@ -252,7 +327,22 @@ export function AssistantScreen() {
           })}
         </Text>
       ) : null}
-      <ScrollView ref={scrollRef} style={styles.chat}>
+      {voiceCaps.tts === "none" && ttsEnabled ? (
+        <Text style={styles.banner}>
+          {caps.ttsDetail ||
+            t("assistant.ttsUnavailable", {
+              defaultValue: "Download TTS in Settings to speak replies.",
+            })}
+        </Text>
+      ) : null}
+      {voiceError ? <Text style={styles.banner}>{voiceError}</Text> : null}
+      <ScrollView
+        ref={scrollRef}
+        style={styles.chat}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        automaticallyAdjustKeyboardInsets
+      >
         {messages.length === 0 ? (
           <EmptyState
             title={t("assistant.emptyTitle", { defaultValue: "Ask anything about your finances" })}
@@ -278,7 +368,11 @@ export function AssistantScreen() {
               m.role === "user" ? styles.bubbleUser : styles.bubbleAssistant,
             ]}
           >
-            <Text style={[styles.content, m.error && styles.errorText]}>{m.content}</Text>
+            {m.role === "assistant" && !m.error ? (
+              <Markdown style={mdStyles}>{m.content}</Markdown>
+            ) : (
+              <Text style={[styles.content, m.error && styles.errorText]}>{m.content}</Text>
+            )}
             {m.error ? (
               <SecondaryButton
                 label={t("assistant.retry", { defaultValue: "Retry" })}
@@ -309,7 +403,7 @@ export function AssistantScreen() {
         ))}
       </ScrollView>
       {partial ? <Text style={styles.partial}>{partial}</Text> : null}
-      <View style={styles.composer}>
+      <View style={[styles.composer, keyboardPad > 0 && { marginBottom: keyboardPad }]}>
         <Pressable
           style={[styles.mic, listening && styles.micActive]}
           onPress={() => void toggleListen()}
@@ -318,7 +412,7 @@ export function AssistantScreen() {
           <Text style={[styles.micText, listening && styles.micTextOn]}>
             {listening
               ? t("assistant.stop", { defaultValue: "Stop" })
-              : t("assistant.mic", { defaultValue: "Mic" })}
+              : t("assistant.mic", { defaultValue: "Voice" })}
           </Text>
         </Pressable>
         <TextInput
@@ -342,6 +436,7 @@ export function AssistantScreen() {
 }
 
 const styles = StyleSheet.create({
+  flex: { flex: 1 },
   chat: { flex: 1 },
   bubble: {
     maxWidth: "88%",
@@ -366,14 +461,10 @@ const styles = StyleSheet.create({
   errorText: { color: colors.danger },
   chips: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 12 },
   chip: {
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
+    ...chipContainerStyle,
     borderRadius: 16,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
   },
-  chipText: { color: colors.text, fontSize: 12, fontWeight: "600" },
+  chipText: { ...chipLabelStyle },
   composer: { flexDirection: "row", gap: 8, paddingTop: spacing.sm, alignItems: "center" },
   input: {
     flex: 1,

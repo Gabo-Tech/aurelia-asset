@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Financial Tracker",
+  "productName": "Aurelia",
   "version": "0.1.2",
   "identifier": "rocks.gabo.portfoliotracker",
   "build": {
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "Financial Tracker",
+        "title": "Aurelia",
         "width": 1280,
         "height": 800,
         "minWidth": 360,

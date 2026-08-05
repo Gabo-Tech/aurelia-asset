@@ -1,7 +1,21 @@
 import React, { useMemo, useState } from "react";
 import { ScrollView, Text, StyleSheet, TextInput, Alert, View, Pressable } from "react-native";
 import { useTranslation } from "react-i18next";
-import { Screen, Header, Card, PrimaryButton, Metric } from "@/components/ui";
+import {
+  Screen,
+  Header,
+  Card,
+  PrimaryButton,
+  SecondaryButton,
+  DangerButton,
+  Metric,
+  MetricRow,
+  EmptyState,
+  Field,
+  SegmentedControl,
+  chipLabelStyle,
+  chipContainerStyle,
+} from "@/components/ui";
 import { ChartFrame } from "@/components/ChartFrame";
 import { CategoryBreakdown } from "@/components/CategoryBreakdown";
 import { useStore, useMoney } from "@/lib/store";
@@ -101,7 +115,12 @@ export function PlanningScreen() {
   function onAddGoal() {
     const target = Number(goalTarget);
     if (!goalName.trim() || !isFinite(target) || target <= 0) {
-      Alert.alert("Invalid", "Enter name and target amount");
+      Alert.alert(
+        t("common.checkFields", { defaultValue: "Check your entries" }),
+        t("planning.goals.needNameTarget", {
+          defaultValue: "Enter a name and target amount.",
+        }),
+      );
       return;
     }
     addGoal({
@@ -330,55 +349,101 @@ export function PlanningScreen() {
 
   return (
     <Screen>
-      <ScrollView>
-        <Header title={t("nav.planning", { defaultValue: "Planning" })} />
+      <ScrollView
+        style={{ flex: 1 }}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        automaticallyAdjustKeyboardInsets
+      >
+        <Header
+          title={t("nav.planning", { defaultValue: "Planning" })}
+          subtitle={t("planning.subtitle", {
+            defaultValue: "Goals, budgets, loans, and forecasts",
+          })}
+        />
         <Card>
-          <Metric label="This month income" value={mask(monthly.income)} />
-          <Metric label="This month expenses" value={mask(monthly.expense)} />
-          <Metric label="Surplus" value={mask(monthly.surplus)} />
+          <MetricRow
+            items={[
+              { label: "This month income", value: mask(monthly.income) },
+              { label: "This month expenses", value: mask(monthly.expense) },
+              { label: "Surplus", value: mask(monthly.surplus) },
+            ]}
+          />
         </Card>
 
-        <View style={styles.tabs}>
-          {(["goals", "budgets", "loans", "forecast"] as const).map((id) => (
-            <Pressable
-              key={id}
-              onPress={() => setTab(id)}
-              style={[styles.tab, tab === id && styles.tabOn]}
-            >
-              <Text style={styles.tabText}>{id}</Text>
-            </Pressable>
-          ))}
-        </View>
+        <SegmentedControl
+          options={[
+            {
+              id: "goals" as const,
+              label: t("planning.tabs.goals", { defaultValue: "Goals" }),
+            },
+            {
+              id: "budgets" as const,
+              label: t("planning.tabs.budgets", { defaultValue: "Budgets" }),
+            },
+            {
+              id: "loans" as const,
+              label: t("planning.tabs.loans", { defaultValue: "Loans" }),
+            },
+            {
+              id: "forecast" as const,
+              label: t("planning.tabs.forecast", { defaultValue: "Forecast" }),
+            },
+          ]}
+          value={tab}
+          onChange={setTab}
+        />
 
         {tab === "goals" ? (
           <>
             <Card>
-              <Text style={styles.section}>Savings goals</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Goal name"
-                placeholderTextColor={colors.muted}
-                value={goalName}
-                onChangeText={setGoalName}
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="Target amount"
-                placeholderTextColor={colors.muted}
-                keyboardType="decimal-pad"
-                value={goalTarget}
-                onChangeText={setGoalTarget}
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="Target date (YYYY-MM-DD, optional)"
-                placeholderTextColor={colors.muted}
-                value={goalDate}
-                onChangeText={setGoalDate}
-                autoCapitalize="none"
-              />
-              <PrimaryButton label="Add goal" onPress={onAddGoal} />
+              <Text style={styles.section}>
+                {t("planning.goals.title", { defaultValue: "Savings goals" })}
+              </Text>
+              <Text style={styles.meta}>{t("planning.goals.manualHint")}</Text>
+              <Field label={t("planning.goals.name", { defaultValue: "Goal name" })}>
+                <TextInput
+                  style={styles.input}
+                  placeholder="e.g. Emergency fund"
+                  placeholderTextColor={colors.muted}
+                  value={goalName}
+                  onChangeText={setGoalName}
+                />
+              </Field>
+              <Field label={t("planning.goals.target", { defaultValue: "Target amount" })}>
+                <TextInput
+                  style={styles.input}
+                  placeholder="0.00"
+                  placeholderTextColor={colors.muted}
+                  keyboardType="decimal-pad"
+                  value={goalTarget}
+                  onChangeText={setGoalTarget}
+                />
+              </Field>
+              <Field
+                label={t("planning.goals.date", { defaultValue: "Target date (optional)" })}
+              >
+                <TextInput
+                  style={styles.input}
+                  placeholder="YYYY-MM-DD"
+                  placeholderTextColor={colors.muted}
+                  value={goalDate}
+                  onChangeText={setGoalDate}
+                  autoCapitalize="none"
+                />
+              </Field>
+              <PrimaryButton label={t("planning.goals.add", { defaultValue: "Add goal" })} onPress={onAddGoal} />
             </Card>
+            {(state.goals ?? []).length === 0 ? (
+              <EmptyState
+                title={t("planning.goals.empty", { defaultValue: "No goals yet" })}
+                body={t("planning.goals.emptyBody", {
+                  defaultValue: "Set a savings target to track progress toward something that matters.",
+                })}
+                actionLabel={t("planning.goals.add", { defaultValue: "Add goal" })}
+                onAction={onAddGoal}
+              />
+            ) : null}
             {(state.goals ?? []).map((g) => {
               const pct = g.targetAmount > 0 ? (g.currentAmount / g.targetAmount) * 100 : 0;
               return (
@@ -397,6 +462,8 @@ export function PlanningScreen() {
                   </View>
                   <View style={styles.row}>
                     <PrimaryButton
+                      compact
+                      style={{ flex: 1 }}
                       label="+ Contribute"
                       onPress={() => {
                         const step = Math.max(1, Math.round(g.targetAmount * 0.05));
@@ -405,10 +472,34 @@ export function PlanningScreen() {
                         });
                       }}
                     />
-                    <View style={{ width: 8 }} />
-                    <PrimaryButton label="Edit" onPress={() => openGoal(g)} />
-                    <View style={{ width: 8 }} />
-                    <PrimaryButton label="Delete" onPress={() => removeGoal(g.id)} />
+                    <SecondaryButton
+                      compact
+                      style={{ flex: 1 }}
+                      label={t("common.edit", { defaultValue: "Edit" })}
+                      onPress={() => openGoal(g)}
+                    />
+                    <DangerButton
+                      compact
+                      style={{ flex: 1 }}
+                      label={t("common.delete", { defaultValue: "Delete" })}
+                      onPress={() => {
+                        Alert.alert(
+                          t("planning.goals.deleteTitle", { defaultValue: "Delete goal?" }),
+                          t("planning.goals.deleteBody", {
+                            defaultValue: `Remove “${g.name}”?`,
+                            name: g.name,
+                          }),
+                          [
+                            { text: t("common.cancel", { defaultValue: "Cancel" }), style: "cancel" },
+                            {
+                              text: t("common.delete", { defaultValue: "Delete" }),
+                              style: "destructive",
+                              onPress: () => removeGoal(g.id),
+                            },
+                          ],
+                        );
+                      }}
+                    />
                   </View>
                 </Card>
               );
@@ -416,48 +507,58 @@ export function PlanningScreen() {
             {editGoal ? (
               <Card>
                 <Text style={styles.title}>Edit goal</Text>
-                <TextInput
-                  style={styles.input}
-                  value={gName}
-                  onChangeText={setGName}
-                  placeholder="Name"
-                  placeholderTextColor={colors.muted}
-                />
-                <TextInput
-                  style={styles.input}
-                  value={gTarget}
-                  onChangeText={setGTarget}
-                  placeholder="Target"
-                  placeholderTextColor={colors.muted}
-                  keyboardType="decimal-pad"
-                />
-                <TextInput
-                  style={styles.input}
-                  value={gCurrent}
-                  onChangeText={setGCurrent}
-                  placeholder="Current"
-                  placeholderTextColor={colors.muted}
-                  keyboardType="decimal-pad"
-                />
-                <TextInput
-                  style={styles.input}
-                  value={gDate}
-                  onChangeText={setGDate}
-                  placeholder="Target date YYYY-MM-DD"
-                  placeholderTextColor={colors.muted}
-                  autoCapitalize="none"
-                />
-                <TextInput
-                  style={[styles.input, styles.notes]}
-                  value={gNotes}
-                  onChangeText={setGNotes}
-                  placeholder="Notes"
-                  placeholderTextColor={colors.muted}
-                  multiline
-                />
+                <Field label="Name">
+                  <TextInput
+                    style={styles.input}
+                    value={gName}
+                    onChangeText={setGName}
+                    placeholder="Name"
+                    placeholderTextColor={colors.muted}
+                  />
+                </Field>
+                <Field label="Target">
+                  <TextInput
+                    style={styles.input}
+                    value={gTarget}
+                    onChangeText={setGTarget}
+                    placeholder="Target"
+                    placeholderTextColor={colors.muted}
+                    keyboardType="decimal-pad"
+                  />
+                </Field>
+                <Field label="Current">
+                  <TextInput
+                    style={styles.input}
+                    value={gCurrent}
+                    onChangeText={setGCurrent}
+                    placeholder="Current"
+                    placeholderTextColor={colors.muted}
+                    keyboardType="decimal-pad"
+                  />
+                </Field>
+                <Field label="Target date YYYY-MM-DD">
+                  <TextInput
+                    style={styles.input}
+                    value={gDate}
+                    onChangeText={setGDate}
+                    placeholder="YYYY-MM-DD"
+                    placeholderTextColor={colors.muted}
+                    autoCapitalize="none"
+                  />
+                </Field>
+                <Field label="Notes">
+                  <TextInput
+                    style={[styles.input, styles.notes]}
+                    value={gNotes}
+                    onChangeText={setGNotes}
+                    placeholder="Notes"
+                    placeholderTextColor={colors.muted}
+                    multiline
+                  />
+                </Field>
                 <PrimaryButton label="Save" onPress={saveGoal} />
                 <View style={{ height: 8 }} />
-                <PrimaryButton label="Cancel" onPress={() => setEditGoal(null)} />
+                <SecondaryButton label="Cancel" onPress={() => setEditGoal(null)} />
               </Card>
             ) : null}
           </>
@@ -467,11 +568,29 @@ export function PlanningScreen() {
           <>
             <Card>
               <Text style={styles.section}>Budget plans</Text>
+              <Text style={styles.meta}>
+                {t("planning.budgets.linkHint", {
+                  defaultValue:
+                    "Link budget lines to an expense category so spent amounts roll up automatically.",
+                })}
+              </Text>
               <PrimaryButton
                 label="Create budget plan"
                 onPress={() => addBudgetPlan(`Plan ${(state.budgetPlans?.length ?? 0) + 1}`)}
               />
             </Card>
+            {(state.budgetPlans ?? []).length === 0 ? (
+              <EmptyState
+                title={t("planning.budgets.empty", {
+                  defaultValue: "No budgets yet. Add a monthly limit to a category to stay on track.",
+                })}
+                body={t("planning.budgets.emptyBody", {
+                  defaultValue: "Create a plan, then add lines with amounts and optional categories.",
+                })}
+                actionLabel={t("planning.budgets.create", { defaultValue: "Create budget plan" })}
+                onAction={() => addBudgetPlan(`Plan ${(state.budgetPlans?.length ?? 0) + 1}`)}
+              />
+            ) : null}
             {mainPlan && mainPlan.items.length > 0 ? (
               <CategoryBreakdown
                 title={t("planning.budgets.pieTitle", {
@@ -480,7 +599,10 @@ export function PlanningScreen() {
                 })}
                 filename="budget-allocation"
                 slices={mainPlan.items.map((it, i) => ({
-                  label: it.label || "(untitled)",
+                  label:
+                    it.label?.trim() ||
+                    (it.categoryId ? catNameById.get(it.categoryId) : undefined) ||
+                    t("planning.budgets.untitledItem", { defaultValue: "Untitled" }),
                   value: toDisplay(it.amount, it.currency),
                   color:
                     it.color ||
@@ -509,20 +631,44 @@ export function PlanningScreen() {
                   </Text>
                   {p.description ? <Text style={styles.meta}>{p.description}</Text> : null}
                   <Text style={styles.meta}>Window: {window.label}</Text>
-                  <Metric label="Budgeted" value={mask(total)} />
-                  <Metric label="Spent (linked cats)" value={mask(spentTotal)} />
+                  <MetricRow
+                    items={[
+                      { label: "Budgeted", value: mask(total) },
+                      { label: "Spent (linked cats)", value: mask(spentTotal) },
+                    ]}
+                  />
                   <Text style={styles.meta}>{p.items.length} lines</Text>
                   <View style={styles.row}>
-                    <PrimaryButton label="Set main" onPress={() => setMainBudgetPlan(p.id)} />
-                    <View style={{ width: 8 }} />
-                    <PrimaryButton label="Edit" onPress={() => openPlan(p)} />
-                    <View style={{ width: 8 }} />
-                    <PrimaryButton
+                    <PrimaryButton compact style={{ flex: 1 }} label="Set main" onPress={() => setMainBudgetPlan(p.id)} />
+                    <SecondaryButton compact style={{ flex: 1 }} label="Edit" onPress={() => openPlan(p)} />
+                    <SecondaryButton
+                      compact
+                      style={{ flex: 1 }}
                       label="Duplicate"
                       onPress={() => duplicateBudgetPlan(p.id)}
                     />
-                    <View style={{ width: 8 }} />
-                    <PrimaryButton label="Delete" onPress={() => removeBudgetPlan(p.id)} />
+                    <DangerButton
+                      compact
+                      style={{ flex: 1 }}
+                      label="Delete"
+                      onPress={() => {
+                        Alert.alert(
+                          t("planning.budgets.deleteTitle", { defaultValue: "Delete plan?" }),
+                          t("planning.budgets.deleteBody", {
+                            defaultValue: `Remove “${p.name}” and its lines?`,
+                            name: p.name,
+                          }),
+                          [
+                            { text: t("common.cancel", { defaultValue: "Cancel" }), style: "cancel" },
+                            {
+                              text: t("common.delete", { defaultValue: "Delete" }),
+                              style: "destructive",
+                              onPress: () => removeBudgetPlan(p.id),
+                            },
+                          ],
+                        );
+                      }}
+                    />
                   </View>
                   {p.items.map((it) => {
                     const budget = toDisplay(it.amount, it.currency);
@@ -531,11 +677,15 @@ export function PlanningScreen() {
                     const catLabel = it.categoryId
                       ? catNameById.get(it.categoryId) ?? "category"
                       : null;
+                    const displayLabel =
+                      it.label?.trim() ||
+                      catLabel ||
+                      t("planning.budgets.untitledItem", { defaultValue: "Untitled" });
                     return (
                       <View key={it.id} style={styles.budgetLine}>
                         <Text style={styles.meta}>
-                          {it.label || "(untitled)"} · {mask(it.amount, it.currency)}
-                          {catLabel ? ` · ${catLabel}` : ""}
+                          {displayLabel} · {mask(it.amount, it.currency)}
+                          {catLabel && it.label?.trim() ? ` · ${catLabel}` : ""}
                         </Text>
                         {spent != null ? (
                           <>
@@ -661,14 +811,18 @@ export function PlanningScreen() {
                   return (
                     <View key={it.id} style={styles.lineRow}>
                       <Text style={styles.meta}>
-                        {it.label || "(untitled)"} · {mask(it.amount, it.currency)}
-                        {it.categoryId
+                        {it.label?.trim() ||
+                          (it.categoryId ? catNameById.get(it.categoryId) : undefined) ||
+                          t("planning.budgets.untitledItem", { defaultValue: "Untitled" })}{" "}
+                        · {mask(it.amount, it.currency)}
+                        {it.categoryId && it.label?.trim()
                           ? ` · ${catNameById.get(it.categoryId) ?? "cat"}`
                           : ""}
                         {spent != null ? ` · spent ${mask(spent)}` : ""}
                       </Text>
                       <View style={styles.row}>
-                        <PrimaryButton
+                        <SecondaryButton
+                          compact
                           label="Edit"
                           onPress={() => {
                             setEditLineId(it.id);
@@ -678,9 +832,30 @@ export function PlanningScreen() {
                           }}
                         />
                         <View style={{ width: 8 }} />
-                        <PrimaryButton
+                        <DangerButton
+                          compact
                           label="Delete"
-                          onPress={() => removeBudgetItem(livePlan.id, it.id)}
+                          onPress={() => {
+                            Alert.alert(
+                              t("planning.budgets.deleteLineTitle", {
+                                defaultValue: "Delete line?",
+                              }),
+                              t("planning.budgets.deleteLineBody", {
+                                defaultValue: "Remove this budget line?",
+                              }),
+                              [
+                                {
+                                  text: t("common.cancel", { defaultValue: "Cancel" }),
+                                  style: "cancel",
+                                },
+                                {
+                                  text: t("common.delete", { defaultValue: "Delete" }),
+                                  style: "destructive",
+                                  onPress: () => removeBudgetItem(livePlan.id, it.id),
+                                },
+                              ],
+                            );
+                          }}
                         />
                       </View>
                     </View>
@@ -746,6 +921,16 @@ export function PlanningScreen() {
               />
               <PrimaryButton label="Add loan" onPress={onAddLoan} />
             </Card>
+            {(state.loans ?? []).length === 0 ? (
+              <EmptyState
+                title={t("planning.loans.empty", { defaultValue: "No loans yet" })}
+                body={t("planning.loans.emptyBody", {
+                  defaultValue: "Add a loan to see monthly payment and amortization.",
+                })}
+                actionLabel={t("planning.loans.add", { defaultValue: "Add loan" })}
+                onAction={onAddLoan}
+              />
+            ) : null}
             {(state.loans ?? []).map((loan) => {
               const sched = amortize(loan);
               const open = showSchedule === loan.id;
@@ -766,14 +951,35 @@ export function PlanningScreen() {
                     <Text style={styles.meta}>Extra monthly: {mask(loan.extraMonthly, loan.currency)}</Text>
                   ) : null}
                   <View style={styles.row}>
-                    <PrimaryButton label="Edit" onPress={() => openLoan(loan)} />
-                    <View style={{ width: 8 }} />
-                    <PrimaryButton
+                    <SecondaryButton compact style={{ flex: 1 }} label="Edit" onPress={() => openLoan(loan)} />
+                    <SecondaryButton
+                      compact
+                      style={{ flex: 1 }}
                       label={open ? "Hide schedule" : "Schedule"}
                       onPress={() => setShowSchedule(open ? null : loan.id)}
                     />
-                    <View style={{ width: 8 }} />
-                    <PrimaryButton label="Delete" onPress={() => removeLoan(loan.id)} />
+                    <DangerButton
+                      compact
+                      style={{ flex: 1 }}
+                      label="Delete"
+                      onPress={() => {
+                        Alert.alert(
+                          t("planning.loans.deleteTitle", { defaultValue: "Delete loan?" }),
+                          t("planning.loans.deleteBody", {
+                            defaultValue: `Remove “${loan.name}”?`,
+                            name: loan.name,
+                          }),
+                          [
+                            { text: t("common.cancel", { defaultValue: "Cancel" }), style: "cancel" },
+                            {
+                              text: t("common.delete", { defaultValue: "Delete" }),
+                              style: "destructive",
+                              onPress: () => removeLoan(loan.id),
+                            },
+                          ],
+                        );
+                      }}
+                    />
                   </View>
                   {open
                     ? sched.rows.slice(0, 12).map((row) => (
@@ -863,6 +1069,26 @@ export function PlanningScreen() {
                   })
                 }
               />
+              {(state.forecastScenarios ?? []).length === 0 ? (
+                <EmptyState
+                  title={t("planning.forecast.empty", {
+                    defaultValue: "Add a scenario to see a projection.",
+                  })}
+                  body={t("planning.forecast.emptyBody", {
+                    defaultValue: "Scenarios adjust this month’s income and expenses forward.",
+                  })}
+                  actionLabel={t("planning.forecast.add", { defaultValue: "Add scenario" })}
+                  onAction={() =>
+                    addForecastScenario({
+                      name: `Scenario ${(state.forecastScenarios?.length ?? 0) + 1}`,
+                      months: 12,
+                      monthlyIncomeAdjust: 0,
+                      monthlyExpenseAdjust: 0,
+                      currency,
+                    })
+                  }
+                />
+              ) : null}
               {(state.forecastScenarios ?? []).map((s) => (
                 <View key={s.id} style={styles.lineRow}>
                   <Pressable onPress={() => setMainForecastScenario(s.id)}>
@@ -878,16 +1104,39 @@ export function PlanningScreen() {
                     </Text>
                   </Pressable>
                   <View style={styles.row}>
-                    <PrimaryButton label="Edit" onPress={() => openScenario(s)} />
+                    <SecondaryButton compact label="Edit" onPress={() => openScenario(s)} />
                     <View style={{ width: 8 }} />
-                    <PrimaryButton
+                    <SecondaryButton
+                      compact
                       label="Duplicate"
                       onPress={() => duplicateForecastScenario(s.id)}
                     />
                     <View style={{ width: 8 }} />
-                    <PrimaryButton
+                    <DangerButton
+                      compact
                       label="Delete"
-                      onPress={() => removeForecastScenario(s.id)}
+                      onPress={() => {
+                        Alert.alert(
+                          t("planning.forecast.deleteTitle", {
+                            defaultValue: "Delete scenario?",
+                          }),
+                          t("planning.forecast.deleteBody", {
+                            defaultValue: `Remove “${s.name}”?`,
+                            name: s.name,
+                          }),
+                          [
+                            {
+                              text: t("common.cancel", { defaultValue: "Cancel" }),
+                              style: "cancel",
+                            },
+                            {
+                              text: t("common.delete", { defaultValue: "Delete" }),
+                              style: "destructive",
+                              onPress: () => removeForecastScenario(s.id),
+                            },
+                          ],
+                        );
+                      }}
                     />
                   </View>
                 </View>
@@ -1015,30 +1264,23 @@ const styles = StyleSheet.create({
   hint: { color: colors.muted, textAlign: "center", marginBottom: 16 },
   tabs: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: spacing.md },
   tab: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 16,
+    ...chipContainerStyle,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
   },
   tabOn: { borderColor: colors.accent, backgroundColor: colors.accentSoft },
-  tabText: { color: colors.text, fontSize: 12, textTransform: "capitalize" },
+  tabText: { ...chipLabelStyle, textTransform: "capitalize" },
   row: { flexDirection: "row", marginTop: 8, flexWrap: "wrap" },
   lineRow: { marginTop: 8, borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 8 },
   budgetLine: { marginTop: 8 },
   catRow: { marginBottom: 8 },
   catChip: {
+    ...chipContainerStyle,
     paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: colors.border,
     marginRight: 6,
-    backgroundColor: colors.surface,
+    borderWidth: 1,
   },
   catChipOn: { backgroundColor: colors.accentSoft, borderColor: colors.accent },
-  catChipText: { color: colors.text, fontSize: 12 },
+  catChipText: { ...chipLabelStyle },
   barTrack: {
     height: 8,
     backgroundColor: colors.surfaceAlt,

@@ -38,6 +38,7 @@ const nl: Translation = {
     planning: "Planning",
     assistant: "Assistent",
     settings: "Instellingen",
+    more: "Meer",
     short: {
       dashboard: "Home",
       holdings: "Activa",
@@ -46,6 +47,7 @@ const nl: Translation = {
       planning: "Plan",
       assistant: "AI",
       settings: "Setup",
+      more: "Meer",
     },
   },
   assistant: {
@@ -86,11 +88,11 @@ const nl: Translation = {
       "Spraakinvoer vereist de native app of een ondersteunde browser. Tekst werkt overal.",
     emptyTitle: "Je privé geldassistent",
     emptyBody:
-      'Zeg of typ dingen zoals "Ik gaf gisteren 45 uit aan boodschappen bij Albert Heijn". Ik bevestig voordat ik opsla, en alles blijft op je apparaat.',
+      'Vraag naar je nettovermogen, uitgaven of zeg "geef me financieel advies". Je kunt ook uitgaven loggen zoals "Ik gaf 45 uit aan boodschappen" — ik bevestig vóór het opslaan.',
     backend: {
       greeting:
-        'Hoi! Ik ben je financiële assistent. Vertel me over een uitgave (bijv. "Ik gaf 12 uit aan lunch"), vraag hoeveel je hebt uitgegeven, of vraag om spaartips.',
-      help: "Ik kan:\n• Uitgaven registreren die je beschrijft (ik bevestig eerst)\n• Je uitgaven samenvatten per periode of categorie\n• Recente transacties tonen\n• Je budgetstatus rapporteren\n• Spaartips geven op basis van je gegevens\nAlles draait op je apparaat.",
+        'Hoi! Ik ben je persoonlijke financiële adviseur. Vraag naar nettovermogen, uitgaven, budgetten, doelen of zeg "geef me advies" — en ik kan uitgaven vastleggen die je beschrijft.',
+      help: "Ik kan:\n• Je financiën analyseren en coachen (kosten snijden, inkomen verhogen, surplus beleggen)\n• Nettovermogen, portefeuille, liquiditeit en schulden melden\n• Uitgaven, budgetten, doelen en leningen samenvatten\n• Uitgaven vastleggen die je beschrijft (ik bevestig eerst)\nAlles draait op je apparaat met je echte data.",
       thanks: "Graag gedaan! Laat het weten als je nog iets nodig hebt rond je financiën.",
       positive: "Blij dat ik kon helpen! Vraag me gerust over uitgaven, budgetten of sparen.",
       goodbye: "Tot later! Ik ben er als je je geld wilt checken.",
@@ -98,7 +100,7 @@ const nl: Translation = {
       howAreYou:
         "Het gaat goed — klaar om je te helpen met uitgaven bijhouden en slimmer sparen. Wat kan ik voor je doen?",
       unknown:
-        'Dat snapte ik niet helemaal. Probeer dingen als "8,50 uitgegeven aan koffie", "hoeveel heb ik deze maand aan eten uitgegeven?" of "geef me spaartips".',
+        'Dat begreep ik niet helemaal. Probeer "Wat is mijn nettovermogen?", "hoeveel gaf ik deze maand uit aan eten?", "geef me financieel advies" of "8,50 uitgegeven aan koffie".',
       done: "Klaar.",
       expenseConfirm:
         "Een {{category}}-uitgave van {{amount}} voor {{when}} toevoegen? Bevestig hieronder.",
@@ -125,14 +127,24 @@ const nl: Translation = {
           "Sterk spaarpercentage van {{rate}}% deze maand — stuur een deel van het overschot naar doelen of lange-termijnbeleggingen.",
         lowIncome:
           "Uitgaven gebruiken {{pct}}% van je inkomen deze maand. Vaste lasten verlagen of inkomen verhogen kan druk verlichten.",
+        tightCashflow:
+          "Uitgaven zijn {{pct}}% van je inkomen — weinig buffer. Beperk discretionaire uitgaven en zoek dit kwartaal één inkomensboost.",
+        growIncome:
+          "Je overschot is dun t.o.v. je inkomen. Naast bezuinigen: verdienvermogen verhogen (onderhandelen, promotie, freelance of een beter betaalde baan).",
         topCategory:
           "{{name}} is {{pct}}% van je uitgaven ({{amount}}). 10% minder zou {{savings}}/maand vrijmaken.",
+        secondCategory:
+          "{{name}} is nog een grote post: {{pct}}% ({{amount}}) — goed tweede doel om te snoeien.",
         highDebt:
           "Je bent {{debt}} schuldig op creditcards. Aflossen eerst kan ruimte vrijmaken om te sparen en beleggen.",
+        highAprLoan:
+          'Lening "{{name}}" kost {{apr}}% rente op {{principal}}. Extra aflossen wint hier meestal van laagrenderend cash.',
         excessCash:
           "Je hebt {{liquidity}} aan liquiditeit (~{{months}} maanden uitgaven). ~{{reserve}} als buffer is verstandig; {{investable}} kan geleidelijk worden belegd.",
         lowInvestment:
           "Ongeveer {{pct}}% van je vermogen zit in cash/liquiditeit ({{liquidity}} liquide vs {{invested}} belegd). Is het noodfonds op orde, overweeg dan een deel te beleggen.",
+        startInvesting:
+          "Je hebt stevige liquiditeit maar nog geen holdings. Na een noodbuffer (3–6 maanden uitgaven) start een eenvoudig langetermijnplan — gespreide fondsen, geen stockpicking.",
         balancedAllocation:
           "Je verdeling lijkt in balans — {{invested}} belegd en {{liquid}} in cash/liquide posities.",
         overBudget:
@@ -153,6 +165,8 @@ const nl: Translation = {
         this_month: "deze maand",
         last_month: "vorige maand",
         this_week: "deze week",
+        this_year: "dit jaar",
+        ytd: "jaar tot nu toe",
         all: "altijd",
       },
       tools: {
@@ -160,11 +174,22 @@ const nl: Translation = {
         spentTotal: "Totaal uitgegeven {{total}} ({{period}}). Top: {{top}}.",
         noTransactions: "Nog geen transacties.",
         noBudget: "Nog geen budget ingesteld.",
+        noHoldings: "Nog geen holdings.",
+        noGoals: "Nog geen spaardoelen ingesteld.",
+        noLoans: "Nog geen leningen bijgehouden.",
         budgetStatus: 'Budget "{{name}}": {{spent}} van {{limit}} gebruikt.',
         overOn: " Over op: {{list}}.",
         onTrack: " Op schema.",
         unknownTool: "Onbekende tool.",
         txLine: "{{date}} {{kind}} {{category}} {{amount}}",
+
+        netWorth:
+          "Nettovermogen {{netWorth}} = portefeuille {{portfolio}} (belegd {{invested}}, cashachtig {{cashLike}}) + liquiditeit {{liquidity}} − kaartschuld {{debt}}.{{savingsRate}}",
+        savingsRate: " Spaarquote deze maand: {{rate}}%.",
+        portfolio: "Portefeuille {{total}}. Holdings: {{lines}}.",
+        holdingLine: "{{symbol}} {{name}} ({{type}}, {{horizon}}) {{value}}",
+        goalLine: "{{name}}: {{current}} / {{target}} ({{pct}}%)",
+        loanLine: "{{name}}: {{principal}} tegen {{apr}}% rente over {{months}} maanden",
       },
       voice: {
         recognitionUnavailable: "Spraakherkenning niet beschikbaar.",
@@ -183,7 +208,7 @@ const nl: Translation = {
     goHome: "Naar home",
   },
   shell: {
-    brand: "Elegant",
+    brand: "Aurelia",
     brandTagline: "Portefeuillebeheer",
     showValues: "Waarden tonen",
     hideValues: "Waarden verbergen",
@@ -192,7 +217,8 @@ const nl: Translation = {
   },
   landing: {
     headerTagline: "Van jou · Privé · Gratis",
-    openApp: "App openen",
+    openApp: "Aurelia openen",
+    logoAlt: "Aurelia-logo",
     nav: { features: "Functies", how: "Hoe het werkt", faq: "FAQ" },
     hero: {
       badge: "Geen account. Geen tracking. Je gegevens blijven bij jou.",
@@ -202,7 +228,7 @@ const nl: Translation = {
         "Zie alles wat je bezit, begrijp waar je geld echt heengaat en plan wat komt - in één elegante tracker die nooit vraagt wie je bent.",
       ctaPrimary: "Open je tracker",
       ctaSecondary: "Zie wat je krijgt",
-      screenshotAlt: "Elegant Portfolio Tracker dashboard met allocatie en kasstroom",
+      screenshotAlt: "Aurelia dashboard met allocatie en kasstroom",
     },
     proof: {
       zeroAccounts: "Je gegevens blijven bij jou",
@@ -236,8 +262,8 @@ const nl: Translation = {
           body: "Alles wordt versleuteld op je apparaat opgeslagen. Geen account, geen cloud, geen analytics op wat je bezit.",
         },
         elegant: {
-          title: "Elegant op elk scherm",
-          body: "Een rustige, afleidingsvrije interface voor desktop, tablet en telefoon - met native apps en zes talen, inclusief Valencià.",
+          title: "Eerst voor je telefoon",
+          body: "Rustige, duimvriendelijke schermen, native apps en zes talen.",
         },
       },
     },
@@ -329,9 +355,9 @@ const nl: Translation = {
         ios: "Vereist AltStore of Sideloadly",
       },
     },
-    footer: { brand: "Elegante Portfolio Tracker", madeBy: "Gemaakt door", sourceCode: "Broncode" },
+    footer: { brand: "Aurelia", madeBy: "Gemaakt door", sourceCode: "Broncode" },
     meta: {
-      title: "Privé Portfolio Tracker - Aandelen, Crypto & ETFs",
+      title: "Privé Aurelia - Aandelen, Crypto & ETFs",
       description:
         "Volg elk aandeel, elke ETF, crypto, metaal en euro die je bezit in één privé-tracker. Zie allocatie, kasstroom, prognose en vermogen - zonder registratie, zonder cloud, voor altijd gratis.",
       keywords:
@@ -339,25 +365,49 @@ const nl: Translation = {
     },
   },
   dashboard: {
-    metaTitle: "Dashboard - Portfolio Tracker",
-    metaDesc: "Je portefeuille in één oogopslag - allocatie, waarde en recente activiteit.",
+    metaTitle: "Dashboard · Aurelia",
+    metaDesc: "Je portefeuille in één oogopslag: allocatie, vermogen en activiteit.",
     title: "Dashboard",
     description: "Welkom bij je portefeuille.",
-    portfolioValue: "Totale portefeuillewaarde",
+    greeting: "Hoi",
+    greetingNamed: "Hoi {{name}}",
+    greetingShort: "Hoi",
+    headerNetWorth: "{{value}} vermogen",
+    netWorthSub: "Beleggingen plus liquiditeit, minus kaartschuld",
+    portfolioValue: "Portefeuillewaarde",
     netWorth: "Vermogen",
+    netWorthLiquidity: "{{sign}}{{value}} liquiditeit",
     liquidity: "liquiditeit",
-    net30: "Kasstroom · laatste 30 dagen",
+    net30: "Laatste 30 dagen",
+    net30Sub: "Netto-inkomen minus uitgaven",
+    net30Positive: "+{{value}} laatste 30 dagen",
+    net30Negative: "-{{value}} laatste 30 dagen",
     topAsset: "Top-activum",
     allocation: "Allocatie",
     showAllLabels: "Alle labels tonen",
     showAll: "Alles tonen",
     hideAll: "Alles verbergen",
+    allAssetsHidden: "Alle activa zijn verborgen.",
+    showAllAssets: "Alle activa tonen",
+    addAsset: "Activa toevoegen",
+    addEntry: "Uitgave loggen",
+    holdingsCount: "{{count}} activa",
+    holdingsCountOne: "1 activum",
+    topHolding: "Top: {{name}} ({{pct}})",
+    emptyTitle: "Nog niets hier",
+    emptyDescription:
+      "Log een koffie of voeg je eerste ETF toe. Alles blijft op dit apparaat, versleuteld en van jou.",
+    emptyAction: "Activa toevoegen",
+    fabLog: "Uitgave loggen",
+    localFirstHint: "Alleen op je apparaat",
   },
   holdings: {
-    metaTitle: "Beleggingen - Elegant Portfolio Tracker",
+    metaTitle: "Beleggingen - Aurelia",
     metaDesc: "Beheer je aandelen, crypto, ETF's en metalen.",
     title: "Beleggingen",
     description: "Beheer je aandelen, crypto, ETF's en metalen.",
+    headerSubtitle: "{{count}} posities · {{value}}",
+    fabAdd: "Belegging toevoegen",
     positionsCount: "posities",
     addHolding: "Belegging toevoegen",
     refresh: "Prijzen vernieuwen",
@@ -365,6 +415,9 @@ const nl: Translation = {
     refreshFailed: "Enkele prijzen konden niet worden vernieuwd",
     symbol: "Symbool",
     quantity: "Aantal",
+    shares: "Aandelen",
+    amount: "Hoeveelheid",
+    manualPrice: "Handmatige prijs",
     price: "Prijs",
     value: "Waarde",
     invested: "Geïnvesteerd",
@@ -439,17 +492,20 @@ const nl: Translation = {
     },
   },
   performance: {
-    metaTitle: "Rendement - Elegant Portfolio Tracker",
+    metaTitle: "Rendement - Aurelia",
     metaDesc: "Volg het rendement van je activa over tijd.",
     title: "Rendement",
     description: "Historische portefeuillewaarde periode na periode.",
     emptyState: "Voeg eerst posities toe om je historische prestaties te zien.",
   },
   cashflow: {
-    metaTitle: "Kasstroom - Elegant Portfolio Tracker",
+    metaTitle: "Kasstroom - Aurelia",
     metaDesc: "Registreer inkomsten, uitgaven, sparen en beleggen.",
     title: "Kasstroom",
-    description: "Registreer elke euro in en uit - en zie waar het heen gaat.",
+    description: "Registreer elke euro in en uit, en zie waar het heen gaat.",
+    addData: "Gegevens toevoegen",
+    addDataHint: "Log inkomen, uitgave of een overboeking",
+    fabAdd: "Gegevens toevoegen",
     income: "Inkomen",
     expense: "Uitgave",
     expenses: "Uitgaven",
@@ -555,6 +611,30 @@ const nl: Translation = {
       expenses: "Uitgaven",
       investments: "Beleggingen & sparen",
     },
+    upcoming: {
+      title: "Komend",
+      description: "Geplande inkomsten en betalingen in de komende weken.",
+      tabOverview: "Overzicht",
+      tabUpcoming: "Komend",
+      period7: "7 dagen",
+      period14: "2 weken",
+      period30: "1 maand",
+      periodShort7: "7d",
+      periodShort14: "2w",
+      periodShort30: "1m",
+      periodShort90: "90d",
+      viewAll: "Alles bekijken",
+      today: "Vandaag",
+      tomorrow: "Morgen",
+      expectedIn: "Verwacht in de komende {{days}} dagen",
+      empty: "Niets gepland",
+      emptyHint: "Voeg een terugkerende boeking of toekomstige betaling toe.",
+      recurring: "Terugkerend",
+      oneTime: "Eenmalig",
+      whenLabel: "Wanneer",
+      startDate: "Startdatum",
+      previewRecurring: "Elke {{frequency}}, dag {{day}}",
+    },
     sankey: {
       totalIncome: "Totale inkomsten",
       totalExpenses: "Totale uitgaven",
@@ -628,10 +708,21 @@ const nl: Translation = {
     needName: "Elke sponsor heeft een naam nodig",
   },
   settings: {
-    metaTitle: "Instellingen - Elegant Portfolio Tracker",
-    metaDesc: "API-opties, importeren/exporteren en gegevensbeheer.",
+    metaTitle: "Instellingen · Aurelia",
+    metaDesc: "Profiel, valuta, backup en AI op het apparaat.",
     title: "Instellingen",
-    description: "API-opties en gegevensbeheer.",
+    description: "Profiel, valuta en datakluis.",
+    sections: {
+      profile: "Profiel",
+      appearance: "Weergave",
+      currency: "Valuta",
+      data: "Data",
+      ai: "AI",
+    },
+    appearance: {
+      title: "Weergave",
+      description: "Thema en rondleiding staan hier op je telefoon.",
+    },
     api: {
       title: "API & betrouwbaarheid",
       description:
@@ -733,7 +824,7 @@ const nl: Translation = {
     },
     about: {
       title: "Over",
-      body: "Elegant Portfolio Tracker is een volledig client-side app. Prijzen komen van CoinGecko (crypto) en Yahoo Finance (aandelen/ETF's/metalen). Geen account, geen backend.",
+      body: "Aurelia is een volledig client-side app. Prijzen komen van CoinGecko (crypto) en Yahoo Finance (aandelen/ETF's/metalen). Geen account, geen backend.",
       metalsHint: "Gebruik voor metalen Yahoo-symbolen zoals GC=F (goud) of SI=F (zilver).",
     },
   },
@@ -1053,6 +1144,9 @@ const nl: Translation = {
       limitPlaceholder: "bv. 500",
       currency: "Valuta",
       addBudget: "Budget toevoegen",
+      addBudgetItem: "Budgetregel toevoegen",
+      addItemHint: "Stel een limiet in voor een categorie of een eigen regel.",
+      itemAdded: "Budgetregel toegevoegd",
       thisMonth: "Deze maand",
       empty: "Nog geen budgetten. Voeg een maandlimiet toe aan een categorie om te beginnen.",
       unknown: "Onbekend",
@@ -1100,6 +1194,8 @@ const nl: Translation = {
       alreadySaved: "Al gespaard",
       targetDate: "Streefdatum (optioneel)",
       addGoal: "Doel toevoegen",
+      addHint: "Stel een doel in en volg hoeveel je hebt gespaard.",
+      added: "Doel toegevoegd",
       empty: "Nog geen doelen.",
       by: "tegen {{date}}",
       saveHint: "Spaar ~{{amount}}/mnd om je doel te halen.",
@@ -1156,6 +1252,8 @@ const nl: Translation = {
       notes: "Notities",
       currency: "Valuta",
       addLoan: "Lening toevoegen",
+      addHint: "Registreer een lening en bekijk het aflossingsschema.",
+      added: "Lening toegevoegd",
       empty: "Nog geen leningen geregistreerd.",
       hide: "Verbergen",
       schedule: "Schema",

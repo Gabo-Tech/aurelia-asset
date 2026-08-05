@@ -17,6 +17,7 @@ import {
 } from "date-fns";
 import { useStore, useMoney } from "@/lib/store";
 import { PageHeader } from "@/components/app-shell";
+import { ResponsiveDialog } from "@/components/design/responsive-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
@@ -77,6 +78,7 @@ import { ChevronDown } from "lucide-react";
 import { BudgetPieCard, type PieSlice } from "@/components/budget-pie-card";
 import { ColorSwatchPicker, SWATCH_PALETTE } from "@/components/color-swatch-picker";
 import { SITE_URL } from "@/lib/site-config";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/planning")({
   head: () => {
@@ -287,6 +289,7 @@ function BudgetsPanel() {
   };
 
   // New-item form state
+  const [addItemOpen, setAddItemOpen] = useState(false);
   const [label, setLabel] = useState("");
   const [amount, setAmount] = useState("");
   const [entryCurrency, setEntryCurrency] = useState(displayCurrency);
@@ -362,6 +365,8 @@ function BudgetsPanel() {
     setAmount("");
     setLinkCategoryId("none");
     setItemColor(undefined);
+    setAddItemOpen(false);
+    toast.success(t("planning.budgets.itemAdded", { defaultValue: "Budget item added" }));
   };
 
   const itemColorOf = (it: BudgetItem, plan: BudgetPlan) => {
@@ -565,84 +570,19 @@ function BudgetsPanel() {
             </CardHeader>
           </Card>
 
-          <div className="grid lg:grid-cols-3 gap-6">
-            <Card className="lg:col-span-1">
-              <CardHeader>
-                <CardTitle className="text-base">{t("planning.budgets.addTitle")}</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div>
-                  <Label>{t("planning.budgets.itemLabel", { defaultValue: "Label" })}</Label>
-                  <Input
-                    value={label}
-                    onChange={(e) => setLabel(e.target.value)}
-                    placeholder={t("planning.budgets.labelPlaceholder", {
-                      defaultValue: "e.g. Vacation fund",
-                    })}
-                  />
-                </div>
-                <div>
-                  <Label>
-                    {t("planning.budgets.linkCategory", {
-                      defaultValue: "Link to category (optional)",
-                    })}
-                  </Label>
-                  <Select value={linkCategoryId} onValueChange={setLinkCategoryId}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">
-                        {t("planning.budgets.noCategory", {
-                          defaultValue: "None — track manually",
-                        })}
-                      </SelectItem>
-                      {expenseCats.map((c) => (
-                        <SelectItem key={c.id} value={c.id}>
-                          {c.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid grid-cols-[1fr_auto] gap-2">
-                  <div>
-                    <Label>{t("planning.budgets.monthlyLimit")}</Label>
-                    <Input
-                      inputMode="decimal"
-                      value={amount}
-                      onChange={(e) => setAmount(e.target.value)}
-                      placeholder={t("planning.budgets.limitPlaceholder")}
-                    />
-                  </div>
-                  <div>
-                    <Label>{t("planning.budgets.currency")}</Label>
-                    <CurrencyPicker
-                      value={entryCurrency}
-                      onChange={setEntryCurrency}
-                      className="w-28"
-                    />
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Label className="text-xs">
-                    {t("planning.budgets.color", { defaultValue: "Color" })}
-                  </Label>
-                  <ColorSwatchPicker value={itemColor} onChange={setItemColor} />
-                  <span className="text-xs text-muted-foreground">
-                    {t("planning.budgets.colorHint", {
-                      defaultValue: "Optional — falls back to category",
-                    })}
-                  </span>
-                </div>
-                <Button onClick={submitItem} className="w-full">
-                  <Plus className="h-4 w-4 mr-1" />
-                  {t("planning.budgets.addBudget")}
-                </Button>
-              </CardContent>
-            </Card>
+          <div className="space-y-4">
+            <div className="flex justify-end">
+              <Button
+                onClick={() => setAddItemOpen(true)}
+                data-tour="plan-add-budget-item"
+                className="gap-1.5"
+              >
+                <Plus className="h-4 w-4" />
+                {t("planning.budgets.addBudgetItem", { defaultValue: "Add budget item" })}
+              </Button>
+            </div>
 
-            <Card className="lg:col-span-2">
+            <Card>
               <CardHeader>
                 <CardTitle className="text-base flex items-center gap-2">
                   <span>{planWindow.label}</span>
@@ -731,6 +671,88 @@ function BudgetsPanel() {
               </CardContent>
             </Card>
           </div>
+
+          <ResponsiveDialog
+            open={addItemOpen}
+            onOpenChange={setAddItemOpen}
+            title={t("planning.budgets.addTitle")}
+            description={t("planning.budgets.addItemHint", {
+              defaultValue: "Set a limit for a category or a custom line item.",
+            })}
+            className="max-h-[92dvh] w-full max-w-2xl"
+            showClose
+          >
+            <div className="space-y-3 pb-2">
+              <div>
+                <Label>{t("planning.budgets.itemLabel", { defaultValue: "Label" })}</Label>
+                <Input
+                  value={label}
+                  onChange={(e) => setLabel(e.target.value)}
+                  placeholder={t("planning.budgets.labelPlaceholder", {
+                    defaultValue: "e.g. Vacation fund",
+                  })}
+                />
+              </div>
+              <div>
+                <Label>
+                  {t("planning.budgets.linkCategory", {
+                    defaultValue: "Link to category (optional)",
+                  })}
+                </Label>
+                <Select value={linkCategoryId} onValueChange={setLinkCategoryId}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">
+                      {t("planning.budgets.noCategory", {
+                        defaultValue: "None — track manually",
+                      })}
+                    </SelectItem>
+                    {expenseCats.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid grid-cols-[1fr_auto] gap-2">
+                <div>
+                  <Label>{t("planning.budgets.monthlyLimit")}</Label>
+                  <Input
+                    inputMode="decimal"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    placeholder={t("planning.budgets.limitPlaceholder")}
+                  />
+                </div>
+                <div>
+                  <Label>{t("planning.budgets.currency")}</Label>
+                  <CurrencyPicker
+                    value={entryCurrency}
+                    onChange={setEntryCurrency}
+                    className="w-28"
+                  />
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Label className="text-xs">
+                  {t("planning.budgets.color", { defaultValue: "Color" })}
+                </Label>
+                <ColorSwatchPicker value={itemColor} onChange={setItemColor} />
+                <span className="text-xs text-muted-foreground">
+                  {t("planning.budgets.colorHint", {
+                    defaultValue: "Optional — falls back to category",
+                  })}
+                </span>
+              </div>
+              <Button onClick={submitItem} className="w-full">
+                <Plus className="h-4 w-4 mr-1" />
+                {t("planning.budgets.addBudget")}
+              </Button>
+            </div>
+          </ResponsiveDialog>
 
           {/* Pie */}
           {activePlan.items.length > 0 ? (
@@ -963,6 +985,7 @@ function GoalsPanel() {
   const { t } = useTranslation();
   const { state, addGoal, updateGoal, removeGoal } = useStore();
   const { fmt, currency: displayCurrency } = useMoney();
+  const [addOpen, setAddOpen] = useState(false);
   const [form, setForm] = useState({
     name: "",
     target: "",
@@ -984,67 +1007,20 @@ function GoalsPanel() {
       color: GOAL_COLORS[state.goals.length % GOAL_COLORS.length],
     });
     setForm({ name: "", target: "", current: "", date: "", currency: displayCurrency });
+    setAddOpen(false);
+    toast.success(t("planning.goals.added", { defaultValue: "Goal added" }));
   };
 
   return (
-    <div className="grid lg:grid-cols-3 gap-6">
-      <Card className="lg:col-span-1">
-        <CardHeader>
-          <CardTitle className="text-base">{t("planning.goals.newTitle")}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div>
-            <Label>{t("planning.goals.name")}</Label>
-            <Input
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-              placeholder={t("planning.goals.namePlaceholder")}
-            />
-          </div>
-          <div className="grid grid-cols-[1fr_auto] gap-2">
-            <div>
-              <Label>{t("planning.goals.targetAmount")}</Label>
-              <Input
-                inputMode="decimal"
-                value={form.target}
-                onChange={(e) => setForm({ ...form, target: e.target.value })}
-                placeholder={t("planning.goals.targetPlaceholder")}
-              />
-            </div>
-            <div>
-              <Label>{t("planning.goals.currency")}</Label>
-              <CurrencyPicker
-                value={form.currency}
-                onChange={(v) => setForm({ ...form, currency: v })}
-                className="w-28"
-              />
-            </div>
-          </div>
-          <div>
-            <Label>{t("planning.goals.alreadySaved")}</Label>
-            <Input
-              inputMode="decimal"
-              value={form.current}
-              onChange={(e) => setForm({ ...form, current: e.target.value })}
-              placeholder="0"
-            />
-          </div>
-          <div>
-            <Label>{t("planning.goals.targetDate")}</Label>
-            <Input
-              type="date"
-              value={form.date}
-              onChange={(e) => setForm({ ...form, date: e.target.value })}
-            />
-          </div>
-          <Button onClick={submit} className="w-full">
-            <Plus className="h-4 w-4 mr-1" />
-            {t("planning.goals.addGoal")}
-          </Button>
-        </CardContent>
-      </Card>
+    <div className="space-y-4">
+      <div className="flex justify-end">
+        <Button onClick={() => setAddOpen(true)} data-tour="plan-add-goal" className="gap-1.5">
+          <Plus className="h-4 w-4" />
+          {t("planning.goals.addGoal")}
+        </Button>
+      </div>
 
-      <div className="lg:col-span-2 grid sm:grid-cols-2 gap-4">
+      <div className="grid sm:grid-cols-2 gap-4">
         {state.goals.length === 0 ? (
           <Card className="sm:col-span-2">
             <CardContent className="py-10 text-center text-sm text-muted-foreground">
@@ -1118,6 +1094,68 @@ function GoalsPanel() {
           );
         })}
       </div>
+
+      <ResponsiveDialog
+        open={addOpen}
+        onOpenChange={setAddOpen}
+        title={t("planning.goals.newTitle")}
+        description={t("planning.goals.addHint", {
+          defaultValue: "Set a target and track how much you have saved.",
+        })}
+        className="max-h-[92dvh] w-full max-w-2xl"
+        showClose
+      >
+        <div className="space-y-3 pb-2">
+          <div>
+            <Label>{t("planning.goals.name")}</Label>
+            <Input
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              placeholder={t("planning.goals.namePlaceholder")}
+            />
+          </div>
+          <div className="grid grid-cols-[1fr_auto] gap-2">
+            <div>
+              <Label>{t("planning.goals.targetAmount")}</Label>
+              <Input
+                inputMode="decimal"
+                value={form.target}
+                onChange={(e) => setForm({ ...form, target: e.target.value })}
+                placeholder={t("planning.goals.targetPlaceholder")}
+              />
+            </div>
+            <div>
+              <Label>{t("planning.goals.currency")}</Label>
+              <CurrencyPicker
+                value={form.currency}
+                onChange={(v) => setForm({ ...form, currency: v })}
+                className="w-28"
+              />
+            </div>
+          </div>
+          <div>
+            <Label>{t("planning.goals.alreadySaved")}</Label>
+            <Input
+              inputMode="decimal"
+              value={form.current}
+              onChange={(e) => setForm({ ...form, current: e.target.value })}
+              placeholder="0"
+            />
+          </div>
+          <div>
+            <Label>{t("planning.goals.targetDate")}</Label>
+            <Input
+              type="date"
+              value={form.date}
+              onChange={(e) => setForm({ ...form, date: e.target.value })}
+            />
+          </div>
+          <Button onClick={submit} className="w-full">
+            <Plus className="h-4 w-4 mr-1" />
+            {t("planning.goals.addGoal")}
+          </Button>
+        </div>
+      </ResponsiveDialog>
     </div>
   );
 }
@@ -2007,6 +2045,7 @@ function LoansPanel() {
   const { t } = useTranslation();
   const { state, addLoan, updateLoan, removeLoan } = useStore();
   const { fmt, currency: displayCurrency } = useMoney();
+  const [addOpen, setAddOpen] = useState(false);
   const [form, setForm] = useState({
     name: "",
     principal: "",
@@ -2045,15 +2084,51 @@ function LoansPanel() {
       notes: "",
       currency: form.currency,
     });
+    setAddOpen(false);
+    toast.success(t("planning.loans.added", { defaultValue: "Loan added" }));
   };
 
   return (
-    <div className="grid lg:grid-cols-3 gap-6">
-      <Card className="lg:col-span-1">
-        <CardHeader>
-          <CardTitle className="text-base">{t("planning.loans.newTitle")}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
+    <div className="space-y-4">
+      <div className="flex justify-end">
+        <Button onClick={() => setAddOpen(true)} data-tour="plan-add-loan" className="gap-1.5">
+          <Plus className="h-4 w-4" />
+          {t("planning.loans.addLoan")}
+        </Button>
+      </div>
+
+      <div className="space-y-4">
+        {state.loans.length === 0 ? (
+          <Card>
+            <CardContent className="py-10 text-center text-sm text-muted-foreground">
+              {t("planning.loans.empty")}
+            </CardContent>
+          </Card>
+        ) : null}
+        {state.loans.map((loan) => (
+          <LoanCard
+            key={loan.id}
+            loan={loan}
+            open={openId === loan.id}
+            onToggle={() => setOpenId(openId === loan.id ? null : loan.id)}
+            onRemove={() => removeLoan(loan.id)}
+            onPatch={(p) => updateLoan(loan.id, p)}
+            fmt={fmt}
+          />
+        ))}
+      </div>
+
+      <ResponsiveDialog
+        open={addOpen}
+        onOpenChange={setAddOpen}
+        title={t("planning.loans.newTitle")}
+        description={t("planning.loans.addHint", {
+          defaultValue: "Track a loan and see the amortization schedule.",
+        })}
+        className="max-h-[92dvh] w-full max-w-2xl"
+        showClose
+      >
+        <div className="space-y-3 pb-2">
           <div>
             <Label>{t("planning.loans.name")}</Label>
             <Input
@@ -2127,29 +2202,8 @@ function LoansPanel() {
             <Plus className="h-4 w-4 mr-1" />
             {t("planning.loans.addLoan")}
           </Button>
-        </CardContent>
-      </Card>
-
-      <div className="lg:col-span-2 space-y-4">
-        {state.loans.length === 0 ? (
-          <Card>
-            <CardContent className="py-10 text-center text-sm text-muted-foreground">
-              {t("planning.loans.empty")}
-            </CardContent>
-          </Card>
-        ) : null}
-        {state.loans.map((loan) => (
-          <LoanCard
-            key={loan.id}
-            loan={loan}
-            open={openId === loan.id}
-            onToggle={() => setOpenId(openId === loan.id ? null : loan.id)}
-            onRemove={() => removeLoan(loan.id)}
-            onPatch={(p) => updateLoan(loan.id, p)}
-            fmt={fmt}
-          />
-        ))}
-      </div>
+        </div>
+      </ResponsiveDialog>
     </div>
   );
 }

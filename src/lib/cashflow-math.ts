@@ -1,11 +1,16 @@
-import { addMonths, addWeeks, addYears } from "date-fns";
+import { addDays, addMonths, addWeeks, addYears, endOfDay, format, startOfDay } from "date-fns";
 import type { CashflowEntry } from "@/lib/types";
+
+export type ExpandedCashflowEntry = CashflowEntry & {
+  parentId: string;
+  isOccurrence: boolean;
+};
 
 export function expandCashflows(
   entries: CashflowEntry[],
   until: Date = new Date(),
-): (CashflowEntry & { parentId: string; isOccurrence: boolean })[] {
-  const out: (CashflowEntry & { parentId: string; isOccurrence: boolean })[] = [];
+): ExpandedCashflowEntry[] {
+  const out: ExpandedCashflowEntry[] = [];
   for (const e of entries) {
     if (e.installmentPlan && e.kind === "expense") {
       const plan = e.installmentPlan;
@@ -55,6 +60,55 @@ export function expandCashflows(
     }
   }
   return out;
+}
+
+/** Income/expense occurrences from `from` through `from + days`, sorted soonest first. */
+export function getUpcomingOccurrences(
+  entries: CashflowEntry[],
+  opts: { from?: Date; days?: number } = {},
+): ExpandedCashflowEntry[] {
+  const from = startOfDay(opts.from ?? new Date());
+  const days = opts.days ?? 30;
+  const horizon = endOfDay(addDays(from, days));
+  const expanded = expandCashflows(entries, horizon);
+  return expanded
+    .filter((e) => {
+      if (e.kind === "transfer") return false;
+      const d = new Date(e.date);
+      return d >= from && d <= horizon;
+    })
+    .sort((a, b) => +new Date(a.date) - +new Date(b.date));
+}
+
+export function summarizeUpcoming(
+  occurrences: ExpandedCashflowEntry[],
+  values: Map<string, number>,
+): { income: number; expense: number; net: number } {
+  let income = 0;
+  let expense = 0;
+  for (const e of occurrences) {
+    const v = values.get(e.id) ?? 0;
+    if (e.kind === "income") income += v;
+    else if (e.kind === "expense") expense += v;
+  }
+  return { income, expense, net: income - expense };
+}
+
+export function groupOccurrencesByDay(
+  occurrences: ExpandedCashflowEntry[],
+): Map<string, ExpandedCashflowEntry[]> {
+  const map = new Map<string, ExpandedCashflowEntry[]>();
+  for (const e of occurrences) {
+    const key = format(new Date(e.date), "yyyy-MM-dd");
+    const list = map.get(key) ?? [];
+    list.push(e);
+    map.set(key, list);
+  }
+  return map;
+}
+
+export function isRecurringParent(entry: CashflowEntry): boolean {
+  return !!entry.recurrence || !!entry.installmentPlan;
 }
 
 export function liquidityImpact(entry: CashflowEntry, valueInDisplay: number): number {

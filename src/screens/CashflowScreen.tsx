@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useRef } from "react";
 import {
   ScrollView,
   Text,
@@ -7,14 +7,29 @@ import {
   View,
   Alert,
   Pressable,
+  type LayoutChangeEvent,
 } from "react-native";
 import { useTranslation } from "react-i18next";
 import { startOfMonth, endOfMonth, subMonths, startOfYear } from "date-fns";
-import { Screen, Header, Card, PrimaryButton, Metric, SegmentedControl, Chip } from "@/components/ui";
+import {
+  Screen,
+  Header,
+  Card,
+  PrimaryButton,
+  SecondaryButton,
+  MetricRow,
+  SegmentedControl,
+  Chip,
+  EmptyState,
+  Field,
+  chipLabelStyle,
+  chipContainerStyle,
+} from "@/components/ui";
 import { SankeyChart } from "@/components/SankeyChart";
 import { CreditCardsManager } from "@/components/CreditCardsManager";
 import { CategoryBreakdown } from "@/components/CategoryBreakdown";
 import { CategoriesManager } from "@/components/CategoriesManager";
+import { CashflowUpcoming } from "@/components/CashflowUpcoming";
 import { useStore, useMoney } from "@/lib/store";
 import {
   expandCashflows,
@@ -63,8 +78,12 @@ export function CashflowScreen() {
   const [kind, setKind] = useState<"income" | "expense" | "transfer">("expense");
   const [categoryId, setCategoryId] = useState<string | null>(null);
   const [period, setPeriod] = useState<Period>("this-month");
+  const [mode, setMode] = useState<"activity" | "upcoming" | "insights" | "accounts">("activity");
   const [showSankey, setShowSankey] = useState(true);
   const [recurrence, setRecurrence] = useState<"none" | "weekly" | "monthly" | "yearly">("none");
+  const [whenSchedule, setWhenSchedule] = useState<"one-time" | "recurring" | "installments">(
+    "one-time",
+  );
   const [editingId, setEditingId] = useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<string>("liquidity");
   const [installments, setInstallments] = useState(false);
@@ -81,6 +100,8 @@ export function CashflowScreen() {
   const [entryDate, setEntryDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [entryCurrency, setEntryCurrency] = useState(currency);
   const [recurUntil, setRecurUntil] = useState("");
+  const scrollRef = useRef<ScrollView>(null);
+  const formY = useRef(0);
 
   const { rows, totals, sankeyData, chartData, periodLabel, expenseSlices, incomeSlices } =
     useMemo(() => {
@@ -215,12 +236,52 @@ export function CashflowScreen() {
     [state.categories],
   );
 
+  /** Category names that appear in the current period (and kind filter), for chip visibility. */
+  const categoriesWithData = useMemo(() => {
+    const { from, until } = periodRange(period);
+    const names = new Set<string>();
+    for (const e of expandCashflows(state.cashflows, until)) {
+      const d = new Date(e.date);
+      if (d < from || d > until) continue;
+      if (kindFilter !== "all" && e.kind !== kindFilter) continue;
+      if (e.kind === "transfer") continue;
+      const name = e.kind === "income" ? e.source : e.category || e.source;
+      if (name?.trim()) names.add(name.trim());
+    }
+    return names;
+  }, [state.cashflows, period, kindFilter]);
+
   const filterCategories = useMemo(() => {
-    if (kindFilter === "income") return incomeCats;
-    if (kindFilter === "expense") return expenseCats;
     if (kindFilter === "transfer") return [];
-    return state.categories;
-  }, [kindFilter, incomeCats, expenseCats, state.categories]);
+    const base =
+      kindFilter === "income"
+        ? incomeCats
+        : kindFilter === "expense"
+          ? expenseCats
+          : state.categories;
+    const withData = base.filter((c) => categoriesWithData.has(c.name));
+    // Include orphan labels that appear on entries but are not in the category list
+    const known = new Set(withData.map((c) => c.name));
+    const orphans = [...categoriesWithData]
+      .filter((name) => !known.has(name))
+      .map((name) => ({
+        id: `orphan:${name}`,
+        name,
+        color: colors.muted,
+        kind: "expense" as const,
+        group: "expense" as const,
+      }));
+    return [...withData, ...orphans];
+  }, [kindFilter, incomeCats, expenseCats, state.categories, categoriesWithData]);
+
+  React.useEffect(() => {
+    if (
+      categoryFilter !== "all" &&
+      !filterCategories.some((c) => c.name === categoryFilter)
+    ) {
+      setCategoryFilter("all");
+    }
+  }, [categoryFilter, filterCategories]);
 
   const accountOptions = useMemo(() => {
     const items: { id: string; label: string }[] = [
@@ -254,7 +315,8 @@ export function CashflowScreen() {
   function resetForm() {
     setSource("");
     setAmount("");
-    setRecurrence("none");
+    setRecurrence("monthly");
+    setWhenSchedule("one-time");
     setInstallments(false);
     setPaymentMethod("liquidity");
     setFromAccount("liquidity");
@@ -339,21 +401,32 @@ export function CashflowScreen() {
   function onAdd() {
     const n = Number(amount);
     if (!source.trim() || !isFinite(n) || n <= 0) {
-      Alert.alert("Invalid", "Enter a label and amount > 0");
+      Alert.alert(
+        t("common.checkFields", { defaultValue: "Check your entries" }),
+        t("cashflow.needLabelAmount", { defaultValue: "Enter a label and an amount greater than 0." }),
+      );
       return;
     }
     if (kind === "transfer" && fromAccount === toAccount) {
-      Alert.alert("Invalid", "From and to accounts must differ");
+      Alert.alert(
+        t("common.checkFields", { defaultValue: "Check your entries" }),
+        t("cashflow.transferAccountsDiffer", {
+          defaultValue: "From and to accounts must be different.",
+        }),
+      );
       return;
     }
     const cat =
       kind === "expense"
         ? expenseCats.find((c) => c.id === categoryId)?.name || source.trim()
         : kind === "income"
-          ? incomeCats[0]?.name || ""
+          ? incomeCats.find((c) => c.id === categoryId)?.name ||
+            incomeCats[0]?.name ||
+            source.trim()
           : "Transfer";
     const count = Math.max(2, Math.min(60, parseInt(instCount, 10) || 3));
-    const useInstallments = kind === "expense" && installments && recurrence === "none";
+    const useInstallments = kind === "expense" && whenSchedule === "installments";
+    const useRecurring = whenSchedule === "recurring";
     const usePercent = amountKind === "percent" && !useInstallments && kind !== "transfer";
     const isoDate = parseIsoDate(entryDate);
     const payload = {
@@ -366,7 +439,7 @@ export function CashflowScreen() {
       amountKind: usePercent ? ("percent" as const) : ("fixed" as const),
       percentOf: usePercent ? percentOf : undefined,
       recurrence:
-        !useInstallments && recurrence !== "none"
+        useRecurring && !useInstallments
           ? {
               frequency: recurrence as "weekly" | "monthly" | "yearly",
               until: recurUntil.trim() ? parseIsoDate(recurUntil) : undefined,
@@ -406,7 +479,10 @@ export function CashflowScreen() {
     setAmount(
       entry.installmentPlan ? String(entry.installmentPlan.total) : String(entry.amount),
     );
-    setRecurrence(entry.recurrence?.frequency ?? "none");
+    setRecurrence(entry.recurrence?.frequency ?? "monthly");
+    if (entry.installmentPlan) setWhenSchedule("installments");
+    else if (entry.recurrence) setWhenSchedule("recurring");
+    else setWhenSchedule("one-time");
     setRecurUntil(entry.recurrence?.until?.slice(0, 10) ?? "");
     setPaymentMethod(entry.paymentMethod || "liquidity");
     setFromAccount(entry.fromAccount || "liquidity");
@@ -425,19 +501,38 @@ export function CashflowScreen() {
     if (entry.kind === "expense") {
       const cat = expenseCats.find((c) => c.name === entry.category);
       setCategoryId(cat?.id ?? null);
+    } else if (entry.kind === "income") {
+      const cat = incomeCats.find((c) => c.name === entry.category || c.name === entry.source);
+      setCategoryId(cat?.id ?? null);
+    } else {
+      setCategoryId(null);
     }
+    setMode("activity");
+    requestAnimationFrame(() => {
+      scrollRef.current?.scrollTo({ y: Math.max(0, formY.current - 12), animated: true });
+    });
   }
 
   function onDelete(id: string, parentId: string, isOccurrence: boolean) {
     const target = isOccurrence ? parentId : id;
-    Alert.alert("Delete entry?", "Remove this cashflow entry.", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Delete",
-        style: "destructive",
-        onPress: () => removeCashflow(target),
-      },
-    ]);
+    const entry = state.cashflows.find((c) => c.id === target);
+    const isRecurring = !!entry?.recurrence || isOccurrence;
+    Alert.alert(
+      t("common.delete", { defaultValue: "Delete" }),
+      isRecurring
+        ? t("more.entriesDeleteRecurringConfirm", {
+            defaultValue: "Delete the entire recurring entry and all its occurrences?",
+          })
+        : t("cashflow.deleteConfirm", { defaultValue: "Remove this cashflow entry?" }),
+      [
+        { text: t("common.cancel", { defaultValue: "Cancel" }), style: "cancel" },
+        {
+          text: t("common.delete", { defaultValue: "Delete" }),
+          style: "destructive",
+          onPress: () => removeCashflow(target),
+        },
+      ],
+    );
   }
 
   const periods: { id: Period; label: string }[] = [
@@ -447,483 +542,708 @@ export function CashflowScreen() {
     { id: "all", label: "All" },
   ];
 
+  const kindFilterLabels: Record<typeof kindFilter, string> = {
+    all: t("more.entriesAll", { defaultValue: "All" }),
+    income: t("more.entriesIncome", { defaultValue: "Income" }),
+    expense: t("cashflow.expense", { defaultValue: "Expense" }),
+    transfer: t("cashflow.transfer", { defaultValue: "Transfer" }),
+  };
+
   return (
     <Screen>
-      <ScrollView>
-        <Header title={t("nav.cashflow", { defaultValue: "Cashflow" })} />
+      <ScrollView
+        ref={scrollRef}
+        style={{ flex: 1 }}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        automaticallyAdjustKeyboardInsets
+      >
+        <Header title={t("nav.cashflow")} subtitle={t("cashflow.subtitle")} />
 
         <SegmentedControl
-          options={periods.map((p) => ({ id: p.id, label: p.label }))}
-          value={period}
-          onChange={setPeriod}
+          options={[
+            { id: "activity" as const, label: t("cashflow.mode.activity") },
+            { id: "upcoming" as const, label: t("cashflow.mode.upcoming") },
+            { id: "insights" as const, label: t("cashflow.mode.insights") },
+            { id: "accounts" as const, label: t("cashflow.mode.accounts") },
+          ]}
+          value={mode}
+          onChange={setMode}
         />
-        <SegmentedControl
-          options={(["all", "income", "expense", "transfer"] as const).map((k) => ({
-            id: k,
-            label: k,
-          }))}
-          value={kindFilter}
-          onChange={(k) => {
-            setKindFilter(k);
-            setCategoryFilter("all");
-          }}
-        />
-        {filterCategories.length > 0 ? (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.catRow}>
-            <Chip
-              label="All"
-              active={categoryFilter === "all"}
-              onPress={() => setCategoryFilter("all")}
-            />
-            {filterCategories.map((c) => (
-              <Chip
-                key={c.id}
-                label={c.name}
-                color={c.color}
-                active={categoryFilter === c.name}
-                onPress={() => setCategoryFilter(c.name)}
-              />
-            ))}
-          </ScrollView>
-        ) : null}
 
-        <Card>
-          <Metric label={`Income (${currency})`} value={mask(totals.income)} />
-          <Metric label="Expenses" value={mask(totals.expense)} />
-          <Metric label="Net" value={mask(totals.net)} />
-          <Metric label="Liquidity impact" value={mask(totals.liquidity)} />
-          <View style={styles.buttonStack}>
-            <PrimaryButton label="Export period CSV" onPress={() => void exportCsv()} />
-            <PrimaryButton
-              label={t("cashflow.exportPdf", { defaultValue: "Export PDF" })}
-              onPress={() => void exportPdf()}
-            />
-          </View>
-        </Card>
-
-        <CreditCardsManager />
-        <CategoriesManager />
-
-        <View style={styles.rowBetween}>
-          <Text style={styles.section}>By category</Text>
-          <Pressable onPress={() => setShowBreakdown((v) => !v)}>
-            <Text style={styles.link}>{showBreakdown ? "Hide" : "Show"}</Text>
-          </Pressable>
-        </View>
-        {showBreakdown ? (
+        {mode === "activity" ? (
           <>
-            <CategoryBreakdown
-              title="Expenses"
-              filename="cashflow-expense-cats"
-              slices={expenseSlices}
-              format={(n) => mask(n)}
-              emptyLabel="No expenses in this period."
+            <SegmentedControl
+              options={periods.map((p) => ({ id: p.id, label: p.label }))}
+              value={period}
+              onChange={setPeriod}
             />
-            <CategoryBreakdown
-              title="Income"
-              filename="cashflow-income-cats"
-              slices={incomeSlices}
-              format={(n) => mask(n)}
-              emptyLabel="No income in this period."
+            <SegmentedControl
+              options={(["all", "income", "expense", "transfer"] as const).map((k) => ({
+                id: k,
+                label: kindFilterLabels[k],
+              }))}
+              value={kindFilter}
+              onChange={(k) => {
+                setKindFilter(k);
+                setCategoryFilter("all");
+              }}
             />
-          </>
-        ) : null}
-
-        <View style={styles.rowBetween}>
-          <Text style={styles.section}>Sankey</Text>
-          <Pressable onPress={() => setShowSankey((v) => !v)}>
-            <Text style={styles.link}>{showSankey ? "Hide" : "Show"}</Text>
-          </Pressable>
-        </View>
-        {showSankey ? (
-          <View style={styles.pills}>
-            <Pressable
-              onPress={() =>
-                setSankeyStages((s) => ({ ...s, categories: !s.categories }))
-              }
-              style={[styles.pill, sankeyStages.categories && styles.pillActive]}
-            >
-              <Text
-                style={[
-                  styles.pillText,
-                  sankeyStages.categories && styles.pillTextActive,
-                ]}
-              >
-                Categories
-              </Text>
-            </Pressable>
-            <Pressable
-              onPress={() =>
-                setSankeyStages((s) => ({ ...s, descriptions: !s.descriptions }))
-              }
-              style={[styles.pill, sankeyStages.descriptions && styles.pillActive]}
-            >
-              <Text
-                style={[
-                  styles.pillText,
-                  sankeyStages.descriptions && styles.pillTextActive,
-                ]}
-              >
-                Descriptions
-              </Text>
-            </Pressable>
-          </View>
-        ) : null}
-        {showSankey && sankeyData ? (
-          <SankeyChart data={sankeyData} height={340} format={(v) => fmt(v)} />
-        ) : null}
-
-        <Card>
-          <Text style={styles.label}>{editingId ? "Edit entry" : "Quick add"}</Text>
-          <View style={styles.row}>
-            <Pressable
-              onPress={() => setKind("expense")}
-              style={[styles.kindBtn, kind === "expense" && styles.kindBtnActiveExpense]}
-            >
-              <Text style={styles.kindText}>Expense</Text>
-            </Pressable>
-            <Pressable
-              onPress={() => setKind("income")}
-              style={[styles.kindBtn, kind === "income" && styles.kindBtnActiveIncome]}
-            >
-              <Text style={styles.kindText}>Income</Text>
-            </Pressable>
-            <Pressable
-              onPress={() => setKind("transfer")}
-              style={[styles.kindBtn, kind === "transfer" && styles.kindBtnActiveTransfer]}
-            >
-              <Text style={styles.kindText}>Transfer</Text>
-            </Pressable>
-          </View>
-          {kind === "expense" ? (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.catRow}>
-              {expenseCats.map((c) => (
-                <Pressable
-                  key={c.id}
-                  onPress={() => setCategoryId(c.id)}
-                  style={[
-                    styles.catChip,
-                    { borderColor: c.color },
-                    categoryId === c.id && { backgroundColor: c.color + "33" },
-                  ]}
-                >
-                  <Text style={styles.catChipText}>{c.name}</Text>
-                </Pressable>
-              ))}
-            </ScrollView>
-          ) : null}
-          <TextInput
-            style={styles.input}
-            placeholder={
-              kind === "income" ? "Source" : kind === "transfer" ? "Transfer label" : "Description / label"
-            }
-            placeholderTextColor={colors.muted}
-            value={source}
-            onChangeText={setSource}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder={amountKind === "percent" ? "Percent (e.g. 10)" : "Amount"}
-            placeholderTextColor={colors.muted}
-            keyboardType="decimal-pad"
-            value={amount}
-            onChangeText={setAmount}
-          />
-          <Text style={styles.label}>Date (YYYY-MM-DD)</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="YYYY-MM-DD"
-            placeholderTextColor={colors.muted}
-            value={entryDate}
-            onChangeText={setEntryDate}
-            autoCapitalize="none"
-            autoCorrect={false}
-          />
-          <Text style={styles.label}>Currency</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.catRow}>
-            {CURRENCIES.slice(0, 12).map((c) => (
-              <Pressable
-                key={c.code}
-                onPress={() => setEntryCurrency(c.code)}
-                style={[
-                  styles.catChip,
-                  { borderColor: colors.border },
-                  entryCurrency === c.code && {
-                    backgroundColor: colors.accentSoft,
-                    borderColor: colors.accent,
-                  },
-                ]}
-              >
-                <Text style={styles.catChipText}>{c.code}</Text>
-              </Pressable>
-            ))}
-          </ScrollView>
-          {kind === "transfer" ? (
-            <>
-              <Text style={styles.label}>From</Text>
+            {filterCategories.length > 0 ? (
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.catRow}>
-                {accountOptions.map((m) => (
-                  <Pressable
-                    key={`from-${m.id}`}
-                    onPress={() => setFromAccount(m.id)}
-                    style={[
-                      styles.catChip,
-                      { borderColor: colors.border },
-                      fromAccount === m.id && {
-                        backgroundColor: colors.accentSoft,
-                        borderColor: colors.accent,
-                      },
-                    ]}
-                  >
-                    <Text style={styles.catChipText}>{m.label}</Text>
-                  </Pressable>
+                <Chip
+                  label={t("more.entriesAll", { defaultValue: "All" })}
+                  active={categoryFilter === "all"}
+                  onPress={() => setCategoryFilter("all")}
+                />
+                {filterCategories.map((c) => (
+                  <Chip
+                    key={c.id}
+                    label={c.name}
+                    color={c.color}
+                    active={categoryFilter === c.name}
+                    onPress={() => setCategoryFilter(c.name)}
+                  />
                 ))}
               </ScrollView>
-              <Text style={styles.label}>To</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.catRow}>
-                {accountOptions.map((m) => (
-                  <Pressable
-                    key={`to-${m.id}`}
-                    onPress={() => setToAccount(m.id)}
-                    style={[
-                      styles.catChip,
-                      { borderColor: colors.border },
-                      toAccount === m.id && {
-                        backgroundColor: colors.accentSoft,
-                        borderColor: colors.accent,
-                      },
-                    ]}
-                  >
-                    <Text style={styles.catChipText}>{m.label}</Text>
-                  </Pressable>
-                ))}
-              </ScrollView>
-            </>
-          ) : null}
-          {kind !== "transfer" && !installments ? (
-            <>
-              <Text style={styles.label}>Amount type</Text>
-              <View style={styles.row}>
-                <Pressable
-                  onPress={() => setAmountKind("fixed")}
-                  style={[styles.kindBtn, amountKind === "fixed" && styles.kindBtnActiveIncome]}
-                >
-                  <Text style={styles.kindText}>Fixed</Text>
-                </Pressable>
-                <Pressable
-                  onPress={() => setAmountKind("percent")}
-                  style={[styles.kindBtn, amountKind === "percent" && styles.kindBtnActiveTransfer]}
-                >
-                  <Text style={styles.kindText}>Percent</Text>
-                </Pressable>
+            ) : null}
+
+            <Card>
+              <MetricRow
+                items={[
+                  { label: `Income (${currency})`, value: mask(totals.income) },
+                  { label: "Expenses", value: mask(totals.expense) },
+                  { label: "Net", value: mask(totals.net) },
+                  { label: "Liquidity impact", value: mask(totals.liquidity) },
+                ]}
+              />
+              <View style={styles.buttonStack}>
+                <PrimaryButton
+                  compact
+                  style={{ flex: 1 }}
+                  label="Export period CSV"
+                  onPress={() => void exportCsv()}
+                />
+                <PrimaryButton
+                  compact
+                  style={{ flex: 1 }}
+                  label={t("cashflow.exportPdf", { defaultValue: "Export PDF" })}
+                  onPress={() => void exportPdf()}
+                />
               </View>
-              {amountKind === "percent" ? (
-                <>
-                  <View style={styles.row}>
-                    <Pressable
-                      onPress={() => setPercentOf("all-income")}
-                      style={[
-                        styles.kindBtn,
-                        percentOf === "all-income" && styles.kindBtnActiveIncome,
-                      ]}
-                    >
-                      <Text style={styles.kindText}>of income</Text>
-                    </Pressable>
-                    <Pressable
-                      onPress={() => setPercentOf("all-expense")}
-                      style={[
-                        styles.kindBtn,
-                        percentOf === "all-expense" && styles.kindBtnActiveExpense,
-                      ]}
-                    >
-                      <Text style={styles.kindText}>of expenses</Text>
-                    </Pressable>
-                  </View>
-                  {percentBases.length > 0 ? (
-                    <>
-                      <Text style={styles.label}>Or of specific entry</Text>
+            </Card>
+
+            <Card>
+              <Text style={styles.section}>{t("cashflow.upcoming.previewTitle")}</Text>
+              <CashflowUpcoming
+                cashflows={state.cashflows}
+                mask={mask}
+                toDisplay={toDisplay}
+                compact
+                limit={5}
+                initialDays={7}
+                onViewAll={() => setMode("upcoming")}
+                onEdit={(id) => {
+                  onEdit(id);
+                  scrollRef.current?.scrollTo({ y: Math.max(0, formY.current - 12), animated: true });
+                }}
+              />
+            </Card>
+
+            <View
+              onLayout={(e: LayoutChangeEvent) => {
+                formY.current = e.nativeEvent.layout.y;
+              }}
+            >
+              <Card>
+                <Text style={styles.label}>{editingId ? "Edit entry" : "Quick add"}</Text>
+                <View style={styles.row}>
+                  <Pressable
+                    onPress={() => {
+                      setKind("expense");
+                      setCategoryId(null);
+                    }}
+                    style={[styles.kindBtn, kind === "expense" && styles.kindBtnActiveExpense]}
+                  >
+                    <Text style={styles.kindText}>Expense</Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={() => {
+                      setKind("income");
+                      setCategoryId(incomeCats[0]?.id ?? null);
+                    }}
+                    style={[styles.kindBtn, kind === "income" && styles.kindBtnActiveIncome]}
+                  >
+                    <Text style={styles.kindText}>Income</Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={() => {
+                      setKind("transfer");
+                      setCategoryId(null);
+                    }}
+                    style={[styles.kindBtn, kind === "transfer" && styles.kindBtnActiveTransfer]}
+                  >
+                    <Text style={styles.kindText}>Transfer</Text>
+                  </Pressable>
+                </View>
+                {kind === "expense" || kind === "income" ? (
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    style={styles.catRow}
+                  >
+                    {(kind === "expense" ? expenseCats : incomeCats).map((c) => (
+                      <Pressable
+                        key={c.id}
+                        onPress={() => setCategoryId(c.id)}
+                        style={[
+                          styles.catChip,
+                          { borderColor: c.color },
+                          categoryId === c.id && { backgroundColor: c.color + "33" },
+                        ]}
+                      >
+                        <Text style={styles.catChipText}>{c.name}</Text>
+                      </Pressable>
+                    ))}
+                  </ScrollView>
+                ) : null}
+                {kind === "transfer" ? (
+                  <Text style={styles.hintInline}>{t("cashflow.transferHint")}</Text>
+                ) : null}
+                <Field
+                  label={
+                    kind === "income"
+                      ? t("cashflow.source", { defaultValue: "Source" })
+                      : kind === "transfer"
+                        ? t("cashflow.transferLabel", { defaultValue: "Transfer label" })
+                        : t("cashflow.description", { defaultValue: "Description" })
+                  }
+                >
+                  <TextInput
+                    style={styles.input}
+                    placeholder={
+                      kind === "income"
+                        ? "e.g. Salary"
+                        : kind === "transfer"
+                          ? "e.g. Card payment"
+                          : "e.g. groceries"
+                    }
+                    placeholderTextColor={colors.muted}
+                    value={source}
+                    onChangeText={setSource}
+                  />
+                </Field>
+                <Field
+                  label={
+                    amountKind === "percent"
+                      ? t("cashflow.percent", { defaultValue: "Percent" })
+                      : t("cashflow.amount", { defaultValue: "Amount" })
+                  }
+                >
+                  <TextInput
+                    style={styles.input}
+                    placeholder={amountKind === "percent" ? "e.g. 10" : "0.00"}
+                    placeholderTextColor={colors.muted}
+                    keyboardType="decimal-pad"
+                    value={amount}
+                    onChangeText={setAmount}
+                  />
+                </Field>
+                <Field label={t("cashflow.date", { defaultValue: "Date (YYYY-MM-DD)" })}>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="YYYY-MM-DD"
+                    placeholderTextColor={colors.muted}
+                    value={entryDate}
+                    onChangeText={setEntryDate}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                  />
+                </Field>
+                <Field label={t("cashflow.currency", { defaultValue: "Currency" })}>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    style={styles.catRow}
+                  >
+                    {CURRENCIES.slice(0, 12).map((c) => (
+                      <Pressable
+                        key={c.code}
+                        onPress={() => setEntryCurrency(c.code)}
+                        style={[
+                          styles.catChip,
+                          { borderColor: colors.border },
+                          entryCurrency === c.code && {
+                            backgroundColor: colors.accentSoft,
+                            borderColor: colors.accent,
+                          },
+                        ]}
+                      >
+                        <Text style={styles.catChipText}>{c.code}</Text>
+                      </Pressable>
+                    ))}
+                  </ScrollView>
+                </Field>
+                {kind === "transfer" ? (
+                  <>
+                    <Field label={t("cashflow.from", { defaultValue: "From" })}>
                       <ScrollView
                         horizontal
                         showsHorizontalScrollIndicator={false}
                         style={styles.catRow}
                       >
-                        {percentBases.map((b) => (
+                        {accountOptions.map((m) => (
                           <Pressable
-                            key={b.id}
-                            onPress={() => setPercentOf(b.id)}
+                            key={`from-${m.id}`}
+                            onPress={() => setFromAccount(m.id)}
                             style={[
                               styles.catChip,
                               { borderColor: colors.border },
-                              percentOf === b.id && {
+                              fromAccount === m.id && {
                                 backgroundColor: colors.accentSoft,
                                 borderColor: colors.accent,
                               },
                             ]}
                           >
-                            <Text style={styles.catChipText}>{b.label}</Text>
+                            <Text style={styles.catChipText}>{m.label}</Text>
                           </Pressable>
                         ))}
                       </ScrollView>
-                    </>
+                    </Field>
+                    <Field label={t("cashflow.to", { defaultValue: "To" })}>
+                      <ScrollView
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        style={styles.catRow}
+                      >
+                        {accountOptions.map((m) => (
+                          <Pressable
+                            key={`to-${m.id}`}
+                            onPress={() => setToAccount(m.id)}
+                            style={[
+                              styles.catChip,
+                              { borderColor: colors.border },
+                              toAccount === m.id && {
+                                backgroundColor: colors.accentSoft,
+                                borderColor: colors.accent,
+                              },
+                            ]}
+                          >
+                            <Text style={styles.catChipText}>{m.label}</Text>
+                          </Pressable>
+                        ))}
+                      </ScrollView>
+                    </Field>
+                  </>
+                ) : null}
+                {kind !== "transfer" && !installments ? (
+                  <>
+                    <Text style={styles.label}>Amount type</Text>
+                    <View style={styles.row}>
+                      <Pressable
+                        onPress={() => setAmountKind("fixed")}
+                        style={[styles.kindBtn, amountKind === "fixed" && styles.kindBtnActiveIncome]}
+                      >
+                        <Text style={styles.kindText}>Fixed</Text>
+                      </Pressable>
+                      <Pressable
+                        onPress={() => setAmountKind("percent")}
+                        style={[
+                          styles.kindBtn,
+                          amountKind === "percent" && styles.kindBtnActiveTransfer,
+                        ]}
+                      >
+                        <Text style={styles.kindText}>Percent</Text>
+                      </Pressable>
+                    </View>
+                    {amountKind === "percent" ? (
+                      <>
+                        <View style={styles.row}>
+                          <Pressable
+                            onPress={() => setPercentOf("all-income")}
+                            style={[
+                              styles.kindBtn,
+                              percentOf === "all-income" && styles.kindBtnActiveIncome,
+                            ]}
+                          >
+                            <Text style={styles.kindText}>of income</Text>
+                          </Pressable>
+                          <Pressable
+                            onPress={() => setPercentOf("all-expense")}
+                            style={[
+                              styles.kindBtn,
+                              percentOf === "all-expense" && styles.kindBtnActiveExpense,
+                            ]}
+                          >
+                            <Text style={styles.kindText}>of expenses</Text>
+                          </Pressable>
+                        </View>
+                        {percentBases.length > 0 ? (
+                          <>
+                            <Text style={styles.label}>Or of specific entry</Text>
+                            <ScrollView
+                              horizontal
+                              showsHorizontalScrollIndicator={false}
+                              style={styles.catRow}
+                            >
+                              {percentBases.map((b) => (
+                                <Pressable
+                                  key={b.id}
+                                  onPress={() => setPercentOf(b.id)}
+                                  style={[
+                                    styles.catChip,
+                                    { borderColor: colors.border },
+                                    percentOf === b.id && {
+                                      backgroundColor: colors.accentSoft,
+                                      borderColor: colors.accent,
+                                    },
+                                  ]}
+                                >
+                                  <Text style={styles.catChipText}>{b.label}</Text>
+                                </Pressable>
+                              ))}
+                            </ScrollView>
+                          </>
+                        ) : null}
+                      </>
+                    ) : null}
+                  </>
+                ) : null}
+                {kind === "expense" ? (
+                  <>
+                    <Field label={t("cashflow.paidFrom", { defaultValue: "Paid from" })}>
+                      <ScrollView
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        style={styles.catRow}
+                      >
+                        {payMethods.map((m) => (
+                          <Pressable
+                            key={m.id}
+                            onPress={() => setPaymentMethod(m.id)}
+                            style={[
+                              styles.catChip,
+                              { borderColor: colors.border },
+                              paymentMethod === m.id && {
+                                backgroundColor: colors.accentSoft,
+                                borderColor: colors.accent,
+                              },
+                            ]}
+                          >
+                            <Text style={styles.catChipText}>{m.label}</Text>
+                          </Pressable>
+                        ))}
+                      </ScrollView>
+                    </Field>
+                  </>
+                ) : null}
+                {kind !== "transfer" && amountKind === "fixed" ? (
+                  <>
+                    <Text style={styles.label}>{t("cashflow.upcoming.whenLabel")}</Text>
+                    <View style={styles.row}>
+                      {(
+                        [
+                          ["one-time", t("cashflow.none")],
+                          ["recurring", t("cashflow.recurrence")],
+                          ...(kind === "expense"
+                            ? [
+                                [
+                                  "installments",
+                                  t("cashflow.splitInstallments", { defaultValue: "Installments" }),
+                                ],
+                              ]
+                            : []),
+                        ] as const
+                      ).map(([mode, label]) => (
+                        <Pressable
+                          key={mode}
+                          onPress={() => {
+                            setWhenSchedule(mode);
+                            setInstallments(mode === "installments");
+                          }}
+                          style={[
+                            styles.kindBtn,
+                            whenSchedule === mode && styles.kindBtnActiveIncome,
+                          ]}
+                        >
+                          <Text style={styles.kindText}>{label}</Text>
+                        </Pressable>
+                      ))}
+                    </View>
+                    {whenSchedule === "installments" ? (
+                      <View style={styles.row}>
+                        <TextInput
+                          style={[styles.input, { flex: 1, marginBottom: 0 }]}
+                          placeholder="Count"
+                          placeholderTextColor={colors.muted}
+                          keyboardType="number-pad"
+                          value={instCount}
+                          onChangeText={setInstCount}
+                        />
+                        {(["monthly", "weekly"] as const).map((f) => (
+                          <Pressable
+                            key={f}
+                            onPress={() => setInstFreq(f)}
+                            style={[styles.kindBtn, instFreq === f && styles.kindBtnActiveIncome]}
+                          >
+                            <Text style={styles.kindText}>{f}</Text>
+                          </Pressable>
+                        ))}
+                      </View>
+                    ) : null}
+                    {whenSchedule === "recurring" ? (
+                      <>
+                        <Text style={styles.label}>
+                          {t("cashflow.frequency", { defaultValue: "Frequency" })}
+                        </Text>
+                        <View style={styles.row}>
+                          {(["weekly", "monthly", "yearly"] as const).map((r) => (
+                            <Pressable
+                              key={r}
+                              onPress={() => setRecurrence(r)}
+                              style={[styles.kindBtn, recurrence === r && styles.kindBtnActiveIncome]}
+                            >
+                              <Text style={styles.kindText}>{r}</Text>
+                            </Pressable>
+                          ))}
+                        </View>
+                        <Field
+                          label={t("cashflow.until", { defaultValue: "Until (optional YYYY-MM-DD)" })}
+                          hint={t("cashflow.untilHint", {
+                            defaultValue: "Leave empty for ongoing",
+                          })}
+                        >
+                          <TextInput
+                            style={styles.input}
+                            placeholder="YYYY-MM-DD"
+                            placeholderTextColor={colors.muted}
+                            value={recurUntil}
+                            onChangeText={setRecurUntil}
+                            autoCapitalize="none"
+                            autoCorrect={false}
+                          />
+                        </Field>
+                      </>
+                    ) : null}
+                  </>
+                ) : null}
+                <View style={styles.buttonStack}>
+                  <PrimaryButton
+                    label={editingId ? "Save changes" : "Add entry"}
+                    onPress={onAdd}
+                    style={{ flex: 1 }}
+                  />
+                  {editingId ? (
+                    <SecondaryButton label="Cancel" onPress={resetForm} style={{ flex: 1 }} />
                   ) : null}
-                </>
-              ) : null}
-            </>
-          ) : null}
-          {kind === "expense" ? (
-            <>
-              <Text style={styles.label}>Paid from</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.catRow}>
-                {payMethods.map((m) => (
+                </View>
+              </Card>
+            </View>
+
+            <Text style={styles.section}>Entries ({rows.length})</Text>
+            {rows.length === 0 ? (
+              <EmptyState
+                title={t("cashflow.emptyTitle", { defaultValue: "No entries yet" })}
+                body={t("cashflow.emptyFlow", {
+                  defaultValue: "Add some income and expenses to see your cashflow.",
+                })}
+                actionLabel={t("cashflow.addFirst", { defaultValue: "Add your first entry" })}
+                onAction={() => {
+                  scrollRef.current?.scrollTo({ y: Math.max(0, formY.current - 12), animated: true });
+                }}
+              />
+            ) : (
+              <>
+                {rows.map((r) => (
                   <Pressable
-                    key={m.id}
-                    onPress={() => setPaymentMethod(m.id)}
+                    key={r.id}
+                    onPress={() => onEdit(r.parentId || r.id)}
+                    onLongPress={() => onDelete(r.id, r.parentId, r.isOccurrence)}
+                  >
+                    <Card>
+                      <View style={styles.rowBetween}>
+                        <Text
+                          style={[
+                            styles.rowTitle,
+                            {
+                              color:
+                                r.kind === "income"
+                                  ? colors.income
+                                  : r.kind === "transfer"
+                                    ? colors.accent
+                                    : colors.expense,
+                            },
+                          ]}
+                        >
+                          {r.kind.toUpperCase()} · {r.label}
+                        </Text>
+                        <Text style={styles.rowValue}>{mask(r.value)}</Text>
+                      </View>
+                      <Text style={styles.rowMeta}>
+                        {r.date}
+                        {r.description ? ` · ${r.description}` : ""}
+                        {r.isOccurrence ? " · recurring" : ""}
+                        {r.installment ? " · installment" : ""}
+                        {r.paymentMethod?.startsWith("credit:") ? " · card" : ""}
+                      </Text>
+                    </Card>
+                  </Pressable>
+                ))}
+                <Text style={styles.hint}>
+                  Tap to edit · Long-press to delete
+                  {rows.some((r) => r.isOccurrence)
+                    ? " · recurring rows edit the parent entry"
+                    : ""}
+                  .
+                </Text>
+              </>
+            )}
+          </>
+        ) : null}
+
+        {mode === "upcoming" ? (
+          <>
+            <Text style={styles.section}>{t("cashflow.upcoming.title")}</Text>
+            <Text style={styles.hintInline}>{t("cashflow.upcoming.description")}</Text>
+            <CashflowUpcoming
+              cashflows={state.cashflows}
+              mask={mask}
+              toDisplay={toDisplay}
+              onEdit={(id) => {
+                setMode("activity");
+                onEdit(id);
+                scrollRef.current?.scrollTo({ y: Math.max(0, formY.current - 12), animated: true });
+              }}
+            />
+          </>
+        ) : null}
+
+        {mode === "insights" ? (
+          <>
+            <SegmentedControl
+              options={periods.map((p) => ({ id: p.id, label: p.label }))}
+              value={period}
+              onChange={setPeriod}
+            />
+            <Card>
+              <MetricRow
+                items={[
+                  { label: `Income (${currency})`, value: mask(totals.income) },
+                  { label: "Expenses", value: mask(totals.expense) },
+                  { label: "Net", value: mask(totals.net) },
+                ]}
+              />
+            </Card>
+            <View style={styles.rowBetween}>
+              <Text style={styles.section}>By category</Text>
+              <Pressable onPress={() => setShowBreakdown((v) => !v)}>
+                <Text style={styles.link}>{showBreakdown ? "Hide" : "Show"}</Text>
+              </Pressable>
+            </View>
+            {showBreakdown ? (
+              <>
+                <CategoryBreakdown
+                  title="Expenses"
+                  filename="cashflow-expense-cats"
+                  slices={expenseSlices}
+                  format={(n) => mask(n)}
+                  emptyLabel="No expenses in this period."
+                />
+                <CategoryBreakdown
+                  title="Income"
+                  filename="cashflow-income-cats"
+                  slices={incomeSlices}
+                  format={(n) => mask(n)}
+                  emptyLabel="No income in this period."
+                />
+              </>
+            ) : null}
+
+            <View style={styles.rowBetween}>
+              <Text style={styles.section}>Sankey</Text>
+              <Pressable onPress={() => setShowSankey((v) => !v)}>
+                <Text style={styles.link}>{showSankey ? "Hide" : "Show"}</Text>
+              </Pressable>
+            </View>
+            {showSankey ? (
+              <View style={styles.pills}>
+                <Pressable
+                  onPress={() =>
+                    setSankeyStages((s) => ({ ...s, categories: !s.categories }))
+                  }
+                  style={[styles.pill, sankeyStages.categories && styles.pillActive]}
+                >
+                  <Text
                     style={[
-                      styles.catChip,
-                      { borderColor: colors.border },
-                      paymentMethod === m.id && {
-                        backgroundColor: colors.accentSoft,
-                        borderColor: colors.accent,
-                      },
+                      styles.pillText,
+                      sankeyStages.categories && styles.pillTextActive,
                     ]}
                   >
-                    <Text style={styles.catChipText}>{m.label}</Text>
-                  </Pressable>
-                ))}
-              </ScrollView>
-              <Pressable
-                onPress={() => {
-                  setInstallments((v) => !v);
-                  if (!installments) setRecurrence("none");
-                }}
-                style={[styles.kindBtn, installments && styles.kindBtnActiveTransfer]}
-              >
-                <Text style={styles.kindText}>
-                  {installments ? "✓ Installment plan" : "Split into installments"}
-                </Text>
-              </Pressable>
-              {installments ? (
-                <View style={styles.row}>
-                  <TextInput
-                    style={[styles.input, { flex: 1, marginBottom: 0 }]}
-                    placeholder="Count"
-                    placeholderTextColor={colors.muted}
-                    keyboardType="number-pad"
-                    value={instCount}
-                    onChangeText={setInstCount}
-                  />
-                  {(["monthly", "weekly"] as const).map((f) => (
-                    <Pressable
-                      key={f}
-                      onPress={() => setInstFreq(f)}
-                      style={[styles.kindBtn, instFreq === f && styles.kindBtnActiveIncome]}
-                    >
-                      <Text style={styles.kindText}>{f}</Text>
-                    </Pressable>
-                  ))}
-                </View>
-              ) : null}
-            </>
-          ) : null}
-          {!installments ? (
-            <>
-              <Text style={styles.label}>Recurrence</Text>
-              <View style={styles.row}>
-                {(["none", "weekly", "monthly", "yearly"] as const).map((r) => (
-                  <Pressable
-                    key={r}
-                    onPress={() => setRecurrence(r)}
-                    style={[styles.kindBtn, recurrence === r && styles.kindBtnActiveIncome]}
-                  >
-                    <Text style={styles.kindText}>{r}</Text>
-                  </Pressable>
-                ))}
-              </View>
-              {recurrence !== "none" ? (
-                <>
-                  <Text style={styles.label}>Until (optional YYYY-MM-DD)</Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Leave empty = ongoing"
-                    placeholderTextColor={colors.muted}
-                    value={recurUntil}
-                    onChangeText={setRecurUntil}
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                  />
-                </>
-              ) : null}
-            </>
-          ) : null}
-          <View style={styles.buttonStack}>
-            <PrimaryButton label={editingId ? "Save changes" : "Add entry"} onPress={onAdd} />
-            {editingId ? (
-              <PrimaryButton label="Cancel edit" onPress={resetForm} />
-            ) : null}
-          </View>
-        </Card>
-
-        <Text style={styles.section}>Entries ({rows.length})</Text>
-        {rows.map((r) => (
-          <Pressable
-            key={r.id}
-            onPress={() => !r.isOccurrence && onEdit(r.parentId || r.id)}
-            onLongPress={() => onDelete(r.id, r.parentId, r.isOccurrence)}
-          >
-            <Card>
-              <View style={styles.rowBetween}>
-                <Text
-                  style={[
-                    styles.rowTitle,
-                    {
-                      color:
-                        r.kind === "income"
-                          ? colors.income
-                          : r.kind === "transfer"
-                            ? colors.accent
-                            : colors.expense,
-                    },
-                  ]}
+                    Categories
+                  </Text>
+                </Pressable>
+                <Pressable
+                  onPress={() =>
+                    setSankeyStages((s) => ({ ...s, descriptions: !s.descriptions }))
+                  }
+                  style={[styles.pill, sankeyStages.descriptions && styles.pillActive]}
                 >
-                  {r.kind.toUpperCase()} · {r.label}
-                </Text>
-                <Text style={styles.rowValue}>{mask(r.value)}</Text>
+                  <Text
+                    style={[
+                      styles.pillText,
+                      sankeyStages.descriptions && styles.pillTextActive,
+                    ]}
+                  >
+                    Descriptions
+                  </Text>
+                </Pressable>
               </View>
-              <Text style={styles.rowMeta}>
-                {r.date}
-                {r.description ? ` · ${r.description}` : ""}
-                {r.isOccurrence ? " · recurring" : ""}
-                {r.installment ? " · installment" : ""}
-                {r.paymentMethod?.startsWith("credit:") ? " · card" : ""}
-              </Text>
+            ) : null}
+            {showSankey ? (
+              sankeyData && (expenseSlices.length > 0 || incomeSlices.length > 0) ? (
+                <SankeyChart data={sankeyData} height={340} format={(v) => fmt(v)} />
+              ) : (
+                <EmptyState
+                  title={t("cashflow.sankeyEmptyTitle", { defaultValue: "Not enough data" })}
+                  body={t("cashflow.emptyFlow", {
+                    defaultValue: "Add some income and expenses to see the flow.",
+                  })}
+                  actionLabel={t("cashflow.goActivity", { defaultValue: "Add entries" })}
+                  onAction={() => setMode("activity")}
+                />
+              )
+            ) : null}
+          </>
+        ) : null}
+
+        {mode === "accounts" ? (
+          <>
+            <Card>
+              <Text style={styles.accountsExplainer}>{t("cashflow.accountsExplainer")}</Text>
             </Card>
-          </Pressable>
-        ))}
-        {rows.length === 0 ? (
-          <Card>
-            <Text style={styles.empty}>No cashflow entries in this period.</Text>
-          </Card>
-        ) : (
-          <Text style={styles.hint}>Tap to edit · Long-press to delete.</Text>
-        )}
+            <CreditCardsManager />
+            <CategoriesManager />
+          </>
+        ) : null}
       </ScrollView>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  buttonStack: { gap: spacing.sm, marginTop: spacing.xs },
+  buttonStack: {
+    flexDirection: "row",
+    gap: spacing.sm,
+    marginTop: spacing.xs,
+    alignItems: "stretch",
+  },
   pills: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: spacing.md },
   pill: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 20,
+    ...chipContainerStyle,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
   },
   pillActive: { backgroundColor: colors.accentSoft, borderColor: colors.accent },
-  pillText: { color: colors.muted, fontSize: 12 },
+  pillText: { ...chipLabelStyle, color: colors.muted },
   pillTextActive: { color: colors.text, fontWeight: "600" },
   section: {
     color: colors.text,
@@ -943,26 +1263,27 @@ const styles = StyleSheet.create({
   link: { color: colors.accent, fontSize: 13 },
   kindBtn: {
     flex: 1,
-    paddingVertical: 10,
+    minHeight: 40,
+    paddingHorizontal: 8,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: colors.border,
     alignItems: "center",
+    justifyContent: "center",
     backgroundColor: colors.surfaceAlt,
   },
   kindBtnActiveExpense: { borderColor: colors.expense, backgroundColor: "#ef444422" },
   kindBtnActiveIncome: { borderColor: colors.income, backgroundColor: "#22c55e22" },
   kindBtnActiveTransfer: { borderColor: colors.accent, backgroundColor: "#3d9a8b22" },
-  kindText: { color: colors.text, fontWeight: "600", fontSize: 12 },
+  kindText: { ...chipLabelStyle },
   catRow: { marginBottom: 8 },
   catChip: {
+    ...chipContainerStyle,
     paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 14,
-    borderWidth: 1,
     marginRight: 6,
+    borderWidth: 1,
   },
-  catChipText: { color: colors.text, fontSize: 12 },
+  catChipText: { ...chipLabelStyle },
   input: {
     borderWidth: 1,
     borderColor: colors.border,
@@ -977,4 +1298,15 @@ const styles = StyleSheet.create({
   rowMeta: { color: colors.muted, marginTop: 4, fontSize: 12 },
   empty: { color: colors.muted },
   hint: { color: colors.muted, fontSize: 12, marginBottom: 24, textAlign: "center" },
+  hintInline: {
+    color: colors.muted,
+    fontSize: 12,
+    lineHeight: 18,
+    marginBottom: spacing.sm,
+  },
+  accountsExplainer: {
+    color: colors.muted,
+    fontSize: 13,
+    lineHeight: 20,
+  },
 });

@@ -51,10 +51,10 @@ fn manifest(kind: ModelKind) -> ModelManifest {
             filename: "qwen2.5-1.5b-instruct-q4_k_m.gguf",
         },
         ModelKind::Stt => ModelManifest {
-            url: "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-whisper-tiny.en-2024-04-30.tar.bz2",
+            url: "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-whisper-tiny.en.tar.bz2",
             sha256: "",
             archive: true,
-            filename: "sherpa-onnx-whisper-tiny.en-2024-04-30.tar.bz2",
+            filename: "sherpa-onnx-whisper-tiny.en.tar.bz2",
         },
         ModelKind::Tts => ModelManifest {
             url: "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-piper-en_US-lessac-medium.tar.bz2",

@@ -3,11 +3,18 @@
  */
 
 import type { AiConfig } from "@/lib/ai/config";
+import type { SpeechReady } from "./speech";
 
-export async function getSpeechReady(
-  _cfg: AiConfig,
-): Promise<{ stt: boolean; tts: boolean }> {
-  return { stt: false, tts: false };
+export type { SpeechReady };
+
+export async function getSpeechReady(_cfg: AiConfig): Promise<SpeechReady> {
+  return {
+    stt: false,
+    tts: false,
+    reason: "On-device Sherpa STT/TTS is not available in the browser",
+    sttDetail: "Use Web Speech or a native build",
+    ttsDetail: "Use Web Speech or a native build",
+  };
 }
 
 export async function transcribePcm(

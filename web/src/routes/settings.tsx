@@ -38,6 +38,9 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { PageHeader } from "@/components/app-shell";
 import { LocalFirstBadge } from "@/components/design";
+import { SettingsSectionNav } from "@/components/settings-section-nav";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { TourLauncher } from "@/components/tour-launcher";
 import {
   Download,
   Upload,
@@ -339,9 +342,11 @@ function SettingsPage() {
   const { t } = useTranslation();
   const { language, setLanguage, languages } = useLanguage();
   const [finnhub, setFinnhub] = useState(state.settings.finnhubKey ?? "");
+  const [displayName, setDisplayName] = useState(state.settings.displayName ?? "");
   const fileRef = useRef<HTMLInputElement>(null);
   const [pasteOpen, setPasteOpen] = useState(false);
   const [pasteValue, setPasteValue] = useState("");
+  const [importing, setImporting] = useState(false);
 
   async function buildExportJson() {
     const envelope = {
@@ -413,6 +418,7 @@ function SettingsPage() {
   }
 
   async function importFromText(txt: string) {
+    setImporting(true);
     try {
       const raw = JSON.parse(txt);
       const envelope = exportEnvelopeSchema.safeParse(raw);
@@ -433,7 +439,7 @@ function SettingsPage() {
         }
         parsedState = legacy.data as AppState;
       }
-      importState(parsedState);
+      await importState(parsedState);
       if (prefs) await applyPreferences(prefs);
       if (userPrefs?.language && SUPPORTED_LANG_CODES.includes(userPrefs.language)) {
         setLanguage(userPrefs.language as LanguageCode);
@@ -448,6 +454,8 @@ function SettingsPage() {
     } catch (e) {
       toast.error(`${t("settings.data.importFailed")}: ${(e as Error).message}`);
       return false;
+    } finally {
+      setImporting(false);
     }
   }
 
@@ -470,7 +478,32 @@ function SettingsPage() {
 
   return (
     <>
+      {importing ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-6">
+          <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-6 text-center shadow-lg">
+            <RefreshCw className="mx-auto mb-3 h-8 w-8 animate-spin text-primary" />
+            <p className="font-medium">
+              {t("settings.data.importing", { defaultValue: "Importing backup…" })}
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {t("settings.data.importingHint", {
+                defaultValue: "Saving locally — keep this page open.",
+              })}
+            </p>
+          </div>
+        </div>
+      ) : null}
       <PageHeader title={t("settings.title")} description={t("settings.description")} />
+
+      <SettingsSectionNav
+        items={[
+          { id: "settings-profile", label: t("settings.sections.profile", { defaultValue: "Profile" }) },
+          { id: "settings-appearance", label: t("settings.sections.appearance", { defaultValue: "Look" }) },
+          { id: "settings-api", label: t("settings.sections.currency", { defaultValue: "Currency" }) },
+          { id: "settings-data", label: t("settings.sections.data", { defaultValue: "Data" }) },
+          { id: "settings-ai", label: t("settings.sections.ai", { defaultValue: "AI" }) },
+        ]}
+      />
 
       <div className="mb-5 flex flex-wrap items-center gap-2">
         <LocalFirstBadge
@@ -483,8 +516,67 @@ function SettingsPage() {
         </span>
       </div>
 
+      <Card id="settings-profile" className="border-border/60 rounded-2xl shadow-sm mb-5" data-tour="settings-profile">
+        <CardHeader>
+          <CardTitle>{t("settings.profile.title", { defaultValue: "Profile" })}</CardTitle>
+          <CardDescription>
+            {t("settings.profile.description", {
+              defaultValue: "Name used in the dashboard greeting.",
+            })}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div>
+            <Label className="text-sm" htmlFor="display-name">
+              {t("settings.profile.displayName", { defaultValue: "Your name" })}
+            </Label>
+            <Input
+              id="display-name"
+              className="mt-1.5"
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              placeholder="e.g. Gabriel"
+              autoComplete="given-name"
+            />
+          </div>
+          <Button
+            type="button"
+            onClick={() => {
+              const trimmed = displayName.trim();
+              updateSettings({ displayName: trimmed || undefined });
+              setDisplayName(trimmed);
+              toast.success(
+                trimmed
+                  ? t("settings.profile.saved", {
+                      defaultValue: `Greeting will say Hi ${trimmed}`,
+                      name: trimmed,
+                    })
+                  : t("settings.profile.cleared", { defaultValue: "Name cleared" }),
+              );
+            }}
+          >
+            {t("settings.profile.save", { defaultValue: "Save name" })}
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card id="settings-appearance" className="border-border/60 rounded-2xl shadow-sm mb-5 lg:hidden">
+        <CardHeader>
+          <CardTitle>{t("settings.appearance.title", { defaultValue: "Look & feel" })}</CardTitle>
+          <CardDescription>
+            {t("settings.appearance.description", {
+              defaultValue: "Theme and the guided tour live here on your phone.",
+            })}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-wrap items-center gap-3">
+          <ThemeToggle className="h-12 w-12" />
+          <TourLauncher className="h-12 w-12" />
+        </CardContent>
+      </Card>
+
       <div className="grid gap-5 lg:grid-cols-2">
-        <Card className="border-border/60 rounded-2xl shadow-sm" data-tour="settings-api">
+        <Card id="settings-api" className="border-border/60 rounded-2xl shadow-sm" data-tour="settings-api">
           <CardHeader>
             <CardTitle>{t("settings.api.title")}</CardTitle>
             <CardDescription>{t("settings.api.description")}</CardDescription>
@@ -610,7 +702,7 @@ function SettingsPage() {
         </Card>
 
         <div className="space-y-5">
-          <Card className="border-border/60" data-tour="settings-language">
+          <Card id="settings-language" className="border-border/60" data-tour="settings-language">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Languages className="h-4 w-4" />
@@ -637,7 +729,7 @@ function SettingsPage() {
 
           <AiSettingsCard />
 
-          <Card className="border-border/60" data-tour="settings-data">
+          <Card id="settings-data" className="border-border/60" data-tour="settings-data">
             <CardHeader>
               <CardTitle>{t("settings.data.title")}</CardTitle>
               <CardDescription>{t("settings.data.description")}</CardDescription>
@@ -661,8 +753,12 @@ function SettingsPage() {
                 variant="outline"
                 className="w-full justify-start"
                 onClick={() => void handleImportClick()}
+                disabled={importing}
               >
-                <Upload className="mr-2 h-4 w-4" /> {t("settings.data.importJson")}
+                <Upload className="mr-2 h-4 w-4" />{" "}
+                {importing
+                  ? t("settings.data.importing", { defaultValue: "Importing…" })
+                  : t("settings.data.importJson")}
               </Button>
               <Button
                 variant="outline"
@@ -761,8 +857,13 @@ function SettingsPage() {
                     <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
                     <AlertDialogAction
                       onClick={() => {
-                        reset();
-                        toast.success(t("settings.data.cleared"));
+                        void reset()
+                          .then(() => toast.success(t("settings.data.cleared")))
+                          .catch((e) =>
+                            toast.error(
+                              `${t("settings.data.resetFailed", { defaultValue: "Reset failed" })}: ${(e as Error).message}`,
+                            ),
+                          );
                       }}
                     >
                       {t("settings.data.resetConfirm")}
@@ -960,7 +1061,7 @@ function AiSettingsCard() {
   };
 
   return (
-    <Card className="border-border/60" data-tour="settings-ai">
+    <Card id="settings-ai" className="border-border/60" data-tour="settings-ai">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Sparkles className="h-4 w-4" />

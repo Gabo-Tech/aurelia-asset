@@ -13,6 +13,9 @@ export type AiCapabilities = {
   sttEnabled?: boolean;
   ttsEnabled?: boolean;
   model?: string;
+  speechReason?: string;
+  sttDetail?: string;
+  ttsDetail?: string;
 };
 
 export async function getLlmReady(_cfg: AiConfig): Promise<boolean> {

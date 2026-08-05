@@ -9,6 +9,9 @@ const de: Translation = {
     add: "Hinzufügen",
     close: "Schließen",
     confirm: "Bestätigen",
+    next: "Next",
+    back: "Back",
+    checkFields: "Check your entries",
     loading: "Lädt…",
     search: "Suchen",
     name: "Name",
@@ -38,6 +41,14 @@ const de: Translation = {
     planning: "Planung",
     assistant: "Assistent",
     settings: "Einstellungen",
+    more: "More",
+    moreDesc: {
+      planning: "Goals, budgets, loans, and forecasts",
+      assistant: "Chatten und Ausgaben auf diesem Gerät erfassen",
+      settings: "Profile, currency, backup, and AI models",
+      tourTitle: "Take the tour",
+      tourBody: "Kurze Einrichtungsliste",
+    },
     short: {
       dashboard: "Start",
       holdings: "Anlagen",
@@ -48,12 +59,26 @@ const de: Translation = {
       settings: "Setup",
     },
   },
+  onboarding: {
+    welcomeBody: "Erfasse Cashflow und Anlagen auf diesem Gerät. Kein Konto nötig.",
+    skip: "Überspringen",
+    profileTitle: "Dein Profil",
+    profileBody: "Optionaler Name für die Begrüßung und die Währung, die du nutzt.",
+    startTitle: "Womit starten?",
+    startBody: "Wähle eines. Das andere kannst du später machen.",
+    trackSpending: "Ausgaben erfassen",
+    trackInvestments: "Anlagen erfassen",
+    exploreOnly: "Diesen Schritt überspringen",
+    doneTitle: "Fertig",
+    doneBody: "Home, Cash, Anlagen und Perf sind in der Leiste. Planung, Assistent und Einstellungen sind unter Mehr.",
+    doneCta: "Weiter",
+  },
   assistant: {
     metaTitle: "KI-Assistent · Aurelia Asset",
     metaDesc:
       "Sprich mit einem vollständig offline arbeitenden Finanzassistenten. Erfasse Ausgaben per Sprache oder Text und erhalte Spartipps aus deinen eigenen Daten.",
     title: "KI-Assistent",
-    subtitle: "Vollständig offline · deine Daten verlassen dieses Gerät nie",
+    subtitle: "Offline. Daten bleiben auf diesem Gerät.",
     onDeviceEngine: "Assistent auf dem Gerät",
     localLlm: "Lokales LLM",
     localLlmQwen: "Lokales LLM (Qwen)",
@@ -62,7 +87,7 @@ const de: Translation = {
     noSpeech: "Ich habe nichts gehört. Tippe auf das Mikrofon und versuche es erneut.",
     sttError: "Audio konnte nicht aufgenommen werden. Überprüfe die Mikrofonberechtigungen.",
     expenseAdded: "Ausgabe hinzugefügt",
-    expenseAddedMsg: "Erledigt — ich habe {{amount}} zu {{category}} hinzugefügt.",
+    expenseAddedMsg: "Erledigt. ich habe {{amount}} zu {{category}} hinzugefügt.",
     chipAddExpense: "Ich habe 12 für Mittagessen ausgegeben",
     chipFoodMonth: "Wie viel habe ich diesen Monat für Essen ausgegeben?",
     chipRecent: "Zeige meine letzten Transaktionen",
@@ -86,20 +111,20 @@ const de: Translation = {
       "Spracheingabe erfordert die native App oder einen unterstützten Browser. Text funktioniert überall.",
     emptyTitle: "Dein privater Geldassistent",
     emptyBody:
-      'Sag oder tippe Dinge wie „Ich habe gestern 45 für Lebensmittel bei Rewe ausgegeben". Ich bestätige vor dem Speichern, und alles bleibt auf deinem Gerät.',
+      'Frag nach deinem Nettovermögen, Ausgaben oder sag „gib mir Finanzberatung“. Du kannst auch Ausgaben erfassen wie „Ich habe 45 für Lebensmittel ausgegeben“. ich bestätige vor dem Speichern.',
     backend: {
       greeting:
-        "Hallo! Ich bin dein Finanzassistent. Erzähl mir von einer Ausgabe (z. B. „Ich habe 12 fürs Mittagessen ausgegeben“), frag nach deinen Ausgaben oder bitte um Spartipps.",
-      help: "Ich kann:\n• Ausgaben erfassen, die du beschreibst (ich bestätige zuerst)\n• Deine Ausgaben für einen Zeitraum oder eine Kategorie zusammenfassen\n• Letzte Transaktionen anzeigen\n• Deinen Budgetstatus melden\n• Spartipps basierend auf deinen Daten geben\nAlles läuft auf deinem Gerät.",
+        "Hallo! Ich bin dein persönlicher Finanzberater. Frag nach Nettovermögen, Ausgaben, Budgets, Zielen oder sag „gib mir Tipps“. und ich kann Ausgaben erfassen, die du beschreibst.",
+      help: "Ich kann:\n• Deine Finanzen analysieren und dich beraten (Kosten senken, Einkommen steigern, Überschuss anlegen)\n• Nettovermögen, Portfolio, Liquidität und Schulden melden\n• Ausgaben, Budgets, Ziele und Kredite zusammenfassen\n• Ausgaben erfassen, die du beschreibst (ich bestätige zuerst)\nAlles läuft auf deinem Gerät mit deinen echten Daten.",
       thanks: "Gern geschehen! Sag Bescheid, wenn du noch etwas zu deinen Finanzen brauchst.",
       positive:
         "Freut mich, dass ich helfen konnte! Frag mich jederzeit zu Ausgaben, Budgets oder Sparen.",
       goodbye: "Bis bald! Ich bin da, wenn du deine Finanzen checken willst.",
       ack: "Verstanden. Womit kann ich dir noch helfen?",
       howAreYou:
-        "Mir geht's gut — bereit, dir beim Ausgeben-Tracken und Sparen zu helfen. Was kann ich für dich tun?",
+        "Mir geht's gut. bereit, dir beim Ausgeben-Tracken und Sparen zu helfen. Was kann ich für dich tun?",
       unknown:
-        "Das habe ich nicht ganz verstanden. Versuch Dinge wie „8,50 für Kaffee ausgegeben“, „wie viel habe ich diesen Monat für Essen ausgegeben?“ oder „gib mir Spartipps“.",
+        'Das habe ich nicht ganz verstanden. Versuch „Was ist mein Nettovermögen?“, „wie viel habe ich diesen Monat für Essen ausgegeben?“, „gib mir Finanzberatung“ oder „8,50 für Kaffee ausgegeben“.',
       done: "Erledigt.",
       expenseConfirm:
         "Eine {{category}}-Ausgabe über {{amount}} für {{when}} hinzufügen? Bestätige unten.",
@@ -114,46 +139,58 @@ const de: Translation = {
         "Das habe ich anhand deiner Daten gefunden. Frag mich alles Weitere über deine Finanzen.",
       advice: {
         disclaimer:
-          "Nur Bildungsinhalt — keine professionelle Finanzberatung. Ich analysiere deine lokalen Daten und schlage Ideen vor; prüfe deine Situation und hole dir bei wichtigen Entscheidungen einen qualifizierten Berater.",
+          "Nur Bildungsinhalt. keine professionelle Finanzberatung. Ich analysiere deine lokalen Daten und schlage Ideen vor; prüfe deine Situation und hole dir bei wichtigen Entscheidungen einen qualifizierten Berater.",
         intro: "Hier ist eine personalisierte Einschätzung basierend auf deinen Daten:",
         overspending:
-          "Du gibst diesen Monat {{amount}} mehr aus als du einnimmst — der Hauptgrund ist {{category}}.",
+          "Du gibst diesen Monat {{amount}} mehr aus als du einnimmst. der Hauptgrund ist {{category}}.",
         netPositive:
-          "Du bist diesen Monat {{amount}} im Plus — überlege, einen Teil in Sparen oder Ziele zu stecken.",
+          "Du bist diesen Monat {{amount}} im Plus. überlege, einen Teil in Sparen oder Ziele zu stecken.",
         lowSavings:
-          "Du sparst etwa {{rate}}% deines Einkommens diesen Monat. Wenn möglich, strebe 15–20% an — schon {{amount}}/Monat würde helfen.",
+          "Du sparst etwa {{rate}}% deines Einkommens diesen Monat. Wenn möglich, strebe 15-20% an. schon {{amount}}/Monat würde helfen.",
         strongSavings:
-          "Starke Sparquote von {{rate}}% diesen Monat — leite einen Teil in Ziele oder langfristige Anlagen.",
+          "Starke Sparquote von {{rate}}% diesen Monat. leite einen Teil in Ziele oder langfristige Anlagen.",
         lowIncome:
           "Ausgaben verbrauchen {{pct}}% deines Einkommens diesen Monat. Fixkosten senken oder Einkommen erhöhen könnte entlasten.",
+        tightCashflow:
+          "Ausgaben machen {{pct}}% deines Einkommens aus. kaum Puffer. Begrenze diskretionäre Ausgaben und suche diesen Quartal einen Einkommensschub.",
+        growIncome:
+          "Dein Überschuss ist im Verhältnis zum Einkommen dünn. Neben Kostensenkung: Verdienstkraft steigern (Verhandlung, Aufstieg, Freelance oder besser bezahlte Stelle).",
         topCategory:
           "{{name}} macht {{pct}}% deiner Ausgaben aus ({{amount}}). 10% weniger würden {{savings}}/Monat freimachen.",
+        secondCategory:
+          "{{name}} ist mit {{pct}}% ({{amount}}) ein weiterer großer Posten. gut zum zweiten Sparen.",
         highDebt:
           "Du schuldest {{debt}} auf Kreditkarten. Tilgung zuerst könnte Spielraum für Sparen und Investieren schaffen.",
+        highAprLoan:
+          'Kredit „{{name}}“ kostet {{apr}}% Zinsen auf {{principal}}. Extra-Tilgung schlägt hier meist niedrig verzinstes Cash.',
         excessCash:
           "Du hast {{liquidity}} an Liquidität (~{{months}} Monatsausgaben). ~{{reserve}} als Reserve ist sinnvoll; {{investable}} könntest du schrittweise anlegen.",
         lowInvestment:
           "Etwa {{pct}}% deines Vermögens liegt in Cash/Liquidität ({{liquidity}} flüssig vs. {{invested}} investiert). Ist die Notreserve da, könnte ein Teil langfristig angelegt werden.",
+        startInvesting:
+          "Du hast solide Liquidität, aber noch keine Anlagen. Nach einer Notreserve (3-6 Monatsausgaben) starte einen einfachen Langfristplan. diversifizierte Fonds, kein Stock-Picking.",
         balancedAllocation:
-          "Deine Aufteilung wirkt ausgewogen — {{invested}} investiert und {{liquid}} in Cash/flüssigen Positionen.",
+          "Deine Aufteilung wirkt ausgewogen. {{invested}} investiert und {{liquid}} in Cash/flüssigen Positionen.",
         overBudget:
           "Du bist über dem Budget bei {{categories}}. Halte dort für den Rest des Monats zurück.",
         onTrack:
-          "Du liegst im „{{plan}}“-Budget — gut. Halte das Tempo und du landest unter {{limit}}.",
+          "Du liegst im „{{plan}}“-Budget. gut. Halte das Tempo und du landest unter {{limit}}.",
         goalOnTrack:
-          "Ziel „{{name}}“ ist zu {{pct}}% erfüllt ({{current}} von {{target}}) — guter Fortschritt.",
+          "Ziel „{{name}}“ ist zu {{pct}}% erfüllt ({{current}} von {{target}}). guter Fortschritt.",
         goalBehind:
           "Ziel „{{name}}“ nur {{pct}}% ({{current}} von {{target}}). Etwa {{monthly}}/Monat würde die Lücke in einem Jahr schließen.",
         keepTracking:
-          "Erfasse weiter Einnahmen und Ausgaben — je klarer das Bild, desto besser die Tipps.",
+          "Erfasse weiter Einnahmen und Ausgaben. je klarer das Bild, desto besser die Tipps.",
         empty:
-          "Füge Ausgaben, Bestände und ein Budget in Planung hinzu — dann gebe ich dir maßgeschneiderte Finanztipps.",
+          "Füge Ausgaben, Bestände und ein Budget in Planung hinzu. dann gebe ich dir maßgeschneiderte Finanztipps.",
         unknownCategory: "deine größte Kategorie",
       },
       periods: {
         this_month: "diesen Monat",
         last_month: "letzten Monat",
         this_week: "diese Woche",
+        this_year: "dieses Jahr",
+        ytd: "seit Jahresbeginn",
         all: "gesamt",
       },
       tools: {
@@ -161,11 +198,22 @@ const de: Translation = {
         spentTotal: "Insgesamt {{total}} ausgegeben ({{period}}). Top: {{top}}.",
         noTransactions: "Noch keine Transaktionen.",
         noBudget: "Noch kein Budget eingerichtet.",
+        noHoldings: "Noch keine Bestände.",
+        noGoals: "Noch keine Sparziele eingerichtet.",
+        noLoans: "Noch keine Kredite erfasst.",
         budgetStatus: "Budget „{{name}}“: {{spent}} von {{limit}} verbraucht.",
         overOn: " Überschritten bei: {{list}}.",
         onTrack: " Im Plan.",
         unknownTool: "Unbekanntes Tool.",
         txLine: "{{date}} {{kind}} {{category}} {{amount}}",
+
+        netWorth:
+          "Nettovermögen {{netWorth}} = Portfolio {{portfolio}} (investiert {{invested}}, cash-ähnlich {{cashLike}}) + Liquidität {{liquidity}} − Kartenschulden {{debt}}.{{savingsRate}}",
+        savingsRate: " Sparquote diesen Monat: {{rate}}%.",
+        portfolio: "Portfolio {{total}}. Bestände: {{lines}}.",
+        holdingLine: "{{symbol}} {{name}} ({{type}}, {{horizon}}) {{value}}",
+        goalLine: "{{name}}: {{current}} / {{target}} ({{pct}}%)",
+        loanLine: "{{name}}: {{principal}} bei {{apr}}% Zinsen über {{months}} Monate",
       },
       voice: {
         recognitionUnavailable: "Spracherkennung nicht verfügbar.",
@@ -184,7 +232,7 @@ const de: Translation = {
     goHome: "Zur Startseite",
   },
   shell: {
-    brand: "Elegant",
+    brand: "Aurelia",
     brandTagline: "Portfolio-Tracker",
     showValues: "Werte anzeigen",
     hideValues: "Werte verbergen",
@@ -194,6 +242,7 @@ const de: Translation = {
   landing: {
     headerTagline: "Deins · Privat · Kostenlos",
     openApp: "App öffnen",
+    logoAlt: "Aurelia-Logo",
     nav: { features: "Funktionen", how: "Wie es funktioniert", faq: "FAQ" },
     hero: {
       badge: "Kein Konto. Kein Tracking. Deine Daten bleiben bei dir.",
@@ -203,7 +252,7 @@ const de: Translation = {
         "Sieh alles, was du besitzt, verstehe, wohin dein Geld wirklich fließt, und plane, was als Nächstes kommt - in einem eleganten Tracker, der nie fragt, wer du bist.",
       ctaPrimary: "Deinen Tracker öffnen",
       ctaSecondary: "Sieh, was du bekommst",
-      screenshotAlt: "Elegantes Portfolio-Tracker-Dashboard mit Allokation und Cashflow",
+      screenshotAlt: "Aurelia-Dashboard mit Allokation und Cashflow",
     },
     proof: {
       zeroAccounts: "Deine Daten bleiben bei dir",
@@ -222,7 +271,7 @@ const de: Translation = {
         },
         performance: {
           title: "Wissen, wie du wirklich stehst",
-          body: "Live-Kurse, historische Charts und zeitgewichtete Renditen zeigen, ob dein Portfolio wächst - nicht nur schwankt.",
+    body: "Live-Kurse, historische Charts und zeitgewichtete Renditen zeigen, ob dein Portfolio wächst - nicht nur schwankt.",
         },
         sankey: {
           title: "Sieh, wohin dein Geld fließt",
@@ -237,7 +286,7 @@ const de: Translation = {
           body: "Alles wird verschlüsselt auf deinem Gerät gespeichert. Kein Konto, keine Cloud, keine Analytics auf dem, was du besitzt.",
         },
         elegant: {
-          title: "Elegant auf jedem Bildschirm",
+          title: "Zuerst für dein Handy",
           body: "Ein ruhiges, ablenkungsfreies Interface für Desktop, Tablet und Handy - mit nativen Apps und sechs Sprachen, inklusive Valencià.",
         },
       },
@@ -332,7 +381,7 @@ const de: Translation = {
       },
     },
     footer: {
-      brand: "Eleganter Portfolio-Tracker",
+      brand: "Aurelia",
       madeBy: "Gemacht von",
       sourceCode: "Quellcode",
     },
@@ -345,10 +394,25 @@ const de: Translation = {
     },
   },
   dashboard: {
-    metaTitle: "Übersicht - Portfolio Tracker",
+    metaTitle: "Übersicht · Aurelia",
     metaDesc: "Dein Portfolio auf einen Blick - Allokation, Wert und letzte Aktivität.",
     title: "Übersicht",
     description: "Willkommen in deinem Portfolio.",
+    brandSubtitle: "Aurelia Asset",
+    greeting: "Hallo, willkommen auf deinem Dashboard.",
+    greetingNamed: "Hallo {{name}}, willkommen auf deinem Dashboard.",
+    gettingStarted: "Erste Schritte",
+    gettingStartedBody: "Füge Einnahmen und Ausgaben unter Cashflow hinzu, oder Anlagen unter Holdings.",
+    trackSpending: "Cashflow hinzufügen",
+    addHolding: "Holding hinzufügen",
+    emptyHoldings: "Noch keine Holdings",
+    emptyHoldingsBody: "Füge ein Holding hinzu, um den Portfoliowert zu verfolgen.",
+    quickActions: "Gehe zu",
+    netWorthHint: "Liquidität + Portfolio - Kartenschulden. Cashflow der letzten 30 Tage: {{amount}}",
+    liquidityHint: "Aus Einnahmen, Ausgaben und Überweisungen",
+    portfolioHint: "Wert deiner Holdings",
+    allocationEmpty: "Füge Cashflow oder Holdings hinzu, um die Allokation zu sehen.",
+    topHoldings: "Top-Holdings",
     portfolioValue: "Gesamter Portfoliowert",
     netWorth: "Vermögen",
     liquidity: "Liquidität",
@@ -360,10 +424,12 @@ const de: Translation = {
     hideAll: "Alle ausblenden",
   },
   holdings: {
-    metaTitle: "Positionen - Elegant Portfolio Tracker",
+    metaTitle: "Positionen - Aurelia",
     metaDesc: "Verwalte deine Aktien, Krypto, ETFs und Metalle.",
     title: "Positionen",
     description: "Verwalte deine Aktien, Krypto, ETFs und Metalle.",
+    emptyTitle: "Noch keine Holdings",
+    emptyBody: "Nutze das Formular oben für Aktie, Krypto oder ein eigenes Asset. Oder importiere ein Backup unter Einstellungen in Mehr.",
     positionsCount: "Positionen",
     addHolding: "Position hinzufügen",
     refresh: "Preise aktualisieren",
@@ -371,6 +437,9 @@ const de: Translation = {
     refreshFailed: "Einige Preise konnten nicht aktualisiert werden",
     symbol: "Symbol",
     quantity: "Anzahl",
+    shares: "Anteile",
+    amount: "Menge",
+    manualPrice: "Manueller Preis",
     price: "Preis",
     value: "Wert",
     invested: "Investiert",
@@ -389,7 +458,7 @@ const de: Translation = {
       addTitle: "Position hinzufügen",
       description:
         "Suche ein Marktasset oder füge eine eigene Position hinzu (z. B. Quanloop, Private Equity).",
-      searchFailed: "Suche fehlgeschlagen — versuche einen anderen Proxy in Einstellungen",
+      searchFailed: "Suche fehlgeschlagen. versuche einen anderen Proxy in Einstellungen",
       qtyGtZero: "Anzahl muss > 0 sein",
       nameRequired: "Name ist erforderlich",
       pickAsset: "Wähle zuerst ein Asset",
@@ -397,7 +466,7 @@ const de: Translation = {
       customAdded: "Eigene Position hinzugefügt",
       holdingUpdated: "Position aktualisiert",
       holdingAdded: "Position hinzugefügt",
-      priceFetchFailed: "Preis konnte nicht abgerufen werden — du kannst später aktualisieren",
+      priceFetchFailed: "Preis konnte nicht abgerufen werden. du kannst später aktualisieren",
       loadedPricePoints: "{{count}} Preispunkte geladen",
       saveChanges: "Änderungen speichern",
       tabStock: "Aktien / ETF",
@@ -446,16 +515,42 @@ const de: Translation = {
     },
   },
   performance: {
-    metaTitle: "Performance - Elegant Portfolio Tracker",
+    metaTitle: "Performance - Aurelia",
     metaDesc: "Verfolge die Rendite deiner Vermögenswerte über die Zeit.",
     title: "Performance",
+    subtitle: "Wert, Kostenbasis und Rendite im Zeitverlauf",
+    emptyTitle: "Noch keine Performance-Daten",
     description: "Historischer Portfoliowert Periode für Periode.",
     emptyState: "Füge zuerst Positionen hinzu, um die historische Wertentwicklung zu sehen.",
   },
   cashflow: {
-    metaTitle: "Cashflow - Elegant Portfolio Tracker",
+    metaTitle: "Cashflow - Aurelia",
     metaDesc: "Verfolge Einnahmen, Ausgaben, Sparen und Investitionen.",
     title: "Cashflow",
+    subtitle: "Einnahmen, Ausgaben und Überweisungen",
+    mode: {
+      activity: "Aktivität",
+      upcoming: "Anstehend",
+      insights: "Übersicht",
+      accounts: "Konten",
+    },
+    transferHint: "Bewegt Geld zwischen Liquidität, Karten und Holdings. Zählt nicht als Einnahme oder Ausgabe.",
+    accountsExplainer: "Liquidität ist dein Cash-Pool. Karten tracken Kreditschulden. Kurzfristige Holdings können Transferkonten sein.",
+    emptyTitle: "Noch keine Einträge",
+    emptyFlow: "Füge Einnahmen und Ausgaben hinzu, um deinen Cashflow zu sehen.",
+    addFirst: "Ersten Eintrag hinzufügen",
+    goActivity: "Einträge hinzufügen",
+    sankeyEmptyTitle: "Nicht genug Daten",
+    needLabelAmount: "Gib eine Bezeichnung und einen Betrag größer als 0 ein.",
+    transferAccountsDiffer: "Von- und An-Konto müssen unterschiedlich sein.",
+    deleteConfirm: "Diesen Eintrag entfernen?",
+    transfer: "Überweisung",
+    transferLabel: "Überweisungsbezeichnung",
+    amount: "Betrag",
+    date: "Datum (JJJJ-MM-TT)",
+    currency: "Währung",
+    paidFrom: "Bezahlt von",
+    untilHint: "Leer lassen für laufend",
     description: "Verfolge jeden Euro rein und raus - und sieh, wohin er geht.",
     income: "Einnahme",
     expense: "Ausgabe",
@@ -533,7 +628,6 @@ const de: Translation = {
     addRecurringIncome: "Wiederkehrende Einnahme hinzufügen",
     addRecurringExpense: "Wiederkehrende Ausgabe hinzufügen",
     addFinancedExpense: "Finanzierte Ausgabe hinzufügen",
-    emptyFlow: "Füge Einnahmen und Ausgaben hinzu, um den Fluss zu sehen.",
     pickCategory: "Kategorie wählen",
     amountGtZero: "Betrag muss > 0 sein",
     percentTooHigh: "Prozentsatz scheint zu hoch",
@@ -562,6 +656,25 @@ const de: Translation = {
       expenses: "Ausgaben",
       investments: "Investitionen & Sparen",
     },
+    upcoming: {
+      title: "Anstehend",
+      description: "Geplante Einnahmen und Zahlungen in den nächsten Wochen.",
+      tabOverview: "Übersicht",
+      tabUpcoming: "Anstehend",
+      previewTitle: "Anstehend · 7 Tage",
+      viewAll: "Alle anzeigen",
+      today: "Heute",
+      tomorrow: "Morgen",
+      expectedIn: "Erwartet in den nächsten {{days}} Tagen",
+      daysShort: "{{count}}T",
+      empty: "Nichts geplant",
+      emptyHint: "Füge eine wiederkehrende Buchung oder eine zukünftige Zahlung hinzu.",
+      recurring: "Wiederkehrend",
+      oneTime: "Einmalig",
+      whenLabel: "Wann",
+      startDate: "Startdatum",
+      previewRecurring: "Jeden {{frequency}}, Tag {{day}}",
+    },
     sankey: {
       totalIncome: "Gesamteinnahmen",
       totalExpenses: "Gesamtausgaben",
@@ -579,8 +692,12 @@ const de: Translation = {
   cards: {
     title: "Kreditkarten",
     add: "Karte hinzufügen",
+    emptyTitle: "Noch keine Karten",
+    dayHint: "Tag im Monat (1-31)",
+    statementDay: "Auszugstag",
+    dueDay: "Fälligkeitstag",
     empty:
-      "Noch keine Karten. Füge eine hinzu, um Schulden aus Kreditkartenkäufen zu verfolgen und per Umbuchung zu tilgen.",
+      "Füge eine Karte hinzu, um Kreditschulden und Zahlungen zu tracken.",
     balanceOwed: "Offener Saldo",
     limit: "Limit",
     available: "Verfügbar",
@@ -628,16 +745,19 @@ const de: Translation = {
     enter: "Eintreten",
     logoUrl: "Logo-URL",
     tagline: "Slogan",
-    weight: "Gewicht (1–10)",
+    weight: "Gewicht (1-10)",
     schedule: "Zeitplan (optional)",
     active: "Aktiv",
     paused: "Pausiert",
     needName: "Jeder Sponsor braucht einen Namen",
   },
   settings: {
-    metaTitle: "Einstellungen - Elegant Portfolio Tracker",
+    metaTitle: "Einstellungen - Aurelia",
     metaDesc: "API-Optionen, Import/Export und Datenverwaltung.",
     title: "Einstellungen",
+    subtitle: "Profil, Datenschutz, Daten und KI auf dem Gerät",
+    displayName: "Anzeigename",
+    displayCurrency: "Anzeige-Währung",
     description: "API-Optionen und Datenverwaltung.",
     api: {
       title: "API & Zuverlässigkeit",
@@ -741,7 +861,7 @@ const de: Translation = {
     },
     about: {
       title: "Über",
-      body: "Elegant Portfolio Tracker ist eine vollständig client-seitige App. Preise stammen von CoinGecko (Krypto) und Yahoo Finance (Aktien/ETFs/Metalle). Kein Konto, kein Backend.",
+      body: "Aurelia Asset läuft vollständig auf diesem Gerät. Kurse kommen von CoinGecko (Krypto) und Yahoo Finance (Aktien, ETFs, Metalle). Kein Konto und kein Server.",
       metalsHint: "Für Metalle Yahoo-Symbole wie GC=F (Gold) oder SI=F (Silber) verwenden.",
     },
   },
@@ -891,7 +1011,7 @@ const de: Translation = {
     steps: {
       welcome: {
         title: "Willkommen bei Aurelia Asset",
-        body: "Dieser kurze Rundgang zeigt jeden Bereich — Portfolio, Cashflow, Planung und mehr. Jederzeit überspringen oder später über das Hilfe-Icon bzw. die Einstellungen neu starten.",
+        body: "Kurzer Überblick über Portfolio, Cashflow, Planung und mehr. Jederzeit überspringen oder unter Einstellungen wiederholen.",
       },
       sidebar: {
         title: "Hauptnavigation",
@@ -911,7 +1031,7 @@ const de: Translation = {
       },
       privacy: {
         title: "Privatsphäre-Modus",
-        body: "Verberge alle Geldbeträge mit einem Tippen — ideal für Bildschirmfreigaben oder öffentliche Charts.",
+        body: "Verberge alle Geldbeträge mit einem Tippen. ideal für Bildschirmfreigaben oder öffentliche Charts.",
       },
       dashStats: {
         title: "Deine Kennzahlen",
@@ -983,7 +1103,7 @@ const de: Translation = {
       },
       cfBreakdown: {
         title: "Kategorie-Aufschlüsselung",
-        body: "Kreisdiagramme für Einnahmen, Ausgaben und Investitionen/Sparen — so siehst du, wohin das Geld geht.",
+        body: "Kreisdiagramme für Einnahmen, Ausgaben und Investitionen/Sparen. so siehst du, wohin das Geld geht.",
       },
       cfEntries: {
         title: "Alle Buchungen",
@@ -991,7 +1111,7 @@ const de: Translation = {
       },
       planTabs: {
         title: "Planungs-Hub",
-        body: "Vier Tools an einem Ort: Prognose, Budgets, Ziele und Kredite — alle mit deinem Cashflow verknüpft.",
+        body: "Vier Tools an einem Ort: Prognose, Budgets, Ziele und Kredite. alle mit deinem Cashflow verknüpft.",
       },
       planForecast: {
         title: "Cashflow-Prognose",
@@ -1007,7 +1127,7 @@ const de: Translation = {
       },
       planLoans: {
         title: "Kredite",
-        body: "Füge Kredite hinzu und prüfe Tilgungspläne — Zinsen und Laufzeit auf einen Blick.",
+        body: "Füge Kredite hinzu und prüfe Tilgungspläne. Zinsen und Laufzeit auf einen Blick.",
       },
       assistantIntro: {
         title: "On-Device-KI-Assistent",
@@ -1027,7 +1147,7 @@ const de: Translation = {
       },
       settingsAi: {
         title: "KI-Einstellungen",
-        body: "Assistent in der Navigation ein- oder ausblenden, Sprachausgabe steuern und On-Device-Modelle verwalten — nichts verlässt dieses Gerät.",
+        body: "Assistent in der Navigation ein- oder ausblenden, Sprachausgabe steuern und On-Device-Modelle verwalten. nichts verlässt dieses Gerät.",
       },
       setLanguage: {
         title: "Sprache",
@@ -1045,13 +1165,14 @@ const de: Translation = {
   },
   planning: {
     title: "Planung",
+    subtitle: "Ziele, Budgets, Kredite und Prognosen",
     description: "Budgets, Ziele, Prognosen und Kredite - alles aus deinem Cashflow abgeleitet.",
     head: {
       title: "Planung · Budgets, Ziele, Prognose, Kredite",
       description:
         "Plane deine Finanzen: Monatsbudgets, Sparziele, Cashflow-Prognosen und Kredittilgung.",
     },
-    tabs: { budgets: "Budgets", goals: "Sparziele", forecast: "Prognose", loans: "Kredite" },
+    tabs: { budgets: "Budgets", goals: "Ziele", forecast: "Prognose", loans: "Kredite" },
     budgets: {
       addTitle: "Monatsbudget hinzufügen",
       category: "Kategorie",
@@ -1062,13 +1183,20 @@ const de: Translation = {
       addBudget: "Budget hinzufügen",
       thisMonth: "Dieser Monat",
       empty: "Noch keine Budgets. Füge einer Kategorie ein Monatslimit hinzu.",
+      emptyBody: "Erstelle einen Plan und füge Zeilen mit Beträgen und optionalen Kategorien hinzu.",
+      create: "Budgetplan erstellen",
+      linkHint: "Verknüpfe Zeilen mit einer Ausgabenkategorie, damit der Verbrauch automatisch aktualisiert wird.",
+      deleteTitle: "Plan löschen?",
+      deleteBody: "“{{name}}” und seine Zeilen entfernen?",
+      deleteLineTitle: "Zeile löschen?",
+      deleteLineBody: "Diese Budgetzeile entfernen?",
       unknown: "Unbekannt",
       overBy: "{{amount}} über dem Limit",
       left: "{{amount}} übrig",
       newPlanName: "Neuer Plan",
       untitledItem: "Ohne Titel",
       noPlansHint:
-        "Erstelle ein Budget für alles — deinen regulären Monatsplan, einen Urlaub, ein persönliches Projekt, einen Umzugsmonat. Füge so viele hinzu, wie du möchtest.",
+        "Erstelle ein Budget für alles. deinen regulären Monatsplan, einen Urlaub, ein persönliches Projekt, einen Umzugsmonat. Füge so viele hinzu, wie du möchtest.",
       newPlan: "Neuer Plan",
       total: "Gesamt",
       isMain: "Haupt",
@@ -1080,9 +1208,9 @@ const de: Translation = {
       itemLabel: "Bezeichnung",
       labelPlaceholder: "z. B. Urlaubskasse",
       linkCategory: "Mit Kategorie verknüpfen (optional)",
-      noCategory: "Keine — manuell verfolgen",
+      noCategory: "Keine. manuell verfolgen",
       color: "Farbe",
-      colorHint: "Optional — fällt auf Kategoriefarbe zurück",
+      colorHint: "Optional. fällt auf Kategoriefarbe zurück",
       manual: "manuell",
       notTracked: "Nicht aus Cashflow verfolgt",
       pieTitle: "Budgetaufschlüsselung",
@@ -1098,6 +1226,13 @@ const de: Translation = {
       periodDays: "Tage",
     },
     goals: {
+      title: "Sparziele",
+      add: "Ziel hinzufügen",
+      emptyBody: "Lege ein Sparziel fest, um den Fortschritt zu tracken.",
+      manualHint: "Der Fortschritt ist manuell. Beitragen aktualisiert das Ziel hier und erzeugt keinen Cashflow-Eintrag.",
+      needNameTarget: "Gib einen Namen und einen Zielbetrag ein.",
+      deleteTitle: "Ziel löschen?",
+      deleteBody: "“{{name}}” entfernen?",
       newTitle: "Neues Sparziel",
       name: "Name",
       namePlaceholder: "Notgroschen",
@@ -1126,8 +1261,13 @@ const de: Translation = {
         "Keine wiederkehrenden Einträge. Markiere Einnahmen/Ausgaben in Cashflow als wiederkehrend.",
       perMo: "{{amount}}/Mon.",
       newScenarioName: "Neues Szenario",
+      empty: "Füge ein Szenario hinzu, um eine Projektion zu sehen.",
+      emptyBody: "Szenarien passen Einnahmen und Ausgaben dieses Monats nach vorne an.",
+      add: "Szenario hinzufügen",
+      deleteTitle: "Szenario löschen?",
+      deleteBody: "“{{name}}” entfernen?",
       noScenariosHint:
-        "Erstelle so viele Prognoseszenarien wie du möchtest — eines für dein Privatleben, eines für ein Nebenprojekt, eines für dein kleines Unternehmen. Vergleiche sie nebeneinander.",
+        "Erstelle so viele Prognoseszenarien wie du möchtest. eines für dein Privatleben, eines für ein Nebenprojekt, eines für dein kleines Unternehmen. Vergleiche sie nebeneinander.",
       newScenario: "Neues Szenario",
       adjustments: "Angewandte Anpassungen: {{i}}/Mon. Einnahmen, {{e}}/Mon. Ausgaben",
       isMain: "Haupt",
@@ -1164,6 +1304,10 @@ const de: Translation = {
       notes: "Notizen",
       currency: "Währung",
       addLoan: "Kredit hinzufügen",
+      add: "Kredit hinzufügen",
+      emptyBody: "Füge einen Kredit hinzu, um Rate und Tilgung zu sehen.",
+      deleteTitle: "Kredit löschen?",
+      deleteBody: "“{{name}}” entfernen?",
       empty: "Noch keine Kredite erfasst.",
       hide: "Ausblenden",
       schedule: "Plan",

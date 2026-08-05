@@ -18,9 +18,18 @@ import type { EngineMessage, LowLevelEngine, ModelTurn, ToolCall } from "./types
 import type { FinanceContext } from "./context";
 
 const SPEND_VERBS =
-  /\b(spent|spend|bought|buy|buying|paid|pay|paying|purchased?|grabbed|got|cost|charged)\b/i;
+  /\b(spent|spend|bought|buy|buying|paid|pay|paying|purchased?|grabbed|got|cost|charged|ausgegeben|gekauft|bezahlt|gast[eé]|compré|compré|pag[uú]e|gastei|comprei|paguei|uitgegeven|kocht|betaald|vaig gastar|he gastat|vaig comprar)\b/i;
 const QUESTION_HINT =
-  /\b(how much|how many|summary|total|what did|what have|show|list|report|balance|left|remaining|advice|tips?|save|saving|budget|recent|last)\b/i;
+  /\b(how much|how many|summary|total|what('?s| is| are)|show|list|report|balance|left|remaining|advice|tips?|save|saving|budget|recent|last|net worth|portfolio|worth|wealth|liquidity|debt|goal|loan|holding|invest|wie viel|wieviele|zusammenfassung|vermögen|nettoverm[oö]gen|budget|tipps?|sparen|cu[aá]nto|cu[aá]nta|resumen|patrimonio|consejo|ahor[ro]|or[cç]amento|quanto|resumo|patrim[oó]nio|conselho|poupan[cç]a|hoeveel|samenvatting|advies|sparen|quant|resum|patrimoni|consell|estalvi|presupuesto|pr[eé]stamo|lening|kredit|cr[eé]dito|ziel|meta|doel|objectiu|holdings?|anlagen?|cartera|carteira|portefeuille)\b/i;
+
+const WEALTH_HINT =
+  /\b(net worth|networth|what('?s| is) my (money|wealth|worth)|how (much|rich) am i worth|total wealth|overall wealth|nettoverm[oö]gen|mein verm[oö]gen|wie reich|patrimonio neto|cu[aá]l es mi patrimonio|mi patrimonio|patrim[oó]nio l[ií]quido|qual (e|é) o meu patrim[oó]nio|mijn (netto)?vermogen|wat is mijn vermogen|patrimoni net|quin (e|é)s el meu patrimoni)\b/i;
+const PORTFOLIO_HINT =
+  /\b(portfolio|holdings?|assets?|stocks?|investments?|what do i (own|hold)|allocation|anlagen?|best[aä]nde|depot|cartera|posiciones?|inversiones?|carteira|posi[cç][oõ]es|portefeuille|beleggingen|cartera|posicions|inversions)\b/i;
+const GOALS_HINT =
+  /\b(goals?|savings goals?|how('?s| is) my goal|ziele?|sparziele?|metas?|objectivos?|objetivos?|doelen?|spaardoelen?|objectius?)\b/i;
+const LOANS_HINT =
+  /\b(loans?|debt payoff|mortgage|amortization|kredite?|darlehen|hypothek|pr[eé]stamos?|hipoteca|empr[eé]stimos?|hipoteca|leningen?|hypotheek|pr[eé]stecs?)\b/i;
 
 const CURRENCY_WORDS: Record<string, string> = {
   dollar: "USD",
@@ -121,6 +130,10 @@ type Intent =
   | { type: "summary"; call: ToolCall }
   | { type: "recent"; call: ToolCall }
   | { type: "budget"; call: ToolCall }
+  | { type: "wealth"; call: ToolCall }
+  | { type: "portfolio"; call: ToolCall }
+  | { type: "goals"; call: ToolCall }
+  | { type: "loans"; call: ToolCall }
   | { type: "advice" }
   | { type: "greeting" }
   | { type: "help" }
@@ -159,12 +172,32 @@ function classify(text: string, ctx: FinanceContext): Intent {
 
   if (isAdviceRequest(lower)) return { type: "advice" };
 
-  if (/\bbudget\b/.test(lower))
+  if (WEALTH_HINT.test(lower) || (isQuestion && /\b(net worth|wealth|balance|vermögen|patrimonio|patrim[oó]nio|vermogen|patrimoni)\b/.test(lower))) {
+    return { type: "wealth", call: { name: "get_net_worth", arguments: {} } };
+  }
+
+  if (PORTFOLIO_HINT.test(lower) && (isQuestion || /\b(show|list|my|zeig|meine|muestra|mis|mostra|meus|toon|mijn|mostra|meus|meves)\b/.test(lower))) {
+    return { type: "portfolio", call: { name: "get_portfolio", arguments: {} } };
+  }
+
+  if (GOALS_HINT.test(lower) && (isQuestion || /\b(show|status|progress|zeig|fortschritt|estado|progreso|estado|progresso|status|voortgang|estat|progr[eé]s)\b/.test(lower))) {
+    return { type: "goals", call: { name: "get_goals_status", arguments: {} } };
+  }
+
+  if (LOANS_HINT.test(lower) && (isQuestion || /\b(show|status|my|zeig|meine|muestra|mis|mostra|meus|toon|mijn)\b/.test(lower))) {
+    return { type: "loans", call: { name: "get_loans_status", arguments: {} } };
+  }
+
+  if (/\b(budget|presupuesto|or[cç]amento|budget|pressupost)\b/.test(lower))
     return { type: "budget", call: { name: "get_budget_status", arguments: {} } };
 
   if (
-    /\b(recent|last|latest)\b.*\b(transactions?|expenses?|entries|spending)\b/.test(lower) ||
-    /\bshow\b.*\b(transactions?|expenses?)\b/.test(lower)
+    /\b(recent|last|latest|letzte|reci[eé]n|recentes|recente|laatste|darrere[rs]?)\b.*\b(transactions?|expenses?|entries|spending|transaktionen|ausgaben|transacciones|gastos|transações|despesas|transacties|uitgaven|transaccions|despeses)\b/.test(
+      lower,
+    ) ||
+    /\b(show|zeig|muestra|mostra|toon)\b.*\b(transactions?|expenses?|transaktionen|ausgaben|transacciones|gastos|transações|despesas|transacties|uitgaven|transaccions|despeses)\b/.test(
+      lower,
+    )
   ) {
     const n = lower.match(/\b(\d{1,2})\b/);
     return {
@@ -176,11 +209,16 @@ function classify(text: string, ctx: FinanceContext): Intent {
     };
   }
 
-  if (isQuestion && /\b(how much|total|spent|spend|spending|summary)\b/.test(lower)) {
+  if (isQuestion && /\b(how much|total|spent|spend|spending|summary|wie viel|ausgegeben|cu[aá]nto|gastad[oa]|gasto|quanto|gastei|gastos?|hoeveel|uitgegeven|quant|gastat)\b/.test(lower)) {
     let period: string = "this_month";
-    if (/\blast month\b/.test(lower)) period = "last_month";
-    else if (/\bthis week\b|\bweek\b/.test(lower)) period = "this_week";
-    else if (/\ball time\b|\boverall\b|\btotal ever\b/.test(lower)) period = "all";
+    if (/\b(last month|letzten monat|el mes pasado|m[eê]s passado|vorige maand|el mes passat)\b/.test(lower))
+      period = "last_month";
+    else if (/\b(this week|diese woche|esta semana|esta semana|deze week|aquesta setmana)\b/.test(lower) || /\bweek\b/.test(lower))
+      period = "this_week";
+    else if (
+      /\b(all time|overall|total ever|gesamt|todo el tiempo|todo o tempo|alles|tot el temps)\b/.test(lower)
+    )
+      period = "all";
     // Try to find a category mention.
     const cat = ctx.expenseCategoryNames.find((c) => lower.includes(c.toLowerCase()));
     return {
@@ -266,6 +304,10 @@ export function createLocalNluEngine(ctx: FinanceContext): LowLevelEngine {
         case "summary":
         case "recent":
         case "budget":
+        case "wealth":
+        case "portfolio":
+        case "goals":
+        case "loans":
           return { toolCalls: [intent.call] };
         case "advice":
           return { content: buildFinancialAdvice(ctx) };

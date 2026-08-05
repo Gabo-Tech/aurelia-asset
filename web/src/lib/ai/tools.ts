@@ -16,10 +16,12 @@ import {
   endOfMonth,
   startOfWeek,
   endOfWeek,
+  startOfYear,
   subMonths,
   isWithinInterval,
 } from "date-fns";
 import type { ProposedExpense, ToolSpec, ToolCall } from "./types";
+import { buildFinanceContext } from "./context";
 
 export const TOOL_SPECS: ToolSpec[] = [
   {
@@ -60,8 +62,8 @@ export const TOOL_SPECS: ToolSpec[] = [
       properties: {
         period: {
           type: "string",
-          description: "Time window.",
-          enum: ["this_month", "last_month", "this_week", "all"],
+          description: "Time window. Use this_year/ytd for calendar year-to-date, all for full history.",
+          enum: ["this_month", "last_month", "this_week", "this_year", "ytd", "all"],
         },
         category: {
           type: "string",
@@ -88,6 +90,31 @@ export const TOOL_SPECS: ToolSpec[] = [
     parameters: { type: "object", properties: {} },
   },
   {
+    name: "get_net_worth",
+    kind: "read",
+    description:
+      "Return net worth breakdown: portfolio, invested vs cash-like holdings, liquidity, card debt, savings rate.",
+    parameters: { type: "object", properties: {} },
+  },
+  {
+    name: "get_portfolio",
+    kind: "read",
+    description: "List holdings with symbol, type, horizon, and current market value.",
+    parameters: { type: "object", properties: {} },
+  },
+  {
+    name: "get_goals_status",
+    kind: "read",
+    description: "Return savings goals with progress toward targets.",
+    parameters: { type: "object", properties: {} },
+  },
+  {
+    name: "get_loans_status",
+    kind: "read",
+    description: "Return loans with principal, APR, term, and optional extra payments.",
+    parameters: { type: "object", properties: {} },
+  },
+  {
     name: "update_transaction",
     kind: "write",
     description: "Correct the most recent matching expense (amount/category/description).",
@@ -106,7 +133,13 @@ export const TOOL_SPECS: ToolSpec[] = [
   },
 ];
 
-export type Period = "this_month" | "last_month" | "this_week" | "all";
+export type Period =
+  | "this_month"
+  | "last_month"
+  | "this_week"
+  | "this_year"
+  | "ytd"
+  | "all";
 
 function periodWindow(period: Period): { start: Date; end: Date } | null {
   const now = new Date();
@@ -122,6 +155,9 @@ function periodWindow(period: Period): { start: Date; end: Date } | null {
         start: startOfWeek(now, { weekStartsOn: 1 }),
         end: endOfWeek(now, { weekStartsOn: 1 }),
       };
+    case "this_year":
+    case "ytd":
+      return { start: startOfYear(now), end: now };
     case "all":
       return null;
   }
@@ -361,6 +397,86 @@ export function runReadTool(call: ToolCall, deps: ToolDeps): ToolRunResult {
           ? t("assistant.backend.tools.overOn", { list: over.map((l) => l.label).join(", ") })
           : t("assistant.backend.tools.onTrack"));
       return { summary, data: { planName: plan.name, totalLimit, totalSpent, lines } };
+    }
+
+    case "get_net_worth": {
+      const ctx = buildFinanceContext(deps.state, deps.toDisplay, deps.currency, deps.locale);
+      const w = ctx.wealth;
+      const rate =
+        w.savingsRate != null
+          ? t("assistant.backend.tools.savingsRate", { rate: Math.round(w.savingsRate * 100) })
+          : "";
+      const summary = t("assistant.backend.tools.netWorth", {
+        netWorth: m(w.netWorth),
+        portfolio: m(w.portfolioTotal),
+        invested: m(w.investedTotal),
+        cashLike: m(w.cashLikeHoldings),
+        liquidity: m(w.liquidityBalance),
+        debt: m(w.cardDebt),
+        savingsRate: rate,
+      });
+      return { summary, data: w };
+    }
+
+    case "get_portfolio": {
+      const ctx = buildFinanceContext(deps.state, deps.toDisplay, deps.currency, deps.locale);
+      if (!ctx.holdings.length) {
+        return { summary: t("assistant.backend.tools.noHoldings"), data: [] };
+      }
+      const lines = ctx.holdings
+        .slice(0, 20)
+        .map((h) =>
+          t("assistant.backend.tools.holdingLine", {
+            symbol: h.symbol,
+            name: h.name,
+            type: h.type,
+            horizon: h.horizon,
+            value: m(h.value),
+          }),
+        )
+        .join("; ");
+      const summary = t("assistant.backend.tools.portfolio", {
+        total: m(ctx.wealth.portfolioTotal),
+        lines,
+      });
+      return { summary, data: ctx.holdings };
+    }
+
+    case "get_goals_status": {
+      const ctx = buildFinanceContext(deps.state, deps.toDisplay, deps.currency, deps.locale);
+      if (!ctx.goals.length) {
+        return { summary: t("assistant.backend.tools.noGoals"), data: [] };
+      }
+      const lines = ctx.goals
+        .map((g) => {
+          const pct = g.target > 0 ? Math.round((g.current / g.target) * 100) : 0;
+          return t("assistant.backend.tools.goalLine", {
+            name: g.name,
+            current: m(g.current),
+            target: m(g.target),
+            pct,
+          });
+        })
+        .join("; ");
+      return { summary: lines, data: ctx.goals };
+    }
+
+    case "get_loans_status": {
+      const ctx = buildFinanceContext(deps.state, deps.toDisplay, deps.currency, deps.locale);
+      if (!ctx.loans.length) {
+        return { summary: t("assistant.backend.tools.noLoans"), data: [] };
+      }
+      const lines = ctx.loans
+        .map((l) =>
+          t("assistant.backend.tools.loanLine", {
+            name: l.name,
+            principal: m(l.principal),
+            apr: l.apr,
+            months: l.termMonths,
+          }),
+        )
+        .join("; ");
+      return { summary: lines, data: ctx.loans };
     }
 
     default:

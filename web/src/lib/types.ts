@@ -96,6 +96,8 @@ export type Settings = {
   corsProxy: string;
   finnhubKey?: string;
   privacyMode?: boolean;
+  /** First name shown in the dashboard greeting. */
+  displayName?: string;
   /** Currency the UI renders all values in. Default "USD". */
   displayCurrency?: string;
 

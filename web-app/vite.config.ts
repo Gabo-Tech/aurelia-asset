@@ -1,4 +1,4 @@
-import { defineConfig } from "vite";
+import { defineConfig, transformWithEsbuild } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "node:path";
 
@@ -8,7 +8,22 @@ import path from "node:path";
  */
 export default defineConfig({
   root: path.resolve(__dirname),
-  plugins: [react()],
+  plugins: [
+    {
+      name: "treat-js-as-jsx",
+      enforce: "pre",
+      async transform(code, id) {
+        if (!id.includes("node_modules/react-native-markdown-display/") || !id.endsWith(".js")) {
+          return null;
+        }
+        return transformWithEsbuild(code, id, {
+          loader: "jsx",
+          jsx: "automatic",
+        });
+      },
+    },
+    react(),
+  ],
   resolve: {
     alias: {
       "react-native": "react-native-web",

@@ -1,4 +1,4 @@
-# Aurelia Asset — Portfolio Tracker (React Native)
+# Aurelia Asset
 
 Privacy-first personal finance and portfolio tracker. **React Native CLI** (no Expo / EAS). Data, LLM, and speech stay on-device.
 

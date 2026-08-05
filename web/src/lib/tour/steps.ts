@@ -24,6 +24,14 @@ async function expandCashflowBreakdown() {
   await new Promise((r) => window.setTimeout(r, 200));
 }
 
+async function openCashflowAddModal() {
+  const form = document.querySelector('[data-tour="cf-add"]');
+  if (form instanceof HTMLElement && form.getClientRects().length > 0) return;
+  const trigger = document.querySelector<HTMLElement>('[data-tour="cf-add-trigger"]');
+  trigger?.click();
+  await new Promise((r) => window.setTimeout(r, 250));
+}
+
 export function buildTourSteps(
   t: TFunction,
   isMobile: boolean,
@@ -96,7 +104,7 @@ export function buildTourSteps(
 
     // Cashflow (top-to-bottom page order)
     step("cfSummary", '[data-tour="cf-summary"]', "/cashflow", pageSide),
-    step("cfAdd", '[data-tour="cf-add"]', "/cashflow", pageSide),
+    step("cfAdd", '[data-tour="cf-add"]', "/cashflow", pageSide, openCashflowAddModal),
     step("cfCards", '[data-tour="cf-cards"]', "/cashflow", contentTopSide),
     step("cfSankey", '[data-tour="cf-sankey"]', "/cashflow", contentTopSide),
     step(

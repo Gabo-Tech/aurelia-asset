@@ -71,7 +71,7 @@ function fallbackIndexHtml() {
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Financial Tracker</title>
+  <title>Aurelia</title>
   <link rel="stylesheet" href="${styles}" />
   ${driverCss ? `<link rel="stylesheet" href="/assets/${driverCss}" />` : ""}
   <link rel="icon" href="/favicon.ico" sizes="any" />

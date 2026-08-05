@@ -177,8 +177,8 @@ type Ctx = {
   updateLoan: (id: string, patch: Partial<Loan>) => void;
   removeLoan: (id: string) => void;
   updateSettings: (patch: Partial<Settings>) => void;
-  importState: (data: AppState) => void;
-  reset: () => void;
+  importState: (data: AppState) => Promise<void>;
+  reset: () => Promise<void>;
 };
 
 /** Recompute holdings.quantity from transactions for any holding that has at
@@ -547,18 +547,22 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       removeLoan: (id) =>
         setState((s) => ({ ...s, loans: (s.loans ?? []).filter((l) => l.id !== id) })),
       updateSettings: (patch) => setState((s) => ({ ...s, settings: { ...s.settings, ...patch } })),
-      importState: (data) =>
-        setState(() =>
-          syncQuantities({
-            ...DEFAULT_STATE,
-            ...data,
-            transactions: Array.isArray((data as AppState).transactions)
-              ? (data as AppState).transactions
-              : [],
-            settings: { ...DEFAULT_STATE.settings, ...(data.settings ?? {}) },
-          }),
-        ),
-      reset: () => setState(() => DEFAULT_STATE),
+      importState: async (data) => {
+        const next = syncQuantities({
+          ...DEFAULT_STATE,
+          ...data,
+          transactions: Array.isArray((data as AppState).transactions)
+            ? (data as AppState).transactions
+            : [],
+          settings: { ...DEFAULT_STATE.settings, ...(data.settings ?? {}) },
+        });
+        setStateRaw(next);
+        await secureSet(STORAGE_KEY, JSON.stringify(next));
+      },
+      reset: async () => {
+        setStateRaw(DEFAULT_STATE);
+        await secureSet(STORAGE_KEY, JSON.stringify(DEFAULT_STATE));
+      },
     };
   }, [state, hydrated]);
 

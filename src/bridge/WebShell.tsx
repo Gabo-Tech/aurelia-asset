@@ -35,7 +35,7 @@ async function requestMicPermission() {
   try {
     await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.RECORD_AUDIO, {
       title: "Microphone",
-      message: "Financial Tracker needs the microphone for voice input.",
+      message: "Aurelia needs the microphone for voice input.",
       buttonPositive: "OK",
     });
   } catch {
@@ -122,7 +122,7 @@ export function WebShell() {
     return (
       <View style={styles.boot}>
         <ActivityIndicator size="large" color={colors.accent} />
-        <Text style={styles.bootText}>Starting Financial Tracker…</Text>
+        <Text style={styles.bootText}>Starting Aurelia…</Text>
       </View>
     );
   }

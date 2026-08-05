@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { View, Text, StyleSheet, TextInput, Pressable, ScrollView, Alert } from "react-native";
 import { useTranslation } from "react-i18next";
-import { Card, PrimaryButton, SecondaryButton, SectionHeader } from "@/components/ui";
+import { Card, PrimaryButton, SecondaryButton, SectionHeader, chipLabelStyle, chipContainerStyle } from "@/components/ui";
 import { useStore } from "@/lib/store";
 import {
   GROUP_COLORS,
@@ -34,7 +34,10 @@ export function CategoriesManager() {
   function create() {
     const n = newName.trim();
     if (!n) {
-      Alert.alert("Invalid", t("more.mcNameRequired", { defaultValue: "Name required" }));
+      Alert.alert(
+        t("common.checkFields", { defaultValue: "Check your entries" }),
+        t("more.mcNameRequired", { defaultValue: "Name required" }),
+      );
       return;
     }
     addCategory({ name: n, kind: newKind, group: newGroup, color: newColor });
@@ -50,7 +53,10 @@ export function CategoriesManager() {
   function saveEdit() {
     if (!editing) return;
     if (!editName.trim()) {
-      Alert.alert("Invalid", "Name required");
+      Alert.alert(
+        t("common.checkFields", { defaultValue: "Check your entries" }),
+        "Name required",
+      );
       return;
     }
     updateCategory(editing.id, { name: editName.trim(), color: editColor });
@@ -101,7 +107,7 @@ export function CategoriesManager() {
             }}
             style={[styles.chip, newKind === k && styles.chipOn]}
           >
-            <Text style={styles.chipText}>{k}</Text>
+            <Text style={styles.chipText}>{k === "income" ? "Income" : "Expense"}</Text>
           </Pressable>
         ))}
       </View>
@@ -118,7 +124,7 @@ export function CategoriesManager() {
 
       {(["expense", "income"] as const).map((kind) => (
         <View key={kind} style={{ marginTop: spacing.md }}>
-          <Text style={styles.sub}>{kind}</Text>
+          <Text style={styles.sub}>{kind === "income" ? "Income" : "Expense"}</Text>
           {grouped[kind].map((c) => (
             <View key={c.id} style={styles.catRow}>
               <View style={[styles.dot, { backgroundColor: c.color }]} />
@@ -126,7 +132,7 @@ export function CategoriesManager() {
               <SecondaryButton label="Edit" onPress={() => openEdit(c)} />
               <View style={{ width: 6 }} />
               <SecondaryButton
-                label="Del"
+                label="Delete"
                 destructive
                 onPress={() =>
                   Alert.alert("Remove category?", c.name, [
@@ -181,16 +187,13 @@ const styles = StyleSheet.create({
   },
   row: { flexDirection: "row", flexWrap: "wrap", marginBottom: 8 },
   chip: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: colors.border,
+    ...chipContainerStyle,
     marginRight: 8,
+    borderWidth: 1,
     backgroundColor: colors.surfaceAlt,
   },
   chipOn: { borderColor: colors.accent, backgroundColor: colors.accentSoft },
-  chipText: { color: colors.text, fontSize: 12, fontWeight: "600", textTransform: "capitalize" },
+  chipText: { ...chipLabelStyle, textTransform: "capitalize" },
   swatches: { marginBottom: 10 },
   swatch: {
     width: 28,

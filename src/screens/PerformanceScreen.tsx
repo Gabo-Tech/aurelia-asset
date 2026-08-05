@@ -9,8 +9,12 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { useTranslation } from "react-i18next";
-import { Screen, Header, Card, Metric, PrimaryButton } from "@/components/ui";
+import { Screen, Header, Card, Metric, MetricRow, PrimaryButton, EmptyState, chipLabelStyle, chipContainerStyle } from "@/components/ui";
+import { useNavigation } from "@react-navigation/native";
+import type { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
+import type { RootTabParamList } from "@/navigation/RootNavigator";
 import { ChartFrame } from "@/components/ChartFrame";
+import { HistoryLineChart, type HistoryLineSeries } from "@/components/HistoryLineChart";
 import { useStore, useMoney } from "@/lib/store";
 import { fetchCurrentQuote, fetchPortfolioHistory } from "@/lib/finance";
 import {
@@ -20,9 +24,11 @@ import {
 import { colors } from "@/theme/colors";
 
 const PERIODS: PeriodId[] = ["1D", "7D", "1M", "3M", "6M", "YTD", "1Y", "Max"];
+const TOTAL_KEY = "Total";
 
 export function PerformanceScreen() {
   const { t } = useTranslation();
+  const navigation = useNavigation<BottomTabNavigationProp<RootTabParamList>>();
   const { state, updateHolding } = useStore();
   const { mask, toDisplay } = useMoney();
   const [busy, setBusy] = useState(false);
@@ -31,6 +37,8 @@ export function PerformanceScreen() {
   const [period, setPeriod] = useState<PeriodId>("1M");
   const [history, setHistory] = useState<PortfolioHistoryPoint[]>([]);
   const [indexed, setIndexed] = useState(false);
+  const [hidden, setHidden] = useState<Set<string>>(new Set());
+  const [hideTotal, setHideTotal] = useState(false);
 
   const rows = useMemo(() => {
     const list = state.holdings.map((h) => {
@@ -89,24 +97,61 @@ export function PerformanceScreen() {
     }));
   }, [rows]);
 
-  const series = useMemo(() => {
-    if (!history.length) return [];
-    const base = history[0]!.total || 1;
-    const max = Math.max(...history.map((p) => (indexed ? (p.total / base) * 100 : p.total)), 1);
-    const min = Math.min(
-      ...history.map((p) => (indexed ? (p.total / base) * 100 : p.total)),
-      indexed ? 100 : 0,
-    );
-    const range = Math.max(1, max - min);
-    return history.map((p) => {
-      const v = indexed ? (p.total / base) * 100 : p.total;
-      return {
-        date: p.date,
-        value: v,
-        pct: (v - min) / range,
-      };
-    });
-  }, [history, indexed]);
+  const chartSeries = useMemo((): HistoryLineSeries[] => {
+    if (history.length < 2) return [];
+
+    const baselines: Record<string, number> = {};
+    if (indexed) {
+      for (const p of history) {
+        if (baselines[TOTAL_KEY] == null && p.total > 0) baselines[TOTAL_KEY] = p.total;
+        for (const h of state.holdings) {
+          const v = p.perAsset[h.id] ?? 0;
+          if (baselines[h.id] == null && v > 0) baselines[h.id] = v;
+        }
+        if (
+          baselines[TOTAL_KEY] != null &&
+          state.holdings.every((h) => baselines[h.id] != null)
+        ) {
+          break;
+        }
+      }
+    }
+
+    const scale = (key: string, raw: number) => {
+      if (!indexed) return raw;
+      const base = baselines[key] || 1;
+      return (raw / base) * 100;
+    };
+
+    const out: HistoryLineSeries[] = [];
+    if (!hideTotal) {
+      out.push({
+        key: TOTAL_KEY,
+        color: colors.accent,
+        strokeWidth: 2.5,
+        values: history.map((p) => scale(TOTAL_KEY, p.total)),
+      });
+    }
+    for (const h of state.holdings) {
+      if (hidden.has(h.id)) continue;
+      out.push({
+        key: h.id,
+        color: h.color || colors.text,
+        strokeWidth: 1.75,
+        values: history.map((p) => scale(h.id, p.perAsset[h.id] ?? 0)),
+      });
+    }
+    return out;
+  }, [history, indexed, state.holdings, hidden, hideTotal]);
+
+  const rangeCaption = useMemo(() => {
+    if (!chartSeries.length || history.length < 2) return null;
+    const primary =
+      chartSeries.find((s) => s.key === TOTAL_KEY) ?? chartSeries[0]!;
+    const first = primary.values[0]!;
+    const last = primary.values[primary.values.length - 1]!;
+    return { first, last, isTotal: primary.key === TOTAL_KEY };
+  }, [chartSeries, history.length]);
 
   const periodReturn = useMemo(() => {
     if (history.length < 2) return null;
@@ -186,6 +231,17 @@ export function PerformanceScreen() {
     }
   }
 
+  function toggleHolding(id: string) {
+    setHidden((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  const hasChart = chartSeries.length > 0 && history.length > 1;
+
   return (
     <Screen>
       <ScrollView
@@ -197,15 +253,29 @@ export function PerformanceScreen() {
           />
         }
       >
-        <Header title={t("nav.performance", { defaultValue: "Performance" })} />
+        <Header
+          title={t("nav.performance", { defaultValue: "Performance" })}
+          subtitle={t("performance.subtitle", {
+            defaultValue: "Value, cost basis, and returns over time",
+          })}
+        />
         <Card>
-          <Metric label="Portfolio value" value={mask(totals.value)} />
-          <Metric label="Cost basis (approx)" value={mask(totals.cost)} />
-          <Metric label="Total P&L" value={`${mask(totals.pnl)} (${totals.pct.toFixed(1)}%)`} />
+          <MetricRow
+            items={[
+              { label: "Portfolio value", value: mask(totals.value) },
+              { label: "Cost basis", value: mask(totals.cost) },
+              {
+                label: "Total P&L",
+                value: `${mask(totals.pnl)} (${totals.pct.toFixed(1)}%)`,
+                color: totals.pnl >= 0 ? colors.success : colors.danger,
+              },
+            ]}
+          />
           {periodReturn != null ? (
             <Metric label={`Return (${period})`} value={`${periodReturn.toFixed(1)}%`} />
           ) : null}
           <PrimaryButton
+            compact
             label={busy ? "Refreshing…" : "Refresh prices"}
             onPress={() => void refresh()}
             disabled={busy}
@@ -238,29 +308,65 @@ export function PerformanceScreen() {
           </Pressable>
         </View>
 
+        {state.holdings.length > 0 ? (
+          <View style={styles.filterRow}>
+            <Pressable
+              onPress={() => setHideTotal((v) => !v)}
+              style={[styles.filterChip, hideTotal && styles.filterChipOff]}
+            >
+              <View style={[styles.dot, { backgroundColor: colors.accent }]} />
+              <Text style={[styles.filterText, hideTotal && styles.filterTextOff]}>Total</Text>
+            </Pressable>
+            {state.holdings.map((h) => {
+              const off = hidden.has(h.id);
+              return (
+                <Pressable
+                  key={h.id}
+                  onPress={() => toggleHolding(h.id)}
+                  style={[styles.filterChip, off && styles.filterChipOff]}
+                >
+                  <View style={[styles.dot, { backgroundColor: h.color || colors.text }]} />
+                  <Text style={[styles.filterText, off && styles.filterTextOff]}>{h.symbol}</Text>
+                </Pressable>
+              );
+            })}
+            {state.holdings.length > 1 ? (
+              <View style={styles.filterActions}>
+                <Pressable
+                  onPress={() => {
+                    setHidden(new Set());
+                    setHideTotal(false);
+                  }}
+                  hitSlop={6}
+                >
+                  <Text style={styles.filterAction}>Show all</Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => {
+                    setHidden(new Set(state.holdings.map((h) => h.id)));
+                    setHideTotal(true);
+                  }}
+                  hitSlop={6}
+                >
+                  <Text style={styles.filterAction}>Hide all</Text>
+                </Pressable>
+              </View>
+            ) : null}
+          </View>
+        ) : null}
+
         {histBusy ? (
           <ActivityIndicator color={colors.accent} style={{ marginVertical: 16 }} />
-        ) : series.length > 1 ? (
+        ) : hasChart ? (
           <ChartFrame filename={`performance-${period}`} title={`History · ${period}`}>
-            <View style={styles.spark}>
-              {series.map((pt, i) => (
-                <View
-                  key={`${pt.date}-${i}`}
-                  style={[
-                    styles.sparkBar,
-                    {
-                      height: `${Math.max(4, Math.round(pt.pct * 100))}%`,
-                      backgroundColor: colors.accent,
-                    },
-                  ]}
-                />
-              ))}
-            </View>
-            <Text style={styles.sparkMeta}>
-              {indexed
-                ? `${series[0]!.value.toFixed(0)} → ${series[series.length - 1]!.value.toFixed(0)} (idx)`
-                : `${mask(series[0]!.value)} → ${mask(series[series.length - 1]!.value)}`}
-            </Text>
+            <HistoryLineChart series={chartSeries} />
+            {rangeCaption ? (
+              <Text style={styles.sparkMeta}>
+                {indexed
+                  ? `${rangeCaption.first.toFixed(0)} → ${rangeCaption.last.toFixed(0)} (idx)`
+                  : `${mask(rangeCaption.first)} → ${mask(rangeCaption.last)}`}
+              </Text>
+            ) : null}
           </ChartFrame>
         ) : null}
 
@@ -328,15 +434,28 @@ export function PerformanceScreen() {
             <Text style={styles.symbol}>
               {r.symbol} · {r.name}
             </Text>
-            <Metric label="Value" value={mask(r.value)} />
-            <Metric label="Cost" value={mask(r.cost)} />
-            <Metric label="P&L" value={`${mask(r.pnl)} (${r.pct.toFixed(1)}%)`} />
+            <MetricRow
+              items={[
+                { label: "Value", value: mask(r.value) },
+                { label: "Cost", value: mask(r.cost) },
+                {
+                  label: "P&L",
+                  value: `${mask(r.pnl)} (${r.pct.toFixed(1)}%)`,
+                  color: r.pnl >= 0 ? colors.success : colors.danger,
+                },
+              ]}
+            />
           </Card>
         ))}
         {rows.length === 0 ? (
-          <Card>
-            <Text style={styles.empty}>Add holdings and transactions to see performance.</Text>
-          </Card>
+          <EmptyState
+            title={t("performance.emptyTitle", { defaultValue: "No performance data yet" })}
+            body={t("performance.emptyState", {
+              defaultValue: "Add holdings first to see your historical performance.",
+            })}
+            actionLabel={t("dashboard.addHolding", { defaultValue: "Add a holding" })}
+            onAction={() => navigation.navigate("Holdings")}
+          />
         ) : null}
       </ScrollView>
     </Screen>
@@ -360,15 +479,35 @@ const styles = StyleSheet.create({
   assetChg: { fontSize: 12, fontWeight: "600", textAlign: "right", minWidth: 100 },
   sortRow: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 12 },
   sortChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 14,
+    ...chipContainerStyle,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
   },
   sortChipOn: { borderColor: colors.accent, backgroundColor: colors.accentSoft },
-  sortText: { color: colors.text, fontSize: 12, textTransform: "uppercase" },
+  sortText: { ...chipLabelStyle, textTransform: "uppercase" },
+  filterRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 12,
+  },
+  filterChip: {
+    ...chipContainerStyle,
+    flexDirection: "row",
+    gap: 6,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  filterChipOff: {
+    opacity: 0.55,
+    backgroundColor: colors.surfaceAlt,
+  },
+  filterText: { ...chipLabelStyle },
+  filterTextOff: { color: colors.muted },
+  filterActions: { flexDirection: "row", alignItems: "center", gap: 12, marginLeft: "auto" },
+  filterAction: { color: colors.muted, fontSize: 12 },
+  dot: { width: 6, height: 6, borderRadius: 3 },
   barRow: { flexDirection: "row", alignItems: "center", marginBottom: 10, gap: 8 },
   barLabel: { color: colors.text, width: 52, fontSize: 12, fontWeight: "600" },
   barTrack: {
@@ -380,14 +519,5 @@ const styles = StyleSheet.create({
   },
   barFill: { height: "100%", borderRadius: 5 },
   barValue: { color: colors.muted, width: 88, fontSize: 11, textAlign: "right" },
-  spark: {
-    flexDirection: "row",
-    alignItems: "flex-end",
-    height: 120,
-    gap: 1,
-    paddingHorizontal: 4,
-    paddingTop: 8,
-  },
-  sparkBar: { flex: 1, borderTopLeftRadius: 2, borderTopRightRadius: 2, minWidth: 2 },
   sparkMeta: { color: colors.muted, fontSize: 11, marginTop: 8, paddingHorizontal: 4 },
 });

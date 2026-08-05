@@ -84,8 +84,16 @@ import {
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { SITE_URL } from "@/lib/site-config";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { Fab } from "@/components/design/fab";
+import { ResponsiveDialog } from "@/components/design/responsive-dialog";
 
 export const Route = createFileRoute("/cashflow")({
+  validateSearch: (search: Record<string, unknown>): { add?: string } => {
+    const raw = search.add;
+    if (raw === "1" || raw === 1 || raw === true) return { add: "1" };
+    return {};
+  },
   head: () => {
     const title = i18n.t("cashflow.metaTitle");
     const desc = i18n.t("cashflow.metaDesc");
@@ -118,157 +126,18 @@ import {
   type SankeyStages,
 } from "@/lib/sankey-build";
 import { CreditCardsManager } from "@/components/credit-cards-manager";
+import { UpcomingPanel, UpcomingPreviewCard } from "@/components/cashflow-upcoming";
+import {
+  expandCashflows,
+  valuesByEntry,
+} from "@/lib/cashflow-math";
 
-/** Expand recurring cashflow entries into individual occurrences up to `until`.
- *  Each occurrence keeps the original id (with a date suffix) and a `parentId`
- *  pointing to the source entry so the UI can edit/remove the rule. */
-export function expandCashflows(
-  entries: CashflowEntry[],
-  until: Date = new Date(),
-): (CashflowEntry & { parentId: string; isOccurrence: boolean })[] {
-  const out: (CashflowEntry & { parentId: string; isOccurrence: boolean })[] = [];
-  for (const e of entries) {
-    // Installment plans expand into N scheduled child charges.
-    if (e.installmentPlan && e.kind === "expense") {
-      const plan = e.installmentPlan;
-      const perCharge = plan.total / Math.max(1, plan.count);
-      const start = new Date(plan.firstDueDate);
-      for (let i = 0; i < plan.count; i++) {
-        const occ = plan.frequency === "weekly" ? addWeeks(start, i) : addMonths(start, i);
-        if (occ > until) break;
-        out.push({
-          ...e,
-          id: `${e.id}__inst${i}`,
-          amount: perCharge,
-          amountKind: "fixed",
-          date: occ.toISOString(),
-          installmentPlan: undefined,
-          parentId: e.id,
-          isOccurrence: i > 0,
-        });
-      }
-      continue;
-    }
-    if (!e.recurrence) {
-      out.push({ ...e, parentId: e.id, isOccurrence: false });
-      continue;
-    }
-    const start = new Date(e.date);
-    const stop = e.recurrence.until ? new Date(e.recurrence.until) : until;
-    const last = stop < until ? stop : until;
-    const step =
-      e.recurrence.frequency === "weekly"
-        ? (d: Date, i: number) => addWeeks(d, i)
-        : e.recurrence.frequency === "monthly"
-          ? (d: Date, i: number) => addMonths(d, i)
-          : (d: Date, i: number) => addYears(d, i);
-    let i = 0;
-    while (i < 600) {
-      const occ = step(start, i);
-      if (occ > last) break;
-      out.push({
-        ...e,
-        id: `${e.id}__${occ.toISOString().slice(0, 10)}`,
-        date: occ.toISOString(),
-        parentId: e.id,
-        isOccurrence: i > 0,
-      });
-      i++;
-    }
-  }
-  return out;
-}
-
-/** Signed change to liquidity caused by an expanded cashflow entry, in the
- *  entry's source currency. Use with `toDisplay` to convert. */
-export function liquidityImpact(entry: CashflowEntry, valueInDisplay: number): number {
-  if (entry.kind === "income") return valueInDisplay;
-  if (entry.kind === "expense") {
-    const pm = entry.paymentMethod;
-    if (pm && pm.startsWith("credit:")) return 0;
-    return -valueInDisplay;
-  }
-  // transfer
-  const from = entry.fromAccount;
-  const to = entry.toAccount;
-  let delta = 0;
-  if (from === "liquidity") delta -= valueInDisplay;
-  if (to === "liquidity") delta += valueInDisplay;
-  return delta;
-}
-
-/** Signed change to a specific card's balance owed. */
-export function cardDebtImpact(
-  entry: CashflowEntry,
-  cardId: string,
-  valueInDisplay: number,
-): number {
-  const ref = `credit:${cardId}` as const;
-  if (entry.kind === "expense" && entry.paymentMethod === ref) return valueInDisplay;
-  if (entry.kind === "transfer") {
-    if (entry.toAccount === ref) return -valueInDisplay; // paying card down
-    if (entry.fromAccount === ref) return valueInDisplay; // refund / new debt
-  }
-  return 0;
-}
-
-/** Resolve each entry to its display-currency value.
- *  Percent entries are evaluated against `percentOf`:
- *  - "all-income"  → % of total fixed income in `entries`
- *  - "all-expense" → % of total fixed expense in `entries`
- *  - entry id      → % of that fixed entry's resolved value (0 if missing) */
-export function valuesByEntry(
-  entries: CashflowEntry[],
-  toDisplay: (amount: number, from?: string) => number,
-): Map<string, number> {
-  // Group entries by month bucket so percent entries resolve against the
-  // income/expense of the SAME month, not the entire expansion window
-  // (otherwise a 12-month expansion inflates percents 12x).
-  const bucketKey = (e: CashflowEntry) => {
-    const d = e.date ? new Date(e.date) : null;
-    if (!d || Number.isNaN(d.getTime())) return "_";
-    return `${d.getFullYear()}-${d.getMonth()}`;
-  };
-  const fixed = new Map<string, number>();
-  const baseIncomeByBucket = new Map<string, number>();
-  const baseExpenseByBucket = new Map<string, number>();
-  const fixedByParentByBucket = new Map<string, Map<string, number>>();
-  for (const e of entries) {
-    if ((e.amountKind ?? "fixed") !== "fixed") continue;
-    const v = toDisplay(e.amount, e.currency);
-    fixed.set(e.id, v);
-    const bk = bucketKey(e);
-    if (e.kind === "income") baseIncomeByBucket.set(bk, (baseIncomeByBucket.get(bk) ?? 0) + v);
-    else if (e.kind === "expense")
-      baseExpenseByBucket.set(bk, (baseExpenseByBucket.get(bk) ?? 0) + v);
-    const parentId = (e as CashflowEntry & { parentId?: string }).parentId ?? e.id;
-    let bm = fixedByParentByBucket.get(bk);
-    if (!bm) {
-      bm = new Map();
-      fixedByParentByBucket.set(bk, bm);
-    }
-    bm.set(parentId, (bm.get(parentId) ?? 0) + v);
-  }
-  const out = new Map<string, number>();
-  for (const e of entries) {
-    if ((e.amountKind ?? "fixed") === "percent") {
-      const pct = Number(e.amount) / 100;
-      const target = e.percentOf ?? "all-income";
-      const bk = bucketKey(e);
-      let base = 0;
-      if (target === "all-income") base = baseIncomeByBucket.get(bk) ?? 0;
-      else if (target === "all-expense") base = baseExpenseByBucket.get(bk) ?? 0;
-      else {
-        const bm = fixedByParentByBucket.get(bk);
-        base = bm?.get(target) ?? fixed.get(target) ?? 0;
-      }
-      out.set(e.id, pct * base);
-    } else {
-      out.set(e.id, fixed.get(e.id) ?? toDisplay(e.amount, e.currency));
-    }
-  }
-  return out;
-}
+export {
+  expandCashflows,
+  liquidityImpact,
+  cardDebtImpact,
+  valuesByEntry,
+} from "@/lib/cashflow-math";
 
 /** Build a human label for what a percent entry is subscribed to. */
 function describePercentOf(entry: CashflowEntry, cashflows: CashflowEntry[]): string {
@@ -331,6 +200,8 @@ async function loadPrefs(): Promise<Prefs> {
 }
 
 function CashflowPage() {
+  const { add } = Route.useSearch();
+  const isMobile = useIsMobile();
   const {
     state,
     addCashflow,
@@ -539,11 +410,48 @@ function CashflowPage() {
     return { incomes, expenses, investments };
   }, [expandedToToday, valuesTop, catByName, t]);
   const [breakdownOpen, setBreakdownOpen] = useState(false);
+  const [addModalOpen, setAddModalOpen] = useState(false);
+  const [pageTab, setPageTab] = useState<"overview" | "upcoming">("overview");
+  const [upcomingEditEntry, setUpcomingEditEntry] = useState<CashflowEntry | null>(null);
+
+  useEffect(() => {
+    if (isMobile) setBreakdownOpen(true);
+  }, [isMobile]);
+
+  useEffect(() => {
+    if (add === "1") setAddModalOpen(true);
+  }, [add]);
+
+  const openUpcomingEdit = (parentId: string) => {
+    const entry = cashflows.find((c) => c.id === parentId);
+    if (entry && entry.kind !== "transfer") setUpcomingEditEntry(entry);
+  };
+
+  const openAddModal = () => {
+    setPageTab("overview");
+    setAddModalOpen(true);
+  };
 
   return (
     <>
-      <PageHeader title={t("cashflow.title")} description={t("cashflow.description")} />
+      <PageHeader
+        title={t("cashflow.title")}
+        description={t("cashflow.description")}
+        actions={
+          <Button onClick={openAddModal} data-tour="cf-add-trigger" className="gap-1.5">
+            <Plus className="h-4 w-4" />
+            {t("cashflow.addData", { defaultValue: "Add data" })}
+          </Button>
+        }
+      />
 
+      <Tabs value={pageTab} onValueChange={(v) => setPageTab(v as typeof pageTab)} className="mt-2">
+        <TabsList>
+          <TabsTrigger value="overview">{t("cashflow.upcoming.tabOverview")}</TabsTrigger>
+          <TabsTrigger value="upcoming">{t("cashflow.upcoming.tabUpcoming")}</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview" className="mt-4 space-y-0">
       <div className="grid grid-cols-3 gap-2 sm:gap-5" data-tour="cf-summary">
         <StatCard
           label={t("cashflow.income")}
@@ -566,30 +474,65 @@ function CashflowPage() {
         />
       </div>
 
-      <div className="mt-5 grid gap-5 lg:grid-cols-2">
-        <div>
-          <AddForm
-            defaultCurrency={currency}
-            categories={categories}
-            subscribeOptions={subscribeOptions}
-            onAddCategory={addCategory}
-            onUpdateCategory={updateCategory}
-            onRemoveCategory={removeCategory}
-            onAdd={(e) => {
-              addCashflow(e as unknown as Omit<CashflowEntry, "id">);
-              toast.success(
-                e.kind === "income"
-                  ? t("cashflow.incomeAdded")
-                  : e.kind === "expense"
-                    ? t("cashflow.expenseAdded")
-                    : t("cashflow.transferAdded"),
-              );
-            }}
-          />
-        </div>
-        <div>
-          <CreditCardsManager />
-        </div>
+      <div className="mt-5">
+        <UpcomingPreviewCard
+          cashflows={cashflows}
+          currency={currency}
+          privacy={privacy}
+          mask={MASK}
+          toDisplay={toDisplay}
+          onViewAll={() => setPageTab("upcoming")}
+          onEdit={openUpcomingEdit}
+        />
+      </div>
+
+      <Collapsible open={breakdownOpen} onOpenChange={setBreakdownOpen}>
+        <CollapsibleTrigger asChild>
+          <Button
+            variant="outline"
+            className="w-full justify-between"
+            data-tour="cf-breakdown-trigger"
+          >
+            <span>{t("cashflow.breakdown.title", { defaultValue: "Breakdown by category" })}</span>
+            <ChevronDown
+              className={`h-4 w-4 transition-transform ${breakdownOpen ? "rotate-180" : ""}`}
+            />
+          </Button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="mt-3" data-tour="cf-breakdown">
+          <div className="grid gap-3 md:grid-cols-3">
+            <CategoryPieCard
+              title={t("cashflow.breakdown.incomes", { defaultValue: "Incomes" })}
+              entries={breakdownData.incomes}
+              format={pieFormat}
+            />
+            <CategoryPieCard
+              title={t("cashflow.breakdown.expenses", { defaultValue: "Expenses" })}
+              entries={breakdownData.expenses}
+              format={pieFormat}
+            />
+            <CategoryPieCard
+              title={t("cashflow.breakdown.investments", { defaultValue: "Investments & Savings" })}
+              entries={breakdownData.investments}
+              format={pieFormat}
+            />
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
+
+      <div className="mt-5">
+        <EntriesPanel
+          cashflows={cashflows}
+          categories={categories}
+          subscribeOptions={subscribeOptions}
+          currency={currency}
+          privacy={privacy}
+          MASK={MASK}
+          mask={mask}
+          toDisplay={toDisplay}
+          onRemove={removeCashflow}
+          onUpdate={updateCashflow}
+        />
       </div>
 
       <Card className="border-border/60 min-w-0 mt-6 sm:mt-8">
@@ -730,54 +673,72 @@ function CashflowPage() {
         </CardContent>
       </Card>
 
-      <Collapsible open={breakdownOpen} onOpenChange={setBreakdownOpen}>
-        <CollapsibleTrigger asChild>
-          <Button
-            variant="outline"
-            className="w-full justify-between"
-            data-tour="cf-breakdown-trigger"
-          >
-            <span>{t("cashflow.breakdown.title", { defaultValue: "Breakdown by category" })}</span>
-            <ChevronDown
-              className={`h-4 w-4 transition-transform ${breakdownOpen ? "rotate-180" : ""}`}
-            />
-          </Button>
-        </CollapsibleTrigger>
-        <CollapsibleContent className="mt-3" data-tour="cf-breakdown">
-          <div className="grid gap-3 md:grid-cols-3">
-            <CategoryPieCard
-              title={t("cashflow.breakdown.incomes", { defaultValue: "Incomes" })}
-              entries={breakdownData.incomes}
-              format={pieFormat}
-            />
-            <CategoryPieCard
-              title={t("cashflow.breakdown.expenses", { defaultValue: "Expenses" })}
-              entries={breakdownData.expenses}
-              format={pieFormat}
-            />
-            <CategoryPieCard
-              title={t("cashflow.breakdown.investments", { defaultValue: "Investments & Savings" })}
-              entries={breakdownData.investments}
-              format={pieFormat}
-            />
-          </div>
-        </CollapsibleContent>
-      </Collapsible>
+      <div className="mt-6">
+        <CreditCardsManager />
+      </div>
+        </TabsContent>
 
-      <div>
-        <EntriesPanel
-          cashflows={cashflows}
+        <TabsContent value="upcoming" className="mt-4">
+          <UpcomingPanel
+            cashflows={cashflows}
+            currency={currency}
+            privacy={privacy}
+            mask={MASK}
+            toDisplay={toDisplay}
+            onEdit={openUpcomingEdit}
+          />
+        </TabsContent>
+      </Tabs>
+
+      <Fab
+        label={t("cashflow.addData", { defaultValue: "Add data" })}
+        icon={<Plus className="h-6 w-6" />}
+        onClick={openAddModal}
+      />
+
+      <ResponsiveDialog
+        open={addModalOpen}
+        onOpenChange={setAddModalOpen}
+        title={t("cashflow.addEntry")}
+        description={t("cashflow.addDataHint", {
+          defaultValue: "Log income, spending, or a transfer",
+        })}
+        className="max-h-[92dvh] w-full max-w-2xl lg:max-w-3xl"
+        showClose
+      >
+        <AddForm
+          embedded
+          defaultCurrency={currency}
           categories={categories}
           subscribeOptions={subscribeOptions}
-          currency={currency}
-          privacy={privacy}
-          MASK={MASK}
-          mask={mask}
-          toDisplay={toDisplay}
-          onRemove={removeCashflow}
-          onUpdate={updateCashflow}
+          onAddCategory={addCategory}
+          onUpdateCategory={updateCategory}
+          onRemoveCategory={removeCategory}
+          onAdd={(e) => {
+            addCashflow(e as unknown as Omit<CashflowEntry, "id">);
+            toast.success(
+              e.kind === "income"
+                ? t("cashflow.incomeAdded")
+                : e.kind === "expense"
+                  ? t("cashflow.expenseAdded")
+                  : t("cashflow.transferAdded"),
+            );
+            setAddModalOpen(false);
+          }}
         />
-      </div>
+      </ResponsiveDialog>
+
+      <EditEntryDialog
+        entry={upcomingEditEntry}
+        categories={categories}
+        subscribeOptions={subscribeOptions}
+        onClose={() => setUpcomingEditEntry(null)}
+        onSave={(patch) => {
+          if (upcomingEditEntry) updateCashflow(upcomingEditEntry.id, patch);
+          setUpcomingEditEntry(null);
+          toast.success(t("more.entriesUpdated"));
+        }}
+      />
     </>
   );
 }
@@ -1920,6 +1881,7 @@ function AddForm({
   onAddCategory,
   onUpdateCategory,
   onRemoveCategory,
+  embedded = false,
 }: {
   onAdd: (e: FormVals) => void;
   defaultCurrency: string;
@@ -1928,6 +1890,7 @@ function AddForm({
   onAddCategory: (c: Omit<Category, "id">) => Category;
   onUpdateCategory: (id: string, patch: Partial<Category>) => void;
   onRemoveCategory: (id: string) => void;
+  embedded?: boolean;
 }) {
   const { t } = useTranslation();
   const { state: storeState } = useStore();
@@ -1952,19 +1915,38 @@ function AddForm({
   const [amount, setAmount] = useState("");
   const [entryCurrency, setEntryCurrency] = useState(defaultCurrency);
   const [date, setDate] = useState(format(new Date(), "yyyy-MM-dd"));
-  const [recurring, setRecurring] = useState(false);
+  const [whenMode, setWhenMode] = useState<"one-time" | "recurring" | "installments">("one-time");
   const [frequency, setFrequency] = useState<RecurrenceFrequency>("monthly");
   const [until, setUntil] = useState("");
   const [isPercent, setIsPercent] = useState(false);
   const [percentOf, setPercentOf] = useState<string>("all-income");
   const [description, setDescription] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<string>("liquidity");
-  const [useInstallments, setUseInstallments] = useState(false);
   const [instCount, setInstCount] = useState("4");
   const [instFreq, setInstFreq] = useState<"weekly" | "monthly">("monthly");
   const [instStart, setInstStart] = useState(format(new Date(), "yyyy-MM-dd"));
   const [fromAccount, setFromAccount] = useState<string>("liquidity");
   const [toAccount, setToAccount] = useState<string>(accountOptions[1]?.value ?? "liquidity");
+
+  const recurrencePreview = useMemo(() => {
+    if (whenMode !== "recurring") return "";
+    const day = format(new Date(date), "d");
+    const freqLabel =
+      frequency === "weekly"
+        ? t("cashflow.weekly")
+        : frequency === "monthly"
+          ? t("cashflow.monthly")
+          : t("cashflow.yearly");
+    const base = t("cashflow.upcoming.previewRecurring", {
+      frequency: freqLabel,
+      day,
+      defaultValue: `Every ${freqLabel.toLowerCase()} on day ${day}`,
+    });
+    if (until) {
+      return `${base} · ${t("cashflow.until")} ${format(new Date(until), "MMM d, yyyy")}`;
+    }
+    return base;
+  }, [whenMode, date, frequency, until, t]);
 
   const visibleCategories = useMemo(
     () => categories.filter((c) => c.kind === (kind === "transfer" ? "expense" : kind)),
@@ -2004,6 +1986,8 @@ function AddForm({
     }
 
     if (!categoryName.trim()) return toast.error(t("cashflow.pickCategory"));
+    const useInstallments = whenMode === "installments";
+    const recurring = whenMode === "recurring";
     const installmentPlan =
       kind === "expense" && useInstallments && !isPercent
         ? {
@@ -2038,30 +2022,26 @@ function AddForm({
     kind === "transfer"
       ? t("cashflow.addTransferBtn")
       : kind === "income"
-        ? recurring && !useInstallments
+        ? whenMode === "recurring"
           ? t("cashflow.addRecurringIncome")
           : t("cashflow.addIncomeBtn")
-        : useInstallments
+        : whenMode === "installments"
           ? t("cashflow.addFinancedExpense")
-          : recurring
+          : whenMode === "recurring"
             ? t("cashflow.addRecurringExpense")
             : t("cashflow.addExpenseBtn");
 
-  return (
-    <Card className="border-border/60">
-      <CardHeader
-        className="flex-row items-center justify-between space-y-0 gap-2 flex-wrap"
-        data-tour="cf-add"
-      >
-        <CardTitle>{t("cashflow.addEntry")}</CardTitle>
-        <CategoriesManager
-          categories={categories}
-          onAdd={onAddCategory}
-          onUpdate={onUpdateCategory}
-          onRemove={onRemoveCategory}
-        />
-      </CardHeader>
-      <CardContent>
+  const categoriesManager = (
+    <CategoriesManager
+      categories={categories}
+      onAdd={onAddCategory}
+      onUpdate={onUpdateCategory}
+      onRemove={onRemoveCategory}
+    />
+  );
+
+  const formBody = (
+    <>
         <Tabs value={kind} onValueChange={(v) => setKind(v as typeof kind)}>
           <TabsList className="grid grid-cols-3">
             <TabsTrigger value="income">{t("cashflow.income")}</TabsTrigger>
@@ -2112,16 +2092,31 @@ function AddForm({
               )}
               {kind === "expense" && !isPercent && (
                 <div className="rounded-md border border-border/60 p-3 space-y-3">
-                  <label className="flex items-center gap-2 text-sm">
-                    <input
-                      type="checkbox"
-                      checked={useInstallments}
-                      onChange={(e) => setUseInstallments(e.target.checked)}
-                      className="h-4 w-4"
-                    />
-                    <span>{t("cashflow.splitInstallments")}</span>
-                  </label>
-                  {useInstallments && (
+                  <Field label={t("cashflow.upcoming.whenLabel")}>
+                    <div className="flex flex-wrap gap-1">
+                      {(
+                        [
+                          ["one-time", t("cashflow.none")],
+                          ["recurring", t("cashflow.recurrence")],
+                          ...(kind === "expense"
+                            ? [["installments", t("cashflow.splitInstallments")]]
+                            : []),
+                        ] as const
+                      ).map(([mode, label]) => (
+                        <Button
+                          key={mode}
+                          type="button"
+                          variant={whenMode === mode ? "secondary" : "outline"}
+                          size="sm"
+                          className="h-8 text-xs"
+                          onClick={() => setWhenMode(mode as typeof whenMode)}
+                        >
+                          {label}
+                        </Button>
+                      ))}
+                    </div>
+                  </Field>
+                  {whenMode === "installments" && (
                     <div className="grid grid-cols-3 gap-3">
                       <Field label={t("cashflow.payments")}>
                         <Input
@@ -2155,44 +2150,92 @@ function AddForm({
                       </Field>
                     </div>
                   )}
+                  {whenMode === "recurring" && (
+                    <>
+                      <div className="grid grid-cols-2 gap-3">
+                        <Field label={t("cashflow.frequency")}>
+                          <Select
+                            value={frequency}
+                            onValueChange={(v) => setFrequency(v as RecurrenceFrequency)}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="weekly">{t("cashflow.weekly")}</SelectItem>
+                              <SelectItem value="monthly">{t("cashflow.monthly")}</SelectItem>
+                              <SelectItem value="yearly">{t("cashflow.yearly")}</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </Field>
+                        <Field label={t("cashflow.untilOptional")}>
+                          <Input
+                            type="date"
+                            value={until}
+                            onChange={(e) => setUntil(e.target.value)}
+                          />
+                        </Field>
+                      </div>
+                      {recurrencePreview && (
+                        <p className="text-xs text-muted-foreground">{recurrencePreview}</p>
+                      )}
+                    </>
+                  )}
                 </div>
               )}
-              {!useInstallments && (
+              {kind === "income" && !isPercent && (
                 <div className="rounded-md border border-border/60 p-3 space-y-3">
-                  <label className="flex items-center gap-2 text-sm">
-                    <input
-                      type="checkbox"
-                      checked={recurring}
-                      onChange={(e) => setRecurring(e.target.checked)}
-                      className="h-4 w-4"
-                    />
-                    <span>{t("cashflow.repeats")}</span>
-                  </label>
-                  {recurring && (
-                    <div className="grid grid-cols-2 gap-3">
-                      <Field label={t("cashflow.frequency")}>
-                        <Select
-                          value={frequency}
-                          onValueChange={(v) => setFrequency(v as RecurrenceFrequency)}
+                  <Field label={t("cashflow.upcoming.whenLabel")}>
+                    <div className="flex flex-wrap gap-1">
+                      {(
+                        [
+                          ["one-time", t("cashflow.none")],
+                          ["recurring", t("cashflow.recurrence")],
+                        ] as const
+                      ).map(([mode, label]) => (
+                        <Button
+                          key={mode}
+                          type="button"
+                          variant={whenMode === mode ? "secondary" : "outline"}
+                          size="sm"
+                          className="h-8 text-xs"
+                          onClick={() => setWhenMode(mode as typeof whenMode)}
                         >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="weekly">{t("cashflow.weekly")}</SelectItem>
-                            <SelectItem value="monthly">{t("cashflow.monthly")}</SelectItem>
-                            <SelectItem value="yearly">{t("cashflow.yearly")}</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </Field>
-                      <Field label={t("cashflow.untilOptional")}>
-                        <Input
-                          type="date"
-                          value={until}
-                          onChange={(e) => setUntil(e.target.value)}
-                        />
-                      </Field>
+                          {label}
+                        </Button>
+                      ))}
                     </div>
+                  </Field>
+                  {whenMode === "recurring" && (
+                    <>
+                      <div className="grid grid-cols-2 gap-3">
+                        <Field label={t("cashflow.frequency")}>
+                          <Select
+                            value={frequency}
+                            onValueChange={(v) => setFrequency(v as RecurrenceFrequency)}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="weekly">{t("cashflow.weekly")}</SelectItem>
+                              <SelectItem value="monthly">{t("cashflow.monthly")}</SelectItem>
+                              <SelectItem value="yearly">{t("cashflow.yearly")}</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </Field>
+                        <Field label={t("cashflow.untilOptional")}>
+                          <Input
+                            type="date"
+                            value={until}
+                            onChange={(e) => setUntil(e.target.value)}
+                          />
+                        </Field>
+                      </div>
+                      {recurrencePreview && (
+                        <p className="text-xs text-muted-foreground">{recurrencePreview}</p>
+                      )}
+                    </>
                   )}
                 </div>
               )}
@@ -2273,7 +2316,28 @@ function AddForm({
         <Button className="mt-4 w-full" onClick={submit}>
           <Plus className="mr-2 h-4 w-4" /> {submitLabel}
         </Button>
-      </CardContent>
+    </>
+  );
+
+  if (embedded) {
+    return (
+      <div data-tour="cf-add" className="space-y-3 pb-2">
+        <div className="flex justify-end">{categoriesManager}</div>
+        {formBody}
+      </div>
+    );
+  }
+
+  return (
+    <Card className="border-border/60">
+      <CardHeader
+        className="flex-row items-center justify-between space-y-0 gap-2 flex-wrap"
+        data-tour="cf-add"
+      >
+        <CardTitle>{t("cashflow.addEntry")}</CardTitle>
+        {categoriesManager}
+      </CardHeader>
+      <CardContent>{formBody}</CardContent>
     </Card>
   );
 
@@ -2333,7 +2397,13 @@ function AddForm({
             </Field>
           )}
           <div className={isPercent ? "col-span-1" : "col-span-2 sm:col-span-1"}>
-            <Field label={t("common.date")}>
+            <Field
+              label={
+                whenMode === "recurring"
+                  ? t("cashflow.upcoming.startDate")
+                  : t("common.date")
+              }
+            >
               <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
             </Field>
           </div>

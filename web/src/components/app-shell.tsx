@@ -18,16 +18,17 @@ import { usePrefetchPortfolioHistory } from "@/hooks/use-portfolio-history";
 import { githubSourceUrl } from "@/lib/site-config";
 import { DesktopSidebar } from "./shell/desktop-sidebar";
 import { MobileHeader } from "./shell/mobile-header";
+import { useMobileHeader } from "@/hooks/use-mobile-header";
 import { BottomTabBar } from "./shell/bottom-tab-bar";
-import { pageTitleForPath, type NavItemDef } from "./shell/nav-config";
+import { type NavItemDef } from "./shell/nav-config";
 import { cn } from "@/lib/utils";
 
 const navItems: NavItemDef[] = [
   { to: "/dashboard", key: "dashboard", icon: LayoutDashboard, tier: "primary" },
-  { to: "/holdings", key: "holdings", icon: Wallet, tier: "primary" },
-  { to: "/performance", key: "performance", icon: TrendingUp, tier: "primary" },
   { to: "/cashflow", key: "cashflow", icon: ArrowLeftRight, tier: "primary" },
-  { to: "/planning", key: "planning", icon: Target, tier: "primary" },
+  { to: "/holdings", key: "holdings", icon: Wallet, tier: "primary" },
+  { to: "/performance", key: "performance", icon: TrendingUp, tier: "secondary" },
+  { to: "/planning", key: "planning", icon: Target, tier: "secondary" },
   { to: "/assistant", key: "assistant", icon: Sparkles, tier: "secondary" },
   { to: "/settings", key: "settings", icon: SettingsIcon, tier: "secondary" },
 ];
@@ -56,19 +57,19 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   const brand = mounted ? t("shell.brand") : "";
   const brandTagline = mounted ? t("shell.brandTagline") : "";
-  const pageTitle = pageTitleForPath(pathname, nav, brand);
+  const mobileHeader = useMobileHeader(nav, brand);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
       <div className="mx-auto flex max-w-[1400px] flex-col lg:flex-row 2xl:max-w-[1600px] 3xl:max-w-[1840px] 4xl:max-w-[2200px]">
         <DesktopSidebar pathname={pathname} nav={nav} brand={brand} brandTagline={brandTagline} />
 
-        <MobileHeader pageTitle={pageTitle} />
+        <MobileHeader title={mobileHeader.title} subtitle={mobileHeader.subtitle} />
 
         <main className="flex-1 min-w-0 pb-[calc(5.5rem+env(safe-area-inset-bottom))] lg:pb-12 flex flex-col min-h-[100dvh] lg:min-h-screen">
           <div
             className={cn(
-              "flex-1 flex flex-col min-h-0 px-4 sm:px-8 2xl:px-12 3xl:px-16 py-4 sm:py-10",
+              "flex-1 flex flex-col min-h-0 px-4 sm:px-6 lg:px-8 2xl:px-12 3xl:px-16 py-4 sm:py-8 lg:py-10",
               ready && "animate-in fade-in slide-in-from-bottom-2 duration-200",
             )}
           >

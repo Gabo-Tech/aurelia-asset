@@ -1,7 +1,15 @@
-import React from "react";
-import { Text, View, StyleSheet } from "react-native";
-import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { NavigationContainer, DarkTheme } from "@react-navigation/native";
+import React, { useState } from "react";
+import { Text, View, StyleSheet, Pressable } from "react-native";
+import {
+  createBottomTabNavigator,
+  type BottomTabBarProps,
+} from "@react-navigation/bottom-tabs";
+import {
+  NavigationContainer,
+  DarkTheme,
+  createNavigationContainerRef,
+} from "@react-navigation/native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import Svg, { Circle, Path, Rect, Polyline } from "react-native-svg";
 import { DashboardScreen } from "@/screens/DashboardScreen";
@@ -11,8 +19,10 @@ import { PerformanceScreen } from "@/screens/PerformanceScreen";
 import { PlanningScreen } from "@/screens/PlanningScreen";
 import { AssistantScreen } from "@/screens/AssistantScreen";
 import { SettingsScreen } from "@/screens/SettingsScreen";
+import { MoreSheet, type MoreDestination } from "@/components/MoreSheet";
+import { OnboardingChecklist } from "@/components/OnboardingChecklist";
 import { useAppStore } from "@/lib/store";
-import { colors, radii } from "@/theme/colors";
+import { colors } from "@/theme/colors";
 import { type as typography } from "@/theme/typography";
 
 export type RootTabParamList = {
@@ -26,6 +36,20 @@ export type RootTabParamList = {
 };
 
 const Tab = createBottomTabNavigator<RootTabParamList>();
+export const navigationRef = createNavigationContainerRef<RootTabParamList>();
+
+const PRIMARY: (keyof RootTabParamList)[] = [
+  "Dashboard",
+  "Cashflow",
+  "Holdings",
+];
+
+const SECONDARY: (keyof RootTabParamList)[] = [
+  "Performance",
+  "Planning",
+  "Assistant",
+  "Settings",
+];
 
 const navTheme = {
   ...DarkTheme,
@@ -43,23 +67,32 @@ function TabIcon({
   name,
   focused,
 }: {
-  name: keyof RootTabParamList;
+  name: keyof RootTabParamList | "More";
   focused: boolean;
 }) {
   const c = focused ? colors.accent : colors.muted;
-  const stroke = 1.6;
+  const stroke = focused ? 2.2 : 1.6;
   const size = 22;
   switch (name) {
     case "Dashboard":
       return (
         <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-          <Path d="M4 10.5L12 4l8 6.5V20a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1v-9.5z" stroke={c} strokeWidth={stroke} />
+          <Path
+            d="M4 10.5L12 4l8 6.5V20a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1v-9.5z"
+            stroke={c}
+            strokeWidth={stroke}
+          />
         </Svg>
       );
     case "Cashflow":
       return (
         <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-          <Path d="M7 7h11M7 7l3-3M7 7l3 3M17 17H6M17 17l-3-3M17 17l-3 3" stroke={c} strokeWidth={stroke} strokeLinecap="round" />
+          <Path
+            d="M7 7h11M7 7l3-3M7 7l3 3M17 17H6M17 17l-3-3M17 17l-3 3"
+            stroke={c}
+            strokeWidth={stroke}
+            strokeLinecap="round"
+          />
         </Svg>
       );
     case "Holdings":
@@ -74,175 +107,196 @@ function TabIcon({
     case "Performance":
       return (
         <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-          <Polyline points="4,16 9,11 13,14 20,6" stroke={c} strokeWidth={stroke} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+          <Polyline
+            points="4,16 9,11 13,14 20,6"
+            stroke={c}
+            strokeWidth={stroke}
+            fill="none"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
           <Path d="M20 6v4h-4" stroke={c} strokeWidth={stroke} strokeLinecap="round" />
         </Svg>
       );
-    case "Planning":
+    case "More":
       return (
         <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-          <Rect x="5" y="4" width="14" height="17" rx="2" stroke={c} strokeWidth={stroke} />
-          <Path d="M9 2v4M15 2v4M5 10h14" stroke={c} strokeWidth={stroke} strokeLinecap="round" />
+          <Circle cx="6" cy="12" r="1.6" fill={c} />
+          <Circle cx="12" cy="12" r="1.6" fill={c} />
+          <Circle cx="18" cy="12" r="1.6" fill={c} />
         </Svg>
       );
-    case "Assistant":
-      return (
-        <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-          <Circle cx="12" cy="12" r="8" stroke={c} strokeWidth={stroke} />
-          <Circle cx="12" cy="12" r="3" fill={c} />
-        </Svg>
-      );
-    case "Settings":
     default:
-      return (
-        <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-          <Circle cx="12" cy="12" r="3" stroke={c} strokeWidth={stroke} />
-          <Path
-            d="M12 3v2M12 19v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M3 12h2M19 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"
-            stroke={c}
-            strokeWidth={stroke}
-            strokeLinecap="round"
-          />
-        </Svg>
-      );
+      return null;
   }
 }
 
-function TabLabel({ label, focused }: { label: string; focused: boolean }) {
+function shortLabel(
+  t: (key: string, opts?: { defaultValue: string }) => string,
+  name: keyof RootTabParamList,
+): string {
+  switch (name) {
+    case "Dashboard":
+      return t("nav.short.dashboard", { defaultValue: "Home" });
+    case "Cashflow":
+      return t("nav.short.cashflow", { defaultValue: "Cash" });
+    case "Holdings":
+      return t("nav.short.holdings", { defaultValue: "Holdings" });
+    case "Performance":
+      return t("nav.short.performance", { defaultValue: "Perf" });
+    default:
+      return name;
+  }
+}
+
+function CustomTabBar({ state, navigation }: BottomTabBarProps) {
+  const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
+  const [moreOpen, setMoreOpen] = useState(false);
+  const assistantEnabled = useAppStore((s) => s.state.settings.aiAssistantEnabled !== false);
+  const updateSettings = useAppStore((s) => s.updateSettings);
+  const bottomPad = Math.max(insets.bottom, 8);
+  const focusedName = state.routes[state.index]?.name as keyof RootTabParamList;
+  const moreActive = SECONDARY.includes(focusedName);
+
   return (
-    <Text style={[styles.tabLabel, focused && styles.tabLabelOn]} numberOfLines={1}>
-      {label}
-    </Text>
+    <>
+      <View style={[styles.tabBar, { paddingBottom: bottomPad, height: 52 + bottomPad }]}>
+        {PRIMARY.map((name) => {
+          const route = state.routes.find((r) => r.name === name);
+          if (!route) return null;
+          const focused = focusedName === name;
+          return (
+            <Pressable
+              key={name}
+              accessibilityRole="button"
+              accessibilityState={focused ? { selected: true } : {}}
+              onPress={() => {
+                const event = navigation.emit({
+                  type: "tabPress",
+                  target: route.key,
+                  canPreventDefault: true,
+                });
+                if (!focused && !event.defaultPrevented) {
+                  navigation.navigate(name);
+                }
+              }}
+              style={styles.tabItem}
+            >
+              <View style={styles.iconWrap}>
+                <TabIcon name={name} focused={focused} />
+              </View>
+              <Text style={[styles.tabLabel, focused && styles.tabLabelOn]} numberOfLines={1}>
+                {shortLabel(t, name)}
+              </Text>
+            </Pressable>
+          );
+        })}
+        <Pressable
+          accessibilityRole="button"
+          accessibilityState={moreActive ? { selected: true } : {}}
+          onPress={() => setMoreOpen(true)}
+          style={styles.tabItem}
+        >
+          <View style={styles.iconWrap}>
+            <TabIcon name="More" focused={moreActive || moreOpen} />
+          </View>
+          <Text
+            style={[styles.tabLabel, (moreActive || moreOpen) && styles.tabLabelOn]}
+            numberOfLines={1}
+          >
+            {t("nav.more", { defaultValue: "More" })}
+          </Text>
+        </Pressable>
+      </View>
+      <MoreSheet
+        visible={moreOpen}
+        onClose={() => setMoreOpen(false)}
+        assistantEnabled={assistantEnabled}
+        activeRoute={focusedName}
+        onNavigate={(route: MoreDestination) => {
+          navigation.navigate(route);
+        }}
+        onTakeTour={() => {
+          updateSettings({ onboardingSeen: false });
+        }}
+      />
+    </>
   );
 }
 
 export function RootNavigator() {
-  const { t } = useTranslation();
   const assistantEnabled = useAppStore((s) => s.state.settings.aiAssistantEnabled !== false);
 
   return (
-    <NavigationContainer
-      theme={navTheme}
-      linking={{
-        prefixes: [
-          typeof window !== "undefined" && window.location?.origin
-            ? window.location.origin
-            : "",
-        ],
-        config: {
-          screens: {
-            Dashboard: "",
-            Cashflow: "Cashflow",
-            Holdings: "Holdings",
-            Performance: "Performance",
-            Planning: "Planning",
-            Assistant: "Assistant",
-            Settings: "Settings",
+    <>
+      <NavigationContainer
+        ref={navigationRef}
+        theme={navTheme}
+        linking={{
+          prefixes: [
+            typeof window !== "undefined" && window.location?.origin
+              ? window.location.origin
+              : "",
+          ],
+          config: {
+            screens: {
+              Dashboard: "",
+              Cashflow: "Cashflow",
+              Holdings: "Holdings",
+              Performance: "Performance",
+              Planning: "Planning",
+              Assistant: "Assistant",
+              Settings: "Settings",
+            },
           },
-        },
-      }}
-    >
-      <Tab.Navigator
-        screenOptions={({ route }) => ({
-          headerShown: false,
-          tabBarStyle: styles.tabBar,
-          tabBarItemStyle: styles.tabItem,
-          tabBarIcon: ({ focused }) => (
-            <View style={styles.iconWrap}>
-              <TabIcon name={route.name as keyof RootTabParamList} focused={focused} />
-              {focused ? <View style={styles.dot} /> : null}
-            </View>
-          ),
-        })}
+        }}
       >
-        <Tab.Screen
-          name="Dashboard"
-          component={DashboardScreen}
-          options={{
-            tabBarLabel: ({ focused }) => (
-              <TabLabel label={t("nav.dashboard", { defaultValue: "Home" })} focused={focused} />
-            ),
+        <Tab.Navigator
+          tabBar={(props) => <CustomTabBar {...props} />}
+          screenOptions={{
+            headerShown: false,
+            tabBarHideOnKeyboard: true,
           }}
-        />
-        <Tab.Screen
-          name="Cashflow"
-          component={CashflowScreen}
-          options={{
-            tabBarLabel: ({ focused }) => (
-              <TabLabel label={t("nav.cashflow", { defaultValue: "Cash" })} focused={focused} />
-            ),
-          }}
-        />
-        <Tab.Screen
-          name="Holdings"
-          component={HoldingsScreen}
-          options={{
-            tabBarLabel: ({ focused }) => (
-              <TabLabel label={t("nav.holdings", { defaultValue: "Holdings" })} focused={focused} />
-            ),
-          }}
-        />
-        <Tab.Screen
-          name="Performance"
-          component={PerformanceScreen}
-          options={{
-            tabBarLabel: ({ focused }) => (
-              <TabLabel label={t("nav.perf", { defaultValue: "Perf" })} focused={focused} />
-            ),
-          }}
-        />
-        <Tab.Screen
-          name="Planning"
-          component={PlanningScreen}
-          options={{
-            tabBarLabel: ({ focused }) => (
-              <TabLabel label={t("nav.planning", { defaultValue: "Plan" })} focused={focused} />
-            ),
-          }}
-        />
-        {assistantEnabled ? (
-          <Tab.Screen
-            name="Assistant"
-            component={AssistantScreen}
-            options={{
-              tabBarLabel: ({ focused }) => (
-                <TabLabel label={t("nav.assistant", { defaultValue: "AI" })} focused={focused} />
-              ),
-            }}
-          />
-        ) : null}
-        <Tab.Screen
-          name="Settings"
-          component={SettingsScreen}
-          options={{
-            tabBarLabel: ({ focused }) => (
-              <TabLabel label={t("nav.settings", { defaultValue: "Settings" })} focused={focused} />
-            ),
-          }}
-        />
-      </Tab.Navigator>
-    </NavigationContainer>
+        >
+          <Tab.Screen name="Dashboard" component={DashboardScreen} />
+          <Tab.Screen name="Cashflow" component={CashflowScreen} />
+          <Tab.Screen name="Holdings" component={HoldingsScreen} />
+          <Tab.Screen name="Performance" component={PerformanceScreen} />
+          <Tab.Screen name="Planning" component={PlanningScreen} />
+          {assistantEnabled ? (
+            <Tab.Screen name="Assistant" component={AssistantScreen} />
+          ) : null}
+          <Tab.Screen name="Settings" component={SettingsScreen} />
+        </Tab.Navigator>
+      </NavigationContainer>
+      <OnboardingChecklist
+        onGoCashflow={() => {
+          if (navigationRef.isReady()) navigationRef.navigate("Cashflow");
+        }}
+        onGoHoldings={() => {
+          if (navigationRef.isReady()) navigationRef.navigate("Holdings");
+        }}
+      />
+    </>
   );
 }
 
 const styles = StyleSheet.create({
   tabBar: {
+    flexDirection: "row",
     backgroundColor: colors.surface,
     borderTopColor: colors.border,
     borderTopWidth: StyleSheet.hairlineWidth,
-    height: 64,
     paddingTop: 6,
-    paddingBottom: 8,
   },
-  tabItem: { paddingTop: 2 },
-  iconWrap: { alignItems: "center", justifyContent: "center", height: 26 },
-  dot: {
-    width: 4,
-    height: 4,
-    borderRadius: radii.pill,
-    backgroundColor: colors.accent,
-    marginTop: 3,
+  tabItem: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingTop: 2,
   },
-  tabLabel: { ...typography.tab, color: colors.muted, marginBottom: 2 },
-  tabLabelOn: { color: colors.accent },
+  iconWrap: { alignItems: "center", justifyContent: "center", height: 24 },
+  tabLabel: { ...typography.tab, color: colors.muted, marginBottom: 2, fontWeight: "500" },
+  tabLabelOn: { color: colors.accent, fontWeight: "700" },
 });

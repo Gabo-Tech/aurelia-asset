@@ -38,6 +38,7 @@ const es: Translation = {
     planning: "Planificación",
     assistant: "Asistente",
     settings: "Ajustes",
+    more: "Más",
     short: {
       dashboard: "Inicio",
       holdings: "Activos",
@@ -46,6 +47,7 @@ const es: Translation = {
       planning: "Plan",
       assistant: "IA",
       settings: "Ajustes",
+      more: "Más",
     },
   },
   assistant: {
@@ -86,11 +88,11 @@ const es: Translation = {
       "La entrada por voz requiere la app nativa o un navegador compatible. El texto funciona en todas partes.",
     emptyTitle: "Tu asistente financiero privado",
     emptyBody:
-      'Di o escribe cosas como "Gasté 45 en la compra en Mercadona ayer". Confirmaré antes de guardar, y todo permanece en tu dispositivo.',
+      'Pregunta por tu patrimonio neto, gastos o di "dame consejo financiero". También puedes registrar gastos como "Gasté 45 en la compra" — confirmaré antes de guardar.',
     backend: {
       greeting:
-        '¡Hola! Soy tu asistente financiero. Cuéntame un gasto (p. ej. "Gasté 12 en el almuerzo"), pregunta cuánto has gastado o pide consejos de ahorro.',
-      help: "Puedo:\n• Registrar gastos que describas (confirmaré antes)\n• Resumir tu gasto por periodo o categoría\n• Mostrar transacciones recientes\n• Informar del estado de tu presupuesto\n• Dar consejos de ahorro basados en tus datos\nTodo funciona en tu dispositivo.",
+        '¡Hola! Soy tu asesor financiero personal. Pregunta por patrimonio neto, gastos, presupuestos, metas o di "dame consejo" — y puedo registrar gastos que describas.',
+      help: "Puedo:\n• Analizar tus finanzas y asesorarte (recortar gastos, aumentar ingresos, invertir el excedente)\n• Informar de patrimonio neto, cartera, liquidez y deudas\n• Resumir gastos, presupuestos, metas y préstamos\n• Registrar gastos que describas (confirmaré antes)\nTodo funciona en tu dispositivo con tus datos reales.",
       thanks: "¡De nada! Avísame si necesitas algo más con tus finanzas.",
       positive:
         "¡Me alegra haber ayudado! Pregúntame cuando quieras sobre gastos, presupuestos o ahorro.",
@@ -99,7 +101,7 @@ const es: Translation = {
       howAreYou:
         "Estoy genial — listo para ayudarte a controlar gastos y ahorrar mejor. ¿Qué puedo hacer por ti?",
       unknown:
-        'No lo he entendido del todo. Prueba cosas como "gasté 8,50 en un café", "¿cuánto gasté en comida este mes?" o "dame consejos de ahorro".',
+        'No lo he entendido del todo. Prueba "¿Cuál es mi patrimonio neto?", "¿cuánto gasté en comida este mes?", "dame consejo financiero" o "gasté 8,50 en un café".',
       done: "Hecho.",
       expenseConfirm:
         "¿Añadir un gasto de {{amount}} en {{category}} para {{when}}? Confirma abajo.",
@@ -126,14 +128,24 @@ const es: Translation = {
           "Buena tasa de ahorro del {{rate}}% este mes — dirige parte del excedente a metas o inversiones a largo plazo.",
         lowIncome:
           "Los gastos consumen el {{pct}}% de tus ingresos este mes. Reducir costes fijos o aumentar ingresos podría aliviar la presión.",
+        tightCashflow:
+          "Los gastos son el {{pct}}% de tus ingresos — hay poco margen. Limita el gasto discrecional y busca un impulso de ingresos este trimestre.",
+        growIncome:
+          "Tu excedente es bajo respecto a los ingresos. Además de recortar costes, considera aumentar tu capacidad de ganancia (negociación, ascenso, freelance o un puesto mejor pagado).",
         topCategory:
           "{{name}} supone el {{pct}}% de tu gasto ({{amount}}). Reducirlo un 10% liberaría {{savings}}/mes.",
+        secondCategory:
+          "{{name}} es otra porción grande: {{pct}}% ({{amount}}) — buen segundo sitio para recortar.",
         highDebt:
           "Debes {{debt}} en tarjetas de crédito. Priorizar el pago liberaría efectivo para ahorrar e invertir.",
+        highAprLoan:
+          'El préstamo "{{name}}" cuesta un {{apr}}% TAE sobre {{principal}}. Los pagos extra aquí suelen superar el efectivo con bajo rendimiento.',
         excessCash:
           "Tienes {{liquidity}} en liquidez (~{{months}} meses de gastos). Reservar ~{{reserve}} como colchón es sensato; {{investable}} podría invertirse gradualmente.",
         lowInvestment:
           "Cerca del {{pct}}% de tu patrimonio está en efectivo/liquidez ({{liquidity}} líquido vs {{invested}} invertido). Si el fondo de emergencia está cubierto, considera invertir una parte.",
+        startInvesting:
+          "Tienes buena liquidez pero aún no hay posiciones. Tras un colchón de emergencia (3–6 meses de gastos), empieza un plan simple a largo plazo — fondos diversificados, sin elegir acciones sueltas.",
         balancedAllocation:
           "Tu reparto parece equilibrado — {{invested}} invertido y {{liquid}} en efectivo/posiciones líquidas.",
         overBudget:
@@ -154,6 +166,8 @@ const es: Translation = {
         this_month: "este mes",
         last_month: "el mes pasado",
         this_week: "esta semana",
+        this_year: "este año",
+        ytd: "en lo que va de año",
         all: "todo el tiempo",
       },
       tools: {
@@ -161,11 +175,22 @@ const es: Translation = {
         spentTotal: "Total gastado {{total}} ({{period}}). Principal: {{top}}.",
         noTransactions: "Aún no hay transacciones.",
         noBudget: "Aún no hay presupuesto configurado.",
+        noHoldings: "Aún no hay posiciones.",
+        noGoals: "Aún no hay metas de ahorro.",
+        noLoans: "Aún no hay préstamos registrados.",
         budgetStatus: 'Presupuesto "{{name}}": {{spent}} de {{limit}} usado.',
         overOn: " Por encima en: {{list}}.",
         onTrack: " En buen camino.",
         unknownTool: "Herramienta desconocida.",
         txLine: "{{date}} {{kind}} {{category}} {{amount}}",
+
+        netWorth:
+          "Patrimonio neto {{netWorth}} = cartera {{portfolio}} (invertido {{invested}}, similar a efectivo {{cashLike}}) + liquidez {{liquidity}} − deuda de tarjetas {{debt}}.{{savingsRate}}",
+        savingsRate: " Tasa de ahorro este mes: {{rate}}%.",
+        portfolio: "Cartera {{total}}. Posiciones: {{lines}}.",
+        holdingLine: "{{symbol}} {{name}} ({{type}}, {{horizon}}) {{value}}",
+        goalLine: "{{name}}: {{current}} / {{target}} ({{pct}}%)",
+        loanLine: "{{name}}: {{principal}} al {{apr}}% TAE en {{months}} meses",
       },
       voice: {
         recognitionUnavailable: "Reconocimiento de voz no disponible.",
@@ -184,8 +209,8 @@ const es: Translation = {
     goHome: "Ir al inicio",
   },
   shell: {
-    brand: "Elegant",
-    brandTagline: "Gestor de cartera",
+    brand: "Aurelia",
+    brandTagline: "Tu dinero, en tu dispositivo",
     showValues: "Mostrar valores",
     hideValues: "Ocultar valores",
     footerNote: "Solo local · tus datos no salen de tu navegador",
@@ -193,7 +218,8 @@ const es: Translation = {
   },
   landing: {
     headerTagline: "Tuyo · Privado · Gratis",
-    openApp: "Abrir app",
+    openApp: "Abrir Aurelia",
+    logoAlt: "Logo de Aurelia",
     nav: { features: "Funciones", how: "Cómo funciona", faq: "Preguntas" },
     hero: {
       badge: "Sin cuenta. Sin rastreo. Tus datos se quedan contigo.",
@@ -237,8 +263,8 @@ const es: Translation = {
           body: "Todo se cifra y se guarda en tu dispositivo. Sin cuenta, sin nube y sin analítica sobre lo que posees.",
         },
         elegant: {
-          title: "Elegante en cualquier pantalla",
-          body: "Una interfaz calmada y sin distracciones para escritorio, tablet y móvil, con apps nativas y seis idiomas, incluido el valencià.",
+          title: "Hecho primero para el móvil",
+          body: "Pantallas tranquilas y cómodas con el pulgar, con apps nativas y seis idiomas.",
         },
       },
     },
@@ -265,7 +291,7 @@ const es: Translation = {
       subheading:
         "Una mirada honesta a lo que aquí obtienes y que las grandes apps te quitan en silencio.",
       feature: "Lo que obtienes",
-      us: "Este gestor",
+      us: "Aurelia",
       them: "App típica en la nube",
       rows: {
         signup: "Te saltas el registro",
@@ -333,38 +359,62 @@ const es: Translation = {
       },
     },
     footer: {
-      brand: "Gestor de cartera elegante",
+      brand: "Aurelia",
       madeBy: "Hecho por",
       sourceCode: "Código fuente",
     },
     meta: {
-      title: "Gestor de cartera privado - Acciones, Cripto y ETFs",
+      title: "Aurelia · Finanzas privadas y cartera",
       description:
-        "Sigue cada acción, ETF, cripto, metal y euro que posees en un gestor privado. Ve asignación, flujo de caja, previsión y patrimonio - sin registro, sin nube, gratis para siempre.",
+        "Acciones, ETFs, cripto, metales y efectivo en una app privada. Asignación, flujo de caja, previsión y patrimonio en tu dispositivo. Sin registro, sin nube, gratis.",
       keywords:
-        "gestor de cartera, patrimonio neto, app privada de finanzas, seguimiento de acciones, cartera cripto, seguimiento ETF, sankey de flujo de caja, presupuestos, objetivos de ahorro, cartera offline",
+        "aurelia, gestor de cartera, patrimonio neto, app privada de finanzas, cripto, sankey, presupuestos, offline",
     },
   },
   dashboard: {
-    metaTitle: "Panel - Gestor de cartera",
-    metaDesc: "Tu cartera de un vistazo - asignación, valor y actividad reciente.",
+    metaTitle: "Panel · Aurelia",
+    metaDesc: "Tu cartera de un vistazo: asignación, patrimonio y actividad reciente.",
     title: "Panel",
     description: "Bienvenido a tu cartera.",
-    portfolioValue: "Valor total de la cartera",
+    greeting: "Hola",
+    greetingNamed: "Hola {{name}}",
+    greetingShort: "Hola",
+    headerNetWorth: "{{value}} patrimonio neto",
+    netWorthSub: "Activos más liquidez, menos deuda de tarjeta",
+    portfolioValue: "Valor de cartera",
     netWorth: "Patrimonio neto",
+    netWorthLiquidity: "{{sign}}{{value}} liquidez",
     liquidity: "liquidez",
-    net30: "Flujo de caja · últimos 30 días",
+    net30: "Últimos 30 días",
+    net30Sub: "Ingresos netos menos gastos",
+    net30Positive: "+{{value}} últimos 30 días",
+    net30Negative: "-{{value}} últimos 30 días",
     topAsset: "Activo principal",
     allocation: "Asignación",
     showAllLabels: "Mostrar todas las etiquetas",
     showAll: "Mostrar todo",
     hideAll: "Ocultar todo",
+    allAssetsHidden: "Todos los activos están ocultos.",
+    showAllAssets: "Mostrar todos los activos",
+    addAsset: "Añadir activo",
+    addEntry: "Registrar gasto",
+    holdingsCount: "{{count}} activos",
+    holdingsCountOne: "1 activo",
+    topHolding: "Top: {{name}} ({{pct}})",
+    emptyTitle: "Aún no hay nada aquí",
+    emptyDescription:
+      "Registra un café o añade tu primer ETF. Todo queda en este dispositivo, cifrado y tuyo.",
+    emptyAction: "Añadir activo",
+    fabLog: "Registrar gasto",
+    localFirstHint: "Solo en tu dispositivo",
   },
   holdings: {
-    metaTitle: "Activos - Elegant Portfolio Tracker",
+    metaTitle: "Activos - Aurelia",
     metaDesc: "Gestiona tus acciones, cripto, ETFs y metales.",
     title: "Activos",
     description: "Gestiona tus acciones, cripto, ETFs y metales.",
+    headerSubtitle: "{{count}} posiciones · {{value}}",
+    fabAdd: "Añadir activo",
     positionsCount: "posiciones",
     addHolding: "Añadir activo",
     refresh: "Actualizar precios",
@@ -372,6 +422,9 @@ const es: Translation = {
     refreshFailed: "No se pudieron actualizar algunos precios",
     symbol: "Símbolo",
     quantity: "Cantidad",
+    shares: "Acciones",
+    amount: "Cantidad",
+    manualPrice: "Precio manual",
     price: "Precio",
     value: "Valor",
     invested: "Invertido",
@@ -447,17 +500,20 @@ const es: Translation = {
     },
   },
   performance: {
-    metaTitle: "Rendimiento - Elegant Portfolio Tracker",
+    metaTitle: "Rendimiento - Aurelia",
     metaDesc: "Sigue la rentabilidad en el tiempo de tus activos.",
     title: "Rendimiento",
     description: "Valor histórico de la cartera periodo a periodo.",
     emptyState: "Añade activos primero para ver tu rendimiento histórico.",
   },
   cashflow: {
-    metaTitle: "Flujo de caja - Elegant Portfolio Tracker",
+    metaTitle: "Flujo de caja - Aurelia",
     metaDesc: "Registra ingresos, gastos, ahorros e inversiones.",
     title: "Flujo de caja",
-    description: "Registra cada euro que entra y sale - y visualiza a dónde va.",
+    description: "Registra cada euro que entra y sale, y mira a dónde va.",
+    addData: "Añadir datos",
+    addDataHint: "Registra un ingreso, un gasto o una transferencia",
+    fabAdd: "Añadir datos",
     income: "Ingreso",
     expense: "Gasto",
     expenses: "Gastos",
@@ -563,6 +619,30 @@ const es: Translation = {
       expenses: "Gastos",
       investments: "Inversiones y ahorros",
     },
+    upcoming: {
+      title: "Próximos",
+      description: "Ingresos y pagos programados en las próximas semanas.",
+      tabOverview: "Resumen",
+      tabUpcoming: "Próximos",
+      period7: "7 días",
+      period14: "2 semanas",
+      period30: "1 mes",
+      periodShort7: "7d",
+      periodShort14: "2s",
+      periodShort30: "1m",
+      periodShort90: "90d",
+      viewAll: "Ver todos",
+      today: "Hoy",
+      tomorrow: "Mañana",
+      expectedIn: "Previsto en los próximos {{days}} días",
+      empty: "Nada programado",
+      emptyHint: "Añade un ingreso o gasto recurrente, o programa un pago futuro.",
+      recurring: "Recurrente",
+      oneTime: "Puntual",
+      whenLabel: "Cuándo",
+      startDate: "Fecha de inicio",
+      previewRecurring: "Cada {{frequency}}, día {{day}}",
+    },
     sankey: {
       totalIncome: "Ingresos totales",
       totalExpenses: "Gastos totales",
@@ -636,10 +716,21 @@ const es: Translation = {
     needName: "Cada patrocinador necesita un nombre",
   },
   settings: {
-    metaTitle: "Ajustes - Elegant Portfolio Tracker",
-    metaDesc: "Opciones de API, importar/exportar y gestión de datos.",
+    metaTitle: "Ajustes · Aurelia",
+    metaDesc: "Perfil, moneda, copia de seguridad e IA en el dispositivo.",
     title: "Ajustes",
-    description: "Opciones de API y gestión de datos.",
+    description: "Tu perfil, moneda y bóveda de datos.",
+    sections: {
+      profile: "Perfil",
+      appearance: "Aspecto",
+      currency: "Moneda",
+      data: "Datos",
+      ai: "IA",
+    },
+    appearance: {
+      title: "Aspecto",
+      description: "Tema y tour guiado, aquí en el móvil.",
+    },
     api: {
       title: "API y fiabilidad",
       description:
@@ -742,7 +833,7 @@ const es: Translation = {
     },
     about: {
       title: "Acerca de",
-      body: "Elegant Portfolio Tracker es una app 100% en cliente. Los precios provienen de CoinGecko (cripto) y Yahoo Finance (acciones/ETFs/metales). Sin cuenta, sin backend.",
+      body: "Aurelia es una app 100% en cliente. Los precios provienen de CoinGecko (cripto) y Yahoo Finance (acciones/ETFs/metales). Sin cuenta, sin backend.",
       metalsHint: "Para metales usa símbolos de Yahoo como GC=F (oro) o SI=F (plata).",
     },
   },
@@ -1067,6 +1158,9 @@ const es: Translation = {
       limitPlaceholder: "p. ej. 500",
       currency: "Divisa",
       addBudget: "Añadir presupuesto",
+      addBudgetItem: "Añadir partida",
+      addItemHint: "Define un límite para una categoría o una partida personalizada.",
+      itemAdded: "Partida añadida",
       thisMonth: "Este mes",
       empty: "Aún no hay presupuestos. Añade un límite mensual a una categoría para empezar.",
       unknown: "Desconocido",
@@ -1113,6 +1207,8 @@ const es: Translation = {
       alreadySaved: "Ya ahorrado",
       targetDate: "Fecha objetivo (opcional)",
       addGoal: "Añadir objetivo",
+      addHint: "Define un objetivo y sigue cuánto has ahorrado.",
+      added: "Objetivo añadido",
       empty: "Aún no hay objetivos.",
       by: "para el {{date}}",
       saveHint: "Ahorra ~{{amount}}/mes para alcanzar tu objetivo.",
@@ -1169,6 +1265,8 @@ const es: Translation = {
       notes: "Notas",
       currency: "Divisa",
       addLoan: "Añadir préstamo",
+      addHint: "Registra un préstamo y consulta el cuadro de amortización.",
+      added: "Préstamo añadido",
       empty: "Aún no hay préstamos registrados.",
       hide: "Ocultar",
       schedule: "Cuadro",

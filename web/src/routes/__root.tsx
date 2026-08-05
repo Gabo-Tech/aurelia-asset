@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import appCss from "../styles.css?url";
 import { StoreProvider, FxProvider } from "@/lib/store";
 import { AppShell } from "@/components/app-shell";
-import { Toaster } from "@/components/ui/sonner";
+import { ResponsiveToaster } from "@/components/responsive-toaster";
 import { ASSETS, SITE_URL } from "@/lib/site-config";
 
 function NotFoundComponent() {
@@ -70,12 +70,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
-      { property: "og:site_name", content: "Financial Tracker" },
+      { property: "og:site_name", content: "Aurelia" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "theme-color", content: "#0B0B0C" },
       { name: "author", content: "GABO Solutions" },
-      { name: "application-name", content: "Financial Tracker" },
+      { name: "application-name", content: "Aurelia" },
       { name: "format-detection", content: "telephone=no" },
     ],
     links: [
@@ -97,7 +97,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         children: JSON.stringify({
           "@context": "https://schema.org",
           "@type": "Organization",
-          name: "Financial Tracker",
+          name: "Aurelia",
           url: SITE_URL,
           logo: SITE_URL + ASSETS.logo,
           sameAs: ["https://solutions.gabo.rocks"],
@@ -159,7 +159,7 @@ function RootComponent() {
                 <Outlet />
               </AppShell>
             )}
-            <Toaster position="top-right" richColors />
+            <ResponsiveToaster />
           </FxProvider>
         </StoreProvider>
       </QueryClientProvider>

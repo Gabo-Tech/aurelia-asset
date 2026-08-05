@@ -50,3 +50,30 @@ export function formatNumber(n: number, digits = 4) {
 export function maskNumber(n: number, privacy: boolean, digits = 4) {
   return privacy ? MASK : formatNumber(n, digits);
 }
+
+/** Fraction digits for position size by asset class. */
+export function holdingQuantityDigits(type: string): number {
+  switch (type) {
+    case "crypto":
+      return 8;
+    case "metal":
+      return 4;
+    case "stock":
+    case "etf":
+      return 6;
+    default:
+      return 4;
+  }
+}
+
+/** e.g. "0.042 BTC", "12.5 AAPL" — quantity with ticker so size is obvious. */
+export function formatHoldingQuantity(
+  quantity: number,
+  symbol: string,
+  type: string,
+  privacy = false,
+): string {
+  const qty = maskNumber(quantity, privacy, holdingQuantityDigits(type));
+  const ticker = (symbol || "").trim().toUpperCase();
+  return ticker ? `${qty} ${ticker}` : qty;
+}

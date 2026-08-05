@@ -83,7 +83,7 @@ export const Route = createFileRoute("/")({
           children: JSON.stringify({
             "@context": "https://schema.org",
             "@type": "SoftwareApplication",
-            name: "Portfolio Tracker",
+            name: "Aurelia",
             applicationCategory: "FinanceApplication",
             operatingSystem: "Web, Android, Linux, Windows, macOS, iOS",
             description: desc,
@@ -131,7 +131,7 @@ export const Route = createFileRoute("/")({
           children: JSON.stringify({
             "@context": "https://schema.org",
             "@type": "WebSite",
-            name: "Portfolio Tracker",
+            name: "Aurelia",
             url: SITE_URL + "/",
             inLanguage: LOCALES as unknown as string[],
           }),
@@ -185,14 +185,14 @@ function SiteHeader() {
         <Link to="/" className="flex items-center gap-2">
           <img
             src={ASSETS.logo}
-            alt="Portfolio Tracker logo"
+            alt={t("landing.logoAlt")}
             className="h-8 w-8 rounded-xl object-contain"
             width={32}
             height={32}
           />
 
           <div className="leading-tight">
-            <div className="text-sm font-semibold tracking-tight">{t("landing.footer.brand")}</div>
+            <div className="font-display text-base tracking-tight">{t("landing.footer.brand")}</div>
             <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
               {t("landing.headerTagline")}
             </div>
@@ -225,7 +225,7 @@ function Hero() {
   return (
     <section className="relative overflow-hidden border-b border-border/50">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_50%_at_50%_0%,color-mix(in_srgb,var(--primary)_18%,transparent),transparent_70%)]" />
-      <div className="relative mx-auto max-w-6xl px-4 py-20 text-center sm:px-6 sm:py-28">
+      <div className="relative mx-auto max-w-6xl px-4 py-16 text-center sm:px-6 sm:py-28">
         <div
           className="mx-auto inline-flex animate-fade-in items-center gap-2 rounded-full border border-border/60 bg-card/60 px-3 py-1 text-xs text-muted-foreground shadow-sm"
           style={{ animationDelay: "0ms", animationFillMode: "both" }}
@@ -396,7 +396,7 @@ function HowItWorks() {
     <section id="how" className="border-b border-border/50 bg-card/20">
       <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
         <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+          <h2 className="font-display text-3xl tracking-tight sm:text-4xl">
             {t("landing.how.heading")}
           </h2>
         </div>
@@ -439,13 +439,13 @@ function Comparison() {
     <section className="border-b border-border/50">
       <div className="mx-auto max-w-4xl px-4 py-20 sm:px-6">
         <div className="text-center">
-          <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+          <h2 className="font-display text-3xl tracking-tight sm:text-4xl">
             {t("landing.comparison.heading")}
           </h2>
           <p className="mt-3 text-muted-foreground">{t("landing.comparison.subheading")}</p>
         </div>
-        <div className="mt-10 overflow-hidden rounded-2xl border border-border/60">
-          <table className="w-full text-sm">
+        <div className="mt-10 overflow-x-auto rounded-2xl border border-border/60">
+          <table className="w-full min-w-[320px] text-sm">
             <thead className="bg-card/50 text-xs uppercase tracking-wider text-muted-foreground">
               <tr>
                 <th className="px-4 py-3 text-left">{t("landing.comparison.feature")}</th>
@@ -483,7 +483,7 @@ function FAQ() {
     <section id="faq" className="border-b border-border/50 bg-card/20">
       <div className="mx-auto max-w-3xl px-4 py-20 sm:px-6">
         <div className="text-center">
-          <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+          <h2 className="font-display text-3xl tracking-tight sm:text-4xl">
             {t("landing.faq.heading")}
           </h2>
         </div>
@@ -577,7 +577,7 @@ function Downloads() {
     <section id="downloads" className="border-b border-border/50">
       <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
         <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+          <h2 className="font-display text-3xl tracking-tight sm:text-4xl">
             {t("landing.downloads.heading")}
           </h2>
           <p className="mt-3 text-muted-foreground">{t("landing.downloads.subheading")}</p>
@@ -636,7 +636,7 @@ function FinalCTA() {
   return (
     <section className="border-b border-border/50">
       <div className="mx-auto max-w-4xl px-4 py-24 text-center sm:px-6">
-        <h2 className="text-3xl font-semibold tracking-tight sm:text-5xl">
+        <h2 className="font-display text-3xl tracking-tight sm:text-5xl">
           {t("landing.cta.heading")}
         </h2>
         <p className="mx-auto mt-4 max-w-xl text-muted-foreground">{t("landing.cta.subheading")}</p>
@@ -665,7 +665,7 @@ function SiteFooter() {
         <div className="flex items-center gap-2">
           <img
             src={ASSETS.logo}
-            alt="Portfolio Tracker logo"
+            alt={t("landing.logoAlt")}
             className="h-7 w-7 rounded-lg object-contain"
             width={28}
             height={28}

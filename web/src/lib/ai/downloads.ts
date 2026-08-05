@@ -91,19 +91,27 @@ export function modelLabel(kind: ModelKind): string {
 }
 
 export function formatDownloadProgress(progress: ModelDownloadProgress): string {
+  const label = progress.kind.toUpperCase();
   const { received, total, phase } = progress;
   if (phase === "extracting") {
-    return t("settings.ai.downloadExtracting");
+    return t("settings.ai.downloadExtracting", { defaultValue: `Extracting ${label}…` });
   }
   if (phase === "ready") {
-    return t("settings.ai.downloadReady");
+    return t("settings.ai.downloadReady", { defaultValue: `${label} ready` });
   }
+  const recvMb = (received / (1024 * 1024)).toFixed(1);
   if (total && total > 0) {
     const pct = Math.min(100, Math.round((received / total) * 100));
-    return t("settings.ai.downloadProgress", { pct });
+    const totalMb = (total / (1024 * 1024)).toFixed(0);
+    return t("settings.ai.downloadProgressDetail", {
+      pct,
+      defaultValue: `Downloading ${label} · ${pct}% · ${recvMb} / ${totalMb} MB`,
+    });
   }
-  const mb = (received / (1024 * 1024)).toFixed(1);
-  return t("settings.ai.downloadProgressUnknown", { mb });
+  return t("settings.ai.downloadProgressUnknown", {
+    mb: recvMb,
+    defaultValue: `Downloading ${label} · ${recvMb} MB`,
+  });
 }
 
 export async function downloadAllModels(

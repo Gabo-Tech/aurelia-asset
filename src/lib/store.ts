@@ -18,18 +18,38 @@ import {
 } from "./types";
 import { getFxRates, convert, type FxRates } from "./finance/fx";
 import { formatMoney, maskMoney, MASK } from "./format";
-import { secureGet, secureSet } from "./secure-storage";
+import { secureGet, DecryptError, createSecureWriteQueue, beginForceKeyCreate, endForceKeyCreate, verifySecureStorage } from "./secure-storage";
 import { setSettingsSnapshot } from "./finance/client";
 import { useCallback, useEffect, useState } from "react";
+import { AppState as RnAppState } from "react-native";
 
 const STORAGE_KEY = "ept_state_v1";
+const stateWriteQueue = createSecureWriteQueue(STORAGE_KEY);
+
+const DECRYPT_LOCK_MSG =
+  "Could not decrypt saved data. Your encrypted backup may still be on device — do not edit until you Import a backup or Reset in Settings.";
+
 
 function uid() {
   const c = globalThis.crypto as Crypto | undefined;
   return c?.randomUUID?.() ?? Math.random().toString(36).slice(2);
 }
 
-function migrateBudgets(parsed: any, defCcy: string): { plans: BudgetPlan[]; mainId?: string } {
+function migrateBudgets(
+  parsed: any,
+  defCcy: string,
+  categories?: Category[],
+): { plans: BudgetPlan[]; mainId?: string } {
+  const cats = Array.isArray(categories) ? categories : [];
+  const catName = (id?: string) => cats.find((c) => c.id === id)?.name;
+  const labelFor = (it: any) => {
+    const existing = String(it.label ?? "").trim();
+    if (existing) return existing;
+    const fromCat = catName(it.categoryId);
+    if (fromCat) return fromCat;
+    const amt = Number(it.amount) || 0;
+    return amt > 0 ? `Item (${amt})` : "";
+  };
   const rawPlans = Array.isArray(parsed?.budgetPlans) ? parsed.budgetPlans : [];
   const plans: BudgetPlan[] = rawPlans.map((p: any) => ({
     id: String(p.id),
@@ -40,7 +60,7 @@ function migrateBudgets(parsed: any, defCcy: string): { plans: BudgetPlan[]; mai
     periodDays: Number.isFinite(Number(p.periodDays)) ? Number(p.periodDays) : undefined,
     items: (Array.isArray(p.items) ? p.items : []).map((it: any) => ({
       id: String(it.id),
-      label: String(it.label ?? ""),
+      label: labelFor(it),
       amount: Number(it.amount) || 0,
       currency: it.currency || defCcy,
       categoryId: it.categoryId || undefined,
@@ -55,7 +75,7 @@ function migrateBudgets(parsed: any, defCcy: string): { plans: BudgetPlan[]; mai
       name: "Default",
       items: parsed.budgets.map((b: any, i: number) => ({
         id: `bi-${b.id ?? i}`,
-        label: "",
+        label: labelFor(b),
         amount: Number(b.amount) || 0,
         currency: b.currency || defCcy,
         categoryId: b.categoryId,
@@ -98,7 +118,11 @@ export function normalizeAppState(parsed: Record<string, unknown> | AppState): A
   const defCcy = (settings.displayCurrency || "USD").toUpperCase();
   const withCcy = <T extends { currency?: string }>(x: T): T =>
     x && (!x.currency || !String(x.currency).trim()) ? { ...x, currency: defCcy } : x;
-  const { plans, mainId: mainBudgetPlanId } = migrateBudgets(p, defCcy);
+  const { plans, mainId: mainBudgetPlanId } = migrateBudgets(
+    p,
+    defCcy,
+    Array.isArray(p.categories) ? p.categories : DEFAULT_CATEGORIES,
+  );
   const { scenarios, mainId: mainForecastScenarioId } = migrateScenarios(p);
   return syncQuantities({
     ...DEFAULT_STATE,
@@ -120,17 +144,87 @@ export function normalizeAppState(parsed: Record<string, unknown> | AppState): A
   });
 }
 
-async function loadState(): Promise<AppState> {
+type LoadResult = { state: AppState; error?: string; locked?: boolean };
+
+async function loadState(fallback?: AppState): Promise<LoadResult> {
   try {
     const raw = await secureGet(STORAGE_KEY);
     if (!raw) {
       const { scenarios, mainId } = migrateScenarios({});
-      return { ...DEFAULT_STATE, forecastScenarios: scenarios, mainForecastScenarioId: mainId };
+      return {
+        state: { ...DEFAULT_STATE, forecastScenarios: scenarios, mainForecastScenarioId: mainId },
+      };
     }
-    return normalizeAppState(JSON.parse(raw));
-  } catch {
-    return DEFAULT_STATE;
+    return { state: normalizeAppState(JSON.parse(raw)) };
+  } catch (e) {
+    const isDecrypt =
+      e instanceof DecryptError || (e instanceof Error && e.name === "DecryptError");
+    if (isDecrypt) {
+      if (fallback && fallback !== DEFAULT_STATE) {
+        return {
+          state: fallback,
+          error: "Could not decrypt saved data. Showing last session state — do not edit until you Import or Reset.",
+          locked: true,
+        };
+      }
+      return {
+        state: DEFAULT_STATE,
+        error: DECRYPT_LOCK_MSG,
+        locked: true,
+      };
+    }
+    console.warn("[store] loadState failed", e);
+    return { state: fallback ?? DEFAULT_STATE, error: "Failed to load saved data." };
   }
+}
+
+function reportPersistFailure(e: unknown) {
+  const msg = e instanceof Error ? e.message : String(e);
+  useAppStore.setState({
+    persistError: `Failed to save data locally (${msg}). Keep the app open a moment and try again.`,
+  });
+}
+
+function persist(state: AppState, opts?: { force?: boolean }) {
+  const { hydrated, storageLocked } = useAppStore.getState();
+  if (!hydrated && !opts?.force) {
+    console.warn("[store] skip persist before hydrate");
+    return;
+  }
+  if (storageLocked && !opts?.force) {
+    console.warn("[store] skip persist while storage locked");
+    return;
+  }
+  setSettingsSnapshot(state.settings);
+  void stateWriteQueue
+    .enqueue(JSON.stringify(state))
+    .then(() => {
+      // Successful drain clears lastError; drop any prior persist banner.
+      useAppStore.setState({ persistError: null });
+    })
+    .catch((e) => {
+      console.warn("[store] persist failed", e);
+      reportPersistFailure(e);
+    });
+}
+
+/** Drain pending encrypted writes (call on background/inactive / resume catch-up). */
+export async function flushPersist(): Promise<void> {
+  try {
+    await stateWriteQueue.flush();
+    if (stateWriteQueue.lastError) {
+      reportPersistFailure(stateWriteQueue.lastError);
+    } else {
+      useAppStore.setState({ persistError: null });
+    }
+  } catch (e) {
+    console.warn("[store] flushPersist failed", e);
+    reportPersistFailure(e);
+  }
+}
+
+export function hasPendingPersist(): boolean {
+  return stateWriteQueue.hasPending || !!stateWriteQueue.lastError;
 }
 
 function syncQuantities(state: AppState): AppState {
@@ -199,8 +293,14 @@ function applyCashflowTransferLinks(state: AppState, entry: CashflowEntry): AppS
 type Store = {
   state: AppState;
   hydrated: boolean;
+  hydrateError: string | null;
+  persistError: string | null;
+  /** True after DecryptError — blocks disk writes until import/reset. */
+  storageLocked: boolean;
   fxRates: FxRates;
   hydrate: () => Promise<void>;
+  clearHydrateError: () => void;
+  clearPersistError: () => void;
   setState: (updater: (s: AppState) => AppState) => void;
   addHolding: (h: Omit<Holding, "id">) => void;
   updateHolding: (id: string, patch: Partial<Holding>) => void;
@@ -240,33 +340,89 @@ type Store = {
   updateLoan: (id: string, patch: Partial<Loan>) => void;
   removeLoan: (id: string) => void;
   updateSettings: (patch: Partial<Settings>) => void;
-  importState: (data: AppState) => void;
-  reset: () => void;
+  importState: (data: AppState) => Promise<void>;
+  reset: () => Promise<void>;
 };
 
-function persist(state: AppState) {
-  setSettingsSnapshot(state.settings);
-  void secureSet(STORAGE_KEY, JSON.stringify(state));
-}
-
 export const useAppStore = create<Store>((set, get) => {
-  const patch = (updater: (s: AppState) => AppState) => {
-    set((prev) => {
-      const next = updater(prev.state);
-      persist(next);
-      return { state: next };
-    });
+  const patch = (updater: (s: AppState) => AppState, opts?: { forcePersist?: boolean }) => {
+    const prev = get();
+    if (!prev.hydrated && !opts?.forcePersist) {
+      console.warn("[store] ignored mutation before hydrate");
+      return;
+    }
+    const next = updater(prev.state);
+    set({ state: next });
+    persist(next, { force: opts?.forcePersist });
+  };
+
+  const unlockAndPersist = async (updater: (s: AppState) => AppState): Promise<void> => {
+    beginForceKeyCreate();
+    set({ storageLocked: false, hydrateError: null, persistError: null });
+    const next = updater(get().state);
+    set({ state: next, hydrated: true });
+    persist(next, { force: true });
+    try {
+      await stateWriteQueue.flush();
+      if (stateWriteQueue.lastError) {
+        reportPersistFailure(stateWriteQueue.lastError);
+        throw stateWriteQueue.lastError;
+      }
+      set({ persistError: null });
+    } finally {
+      endForceKeyCreate();
+    }
   };
 
   return {
     state: DEFAULT_STATE,
     hydrated: false,
+    hydrateError: null,
+    persistError: null,
+    storageLocked: false,
     fxRates: { USD: 1 },
     hydrate: async () => {
-      const [s, rates] = await Promise.all([loadState(), getFxRates().catch(() => ({ USD: 1 }))]);
-      setSettingsSnapshot(s.settings);
-      set({ state: s, hydrated: true, fxRates: rates });
+      const current = get().state;
+      const hasSession =
+        current.cashflows.length > 0 ||
+        current.holdings.length > 0 ||
+        current.budgetPlans.length > 0;
+
+      // Load first so decrypt-lock is detected before any probe write.
+      const [loaded, rates] = await Promise.all([
+        loadState(hasSession ? current : undefined),
+        getFxRates().catch(() => ({ USD: 1 })),
+      ]);
+
+      let storageCheckError: string | null = null;
+      if (!loaded.locked) {
+        try {
+          await verifySecureStorage();
+          // Confirm the real app blob (if any) still decrypts after the probe.
+          const again = await secureGet(STORAGE_KEY);
+          if (again) {
+            normalizeAppState(JSON.parse(again));
+          }
+        } catch (e) {
+          storageCheckError = e instanceof Error ? e.message : String(e);
+          console.warn("[store] secure storage self-check failed", e);
+        }
+      }
+
+      setSettingsSnapshot(loaded.state.settings);
+      set({
+        state: loaded.state,
+        hydrated: true,
+        hydrateError: loaded.error ?? null,
+        persistError: storageCheckError
+          ? `Failed to save data locally (${storageCheckError}). Keep the app open a moment and try again.`
+          : null,
+        storageLocked: !!loaded.locked,
+        fxRates: rates,
+      });
     },
+    clearHydrateError: () => set({ hydrateError: null }),
+    clearPersistError: () => set({ persistError: null }),
     setState: patch,
     addHolding: (h) => patch((s) => ({ ...s, holdings: [...s.holdings, { ...h, id: uid() }] })),
     updateHolding: (id, p) =>
@@ -504,8 +660,8 @@ export const useAppStore = create<Store>((set, get) => {
     removeLoan: (id) =>
       patch((s) => ({ ...s, loans: (s.loans ?? []).filter((l) => l.id !== id) })),
     updateSettings: (p) => patch((s) => ({ ...s, settings: { ...s.settings, ...p } })),
-    importState: (data) => patch(() => normalizeAppState(data as AppState)),
-    reset: () => patch(() => DEFAULT_STATE),
+    importState: (data) => unlockAndPersist(() => normalizeAppState(data as AppState)),
+    reset: () => unlockAndPersist(() => DEFAULT_STATE),
   };
 });
 
@@ -562,5 +718,21 @@ export function useHydrateStore() {
   useEffect(() => {
     void hydrate();
   }, [hydrate]);
+  useEffect(() => {
+    const sub = RnAppState.addEventListener("change", (next) => {
+      if (next === "background" || next === "inactive") {
+        void Promise.all([
+          flushPersist(),
+          import("./ai/persistence").then((m) => m.flushChatPersist()),
+        ]);
+      } else if (next === "active") {
+        if (hasPendingPersist() || stateWriteQueue.lastError) {
+          void flushPersist();
+        }
+        void import("./ai/persistence").then((m) => m.flushChatPersist());
+      }
+    });
+    return () => sub.remove();
+  }, []);
   return hydrated;
 }

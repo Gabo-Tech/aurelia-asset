@@ -9,16 +9,28 @@ import {
   Pressable,
 } from "react-native";
 import { useTranslation } from "react-i18next";
-import { Screen, Header, Card, PrimaryButton, Metric } from "@/components/ui";
+import {
+  Screen,
+  Header,
+  Card,
+  PrimaryButton,
+  SecondaryButton,
+  DangerButton,
+  MetricRow,
+  EmptyState,
+  Field,
+  chipLabelStyle,
+  chipContainerStyle,
+} from "@/components/ui";
 import { CategoryBreakdown } from "@/components/CategoryBreakdown";
 import { TransactionsPanel } from "@/components/TransactionsPanel";
-import { EmptyState, SecondaryButton } from "@/components/ui";
 import { useStore, useMoney } from "@/lib/store";
 import { fetchCurrentQuote, searchAssets } from "@/lib/finance";
 import { colors, spacing } from "@/theme/colors";
 import { PALETTE, type Holding, type HoldingHorizon, type AssetType } from "@/lib/types";
 import { datedFilename, rowsToCsv, saveExportFile, exportMethodDescription } from "@/lib/export";
 import { parseCsvHistory, formatCsvHistory } from "@/lib/price-history-csv";
+import { formatHoldingQuantity } from "@/lib/format";
 import { useNavigation } from "@react-navigation/native";
 import type { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
 import type { RootTabParamList } from "@/navigation/RootNavigator";
@@ -30,7 +42,7 @@ export function HoldingsScreen() {
   const { t } = useTranslation();
   const navigation = useNavigation<BottomTabNavigationProp<RootTabParamList>>();
   const { state, addHolding, updateHolding, removeHolding, addTransaction } = useStore();
-  const { mask, toDisplay, currency } = useMoney();
+  const { mask, toDisplay, currency, privacy } = useMoney();
   const [symbol, setSymbol] = useState("");
   const [qty, setQty] = useState("1");
   const [mode, setMode] = useState<"stock" | "crypto" | "custom">("stock");
@@ -95,15 +107,19 @@ export function HoldingsScreen() {
         label: h.symbol,
         value: Math.max(0, toDisplay(h.quantity * h.currentPrice, h.priceCurrency)),
         color: h.color || colors.accent,
+        detail: formatHoldingQuantity(h.quantity, h.symbol, h.type, privacy),
       })),
-    [state.holdings, toDisplay],
+    [state.holdings, toDisplay, privacy],
   );
 
   async function onAdd() {
     const q = Number(qty);
     const sym = symbol.trim().toUpperCase();
     if (!sym || !isFinite(q) || q <= 0) {
-      Alert.alert("Invalid", "Enter symbol and quantity");
+      Alert.alert(
+        t("common.checkFields", { defaultValue: "Check your entries" }),
+        "Enter symbol and quantity",
+      );
       return;
     }
     setBusy(true);
@@ -114,7 +130,7 @@ export function HoldingsScreen() {
         const lastHist = history.length ? history[history.length - 1]!.p : undefined;
         const price = manual ?? lastHist ?? 0;
         if (manual != null && (!isFinite(manual) || manual < 0)) {
-          Alert.alert("Invalid", "Price must be ≥ 0");
+          Alert.alert(t("common.checkFields", { defaultValue: "Check your entries" }), "Price must be ≥ 0");
           return;
         }
         addHolding({
@@ -226,11 +242,11 @@ export function HoldingsScreen() {
     const q = Number(editQty);
     const manual = editManual.trim() ? Number(editManual) : undefined;
     if (!editName.trim() || !isFinite(q) || q < 0) {
-      Alert.alert("Invalid", "Enter name and quantity");
+      Alert.alert(t("common.checkFields", { defaultValue: "Check your entries" }), "Enter name and quantity");
       return;
     }
     if (manual != null && (!isFinite(manual) || manual < 0)) {
-      Alert.alert("Invalid", "Manual price must be ≥ 0");
+      Alert.alert(t("common.checkFields", { defaultValue: "Check your entries" }), "Manual price must be ≥ 0");
       return;
     }
     const history = parseCsvHistory(editHistoryText);
@@ -256,11 +272,11 @@ export function HoldingsScreen() {
     const p = Number(txPrice || h.currentPrice);
     const fees = txFees.trim() ? Number(txFees) : undefined;
     if (!isFinite(q) || q <= 0 || !isFinite(p) || p < 0) {
-      Alert.alert("Invalid", "Enter quantity and price");
+      Alert.alert(t("common.checkFields", { defaultValue: "Check your entries" }), "Enter quantity and price");
       return;
     }
     if (fees != null && (!isFinite(fees) || fees < 0)) {
-      Alert.alert("Invalid", "Fees must be ≥ 0");
+      Alert.alert(t("common.checkFields", { defaultValue: "Check your entries" }), "Fees must be ≥ 0");
       return;
     }
     addTransaction({
@@ -300,12 +316,21 @@ export function HoldingsScreen() {
 
   return (
     <Screen>
-      <ScrollView>
+      <ScrollView
+        style={{ flex: 1 }}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        automaticallyAdjustKeyboardInsets
+      >
         <Header title={t("nav.holdings", { defaultValue: "Holdings" })} />
         <Card>
-          <Metric label="Portfolio value" value={mask(totals.value)} />
-          <Metric label="Long-term" value={mask(totals.long)} />
-          <Metric label="Short / cash-like" value={mask(totals.short)} />
+          <MetricRow
+            items={[
+              { label: "Portfolio value", value: mask(totals.value) },
+              { label: "Long-term", value: mask(totals.long) },
+              { label: "Short / cash-like", value: mask(totals.short) },
+            ]}
+          />
           <View style={{ height: 8 }} />
           <SecondaryButton
             label={t("holdings.viewHistory", { defaultValue: "View performance history" })}
@@ -458,31 +483,50 @@ export function HoldingsScreen() {
 
         {filtered.map((h) => {
           const value = toDisplay(h.quantity * h.currentPrice, h.priceCurrency);
+          const qtyLabel = formatHoldingQuantity(h.quantity, h.symbol, h.type, privacy);
           const txs = state.transactions.filter((tx) => tx.holdingId === h.id).slice(-3);
           return (
             <Card key={h.id}>
               <Pressable onPress={() => openEdit(h)} onLongPress={() => onDelete(h)}>
                 <View style={styles.cardTop}>
                   <View style={[styles.dot, { backgroundColor: h.color || colors.accent }]} />
-                  <Text style={styles.title}>
-                    {h.symbol} · {h.name}
-                  </Text>
+                  <View style={styles.cardHead}>
+                    <Text style={styles.title}>
+                      {h.symbol} · {h.name}
+                    </Text>
+                    <Text style={styles.valueInline}>{mask(value)}</Text>
+                  </View>
                 </View>
+                <Text style={styles.qtyLine}>{qtyLabel}</Text>
                 <Text style={styles.meta}>
-                  {h.type} · {h.horizon ?? "long"}
+                  {h.type} · {h.horizon ?? "long"} ·{" "}
+                  {h.manualPrice != null
+                    ? t("holdings.manualPrice", { defaultValue: "Manual price" })
+                    : t("holdings.price", { defaultValue: "Price" })}{" "}
+                  {mask(h.currentPrice, h.priceCurrency)}
                   {h.notes ? ` · ${h.notes}` : ""}
                 </Text>
-                <Metric label="Quantity" value={String(h.quantity)} />
-                <Metric
-                  label={h.manualPrice != null ? "Manual price" : "Price"}
-                  value={mask(h.currentPrice, h.priceCurrency)}
+                <MetricRow
+                  items={[
+                    {
+                      label:
+                        h.manualPrice != null
+                          ? t("holdings.manualPrice", { defaultValue: "Manual price" })
+                          : t("holdings.price", { defaultValue: "Price" }),
+                      value: mask(h.currentPrice, h.priceCurrency),
+                    },
+                    {
+                      label: t("holdings.value", { defaultValue: "Value" }),
+                      value: mask(value),
+                    },
+                  ]}
                 />
-                <Metric label="Value" value={mask(value)} />
               </Pressable>
-              <View style={styles.row}>
-                <PrimaryButton label="Edit" onPress={() => openEdit(h)} />
-                <View style={{ width: 8 }} />
+              <View style={[styles.row, styles.actionsCenter]}>
+                <PrimaryButton compact style={{ flex: 1 }} label="Edit" onPress={() => openEdit(h)} />
                 <PrimaryButton
+                  compact
+                  style={{ flex: 1 }}
                   label="Buy/Sell"
                   onPress={() => {
                     setTxHoldingId(h.id);
@@ -535,7 +579,7 @@ export function HoldingsScreen() {
               multiline
             />
             <Text style={styles.meta}>
-              Custom price history (date,price) — {parseCsvHistory(editHistoryText).length} points
+              Custom price history (date,price): {parseCsvHistory(editHistoryText).length} points
             </Text>
             <TextInput
               style={[styles.input, styles.notes]}
@@ -576,9 +620,9 @@ export function HoldingsScreen() {
             </ScrollView>
             <PrimaryButton label="Save" onPress={saveEdit} />
             <View style={{ height: 8 }} />
-            <PrimaryButton label="Cancel" onPress={() => setEditing(null)} />
+            <SecondaryButton label="Cancel" onPress={() => setEditing(null)} />
             <View style={{ height: 8 }} />
-            <PrimaryButton label="Delete holding" onPress={() => onDelete(editing)} />
+            <DangerButton label="Delete holding" onPress={() => onDelete(editing)} />
           </Card>
         ) : null}
 
@@ -599,30 +643,36 @@ export function HoldingsScreen() {
                 <Text style={styles.chipText}>Sell</Text>
               </Pressable>
             </View>
-            <TextInput
-              style={styles.input}
-              placeholder="Quantity"
-              placeholderTextColor={colors.muted}
-              keyboardType="decimal-pad"
-              value={txQty}
-              onChangeText={setTxQty}
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Price per unit"
-              placeholderTextColor={colors.muted}
-              keyboardType="decimal-pad"
-              value={txPrice}
-              onChangeText={setTxPrice}
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Fees (optional)"
-              placeholderTextColor={colors.muted}
-              keyboardType="decimal-pad"
-              value={txFees}
-              onChangeText={setTxFees}
-            />
+            <Field label="Quantity">
+              <TextInput
+                style={styles.input}
+                placeholder="0"
+                placeholderTextColor={colors.muted}
+                keyboardType="decimal-pad"
+                value={txQty}
+                onChangeText={setTxQty}
+              />
+            </Field>
+            <Field label="Price per unit">
+              <TextInput
+                style={styles.input}
+                placeholder="0.00"
+                placeholderTextColor={colors.muted}
+                keyboardType="decimal-pad"
+                value={txPrice}
+                onChangeText={setTxPrice}
+              />
+            </Field>
+            <Field label="Fees (optional)">
+              <TextInput
+                style={styles.input}
+                placeholder="0"
+                placeholderTextColor={colors.muted}
+                keyboardType="decimal-pad"
+                value={txFees}
+                onChangeText={setTxFees}
+              />
+            </Field>
             <PrimaryButton label="Save transaction" onPress={submitTx} />
             <View style={{ height: 8 }} />
             <SecondaryButton label="Cancel" onPress={() => setTxHoldingId(null)} />
@@ -631,8 +681,11 @@ export function HoldingsScreen() {
 
         {state.holdings.length === 0 ? (
           <EmptyState
-            title="No holdings yet"
-            body="Add a symbol above, or import a backup from Settings."
+            title={t("holdings.emptyTitle", { defaultValue: "No holdings yet" })}
+            body={t("holdings.emptyBody", {
+              defaultValue:
+                "Use the form above to add a stock, crypto, or custom asset. Or import a backup from Settings under More.",
+            })}
           />
         ) : filtered.length === 0 ? (
           <EmptyState title="No matches" body="Try a different search or filter." />
@@ -655,23 +708,42 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surfaceAlt,
   },
   notes: { minHeight: 72, textAlignVertical: "top" },
-  row: { flexDirection: "row", marginBottom: spacing.sm, flexWrap: "wrap" },
-  title: { color: colors.text, fontWeight: "700", marginBottom: 8, flex: 1 },
+  row: { flexDirection: "row", marginBottom: spacing.sm, flexWrap: "wrap", gap: 8 },
+  actionsCenter: { justifyContent: "center", alignItems: "stretch", flexWrap: "nowrap" },
+  title: { color: colors.text, fontWeight: "700", flex: 1, marginBottom: 0 },
   empty: { color: colors.muted },
   hint: { color: colors.muted, fontSize: 12, textAlign: "center", marginBottom: 24 },
   meta: { color: colors.muted, fontSize: 12, marginBottom: 8 },
+  qtyLine: {
+    color: colors.text,
+    fontSize: 20,
+    fontWeight: "700",
+    letterSpacing: 0.2,
+    marginTop: 6,
+    marginBottom: 4,
+    fontVariant: ["tabular-nums"],
+  },
+  cardHead: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  valueInline: {
+    color: colors.text,
+    fontWeight: "600",
+    fontSize: 14,
+    fontVariant: ["tabular-nums"],
+  },
   chip: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: colors.border,
+    ...chipContainerStyle,
     marginRight: 8,
     marginBottom: 8,
+    borderWidth: 1,
     backgroundColor: colors.surfaceAlt,
   },
   chipOn: { borderColor: colors.accent, backgroundColor: colors.accentSoft },
-  chipText: { color: colors.text, fontSize: 12, fontWeight: "600" },
+  chipText: { ...chipLabelStyle },
   tx: { color: colors.muted, fontSize: 12, marginTop: 4 },
   cardTop: { flexDirection: "row", alignItems: "center", gap: 8 },
   dot: { width: 10, height: 10, borderRadius: 5 },

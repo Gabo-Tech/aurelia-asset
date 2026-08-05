@@ -5,4 +5,5 @@ export { ResponsiveDialog } from "./responsive-dialog";
 export { FilterPillGroup } from "./filter-pill-group";
 export { EmptyState } from "./empty-state";
 export { LocalFirstBadge } from "./local-first-badge";
+export { Fab } from "./fab";
 export { DashboardSkeleton, ChartSkeleton, TableSkeleton, ChatSkeleton } from "./skeletons";

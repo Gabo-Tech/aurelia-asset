@@ -48,7 +48,7 @@ export function FilterPillGroup({
         </button>
       ))}
       {(onShowAll || onHideAll) && (
-        <div className="ml-auto flex items-center gap-2">
+        <div className="flex w-full basis-full items-center justify-end gap-2 sm:ml-auto sm:w-auto sm:basis-auto">
           {onShowAll ? (
             <button
               type="button"

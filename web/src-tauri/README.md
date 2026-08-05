@@ -1,4 +1,4 @@
-# Portfolio Tracker - Tauri wrapper
+# Aurelia · Tauri wrapper
 
 [Tauri v2](https://tauri.app) wrapper that compiles the web app into native
 binaries for **Windows, macOS, Linux (deb / rpm / AppImage), Android and iOS**.
@@ -76,7 +76,7 @@ Linux dev packages: `libwebkit2gtk-4.1-dev libssl-dev libayatana-appindicator3-d
 
 - Sideload APKs are **arm64 release-signed** (`portfolio-tracker.apk`), not universal.
 - If install fails with "App not installed" after switching from a debug build,
-  uninstall the existing `Portfolio Tracker` app first (same package ID, different
+  uninstall the existing Aurelia app first (same package ID, different
   signing certificate).
 
 ## Icons

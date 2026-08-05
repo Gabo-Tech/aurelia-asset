@@ -18,7 +18,7 @@ import {
   cardDebtImpact,
 } from "@/lib/cashflow-math";
 import { formatMoney } from "@/lib/format";
-import { startOfMonth, endOfMonth, isWithinInterval } from "date-fns";
+import { startOfMonth, endOfMonth, isWithinInterval, startOfYear } from "date-fns";
 
 export interface ContextTransaction {
   id: string;
@@ -57,13 +57,37 @@ export interface FinanceContext {
     net: number;
     topExpenseCategories: CategorySpend[];
   };
+  /** Calendar year-to-date (Jan 1 → today). */
+  year: {
+    label: string;
+    totalIncome: number;
+    totalExpense: number;
+    net: number;
+    topExpenseCategories: CategorySpend[];
+  };
   budget?: {
     planName: string;
     totalLimit: number;
     totalSpent: number;
     lines: BudgetLineStatus[];
   };
-  goals: { name: string; target: number; current: number }[];
+  goals: { name: string; target: number; current: number; targetDate?: string }[];
+  holdings: {
+    symbol: string;
+    name: string;
+    type: string;
+    horizon: string;
+    value: number;
+    quantity: number;
+  }[];
+  loans: {
+    name: string;
+    principal: number;
+    apr: number;
+    termMonths: number;
+    extraMonthly: number;
+  }[];
+  creditCards: { name: string; limit: number }[];
   wealth: {
     portfolioTotal: number;
     liquidityBalance: number;
@@ -92,11 +116,12 @@ export function buildFinanceContext(
   toDisplay: (amount: number, from?: string) => number,
   currency: string,
   locale: string,
-  recentLimit = 15,
+  recentLimit = 40,
 ): FinanceContext {
   const now = new Date();
   const monthStart = startOfMonth(now);
   const monthEnd = endOfMonth(now);
+  const yearStart = startOfYear(now);
 
   // Expand recurring/installment entries up to now so summaries match the rest
   // of the app (Planning/Dashboard use the same helpers).
@@ -116,25 +141,30 @@ export function buildFinanceContext(
       description: e.description,
     }));
 
-  // ---- This month's summary ----
-  let totalIncome = 0;
-  let totalExpense = 0;
-  const byCat = new Map<string, number>();
-  for (const e of expanded) {
-    const d = localDate(e.date);
-    if (!isWithinInterval(d, { start: monthStart, end: monthEnd })) continue;
-    const v = values.get(e.id) ?? 0;
-    if (e.kind === "income") totalIncome += v;
-    else if (e.kind === "expense") {
-      totalExpense += v;
-      const key = e.category || "Other";
-      byCat.set(key, (byCat.get(key) ?? 0) + v);
+  const summarizeWindow = (start: Date, end: Date) => {
+    let totalIncome = 0;
+    let totalExpense = 0;
+    const byCat = new Map<string, number>();
+    for (const e of expanded) {
+      const d = localDate(e.date);
+      if (!isWithinInterval(d, { start, end })) continue;
+      const v = values.get(e.id) ?? 0;
+      if (e.kind === "income") totalIncome += v;
+      else if (e.kind === "expense") {
+        totalExpense += v;
+        const key = e.category || "Other";
+        byCat.set(key, (byCat.get(key) ?? 0) + v);
+      }
     }
-  }
-  const topExpenseCategories = [...byCat.entries()]
-    .map(([name, amount]) => ({ name, amount }))
-    .sort((a, b) => b.amount - a.amount)
-    .slice(0, 6);
+    const topExpenseCategories = [...byCat.entries()]
+      .map(([name, amount]) => ({ name, amount }))
+      .sort((a, b) => b.amount - a.amount)
+      .slice(0, 8);
+    return { totalIncome, totalExpense, net: totalIncome - totalExpense, topExpenseCategories };
+  };
+
+  const monthStats = summarizeWindow(monthStart, monthEnd);
+  const yearStats = summarizeWindow(yearStart, now);
 
   // ---- Main budget plan status ----
   const plans = state.budgetPlans ?? [];
@@ -178,18 +208,28 @@ export function buildFinanceContext(
     name: g.name,
     target: toDisplay(g.targetAmount, g.currency),
     current: toDisplay(g.currentAmount, g.currency),
+    targetDate: g.targetDate,
   }));
 
   // ---- Wealth snapshot (holdings + liquidity + debt) ----
   let portfolioTotal = 0;
   let investedTotal = 0;
   let cashLikeHoldings = 0;
-  for (const h of state.holdings) {
+  const holdings = state.holdings.map((h) => {
     const v = toDisplay(h.quantity * h.currentPrice, h.priceCurrency);
     portfolioTotal += v;
     if (h.horizon === "short") cashLikeHoldings += v;
     else investedTotal += v;
-  }
+    return {
+      symbol: h.symbol,
+      name: h.name,
+      type: h.type,
+      horizon: h.horizon ?? "long",
+      value: v,
+      quantity: h.quantity,
+    };
+  });
+  holdings.sort((a, b) => b.value - a.value);
 
   let liquidityBalance = 0;
   let cardDebt = 0;
@@ -200,8 +240,24 @@ export function buildFinanceContext(
     for (const c of cards) cardDebt += cardDebtImpact(e, c.id, v);
   }
 
+  const creditCards = cards.map((c) => ({
+    name: c.name,
+    limit: toDisplay(c.creditLimit ?? 0, c.currency),
+  }));
+
+  const loans = (state.loans ?? []).map((l) => ({
+    name: l.name,
+    principal: toDisplay(l.principal, l.currency),
+    apr: l.apr,
+    termMonths: l.termMonths,
+    extraMonthly: toDisplay(l.extraMonthly ?? 0, l.currency),
+  }));
+
   const netWorth = portfolioTotal + liquidityBalance - cardDebt;
-  const savingsRate = totalIncome > 0 ? (totalIncome - totalExpense) / totalIncome : null;
+  const savingsRate =
+    monthStats.totalIncome > 0
+      ? (monthStats.totalIncome - monthStats.totalExpense) / monthStats.totalIncome
+      : null;
 
   return {
     currency,
@@ -217,13 +273,17 @@ export function buildFinanceContext(
     recent,
     month: {
       label: now.toLocaleDateString(locale, { month: "long", year: "numeric" }),
-      totalIncome,
-      totalExpense,
-      net: totalIncome - totalExpense,
-      topExpenseCategories,
+      ...monthStats,
+    },
+    year: {
+      label: String(now.getFullYear()),
+      ...yearStats,
     },
     budget,
     goals,
+    holdings,
+    loans,
+    creditCards,
     wealth: {
       portfolioTotal,
       liquidityBalance,
@@ -249,16 +309,45 @@ export function formatContextForPrompt(ctx: FinanceContext): string {
   );
   if (ctx.month.topExpenseCategories.length) {
     lines.push(
-      "Top spending: " +
+      "Top spending this month: " +
         ctx.month.topExpenseCategories.map((c) => `${c.name} ${m(c.amount)}`).join(", ") +
         ".",
     );
   }
+  lines.push(
+    `Year to date (${ctx.year.label}): income ${m(ctx.year.totalIncome)}, ` +
+      `expenses ${m(ctx.year.totalExpense)}, net ${m(ctx.year.net)}.`,
+  );
+  if (ctx.year.topExpenseCategories.length) {
+    lines.push(
+      "Top spending YTD: " +
+        ctx.year.topExpenseCategories.map((c) => `${c.name} ${m(c.amount)}`).join(", ") +
+        ".",
+    );
+  }
+  lines.push(
+    "You have full on-device access to cashflows, holdings, budgets, goals, loans, and cards. " +
+      "Use tools (get_net_worth, get_portfolio, get_spending_summary, get_budget_status, get_goals_status, get_loans_status) when helpful.",
+  );
   if (ctx.budget) {
     lines.push(
       `Budget "${ctx.budget.planName}": spent ${m(ctx.budget.totalSpent)} of ` +
         `${m(ctx.budget.totalLimit)}.`,
     );
+    const tight = ctx.budget.lines
+      .filter((l) => l.limit > 0)
+      .map((l) => ({ ...l, pct: l.spent / l.limit }))
+      .sort((a, b) => b.pct - a.pct)
+      .slice(0, 4);
+    if (tight.length) {
+      lines.push(
+        "Budget lines: " +
+          tight
+            .map((l) => `${l.label} ${m(l.spent)}/${m(l.limit)}`)
+            .join(", ") +
+          ".",
+      );
+    }
   }
   const w = ctx.wealth;
   lines.push(
@@ -269,14 +358,53 @@ export function formatContextForPrompt(ctx: FinanceContext): string {
   if (w.savingsRate != null) {
     lines.push(`Savings rate this month: ${Math.round(w.savingsRate * 100)}%.`);
   }
+  if (ctx.holdings.length) {
+    lines.push(
+      "Holdings: " +
+        ctx.holdings
+          .slice(0, 12)
+          .map((h) => `${h.symbol} (${h.type}, ${h.horizon}) ${m(h.value)}`)
+          .join(", ") +
+        (ctx.holdings.length > 12 ? "…" : "") +
+        ".",
+    );
+  }
+  if (ctx.creditCards.length) {
+    lines.push(
+      "Credit cards: " +
+        ctx.creditCards.map((c) => `${c.name} limit ${m(c.limit)}`).join(", ") +
+        ".",
+    );
+  }
+  if (ctx.loans.length) {
+    lines.push(
+      "Loans: " +
+        ctx.loans
+          .map(
+            (l) =>
+              `${l.name} principal ${m(l.principal)} @ ${l.apr}% / ${l.termMonths}mo` +
+              (l.extraMonthly > 0 ? ` (+${m(l.extraMonthly)}/mo extra)` : ""),
+          )
+          .join(", ") +
+        ".",
+    );
+  }
   if (ctx.goals.length) {
     lines.push(
-      "Goals: " + ctx.goals.map((g) => `${g.name} ${m(g.current)}/${m(g.target)}`).join(", ") + ".",
+      "Goals: " +
+        ctx.goals
+          .map(
+            (g) =>
+              `${g.name} ${m(g.current)}/${m(g.target)}` +
+              (g.targetDate ? ` by ${g.targetDate.slice(0, 10)}` : ""),
+          )
+          .join(", ") +
+        ".",
     );
   }
   if (ctx.recent.length) {
     lines.push("Recent entries:");
-    for (const r of ctx.recent.slice(0, 10)) {
+    for (const r of ctx.recent.slice(0, 12)) {
       lines.push(
         `- ${r.date} ${r.kind} ${r.category} ${m(r.amountDisplay)}` +
           (r.description ? ` (${r.description})` : ""),

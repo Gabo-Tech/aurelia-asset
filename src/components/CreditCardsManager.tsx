@@ -9,7 +9,7 @@ import {
   ScrollView,
 } from "react-native";
 import { useTranslation } from "react-i18next";
-import { Card, PrimaryButton, Metric } from "@/components/ui";
+import { Card, PrimaryButton, SecondaryButton, Metric, EmptyState, Field } from "@/components/ui";
 import { useStore, useMoney } from "@/lib/store";
 import { expandCashflows, cardDebtImpact, valuesByEntry } from "@/lib/cashflow-math";
 import type { CreditCard } from "@/lib/types";
@@ -163,7 +163,14 @@ export function CreditCardsManager() {
       </View>
 
       {cards.length === 0 ? (
-        <Text style={styles.empty}>{t("cards.empty", { defaultValue: "No cards yet." })}</Text>
+        <EmptyState
+          title={t("cards.emptyTitle", { defaultValue: "No cards yet" })}
+          body={t("cards.empty", {
+            defaultValue: "Add a card to track debt from credit purchases and payments.",
+          })}
+          actionLabel={t("cards.add", { defaultValue: "Add" })}
+          onAction={openAdd}
+        />
       ) : (
         cards.map((c) => {
           const debt = debtByCard.get(c.id) ?? 0;
@@ -215,14 +222,22 @@ export function CreditCardsManager() {
               ) : null}
               <View style={styles.actions}>
                 <PrimaryButton
+                  compact
+                  style={{ flex: 1 }}
                   label={t("cards.pay", { defaultValue: "Pay" })}
                   onPress={() => {
                     setPayCard(c);
                     setPayAmount(debt > 0 ? String(Math.round(debt * 100) / 100) : "");
                   }}
                 />
-                <PrimaryButton label="Edit" onPress={() => openEdit(c)} />
-                <PrimaryButton label="Delete" onPress={() => confirmRemove(c)} />
+                <SecondaryButton compact style={{ flex: 1 }} label="Edit" onPress={() => openEdit(c)} />
+                <SecondaryButton
+                  compact
+                  destructive
+                  style={{ flex: 1 }}
+                  label="Delete"
+                  onPress={() => confirmRemove(c)}
+                />
               </View>
             </View>
           );
@@ -236,38 +251,56 @@ export function CreditCardsManager() {
               ? t("cards.editCard", { defaultValue: "Edit card" })
               : t("cards.newCard", { defaultValue: "New card" })}
           </Text>
-          <TextInput
-            style={styles.input}
-            placeholder={t("cards.name", { defaultValue: "Name" })}
-            placeholderTextColor={colors.muted}
-            value={form.name}
-            onChangeText={(name) => setForm((f) => ({ ...f, name }))}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder={t("cards.creditLimit", { defaultValue: "Credit limit" })}
-            placeholderTextColor={colors.muted}
-            keyboardType="decimal-pad"
-            value={form.creditLimit}
-            onChangeText={(creditLimit) => setForm((f) => ({ ...f, creditLimit }))}
-          />
+          <Field label={t("cards.name", { defaultValue: "Name" })}>
+            <TextInput
+              style={styles.input}
+              placeholder="e.g. Visa"
+              placeholderTextColor={colors.muted}
+              value={form.name}
+              onChangeText={(name) => setForm((f) => ({ ...f, name }))}
+            />
+          </Field>
+          <Field label={t("cards.creditLimit", { defaultValue: "Credit limit" })}>
+            <TextInput
+              style={styles.input}
+              placeholder="Optional"
+              placeholderTextColor={colors.muted}
+              keyboardType="decimal-pad"
+              value={form.creditLimit}
+              onChangeText={(creditLimit) => setForm((f) => ({ ...f, creditLimit }))}
+            />
+          </Field>
           <View style={styles.row}>
-            <TextInput
-              style={[styles.input, styles.half]}
-              placeholder="Statement day"
-              placeholderTextColor={colors.muted}
-              keyboardType="number-pad"
-              value={form.statementDay}
-              onChangeText={(statementDay) => setForm((f) => ({ ...f, statementDay }))}
-            />
-            <TextInput
-              style={[styles.input, styles.half]}
-              placeholder="Due day"
-              placeholderTextColor={colors.muted}
-              keyboardType="number-pad"
-              value={form.dueDay}
-              onChangeText={(dueDay) => setForm((f) => ({ ...f, dueDay }))}
-            />
+            <View style={styles.half}>
+              <Field
+                label="Statement day"
+                hint={t("cards.dayHint", { defaultValue: "Day of month (1–31)" })}
+              >
+                <TextInput
+                  style={styles.input}
+                  placeholder="1–31"
+                  placeholderTextColor={colors.muted}
+                  keyboardType="number-pad"
+                  value={form.statementDay}
+                  onChangeText={(statementDay) => setForm((f) => ({ ...f, statementDay }))}
+                />
+              </Field>
+            </View>
+            <View style={styles.half}>
+              <Field
+                label="Due day"
+                hint={t("cards.dayHint", { defaultValue: "Day of month (1–31)" })}
+              >
+                <TextInput
+                  style={styles.input}
+                  placeholder="1–31"
+                  placeholderTextColor={colors.muted}
+                  keyboardType="number-pad"
+                  value={form.dueDay}
+                  onChangeText={(dueDay) => setForm((f) => ({ ...f, dueDay }))}
+                />
+              </Field>
+            </View>
           </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.swatches}>
             {PALETTE.map((c) => (
@@ -284,7 +317,7 @@ export function CreditCardsManager() {
           </ScrollView>
           <PrimaryButton label="Save" onPress={submitForm} />
           <View style={{ height: 8 }} />
-          <PrimaryButton
+          <SecondaryButton
             label="Cancel"
             onPress={() => {
               setFormOpen(false);
@@ -303,14 +336,16 @@ export function CreditCardsManager() {
             {t("cards.balanceOwed", { defaultValue: "Balance owed" })}:{" "}
             {mask(debtByCard.get(payCard.id) ?? 0)}
           </Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Amount"
-            placeholderTextColor={colors.muted}
-            keyboardType="decimal-pad"
-            value={payAmount}
-            onChangeText={setPayAmount}
-          />
+          <Field label={t("common.amount", { defaultValue: "Amount" })}>
+            <TextInput
+              style={styles.input}
+              placeholder="0.00"
+              placeholderTextColor={colors.muted}
+              keyboardType="decimal-pad"
+              value={payAmount}
+              onChangeText={setPayAmount}
+            />
+          </Field>
           <PrimaryButton label="Record payment" onPress={submitPay} />
           <View style={{ height: 8 }} />
           <PrimaryButton
@@ -355,7 +390,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   barFill: { height: "100%", borderRadius: 3 },
-  actions: { gap: 8 },
+  actions: { flexDirection: "row", gap: 8, alignItems: "stretch" },
   form: {
     marginTop: 12,
     paddingTop: 12,

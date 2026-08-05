@@ -1,11 +1,11 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Sector } from "recharts";
 import { useStore, useMoney } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { formatPct } from "@/lib/format";
+import { formatPct, formatHoldingQuantity } from "@/lib/format";
 import {
   ArrowUpRight,
   Wallet,
@@ -18,7 +18,6 @@ import {
 } from "lucide-react";
 import { PageHeader } from "@/components/app-shell";
 import { ChartFrame } from "@/components/chart-frame";
-import { expandCashflows, valuesByEntry, liquidityImpact, cardDebtImpact } from "@/routes/cashflow";
 import { useTranslation } from "react-i18next";
 import i18n from "@/i18n";
 import { SITE_URL } from "@/lib/site-config";
@@ -32,7 +31,10 @@ import {
   FilterPillGroup,
   EmptyState,
   ResponsiveDialog,
+  LocalFirstBadge,
+  Fab,
 } from "@/components/design";
+import { usePortfolioSummary } from "@/hooks/use-portfolio-summary";
 import { MetricTile as StatTile } from "@/components/design/metric-tile";
 
 export const Route = createFileRoute("/dashboard")({
@@ -57,12 +59,24 @@ export const Route = createFileRoute("/dashboard")({
 function Dashboard() {
   const { state } = useStore();
   const { mask, toDisplay, privacy, currency } = useMoney();
-  const { holdings, cashflows } = state;
+  const { holdings } = state;
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const summary = usePortfolioSummary();
+  const { portfolioTotal, netWorth, cashflowBalance, net30 } = summary;
   const [showAllLabels, setShowAllLabels] = useState(false);
   const [activeIdx, setActiveIdx] = useState<number | null>(null);
   const [hidden, setHidden] = useState<Set<string>>(new Set());
   const [detailId, setDetailId] = useState<string | null>(null);
+  const name = state.settings.displayName?.trim();
+  const greeting = name
+    ? t("dashboard.greetingNamed", {
+        name,
+        defaultValue: `Hi ${name}, welcome to your dashboard.`,
+      })
+    : t("dashboard.greeting", {
+        defaultValue: "Hi, welcome to your dashboard.",
+      });
 
   const allocation = useMemo(
     () =>
@@ -71,6 +85,7 @@ function Dashboard() {
           id: h.id,
           name: h.symbol,
           fullName: h.name,
+          type: h.type,
           color: h.color,
           value: toDisplay(h.quantity * h.currentPrice, h.priceCurrency),
           quantity: h.quantity,
@@ -87,7 +102,6 @@ function Dashboard() {
     [allocation, hidden],
   );
 
-  const portfolioTotal = useMemo(() => allocation.reduce((s, a) => s + a.value, 0), [allocation]);
   const visibleTotal = useMemo(
     () => visibleAllocation.reduce((s, a) => s + a.value, 0),
     [visibleAllocation],
@@ -110,61 +124,24 @@ function Dashboard() {
       ? [activeIdx]
       : [];
 
-  const cashflowBalance = useMemo(() => {
-    const expanded = expandCashflows(cashflows, new Date());
-    const values = valuesByEntry(expanded, toDisplay);
-    let bal = 0;
-    for (const e of expanded) {
-      const v = values.get(e.id) ?? 0;
-      bal += liquidityImpact(e, v);
-    }
-    return bal;
-  }, [cashflows, toDisplay]);
-
-  const cardDebt = useMemo(() => {
-    const expanded = expandCashflows(cashflows, new Date());
-    const values = valuesByEntry(expanded, toDisplay);
-    const cards = state.creditCards ?? [];
-    let total = 0;
-    for (const e of expanded) {
-      const v = values.get(e.id) ?? 0;
-      for (const c of cards) total += cardDebtImpact(e, c.id, v);
-    }
-    return total;
-  }, [cashflows, toDisplay, state.creditCards]);
-
-  const netWorth = useMemo(
-    () => portfolioTotal + cashflowBalance - cardDebt,
-    [portfolioTotal, cashflowBalance, cardDebt],
-  );
-
-  const net30 = useMemo(() => {
-    const now = new Date();
-    const cutoff = now.getTime() - 30 * 86400000;
-    const expanded = expandCashflows(cashflows, now);
-    const values = valuesByEntry(expanded, toDisplay);
-    let bal = 0;
-    for (const e of expanded) {
-      if (new Date(e.date).getTime() < cutoff) continue;
-      const v = values.get(e.id) ?? 0;
-      bal += liquidityImpact(e, v);
-    }
-    return bal;
-  }, [cashflows, toDisplay]);
-
   const topAlloc = allocation[0];
   const detail = detailId ? allocation.find((a) => a.id === detailId) : null;
 
   if (!holdings.length) {
     return (
       <>
-        <PageHeader title={t("dashboard.title")} description={t("dashboard.description")} />
+        <PageHeader title={greeting} description={t("dashboard.description")} />
         <EmptyState
           icon={<Wallet className="h-8 w-8" />}
-          title={t("more.dashNoHoldings")}
-          description="Add your first stock, ETF, crypto or metal to see allocation, performance and beautiful charts."
-          actionLabel="Add a holding"
+          title={t("dashboard.emptyTitle")}
+          description={t("dashboard.emptyDescription")}
+          actionLabel={t("dashboard.emptyAction")}
           actionTo="/holdings"
+        />
+        <Fab
+          label={t("dashboard.fabLog")}
+          icon={<ArrowLeftRight className="h-5 w-5" />}
+          onClick={() => navigate({ to: "/cashflow", search: { add: "1" } })}
         />
       </>
     );
@@ -173,7 +150,7 @@ function Dashboard() {
   return (
     <>
       <PageHeader
-        title={t("dashboard.title")}
+        title={greeting}
         description={t("dashboard.description")}
         actions={
           <Button asChild className="hidden sm:inline-flex">
@@ -184,16 +161,37 @@ function Dashboard() {
 
       <div className="grid gap-4 sm:gap-5 sm:grid-cols-2 xl:grid-cols-4" data-tour="dash-stats">
         <MetricHeroCard
+          label={t("dashboard.netWorth")}
+          value={mask(netWorth, currency)}
+          className="order-first col-span-full sm:col-span-2"
+          sub={
+            <>
+              <LocalFirstBadge label={t("dashboard.localFirstHint")} className="mb-2" />
+              {t("dashboard.netWorthSub")}
+              {" · "}
+              {t("dashboard.netWorthLiquidity", {
+                sign: cashflowBalance >= 0 ? "+" : "−",
+                value: mask(Math.abs(cashflowBalance), currency),
+              })}
+            </>
+          }
+        />
+
+        <MetricTile
           label={t("dashboard.portfolioValue")}
           value={mask(portfolioTotal, currency)}
           sub={
             <>
-              {holdings.length} {holdings.length === 1 ? "holding" : "holdings"}
+              {holdings.length === 1
+                ? t("dashboard.holdingsCountOne")
+                : t("dashboard.holdingsCount", { count: holdings.length })}
               {topAlloc ? (
                 <>
-                  {" · Top: "}
-                  <span className="text-foreground font-medium">{topAlloc.name}</span> (
-                  {formatPct((topAlloc.value / portfolioTotal) * 100, 1).replace("+", "")})
+                  {" · "}
+                  {t("dashboard.topHolding", {
+                    name: topAlloc.name,
+                    pct: formatPct((topAlloc.value / portfolioTotal) * 100, 1).replace("+", ""),
+                  })}
                 </>
               ) : null}
             </>
@@ -201,25 +199,10 @@ function Dashboard() {
         />
 
         <MetricTile
-          label="Net worth"
-          value={mask(netWorth, currency)}
-          sub={
-            <>
-              Holdings{" "}
-              <span className={cashflowBalance >= 0 ? "text-success" : "text-destructive"}>
-                {cashflowBalance >= 0 ? "+" : "−"}
-                {mask(Math.abs(cashflowBalance), currency)}
-              </span>{" "}
-              liquidity
-            </>
-          }
-        />
-
-        <MetricTile
-          label="Cashflow · last 30 days"
+          label={t("dashboard.net30")}
           value={`${net30 >= 0 ? "+" : "-"}${mask(Math.abs(net30), currency)}`}
           tone={net30 >= 0 ? "success" : "destructive"}
-          sub="Net income − expenses"
+          sub={t("dashboard.net30Sub")}
           icon={
             net30 >= 0 ? (
               <TrendingUp className="h-4 w-4 text-success" />
@@ -235,11 +218,11 @@ function Dashboard() {
         className="mt-4 flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         data-tour="dash-quick-actions"
       >
-        <QuickAction to="/holdings" icon={<Plus className="h-4 w-4" />} label="Add asset" />
+        <QuickAction to="/holdings" icon={<Plus className="h-4 w-4" />} label={t("dashboard.addAsset")} />
         <QuickAction
           to="/cashflow"
           icon={<ArrowLeftRight className="h-4 w-4" />}
-          label="Add entry"
+          label={t("dashboard.addEntry")}
         />
         <QuickAction
           to="/holdings"
@@ -254,7 +237,7 @@ function Dashboard() {
       </div>
 
       <div className="mt-5 grid gap-4 sm:gap-5 lg:grid-cols-5">
-        <AppCard className="lg:col-span-3" elevated data-tour="dash-allocation">
+        <AppCard className="order-2 lg:order-none lg:col-span-3" elevated data-tour="dash-allocation">
           <AppCardHeader className="flex flex-col gap-4">
             <div className="flex flex-row items-center justify-between gap-4 flex-wrap">
               <AppCardTitle className="text-base font-semibold text-foreground">
@@ -290,13 +273,13 @@ function Dashboard() {
           <AppCardContent>
             {visibleAllocation.length === 0 ? (
               <div className="flex h-72 flex-col items-center justify-center text-center text-sm text-muted-foreground sm:h-80">
-                <p>All assets are hidden.</p>
+                <p>{t("dashboard.allAssetsHidden")}</p>
                 <button
                   type="button"
                   onClick={showAll}
                   className="mt-2 min-h-11 text-primary hover:underline"
                 >
-                  Show all assets
+                  {t("dashboard.showAllAssets")}
                 </button>
               </div>
             ) : (
@@ -333,6 +316,11 @@ function Dashboard() {
                         }
                         onMouseEnter={(_, i) => setActiveIdx(i)}
                         onMouseLeave={() => setActiveIdx(null)}
+                        onClick={(_, i) => {
+                          setActiveIdx(i);
+                          const item = visibleAllocation[i];
+                          if (item) setDetailId(item.id);
+                        }}
                       >
                         {visibleAllocation.map((a) => (
                           <Cell key={a.id} fill={a.color} />
@@ -354,7 +342,7 @@ function Dashboard() {
           </AppCardContent>
         </AppCard>
 
-        <AppCard className="lg:col-span-2" data-tour="dash-breakdown">
+        <AppCard className="order-1 lg:order-none lg:col-span-2" data-tour="dash-breakdown">
           <AppCardHeader>
             <AppCardTitle className="text-base font-semibold text-foreground">
               {t("more.dashBreakdown")}
@@ -441,6 +429,9 @@ function Dashboard() {
             <div className="font-display text-3xl tabular-nums tracking-tight">
               {mask(detail.value, currency)}
             </div>
+            <div className="text-sm tabular-nums text-foreground">
+              {formatHoldingQuantity(detail.quantity, detail.name, detail.type, privacy)}
+            </div>
             <div className="text-sm text-muted-foreground">
               {visibleTotal
                 ? `${((detail.value / visibleTotal) * 100).toFixed(1)}% of portfolio`
@@ -449,6 +440,12 @@ function Dashboard() {
           </div>
         ) : null}
       </ResponsiveDialog>
+
+      <Fab
+        label={t("dashboard.fabLog")}
+        icon={<ArrowLeftRight className="h-5 w-5" />}
+        onClick={() => navigate({ to: "/cashflow", search: { add: "1" } })}
+      />
     </>
   );
 }
@@ -480,7 +477,13 @@ type AllocShapeProps = {
   startAngle: number;
   endAngle: number;
   fill: string;
-  payload: { name: string; fullName?: string; value: number };
+  payload: {
+    name: string;
+    fullName?: string;
+    value: number;
+    quantity?: number;
+    type?: string;
+  };
   percent: number;
 };
 
@@ -518,6 +521,10 @@ function LabelledSector(
   const ey = my;
   const textAnchor = cos >= 0 ? "start" : "end";
   const skipLabel = compact && pct < 0.6;
+  const qtyLine =
+    payload.quantity != null && payload.type
+      ? formatHoldingQuantity(payload.quantity, payload.name, payload.type, privacy)
+      : null;
 
   return (
     <g style={{ pointerEvents: "none" }}>
@@ -542,7 +549,7 @@ function LabelledSector(
           <circle cx={ex} cy={ey} r={2} fill={fill} />
           <text
             x={ex + (cos >= 0 ? 5 : -5)}
-            y={ey - 2}
+            y={ey - (qtyLine ? 8 : 2)}
             textAnchor={textAnchor}
             fill="var(--foreground)"
             fontSize={compact ? 10 : 11}
@@ -550,9 +557,20 @@ function LabelledSector(
           >
             {payload.name}
           </text>
+          {qtyLine ? (
+            <text
+              x={ex + (cos >= 0 ? 5 : -5)}
+              y={ey + 4}
+              textAnchor={textAnchor}
+              fill="var(--muted-foreground)"
+              fontSize={compact ? 9 : 10}
+            >
+              {qtyLine}
+            </text>
+          ) : null}
           <text
             x={ex + (cos >= 0 ? 5 : -5)}
-            y={ey + (compact ? 10 : 11)}
+            y={ey + (qtyLine ? (compact ? 16 : 17) : compact ? 10 : 11)}
             textAnchor={textAnchor}
             fill="var(--muted-foreground)"
             fontSize={compact ? 9 : 10}

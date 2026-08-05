@@ -43,10 +43,11 @@ import { HoldingDialog } from "@/components/holding-dialog";
 import { TransactionDialog } from "@/components/transaction-dialog";
 import { TransactionsPanel } from "@/components/transactions-panel";
 import { HoldingsCharts } from "@/components/holdings-charts";
-import { formatNumber, formatPct, formatMoney, maskNumber, maskMoney } from "@/lib/format";
+import { formatMoney, maskMoney, formatHoldingQuantity } from "@/lib/format";
 import { fetchCurrentQuote } from "@/lib/finance";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { Fab } from "@/components/design/fab";
 import type { Holding } from "@/lib/types";
 import { SITE_URL } from "@/lib/site-config";
 import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
@@ -186,7 +187,7 @@ function HoldingsPage() {
         title={t("holdings.title")}
         description={`${state.holdings.length} ${t("holdings.positionsCount")} · ${maskMoney(total, currency, privacy)}`}
         actions={
-          <>
+          <div className="hidden lg:flex flex-wrap items-center gap-2">
             <Button variant="outline" onClick={refreshPrices} disabled={refreshing}>
               {refreshing ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -204,7 +205,7 @@ function HoldingsPage() {
             >
               <Plus className="mr-2 h-4 w-4" /> {t("holdings.addHolding")}
             </Button>
-          </>
+          </div>
         }
       />
 
@@ -397,8 +398,8 @@ function HoldingsPage() {
                             {h.type}
                           </span>
                         </TableCell>
-                        <TableCell className="text-right tabular-nums">
-                          {maskNumber(h.quantity, privacy, 6)}
+                        <TableCell className="text-right tabular-nums font-medium">
+                          {formatHoldingQuantity(h.quantity, h.symbol, h.type, privacy)}
                         </TableCell>
                         <TableCell className="text-right tabular-nums">
                           {formatMoney(h.currentPrice, h.priceCurrency || "USD")}
@@ -514,6 +515,15 @@ function HoldingsPage() {
         }}
         defaultHoldingId={txHoldingId}
       />
+
+      <Fab
+        label={t("holdings.fabAdd")}
+        icon={<Plus className="h-6 w-6" />}
+        onClick={() => {
+          setEditing(null);
+          setOpen(true);
+        }}
+      />
     </div>
   );
 }
@@ -546,6 +556,3 @@ function SortHead({
     </TableHead>
   );
 }
-
-// Mark referenced for tree-shaking pleasure
-void formatPct;

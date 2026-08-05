@@ -5,6 +5,7 @@
 import { Platform } from "react-native";
 import RNFS from "react-native-fs";
 import type { AiConfig } from "@/lib/ai/config";
+import { looksLikeSttDir, looksLikeTtsDir, findEspeakDataDir } from "@/lib/ai/downloads";
 
 type AsrModelType =
   | "whisper"
@@ -14,19 +15,33 @@ type AsrModelType =
   | "nemo_ctc"
   | "zipformer2_ctc";
 
+export type SpeechReady = {
+  stt: boolean;
+  tts: boolean;
+  /** Short reason when Sherpa is missing or dirs invalid. */
+  reason?: string;
+  sttDetail?: string;
+  ttsDetail?: string;
+};
+
 let asrReadyDir: string | null = null;
 let ttsReadyDir: string | null = null;
 let sherpaMod: typeof import("@siteed/sherpa-onnx.rn") | null = null;
+let sherpaLoadError: string | null = null;
 
 async function loadSherpa() {
   if (sherpaMod) return sherpaMod;
+  if (sherpaLoadError) return null;
   try {
     sherpaMod = await import("@siteed/sherpa-onnx.rn");
     if (Platform.OS === "web") {
       void sherpaMod.loadWasmModule?.({});
     }
+    sherpaLoadError = null;
     return sherpaMod;
-  } catch {
+  } catch (e) {
+    sherpaLoadError =
+      e instanceof Error ? e.message : "Sherpa native module unavailable";
     return null;
   }
 }
@@ -90,26 +105,95 @@ async function detectTtsConfig(modelDir: string) {
   const modelFile =
     pick(files, ["model"], ".onnx") ?? pick(files, [], ".onnx") ?? "model.onnx";
   const tokensFile = pick(files, ["tokens"], ".txt") ?? "tokens.txt";
+  const lexiconFile = pick(files, ["lexicon"], ".txt");
+  const dataDir = await findEspeakDataDir(modelDir);
+  if (!dataDir) {
+    throw new Error(
+      "tts: missing espeak-ng-data (re-download TTS so Piper phonemes are available)",
+    );
+  }
+  const dictDir = await findNamedSubdir(modelDir, "dict");
+
   return {
     modelDir,
     ttsModelType: "vits" as const,
     modelFile,
     tokensFile,
+    ...(lexiconFile ? { lexiconFile } : {}),
+    dataDir,
+    ...(dictDir ? { dictDir } : {}),
   };
 }
 
-export async function getSpeechReady(cfg: AiConfig): Promise<{ stt: boolean; tts: boolean }> {
+async function findNamedSubdir(root: string, needle: string): Promise<string | null> {
+  const q = needle.toLowerCase();
+  async function walk(dir: string, depth: number): Promise<string | null> {
+    if (depth > 6) return null;
+    let entries;
+    try {
+      entries = await RNFS.readDir(dir);
+    } catch {
+      return null;
+    }
+    for (const e of entries) {
+      if (!e.isDirectory()) continue;
+      if (e.name.toLowerCase().includes(q)) return e.path;
+      const nested = await walk(e.path, depth + 1);
+      if (nested) return nested;
+    }
+    return null;
+  }
+  return walk(root, 0);
+}
+
+export async function getSpeechReady(cfg: AiConfig): Promise<SpeechReady> {
   const mod = await loadSherpa();
-  if (!mod) return { stt: false, tts: false };
-  return {
-    stt: !!(cfg.sttDir && cfg.sttDir.trim()),
-    tts: !!(cfg.ttsDir && cfg.ttsDir.trim()),
-  };
+  if (!mod) {
+    return {
+      stt: false,
+      tts: false,
+      reason: sherpaLoadError || "Sherpa native module unavailable",
+    };
+  }
+
+  const sttPath = cfg.sttDir?.trim() || "";
+  const ttsPath = cfg.ttsDir?.trim() || "";
+
+  let stt = false;
+  let sttDetail: string | undefined;
+  if (!sttPath) {
+    sttDetail = "Download STT in Settings";
+  } else if (!(await looksLikeSttDir(sttPath))) {
+    sttDetail = "STT folder incomplete (need tokens.txt + model files)";
+  } else {
+    stt = true;
+  }
+
+  let tts = false;
+  let ttsDetail: string | undefined;
+  if (!ttsPath) {
+    ttsDetail = "Download TTS in Settings";
+  } else if (!(await looksLikeTtsDir(ttsPath))) {
+    ttsDetail = "TTS folder incomplete (need tokens.txt + .onnx)";
+  } else if (!(await findEspeakDataDir(ttsPath))) {
+    ttsDetail = "Missing espeak-ng-data — re-download TTS";
+  } else {
+    tts = true;
+  }
+
+  const reason =
+    !stt && !tts
+      ? sttDetail && ttsDetail
+        ? `${sttDetail}; ${ttsDetail}`
+        : sttDetail || ttsDetail
+      : undefined;
+
+  return { stt, tts, reason, sttDetail, ttsDetail };
 }
 
 async function ensureAsr(modelDir: string) {
   const mod = await loadSherpa();
-  if (!mod) throw new Error("stt-not-enabled");
+  if (!mod) throw new Error(sherpaLoadError || "stt-not-enabled");
   if (asrReadyDir === modelDir) return mod.ASR;
   const config = await detectAsrConfig(modelDir);
   const res = await mod.ASR.initialize(config);
@@ -120,7 +204,7 @@ async function ensureAsr(modelDir: string) {
 
 async function ensureTts(modelDir: string) {
   const mod = await loadSherpa();
-  if (!mod) throw new Error("tts-not-enabled");
+  if (!mod) throw new Error(sherpaLoadError || "tts-not-enabled");
   if (ttsReadyDir === modelDir) return mod.TTS;
   const config = await detectTtsConfig(modelDir);
   const res = await mod.TTS.initialize(config);

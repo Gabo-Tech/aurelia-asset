@@ -39,6 +39,7 @@ const ca: Translation = {
     planning: "Planificació",
     assistant: "Assistent",
     settings: "Ajustos",
+    more: "Més",
     short: {
       dashboard: "Inici",
       holdings: "Actius",
@@ -47,6 +48,7 @@ const ca: Translation = {
       planning: "Pla",
       assistant: "IA",
       settings: "Ajustos",
+      more: "Més",
     },
   },
   assistant: {
@@ -87,11 +89,11 @@ const ca: Translation = {
       "L'entrada per veu requerix l'app nativa o un navegador compatible. El text funciona a tot arreu.",
     emptyTitle: "El teu assistent financer privat",
     emptyBody:
-      'Digues o escriu coses com "He gastat 45 en la compra a Mercadona ahir". Confirmaré abans de guardar, i tot es queda al teu dispositiu.',
+      "Pregunta pel teu patrimoni net, despeses o digues \"dona'm consell financer\". També pots registrar despeses com \"Vaig gastar 45 en la compra\" — confirmo abans de desar.",
     backend: {
       greeting:
-        "Hola! Sóc el teu assistent financer. Explica'm una despesa (p. ex. \"He gastat 12 en el dinar\"), pregunta quant has gastat o demana consells d'estalvi.",
-      help: "Puc:\n• Registrar despeses que descrigues (confirmaré abans)\n• Resumir les teues despeses per període o categoria\n• Mostrar transaccions recents\n• Informar de l'estat del pressupost\n• Donar consells d'estalvi basats en les teues dades\nTot funciona al teu dispositiu.",
+        "Hola! Sóc el teu assessor financer personal. Pregunta pel patrimoni net, despeses, pressupostos, objectius o digues \"dona'm consells\" — i puc registrar despeses que descriguis.",
+      help: "Puc:\n• Analitzar les teves finances i assessorar-te (retallar despeses, augmentar ingressos, invertir l'excedent)\n• Informar del patrimoni net, cartera, liquiditat i deutes\n• Resumir despeses, pressupostos, objectius i préstecs\n• Registrar despeses que descriguis (confirmo abans)\nTot funciona al teu dispositiu amb les teves dades reals.",
       thanks: "De res! Digues si necessites alguna cosa més amb les teues finances.",
       positive:
         "M'alegra haver ajudat! Pregunta'm quan vulguis sobre despeses, pressupostos o estalvi.",
@@ -100,7 +102,7 @@ const ca: Translation = {
       howAreYou:
         "Estic molt bé — a punt per ajudar-te a controlar despeses i estalviar millor. Què puc fer per tu?",
       unknown:
-        'No ho he entès del tot. Prova coses com "he gastat 8,50 en un cafè", "quant he gastat en menjar este mes?" o "dona\'m consells d\'estalvi".',
+        "No ho he acabat d'entendre. Prova \"Quin és el meu patrimoni net?\", \"quant he gastat en menjar aquest mes?\", \"dona'm consell financer\" o \"vaig gastar 8,50 en un cafè\".",
       done: "Fet.",
       expenseConfirm:
         "Afegir una despesa de {{amount}} en {{category}} per a {{when}}? Confirma a baix.",
@@ -127,14 +129,24 @@ const ca: Translation = {
           "Bona taxa d'estalvi del {{rate}}% este mes — dirigeix part de l'excés cap a metes o inversions a llarg termini.",
         lowIncome:
           "Les despeses consumeixen el {{pct}}% dels teus ingressos este mes. Reduir costos fixos o augmentar ingressos podria alleujar la pressió.",
+        tightCashflow:
+          "Les despeses són el {{pct}}% dels ingressos — hi ha poc marge. Limita la despesa discrecional i busca un impuls d'ingressos aquest trimestre.",
+        growIncome:
+          "El teu excedent és fi respecte als ingressos. A banda de retallar costos, considera augmentar la capacitat de guany (negociació, ascens, freelance o una feina millor pagada).",
         topCategory:
           "{{name}} suposa el {{pct}}% de les teues despeses ({{amount}}). Reduir-lo un 10% alliberaria {{savings}}/mes.",
+        secondCategory:
+          "{{name}} és una altra porció gran: {{pct}}% ({{amount}}) — bon segon lloc per retallar.",
         highDebt:
           "Deus {{debt}} en targetes de crèdit. Prioritzar el pagament alliberaria efectiu per estalviar i invertir.",
+        highAprLoan:
+          'El préstec "{{name}}" costa un {{apr}}% TAE sobre {{principal}}. Els pagaments extra aquí solen superar l\'efectiu de baix rendiment.',
         excessCash:
           "Tens {{liquidity}} en liquiditat (~{{months}} mesos de despeses). Reservar ~{{reserve}} com a coixí té sentit; {{investable}} es podria invertir gradualment.",
         lowInvestment:
           "Prop del {{pct}}% del teu patrimoni està en efectiu/liquiditat ({{liquidity}} líquid vs {{invested}} invertit). Si el fons d'emergència està cobert, considera invertir-ne una part.",
+        startInvesting:
+          "Tens bona liquiditat però encara sense posicions. Després d'un coixí d'emergència (3–6 mesos de despeses), comença un pla simple a llarg termini — fons diversificats, sense stock-picking.",
         balancedAllocation:
           "La teua distribució sembla equilibrada — {{invested}} invertit i {{liquid}} en efectiu/posicions líquides.",
         overBudget:
@@ -154,6 +166,8 @@ const ca: Translation = {
         this_month: "este mes",
         last_month: "el mes passat",
         this_week: "esta setmana",
+        this_year: "aquest any",
+        ytd: "en el que va d'any",
         all: "tot el temps",
       },
       tools: {
@@ -161,11 +175,22 @@ const ca: Translation = {
         spentTotal: "Total gastat {{total}} ({{period}}). Principal: {{top}}.",
         noTransactions: "Encara no hi ha transaccions.",
         noBudget: "Encara no hi ha pressupost configurat.",
+        noHoldings: "Encara no hi ha posicions.",
+        noGoals: "Encara no hi ha objectius d'estalvi.",
+        noLoans: "Encara no hi ha préstecs registrats.",
         budgetStatus: 'Pressupost "{{name}}": {{spent}} de {{limit}} usat.',
         overOn: " Per sobre en: {{list}}.",
         onTrack: " En bon camí.",
         unknownTool: "Eina desconeguda.",
         txLine: "{{date}} {{kind}} {{category}} {{amount}}",
+
+        netWorth:
+          "Patrimoni net {{netWorth}} = cartera {{portfolio}} (invertit {{invested}}, similar a efectiu {{cashLike}}) + liquiditat {{liquidity}} − deute de targetes {{debt}}.{{savingsRate}}",
+        savingsRate: " Taxa d'estalvi aquest mes: {{rate}}%.",
+        portfolio: "Cartera {{total}}. Posicions: {{lines}}.",
+        holdingLine: "{{symbol}} {{name}} ({{type}}, {{horizon}}) {{value}}",
+        goalLine: "{{name}}: {{current}} / {{target}} ({{pct}}%)",
+        loanLine: "{{name}}: {{principal}} al {{apr}}% TAE en {{months}} mesos",
       },
       voice: {
         recognitionUnavailable: "Reconeixement de veu no disponible.",
@@ -184,7 +209,7 @@ const ca: Translation = {
     goHome: "Anar a l'inici",
   },
   shell: {
-    brand: "Elegant",
+    brand: "Aurelia",
     brandTagline: "Gestor de cartera",
     showValues: "Mostrar valors",
     hideValues: "Amagar valors",
@@ -193,7 +218,8 @@ const ca: Translation = {
   },
   landing: {
     headerTagline: "Teu · Privat · Gratuït",
-    openApp: "Obrir l'app",
+    openApp: "Obrir Aurelia",
+    logoAlt: "Logotip d'Aurelia",
     nav: { features: "Funcions", how: "Com funciona", faq: "Preguntes" },
     hero: {
       badge: "Sense compte. Sense rastreig. Les teues dades es queden amb tu.",
@@ -237,8 +263,8 @@ const ca: Translation = {
           body: "Tot es xifra i es guarda al teu dispositiu. Sense compte, sense núvol i sense analítica sobre el que tens.",
         },
         elegant: {
-          title: "Elegant en qualsevol pantalla",
-          body: "Una interfície tranquil·la i sense distraccions per a escriptori, tauleta i mòbil, amb apps natives i sis idiomes, inclòs el valencià.",
+          title: "Fet primer per al mòbil",
+          body: "Pantalles tranquil·les i còmodes amb el dit, amb apps natives i sis idiomes.",
         },
       },
     },
@@ -341,25 +367,49 @@ const ca: Translation = {
     },
   },
   dashboard: {
-    metaTitle: "Panell - Gestor de cartera",
-    metaDesc: "La teua cartera d'un colp d'ull - assignació, valor i activitat recent.",
+    metaTitle: "Panell · Aurelia",
+    metaDesc: "La teua cartera d'un colp d'ull: assignació, patrimoni i activitat.",
     title: "Panell",
     description: "Benvingut a la teua cartera.",
-    portfolioValue: "Valor total de la cartera",
+    greeting: "Hola",
+    greetingNamed: "Hola {{name}}",
+    greetingShort: "Hola",
+    headerNetWorth: "{{value}} patrimoni net",
+    netWorthSub: "Actius més liquiditat, menys deute de targeta",
+    portfolioValue: "Valor de cartera",
     netWorth: "Patrimoni net",
+    netWorthLiquidity: "{{sign}}{{value}} liquiditat",
     liquidity: "liquiditat",
-    net30: "Flux de caixa · darrers 30 dies",
+    net30: "Darrers 30 dies",
+    net30Sub: "Ingressos nets menys despeses",
+    net30Positive: "+{{value}} darrers 30 dies",
+    net30Negative: "-{{value}} darrers 30 dies",
     topAsset: "Actiu principal",
     allocation: "Assignació",
     showAllLabels: "Mostrar totes les etiquetes",
     showAll: "Mostrar tot",
     hideAll: "Amagar tot",
+    allAssetsHidden: "Tots els actius estan amagats.",
+    showAllAssets: "Mostrar tots els actius",
+    addAsset: "Afegir actiu",
+    addEntry: "Registrar despesa",
+    holdingsCount: "{{count}} actius",
+    holdingsCountOne: "1 actiu",
+    topHolding: "Top: {{name}} ({{pct}})",
+    emptyTitle: "Encara no hi ha res",
+    emptyDescription:
+      "Registra un cafè o afegeix el teu primer ETF. Tot queda en este dispositiu, xifrat i teu.",
+    emptyAction: "Afegir actiu",
+    fabLog: "Registrar despesa",
+    localFirstHint: "Només en el teu dispositiu",
   },
   holdings: {
-    metaTitle: "Actius - Elegant Portfolio Tracker",
+    metaTitle: "Actius - Aurelia",
     metaDesc: "Gestiona les teues accions, cripto, ETFs i metalls.",
     title: "Actius",
     description: "Gestiona les teues accions, cripto, ETFs i metalls.",
+    headerSubtitle: "{{count}} posicions · {{value}}",
+    fabAdd: "Afegir actiu",
     positionsCount: "posicions",
     addHolding: "Afegir actiu",
     refresh: "Actualitzar preus",
@@ -367,6 +417,9 @@ const ca: Translation = {
     refreshFailed: "No s'han pogut actualitzar alguns preus",
     symbol: "Símbol",
     quantity: "Quantitat",
+    shares: "Accions",
+    amount: "Quantitat",
+    manualPrice: "Preu manual",
     price: "Preu",
     value: "Valor",
     invested: "Invertit",
@@ -441,17 +494,20 @@ const ca: Translation = {
     },
   },
   performance: {
-    metaTitle: "Rendiment - Elegant Portfolio Tracker",
+    metaTitle: "Rendiment - Aurelia",
     metaDesc: "Segueix la rendibilitat en el temps dels teus actius.",
     title: "Rendiment",
     description: "Valor històric de la cartera període a període.",
     emptyState: "Afig actius primer per veure el teu rendiment històric.",
   },
   cashflow: {
-    metaTitle: "Flux de caixa - Elegant Portfolio Tracker",
+    metaTitle: "Flux de caixa - Aurelia",
     metaDesc: "Registra ingressos, despeses, estalvis i inversions.",
     title: "Flux de caixa",
-    description: "Registra cada euro que entra i ix - i veges on va.",
+    description: "Registra cada euro que entra i ix, i veges on va.",
+    addData: "Afegir dades",
+    addDataHint: "Registra un ingrés, una despesa o una transferència",
+    fabAdd: "Afegir dades",
     income: "Ingrés",
     expense: "Despesa",
     expenses: "Despeses",
@@ -557,6 +613,30 @@ const ca: Translation = {
       expenses: "Despeses",
       investments: "Inversions i estalvis",
     },
+    upcoming: {
+      title: "Propers",
+      description: "Ingressos i pagaments programats en les properes setmanes.",
+      tabOverview: "Resum",
+      tabUpcoming: "Propers",
+      period7: "7 dies",
+      period14: "2 setmanes",
+      period30: "1 mes",
+      periodShort7: "7d",
+      periodShort14: "2s",
+      periodShort30: "1m",
+      periodShort90: "90d",
+      viewAll: "Veure-ho tot",
+      today: "Avui",
+      tomorrow: "Demà",
+      expectedIn: "Previst en els propers {{days}} dies",
+      empty: "Res programat",
+      emptyHint: "Afegeix una entrada recurrent o programa un pagament futur.",
+      recurring: "Recurrent",
+      oneTime: "Puntual",
+      whenLabel: "Quan",
+      startDate: "Data d'inici",
+      previewRecurring: "Cada {{frequency}}, dia {{day}}",
+    },
     sankey: {
       totalIncome: "Ingressos totals",
       totalExpenses: "Despeses totals",
@@ -629,10 +709,21 @@ const ca: Translation = {
     needName: "Cada patrocinador necessita un nom",
   },
   settings: {
-    metaTitle: "Ajustos - Elegant Portfolio Tracker",
-    metaDesc: "Opcions d'API, importar/exportar i gestió de dades.",
+    metaTitle: "Ajustos · Aurelia",
+    metaDesc: "Perfil, moneda, còpia de seguretat i IA en el dispositiu.",
     title: "Ajustos",
-    description: "Opcions d'API i gestió de dades.",
+    description: "Perfil, moneda i caixa forta de dades.",
+    sections: {
+      profile: "Perfil",
+      appearance: "Aspecte",
+      currency: "Moneda",
+      data: "Dades",
+      ai: "IA",
+    },
+    appearance: {
+      title: "Aspecte",
+      description: "Tema i tour guiat, ací al mòbil.",
+    },
     api: {
       title: "API i fiabilitat",
       description:
@@ -734,7 +825,7 @@ const ca: Translation = {
     },
     about: {
       title: "Quant a",
-      body: "Elegant Portfolio Tracker és una app 100% al client. Els preus venen de CoinGecko (cripto) i Yahoo Finance (accions/ETFs/metalls). Sense compte, sense backend.",
+      body: "Aurelia és una app 100% al client. Els preus venen de CoinGecko (cripto) i Yahoo Finance (accions/ETFs/metalls). Sense compte, sense backend.",
       metalsHint: "Per a metalls usa símbols de Yahoo com GC=F (or) o SI=F (plata).",
     },
   },
@@ -1058,6 +1149,9 @@ const ca: Translation = {
       limitPlaceholder: "p. ex. 500",
       currency: "Divisa",
       addBudget: "Afegir pressupost",
+      addBudgetItem: "Afegir partida",
+      addItemHint: "Defineix un límit per a una categoria o una partida personalitzada.",
+      itemAdded: "Partida afegida",
       thisMonth: "Este mes",
       empty: "Encara no hi ha pressupostos. Afig un límit mensual a una categoria per començar.",
       unknown: "Desconegut",
@@ -1104,6 +1198,8 @@ const ca: Translation = {
       alreadySaved: "Ja estalviat",
       targetDate: "Data objectiu (opcional)",
       addGoal: "Afegir objectiu",
+      addHint: "Defineix un objectiu i segueix quant has estalviat.",
+      added: "Objectiu afegit",
       empty: "Encara no hi ha objectius.",
       by: "abans de {{date}}",
       saveHint: "Estalvia ~{{amount}}/mes per assolir l'objectiu.",
@@ -1160,6 +1256,8 @@ const ca: Translation = {
       notes: "Notes",
       currency: "Divisa",
       addLoan: "Afegir préstec",
+      addHint: "Registra un préstec i consulta el quadre d'amortització.",
+      added: "Préstec afegit",
       empty: "Encara no hi ha préstecs registrats.",
       hide: "Amaga",
       schedule: "Quadre",

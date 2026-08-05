@@ -10,7 +10,7 @@ type Props = {
   title?: string;
 };
 
-/** Browser chart frame — text-note export fallback. */
+/** Browser chart frame - text-note export fallback. */
 export function ChartFrame({ children, filename = "chart", title }: Props) {
   const ref = useRef<View>(null);
   const [busy, setBusy] = useState(false);

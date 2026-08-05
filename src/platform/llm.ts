@@ -15,6 +15,10 @@ export interface AiCapabilities {
   sttEnabled?: boolean;
   ttsEnabled?: boolean;
   model?: string;
+  /** Why STT/TTS are unavailable (Sherpa missing, empty dirs, etc.). */
+  speechReason?: string;
+  sttDetail?: string;
+  ttsDetail?: string;
 }
 
 let cached: { path: string; ctx: LlamaContext } | null = null;

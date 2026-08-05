@@ -41,7 +41,7 @@ import { SITE_URL } from "@/lib/site-config";
 export const Route = createFileRoute("/assistant")({
   head: () => {
     const title = i18n.t("assistant.metaTitle", {
-      defaultValue: "AI Assistant · Financial Tracker",
+      defaultValue: "AI Assistant · Aurelia",
     });
     const desc = i18n.t("assistant.metaDesc", {
       defaultValue:
@@ -381,7 +381,7 @@ function AssistantPage() {
         aria-relevant="additions"
       >
         {messages.length === 0 ? (
-          <EmptyState />
+          <EmptyState onSuggest={(text) => setInput(text)} />
         ) : (
           <div data-tour="assistant-chat" className="space-y-4">
             {messages.map((m) => (
@@ -457,7 +457,7 @@ function AssistantPage() {
           variant={pipeline === "listening" ? "destructive" : "secondary"}
           onClick={toggleMic}
           className={cn(
-            "h-11 w-11 shrink-0 rounded-full",
+            "h-14 w-14 shrink-0 rounded-full sm:h-11 sm:w-11",
             pipeline === "listening" && "animate-pulse",
           )}
           title={
@@ -510,12 +510,12 @@ function StatusRow({ icon, label }: { icon: ReactNode; label: string }) {
   );
 }
 
-function EmptyState() {
+function EmptyState({ onSuggest }: { onSuggest: (text: string) => void }) {
   const { t } = useTranslation();
   const suggestions = [
-    t("assistant.suggest1", { defaultValue: "I spent 45 on groceries yesterday" }),
-    t("assistant.suggest2", { defaultValue: "How is my portfolio allocated?" }),
-    t("assistant.suggest3", { defaultValue: "What did I spend last month?" }),
+    t("assistant.chipAddExpense"),
+    t("assistant.chipFoodMonth"),
+    t("assistant.chipRecent"),
   ];
   return (
     <div className="flex h-full flex-col items-center justify-center gap-4 text-center px-2">
@@ -524,24 +524,26 @@ function EmptyState() {
           <Sparkles className="h-7 w-7" />
         </div>
         <div>
-          <h3 className="text-base font-semibold tracking-tight">
+          <h3 className="font-display text-lg tracking-tight">
             {t("assistant.emptyTitle", { defaultValue: "Your private money assistant" })}
           </h3>
           <p className="mt-1 text-sm text-muted-foreground">
             {t("assistant.emptyBody", {
               defaultValue:
-                "Say or type things like “I spent 45 on groceries at Walmart yesterday”. I'll confirm before saving, and everything stays on your device.",
+                'Say or type things like "I spent 45 on groceries". I\'ll confirm before saving, and everything stays on your device.',
             })}
           </p>
         </div>
         <div className="flex flex-wrap justify-center gap-2">
           {suggestions.map((s) => (
-            <span
+            <button
               key={s}
-              className="rounded-full border border-border/60 bg-card px-3 py-1.5 text-xs text-muted-foreground shadow-sm"
+              type="button"
+              onClick={() => onSuggest(s)}
+              className="rounded-full border border-border/60 bg-card px-3 py-2 text-xs text-muted-foreground shadow-sm transition-colors hover:border-primary/40 hover:text-foreground active-press"
             >
               {s}
-            </span>
+            </button>
           ))}
         </div>
       </div>

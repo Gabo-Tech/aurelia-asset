@@ -11,7 +11,7 @@ import { t } from "@/lib/i18n-t";
 import type { FinanceContext } from "./context";
 
 const ADVICE_HINT =
-  /\b(advice|tips?|financial advice|money advice|saving tips?|save money|reduce spending|how (can|do|should) i save|should i invest|invest more|am i saving enough|too much cash|sitting on cash|what should i do with my money|help me (save|invest)|increase (my )?income|grow my (money|wealth)|build wealth|improve my finances)\b/i;
+  /\b(advice|tips?|financial advice|money advice|saving tips?|save money|reduce (spending|expenses)|cut (back|costs|spending)|how (can|do|should) i (save|improve|earn|make more)|should i invest|invest more|am i saving enough|too much cash|sitting on cash|what should i do with my money|help me (save|invest|improve)|increase (my )?income|grow my (money|wealth)|build wealth|improve my finances|better job|side (hustle|gig|income)|personal finance|coach me|analyse my (finances|spending|money)|analyze my (finances|spending|money)|where (can|should) i (cut|save)|financial health|money tips|finanzberatung|spartipps?|geldtipps?|wie kann ich sparen|einkommen erh[oö]hen|besser(en)? job|consejo financiero|consejos? de ahorro|c[oó]mo (puedo|debo) ahorrar|aumentar (mis )?ingresos|conselho financeiro|conselhos?|como (posso|devo) poupar|aumentar (o )?rendimento|financieel advies|spaartips?|hoe kan ik sparen|inkomen verhogen|consell financer|consells? d'?estalvi|com (puc|he de) estalviar|augmentar (els )?ingressos|gib mir (tipps?|beratung)|dame consejo|d[aá]-me conselho|geef me advies|dona'?m consell)\b/i;
 
 /** True when the user is asking for financial guidance (not just a spending query). */
 export function isAdviceRequest(text: string): boolean {
@@ -89,6 +89,31 @@ export function buildFinancialAdvice(ctx: FinanceContext): string {
         pct: pct(month.totalExpense / month.totalIncome),
       }),
     );
+  } else if (month.totalIncome > 0 && month.totalExpense / month.totalIncome > 0.75) {
+    tips.push(
+      t("assistant.backend.advice.tightCashflow", {
+        pct: pct(month.totalExpense / month.totalIncome),
+      }),
+    );
+  }
+
+  if (month.totalIncome > 0 && month.net > 0 && month.net < month.totalIncome * 0.1) {
+    tips.push(t("assistant.backend.advice.growIncome"));
+  }
+
+  // Second-largest category if meaningful
+  const second = month.topExpenseCategories[1];
+  if (second && month.totalExpense > 0) {
+    const share = second.amount / month.totalExpense;
+    if (share >= 0.15) {
+      tips.push(
+        t("assistant.backend.advice.secondCategory", {
+          name: second.name,
+          pct: pct(share),
+          amount: money(ctx, second.amount),
+        }),
+      );
+    }
   }
 
   const top = month.topExpenseCategories[0];
@@ -106,9 +131,26 @@ export function buildFinancialAdvice(ctx: FinanceContext): string {
     }
   }
 
+  if (ctx.loans.length) {
+    const costly = [...ctx.loans].sort((a, b) => b.apr - a.apr)[0];
+    if (costly && costly.apr >= 6) {
+      tips.push(
+        t("assistant.backend.advice.highAprLoan", {
+          name: costly.name,
+          apr: costly.apr,
+          principal: money(ctx, costly.principal),
+        }),
+      );
+    }
+  }
+
   // Wealth allocation
   const monthlyBurn = month.totalExpense > 0 ? month.totalExpense : 1;
   const emergencyTarget = monthlyBurn * 6;
+
+  if (ctx.holdings.length === 0 && w.liquidityBalance > monthlyBurn * 3) {
+    tips.push(t("assistant.backend.advice.startInvesting"));
+  }
 
   if (w.cardDebt > monthlyBurn * 0.5) {
     tips.push(
@@ -205,7 +247,9 @@ export function buildFinancialAdvice(ctx: FinanceContext): string {
     tips.push(t("assistant.backend.advice.keepTracking"));
   }
 
-  return tips.map((line) => `• ${line}`).join("\n");
+  // Keep advice scannable: intro + up to 5 tips.
+  const body = tips[0] === t("assistant.backend.advice.intro") ? tips.slice(0, 6) : tips.slice(0, 5);
+  return body.map((line) => `• ${line}`).join("\n");
 }
 
 /** Prepend the one-time responsibility disclaimer. */

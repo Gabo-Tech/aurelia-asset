@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { View, Text, StyleSheet, TextInput, Pressable, Alert } from "react-native";
 import { useTranslation } from "react-i18next";
-import { Card, PrimaryButton, SecondaryButton, SectionHeader, Metric } from "@/components/ui";
+import { Card, PrimaryButton, SecondaryButton, SectionHeader, Metric, chipLabelStyle, chipContainerStyle } from "@/components/ui";
 import { useStore, useMoney } from "@/lib/store";
 import type { HoldingTransaction } from "@/lib/types";
 import { colors, spacing } from "@/theme/colors";
@@ -213,7 +213,15 @@ export function TransactionsPanel() {
         Ledger ({rows.length})
       </Text>
       {rows.length === 0 ? (
-        <Text style={styles.meta}>No transactions match this filter.</Text>
+        <Text style={styles.meta}>
+          {state.transactions?.length
+            ? t("more.tpEmptyFiltered", {
+                defaultValue: "No transactions match this filter.",
+              })
+            : t("more.tpEmpty", {
+                defaultValue: "No transactions yet. Add a buy or sell to start tracking.",
+              })}
+        </Text>
       ) : (
         rows.map((tx) => {
           const h = state.holdings.find((x) => x.id === tx.holdingId);
@@ -256,17 +264,16 @@ export function TransactionsPanel() {
 const styles = StyleSheet.create({
   row: { flexDirection: "row", flexWrap: "wrap", marginBottom: 8 },
   chip: {
+    ...chipContainerStyle,
     paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: colors.border,
+    minHeight: 28,
     marginRight: 6,
     marginBottom: 6,
+    borderWidth: 1,
     backgroundColor: colors.surfaceAlt,
   },
   chipOn: { borderColor: colors.accent, backgroundColor: colors.accentSoft },
-  chipText: { color: colors.text, fontSize: 11, fontWeight: "600", textTransform: "capitalize" },
+  chipText: { ...chipLabelStyle, fontSize: 11, lineHeight: 14, textTransform: "capitalize" },
   sub: { color: colors.text, fontWeight: "600", marginBottom: 6 },
   input: {
     borderWidth: 1,

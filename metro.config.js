@@ -7,19 +7,13 @@ const EMPTY_SHIM = path.resolve(__dirname, 'metro-shims/empty.js');
  * Metro configuration
  * https://reactnative.dev/docs/metro
  *
- * Two production-bundle fixups for this no-Expo RN app:
+ * Production-bundle fixup for this no-Expo RN app:
  *
- * 1. The tar.bz2 model-extraction path (src/lib/ai/downloads.ts) pulls in
- *    `tar-stream` / `unbzip2-stream` / `through`, which reference Node core
- *    modules. `events` / `buffer` / `string_decoder` / `process` resolve to
- *    real installed npm packages; `stream` has no npm package of that name so
- *    it is aliased to `readable-stream`, and `fs` (only touched in a try/catch
- *    fallback) is stubbed empty.
- *
- * 2. `@siteed/sherpa-onnx.rn` eagerly imports `expo-file-system` from its
- *    ArchiveService. This project does its own downloads/extraction (RNFS +
- *    tar-stream) and never calls ArchiveService, so `expo-file-system` is
- *    stubbed to an empty module to keep the bundle Expo-free.
+ * `@siteed/sherpa-onnx.rn` eagerly imports `expo-file-system` from its
+ * ArchiveService. Model download/extract uses RNFS + Sherpa's native
+ * extractTarBz2 and never calls ArchiveService, so `expo-file-system` is
+ * stubbed empty. `fs` / `stream` aliases remain for any incidental Node
+ * polyfill requires from the Sherpa package graph.
  *
  * @type {import('@react-native/metro-config').MetroConfig}
  */
