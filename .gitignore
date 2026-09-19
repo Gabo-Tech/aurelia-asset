@@ -113,6 +113,10 @@ yarn-error.log*
 !.yarn/sdks
 !.yarn/versions
 
+# Vercel Build Output API (generated during deploy)
+.vercel/
+web/.vercel/
+
 # Web package
 web/node_modules/
 web/.output/
