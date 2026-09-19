@@ -178,7 +178,7 @@ function SankeySvg({
 
 export function SankeyChart({ data, height = 320, format, title }: Props) {
   const { width: winW, height: winH } = useWindowDimensions();
-  const width = Math.max(320, winW - 48);
+  const width = Math.max(280, winW - 48);
   const chartH = Math.max(280, Math.min(420, 40 + data.nodes.length * 18));
   const [fullscreen, setFullscreen] = useState(false);
   const [zoom, setZoom] = useState(1);
@@ -189,7 +189,7 @@ export function SankeyChart({ data, height = 320, format, title }: Props) {
     [data, width, height, chartH],
   );
 
-  const fullW = Math.max(320, (winW - 24) * zoom);
+  const fullW = Math.max(280, (winW - 24) * zoom);
   const fullH = Math.max(400, (winH - 140) * zoom);
   const fullLayout = useMemo(
     () => (fullscreen ? buildLayout(data, fullW, fullH) : null),

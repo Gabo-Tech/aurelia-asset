@@ -1,5 +1,5 @@
 import { addDays, addMonths, addWeeks, addYears, endOfDay, format, startOfDay } from "date-fns";
-import type { CashflowEntry } from "@/lib/types";
+import type { AccountRef, CashflowEntry } from "@/lib/types";
 
 export type ExpandedCashflowEntry = CashflowEntry & {
   parentId: string;
@@ -111,18 +111,70 @@ export function isRecurringParent(entry: CashflowEntry): boolean {
   return !!entry.recurrence || !!entry.installmentPlan;
 }
 
+export function isCashPoolRef(ref?: AccountRef | null): boolean {
+  if (!ref || ref === "liquidity") return true;
+  return ref.startsWith("cash:");
+}
+
+export function defaultCashAccountId(
+  accounts: { id: string; isDefault?: boolean }[] | undefined,
+): string {
+  if (!accounts?.length) return "cash-default";
+  return accounts.find((a) => a.isDefault)?.id ?? accounts[0].id;
+}
+
+export function cashRefForAccount(accountId: string): AccountRef {
+  return `cash:${accountId}`;
+}
+
+/** Impact of an entry on a single named cash account. */
+export function cashAccountImpact(
+  entry: CashflowEntry,
+  accountId: string,
+  valueInDisplay: number,
+  defaultAccountId: string,
+): number {
+  const ref = `cash:${accountId}` as const;
+  const isDefault = accountId === defaultAccountId;
+  const matches = (r?: AccountRef) =>
+    r === ref || (isDefault && (!r || r === "liquidity"));
+
+  if (entry.kind === "income") {
+    const dest = entry.paymentMethod;
+    if (dest?.startsWith("cash:")) return dest === ref ? valueInDisplay : 0;
+    if (dest?.startsWith("credit:") || dest?.startsWith("holding:")) return 0;
+    return isDefault ? valueInDisplay : 0;
+  }
+  if (entry.kind === "expense") {
+    const pm = entry.paymentMethod;
+    if (pm?.startsWith("credit:")) return 0;
+    if (pm?.startsWith("holding:")) return 0;
+    if (pm?.startsWith("cash:")) return pm === ref ? -valueInDisplay : 0;
+    return isDefault ? -valueInDisplay : 0;
+  }
+  let delta = 0;
+  if (matches(entry.fromAccount)) delta -= valueInDisplay;
+  if (matches(entry.toAccount)) delta += valueInDisplay;
+  return delta;
+}
+
 export function liquidityImpact(entry: CashflowEntry, valueInDisplay: number): number {
-  if (entry.kind === "income") return valueInDisplay;
+  if (entry.kind === "income") {
+    const dest = entry.paymentMethod;
+    if (dest?.startsWith("credit:") || dest?.startsWith("holding:")) return 0;
+    return valueInDisplay;
+  }
   if (entry.kind === "expense") {
     const pm = entry.paymentMethod;
     if (pm && pm.startsWith("credit:")) return 0;
+    if (pm?.startsWith("holding:")) return 0;
     return -valueInDisplay;
   }
-  const from = entry.fromAccount;
-  const to = entry.toAccount;
+  const fromCash = isCashPoolRef(entry.fromAccount);
+  const toCash = isCashPoolRef(entry.toAccount);
   let delta = 0;
-  if (from === "liquidity") delta -= valueInDisplay;
-  if (to === "liquidity") delta += valueInDisplay;
+  if (fromCash) delta -= valueInDisplay;
+  if (toCash) delta += valueInDisplay;
   return delta;
 }
 

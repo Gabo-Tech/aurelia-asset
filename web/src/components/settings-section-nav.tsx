@@ -9,7 +9,7 @@ export function SettingsSectionNav({ items, className }: SettingsSectionNavProps
   return (
     <nav
       className={cn(
-        "lg:hidden sticky top-14 z-10 -mx-1 mb-5 flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+        "sticky top-[var(--app-header-h)] z-10 -mx-1 mb-5 flex gap-2 overflow-x-auto bg-background/90 pb-1 backdrop-blur lg:top-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
         className,
       )}
       aria-label="Settings sections"

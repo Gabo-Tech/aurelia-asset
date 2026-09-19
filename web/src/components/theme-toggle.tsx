@@ -1,5 +1,6 @@
 import { Moon, Sun, Monitor } from "lucide-react";
-import { useTheme } from "@/hooks/use-theme";
+import { useTheme, type ThemePreference } from "@/hooks/use-theme";
+import { useStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
 const LABELS = {
@@ -9,12 +10,18 @@ const LABELS = {
 } as const;
 
 export function ThemeToggle({ className }: { className?: string }) {
-  const { preference, toggle } = useTheme();
+  const { preference, setTheme } = useTheme();
+  const { state, updateSettings } = useStore();
   const label = LABELS[preference];
   return (
     <button
       type="button"
-      onClick={toggle}
+      onClick={() => {
+        const next: ThemePreference =
+          preference === "light" ? "dark" : preference === "dark" ? "system" : "light";
+        setTheme(next);
+        updateSettings({ appearance: { ...state.settings.appearance, mode: next } });
+      }}
       title={label}
       aria-label={label}
       className={cn(

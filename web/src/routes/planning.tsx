@@ -62,17 +62,9 @@ import type {
   ForecastScenario,
   Loan,
   CashflowEntry,
+  SavingsGoal,
 } from "@/lib/types";
 import { Star, StarOff, Copy } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter,
-  DialogDescription,
-} from "@/components/ui/dialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronDown } from "lucide-react";
 import { BudgetPieCard, type PieSlice } from "@/components/budget-pie-card";
@@ -641,7 +633,7 @@ function BudgetsPanel() {
                           style={!over ? ({ ["--progress-fg" as any]: swatch } as any) : undefined}
                         />
                       ) : null}
-                      <div className="flex items-center justify-between text-xs">
+                      <div className="flex flex-wrap items-center justify-between gap-1 text-xs">
                         <span className={over ? "text-destructive" : "text-muted-foreground"}>
                           {tracked
                             ? over
@@ -659,6 +651,9 @@ function BudgetsPanel() {
                           <Button
                             size="icon"
                             variant="ghost"
+                            aria-label={t("planning.budgets.deleteItemAria", {
+                              defaultValue: "Delete budget item",
+                            })}
                             onClick={() => removeBudgetItem(activePlan.id, it.id)}
                           >
                             <Trash2 className="h-3.5 w-3.5" />
@@ -811,51 +806,97 @@ function PlanDialog({
   const [color, setColor] = useState<string | undefined>(initial?.color);
   const [periodType, setPeriodType] = useState<BudgetPeriodType>(initial?.periodType ?? "monthly");
   const [periodDays, setPeriodDays] = useState<string>(String(initial?.periodDays ?? 10));
+  const [nameError, setNameError] = useState<string | null>(null);
+
+  function hydrate() {
+    setName(initial?.name ?? "");
+    setDescription(initial?.description ?? "");
+    setColor(initial?.color);
+    setPeriodType(initial?.periodType ?? "monthly");
+    setPeriodDays(String(initial?.periodDays ?? 10));
+    setNameError(null);
+  }
+
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(v) => {
-        setOpen(v);
-        if (v) {
-          setName(initial?.name ?? "");
-          setDescription(initial?.description ?? "");
-          setColor(initial?.color);
-          setPeriodType(initial?.periodType ?? "monthly");
-          setPeriodDays(String(initial?.periodDays ?? 10));
+    <>
+      <span className="contents" onClick={() => setOpen(true)}>
+        {trigger}
+      </span>
+      <ResponsiveDialog
+        open={open}
+        onOpenChange={(v) => {
+          setOpen(v);
+          if (v) hydrate();
+        }}
+        title={
+          mode === "edit"
+            ? t("planning.budgets.editPlan", { defaultValue: "Edit plan" })
+            : t("planning.budgets.newPlan", { defaultValue: "New plan" })
         }
-      }}
-    >
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>
-            {mode === "edit"
-              ? t("planning.budgets.editPlan", { defaultValue: "Edit plan" })
-              : t("planning.budgets.newPlan", { defaultValue: "New plan" })}
-          </DialogTitle>
-          <DialogDescription>
-            {t("planning.budgets.planDialogDesc", {
-              defaultValue:
-                "Give this budget a clear name so you can tell it apart from your others.",
-            })}
-          </DialogDescription>
-        </DialogHeader>
+        description={t("planning.budgets.planDialogDesc", {
+          defaultValue: "Give this budget a clear name so you can tell it apart from your others.",
+        })}
+        showClose={false}
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setOpen(false)}>
+              {t("common.cancel", { defaultValue: "Cancel" })}
+            </Button>
+            <Button
+              onClick={() => {
+                const n = name.trim();
+                if (!n) {
+                  setNameError(t("more.mcNameRequired", { defaultValue: "Name required" }));
+                  return;
+                }
+                const days =
+                  periodType === "custom"
+                    ? Math.max(1, Math.min(3650, Math.floor(Number(periodDays) || 10)))
+                    : undefined;
+                onSubmit({
+                  name: n,
+                  description: description.trim() || undefined,
+                  color,
+                  periodType,
+                  periodDays: days,
+                });
+                setOpen(false);
+              }}
+            >
+              {mode === "edit"
+                ? t("common.save", { defaultValue: "Save" })
+                : t("common.create", { defaultValue: "Create" })}
+            </Button>
+          </>
+        }
+      >
         <div className="space-y-3">
           <div>
-            <Label>{t("planning.budgets.planName", { defaultValue: "Name" })}</Label>
+            <Label htmlFor="plan-name">{t("planning.budgets.planName", { defaultValue: "Name" })}</Label>
             <Input
+              id="plan-name"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) => {
+                setName(e.target.value);
+                if (nameError) setNameError(null);
+              }}
               placeholder={t("planning.budgets.planNamePlaceholder", {
                 defaultValue: "e.g. Japan trip 2026",
               })}
+              aria-invalid={!!nameError}
             />
+            {nameError ? (
+              <p className="mt-1 text-xs text-destructive" role="alert">
+                {nameError}
+              </p>
+            ) : null}
           </div>
           <div>
-            <Label>
+            <Label htmlFor="plan-description">
               {t("planning.budgets.planDescription", { defaultValue: "Description (optional)" })}
             </Label>
             <Textarea
+              id="plan-description"
               rows={2}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -885,8 +926,11 @@ function PlanDialog({
             </div>
             {periodType === "custom" ? (
               <div>
-                <Label>{t("planning.budgets.periodDays", { defaultValue: "Days" })}</Label>
+                <Label htmlFor="plan-days">
+                  {t("planning.budgets.periodDays", { defaultValue: "Days" })}
+                </Label>
                 <Input
+                  id="plan-days"
                   inputMode="numeric"
                   value={periodDays}
                   onChange={(e) => setPeriodDays(e.target.value)}
@@ -902,35 +946,8 @@ function PlanDialog({
             <ColorSwatchPicker value={color} onChange={setColor} />
           </div>
         </div>
-        <DialogFooter>
-          <Button variant="ghost" onClick={() => setOpen(false)}>
-            {t("common.cancel", { defaultValue: "Cancel" })}
-          </Button>
-          <Button
-            onClick={() => {
-              const n = name.trim();
-              if (!n) return;
-              const days =
-                periodType === "custom"
-                  ? Math.max(1, Math.min(3650, Math.floor(Number(periodDays) || 10)))
-                  : undefined;
-              onSubmit({
-                name: n,
-                description: description.trim() || undefined,
-                color,
-                periodType,
-                periodDays: days,
-              });
-              setOpen(false);
-            }}
-          >
-            {mode === "edit"
-              ? t("common.save", { defaultValue: "Save" })
-              : t("common.create", { defaultValue: "Create" })}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+      </ResponsiveDialog>
+    </>
   );
 }
 
@@ -941,15 +958,23 @@ function EditBudgetItemButton({
   item: BudgetItem;
   onSave: (p: Partial<BudgetItem>) => void;
 }) {
+  const { t } = useTranslation();
+  const { state } = useStore();
+  const expenseCats = state.categories.filter((c) => c.kind === "expense");
   const [editing, setEditing] = useState(false);
+  const [label, setLabel] = useState(item.label);
   const [amount, setAmount] = useState(String(item.amount));
+  const [categoryId, setCategoryId] = useState(item.categoryId ?? "none");
   if (!editing) {
     return (
       <Button
         size="icon"
         variant="ghost"
+        aria-label={t("planning.budgets.editItemAria", { defaultValue: "Edit budget item" })}
         onClick={() => {
+          setLabel(item.label);
           setAmount(String(item.amount));
+          setCategoryId(item.categoryId ?? "none");
           setEditing(true);
         }}
       >
@@ -958,18 +983,56 @@ function EditBudgetItemButton({
     );
   }
   return (
-    <div className="flex items-center gap-1">
-      <Input className="h-7 w-24" value={amount} onChange={(e) => setAmount(e.target.value)} />
+    <div className="flex flex-wrap items-center justify-end gap-1">
+      <Input
+        className="h-7 w-24"
+        value={label}
+        onChange={(e) => setLabel(e.target.value)}
+        aria-label={t("planning.budgets.itemLabel", { defaultValue: "Label" })}
+        placeholder={t("planning.budgets.itemLabel", { defaultValue: "Label" })}
+      />
+      <Select value={categoryId} onValueChange={setCategoryId}>
+        <SelectTrigger
+          className="h-7 w-[8.5rem]"
+          aria-label={t("planning.budgets.category", { defaultValue: "Category" })}
+        >
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="none">
+            {t("planning.budgets.noCategory", { defaultValue: "None — track manually" })}
+          </SelectItem>
+          {expenseCats.map((c) => (
+            <SelectItem key={c.id} value={c.id}>
+              {c.name}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <Input
+        className="h-7 w-20"
+        inputMode="decimal"
+        value={amount}
+        onChange={(e) => setAmount(e.target.value)}
+        aria-label={t("planning.budgets.monthlyLimit")}
+      />
       <Button
         size="sm"
         variant="secondary"
+        className="h-7 px-2"
         onClick={() => {
           const a = Number(amount);
-          if (Number.isFinite(a) && a > 0) onSave({ amount: a });
+          if (Number.isFinite(a) && a > 0) {
+            onSave({
+              amount: a,
+              label: label.trim() || item.label,
+              categoryId: categoryId === "none" ? undefined : categoryId,
+            });
+          }
           setEditing(false);
         }}
       >
-        OK
+        {t("common.ok", { defaultValue: "OK" })}
       </Button>
     </div>
   );
@@ -986,35 +1049,76 @@ function GoalsPanel() {
   const { state, addGoal, updateGoal, removeGoal } = useStore();
   const { fmt, currency: displayCurrency } = useMoney();
   const [addOpen, setAddOpen] = useState(false);
-  const [form, setForm] = useState({
+  const [editing, setEditing] = useState<SavingsGoal | null>(null);
+  const blankForm = () => ({
     name: "",
     target: "",
     current: "",
     date: "",
     currency: displayCurrency,
+    notes: "",
+    color: undefined as string | undefined,
   });
+  const [form, setForm] = useState(blankForm);
+
+  const closeDialog = () => {
+    setAddOpen(false);
+    setEditing(null);
+    setForm(blankForm());
+  };
+
+  const openEdit = (g: SavingsGoal) => {
+    setForm({
+      name: g.name,
+      target: String(g.targetAmount),
+      current: String(g.currentAmount),
+      date: g.targetDate?.slice(0, 10) ?? "",
+      currency: g.currency || displayCurrency,
+      notes: g.notes ?? "",
+      color: g.color,
+    });
+    setEditing(g);
+  };
 
   const submit = () => {
     const target = Number(form.target);
     const current = Number(form.current) || 0;
-    if (!form.name || !Number.isFinite(target) || target <= 0) return;
-    addGoal({
-      name: form.name,
+    if (!form.name.trim() || !Number.isFinite(target) || target <= 0) return;
+    const color =
+      form.color ||
+      editing?.color ||
+      GOAL_COLORS[state.goals.length % GOAL_COLORS.length];
+    const payload = {
+      name: form.name.trim(),
       targetAmount: target,
       currentAmount: current,
       targetDate: form.date || undefined,
       currency: form.currency,
-      color: GOAL_COLORS[state.goals.length % GOAL_COLORS.length],
-    });
-    setForm({ name: "", target: "", current: "", date: "", currency: displayCurrency });
-    setAddOpen(false);
-    toast.success(t("planning.goals.added", { defaultValue: "Goal added" }));
+      notes: form.notes.trim() || undefined,
+      color,
+    };
+    if (editing) {
+      updateGoal(editing.id, payload);
+      toast.success(t("planning.goals.updated", { defaultValue: "Goal updated" }));
+    } else {
+      addGoal(payload);
+      toast.success(t("planning.goals.added", { defaultValue: "Goal added" }));
+    }
+    closeDialog();
   };
 
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
-        <Button onClick={() => setAddOpen(true)} data-tour="plan-add-goal" className="gap-1.5">
+        <Button
+          onClick={() => {
+            setEditing(null);
+            setForm(blankForm());
+            setAddOpen(true);
+          }}
+          data-tour="plan-add-goal"
+          className="gap-1.5"
+        >
           <Plus className="h-4 w-4" />
           {t("planning.goals.addGoal")}
         </Button>
@@ -1054,10 +1158,38 @@ function GoalsPanel() {
                       })}
                     </div>
                   ) : null}
+                  {g.notes ? (
+                    <div className="text-xs text-muted-foreground mt-0.5">{g.notes}</div>
+                  ) : null}
                 </div>
-                <Button size="icon" variant="ghost" onClick={() => removeGoal(g.id)}>
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
+                <div className="flex items-center gap-1">
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    aria-label={t("planning.goals.editAria", { defaultValue: "Edit goal" })}
+                    onClick={() => openEdit(g)}
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    aria-label={t("planning.goals.deleteAria", { defaultValue: "Delete goal" })}
+                    onClick={() => {
+                      if (
+                        confirm(
+                          t("planning.goals.deleteConfirm", {
+                            defaultValue: "Delete this goal?",
+                          }),
+                        )
+                      ) {
+                        removeGoal(g.id);
+                      }
+                    }}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent className="space-y-2">
                 <Progress value={pct} />
@@ -1096,9 +1228,15 @@ function GoalsPanel() {
       </div>
 
       <ResponsiveDialog
-        open={addOpen}
-        onOpenChange={setAddOpen}
-        title={t("planning.goals.newTitle")}
+        open={addOpen || !!editing}
+        onOpenChange={(open) => {
+          if (!open) closeDialog();
+        }}
+        title={
+          editing
+            ? t("planning.goals.editTitle", { defaultValue: "Edit goal" })
+            : t("planning.goals.newTitle")
+        }
         description={t("planning.goals.addHint", {
           defaultValue: "Set a target and track how much you have saved.",
         })}
@@ -1150,9 +1288,32 @@ function GoalsPanel() {
               onChange={(e) => setForm({ ...form, date: e.target.value })}
             />
           </div>
+          <div>
+            <Label>{t("planning.goals.notes", { defaultValue: "Notes" })}</Label>
+            <Textarea
+              rows={2}
+              value={form.notes}
+              onChange={(e) => setForm({ ...form, notes: e.target.value })}
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <Label className="text-xs">
+              {t("planning.goals.color", { defaultValue: "Color" })}
+            </Label>
+            <ColorSwatchPicker
+              value={form.color}
+              onChange={(c) => setForm({ ...form, color: c })}
+            />
+          </div>
           <Button onClick={submit} className="w-full">
-            <Plus className="h-4 w-4 mr-1" />
-            {t("planning.goals.addGoal")}
+            {editing ? (
+              t("common.save", { defaultValue: "Save" })
+            ) : (
+              <>
+                <Plus className="h-4 w-4 mr-1" />
+                {t("planning.goals.addGoal")}
+              </>
+            )}
           </Button>
         </div>
       </ResponsiveDialog>
@@ -1926,52 +2087,100 @@ function ScenarioDialog({
   const [inc, setInc] = useState(String(initial?.monthlyIncomeAdjust ?? 0));
   const [exp, setExp] = useState(String(initial?.monthlyExpenseAdjust ?? 0));
   const [notes, setNotes] = useState(initial?.notes ?? "");
+  const [nameError, setNameError] = useState<string | null>(null);
+
+  function hydrate() {
+    setName(initial?.name ?? "");
+    setDescription(initial?.description ?? "");
+    setColor(initial?.color);
+    setMonthsStr(String(initial?.months ?? 6));
+    setInc(String(initial?.monthlyIncomeAdjust ?? 0));
+    setExp(String(initial?.monthlyExpenseAdjust ?? 0));
+    setNotes(initial?.notes ?? "");
+    setNameError(null);
+  }
+
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(v) => {
-        setOpen(v);
-        if (v) {
-          setName(initial?.name ?? "");
-          setDescription(initial?.description ?? "");
-          setColor(initial?.color);
-          setMonthsStr(String(initial?.months ?? 6));
-          setInc(String(initial?.monthlyIncomeAdjust ?? 0));
-          setExp(String(initial?.monthlyExpenseAdjust ?? 0));
-          setNotes(initial?.notes ?? "");
+    <>
+      <span className="contents" onClick={() => setOpen(true)}>
+        {trigger}
+      </span>
+      <ResponsiveDialog
+        open={open}
+        onOpenChange={(v) => {
+          setOpen(v);
+          if (v) hydrate();
+        }}
+        title={
+          mode === "edit"
+            ? t("planning.forecast.editScenario", { defaultValue: "Edit scenario" })
+            : t("planning.forecast.newScenario", { defaultValue: "New scenario" })
         }
-      }}
-    >
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>
-            {mode === "edit"
-              ? t("planning.forecast.editScenario", { defaultValue: "Edit scenario" })
-              : t("planning.forecast.newScenario", { defaultValue: "New scenario" })}
-          </DialogTitle>
-          <DialogDescription>
-            {t("planning.forecast.scenarioDialogDesc", {
-              defaultValue: "Give this scenario a name so you can compare it against others.",
-            })}
-          </DialogDescription>
-        </DialogHeader>
+        description={t("planning.forecast.scenarioDialogDesc", {
+          defaultValue: "Give this scenario a name so you can compare it against others.",
+        })}
+        showClose={false}
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setOpen(false)}>
+              {t("common.cancel", { defaultValue: "Cancel" })}
+            </Button>
+            <Button
+              onClick={() => {
+                const n = name.trim();
+                if (!n) {
+                  setNameError(t("more.mcNameRequired", { defaultValue: "Name required" }));
+                  return;
+                }
+                const m = Math.max(1, Math.min(60, Math.floor(Number(monthsStr) || 6)));
+                onSubmit({
+                  name: n,
+                  description: description.trim() || undefined,
+                  color,
+                  months: m,
+                  monthlyIncomeAdjust: Number(inc) || 0,
+                  monthlyExpenseAdjust: Number(exp) || 0,
+                  notes: notes.trim() || undefined,
+                });
+                setOpen(false);
+              }}
+            >
+              {mode === "edit"
+                ? t("common.save", { defaultValue: "Save" })
+                : t("common.create", { defaultValue: "Create" })}
+            </Button>
+          </>
+        }
+      >
         <div className="space-y-3">
           <div>
-            <Label>{t("planning.forecast.scenarioName", { defaultValue: "Name" })}</Label>
+            <Label htmlFor="scenario-name">
+              {t("planning.forecast.scenarioName", { defaultValue: "Name" })}
+            </Label>
             <Input
+              id="scenario-name"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) => {
+                setName(e.target.value);
+                if (nameError) setNameError(null);
+              }}
               placeholder={t("planning.forecast.scenarioNamePlaceholder", {
                 defaultValue: "e.g. Small business",
               })}
+              aria-invalid={!!nameError}
             />
+            {nameError ? (
+              <p className="mt-1 text-xs text-destructive" role="alert">
+                {nameError}
+              </p>
+            ) : null}
           </div>
           <div>
-            <Label>
+            <Label htmlFor="scenario-description">
               {t("planning.budgets.planDescription", { defaultValue: "Description (optional)" })}
             </Label>
             <Textarea
+              id="scenario-description"
               rows={2}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -1979,20 +2188,37 @@ function ScenarioDialog({
           </div>
           <div className="grid grid-cols-3 gap-2">
             <div>
-              <Label>{t("planning.forecast.months", { defaultValue: "Months" })}</Label>
+              <Label htmlFor="scenario-months">
+                {t("planning.forecast.months", { defaultValue: "Months" })}
+              </Label>
               <Input
+                id="scenario-months"
                 inputMode="numeric"
                 value={monthsStr}
                 onChange={(e) => setMonthsStr(e.target.value)}
               />
             </div>
             <div>
-              <Label className="text-xs">{t("planning.forecast.incomeAdjustPerMonth")}</Label>
-              <Input inputMode="decimal" value={inc} onChange={(e) => setInc(e.target.value)} />
+              <Label className="text-xs" htmlFor="scenario-inc">
+                {t("planning.forecast.incomeAdjustPerMonth")}
+              </Label>
+              <Input
+                id="scenario-inc"
+                inputMode="decimal"
+                value={inc}
+                onChange={(e) => setInc(e.target.value)}
+              />
             </div>
             <div>
-              <Label className="text-xs">{t("planning.forecast.expenseAdjustPerMonth")}</Label>
-              <Input inputMode="decimal" value={exp} onChange={(e) => setExp(e.target.value)} />
+              <Label className="text-xs" htmlFor="scenario-exp">
+                {t("planning.forecast.expenseAdjustPerMonth")}
+              </Label>
+              <Input
+                id="scenario-exp"
+                inputMode="decimal"
+                value={exp}
+                onChange={(e) => setExp(e.target.value)}
+              />
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -2002,38 +2228,19 @@ function ScenarioDialog({
             <ColorSwatchPicker value={color} onChange={setColor} />
           </div>
           <div>
-            <Label>{t("planning.forecast.notes", { defaultValue: "Notes" })}</Label>
-            <Textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />
+            <Label htmlFor="scenario-notes">
+              {t("planning.forecast.notes", { defaultValue: "Notes" })}
+            </Label>
+            <Textarea
+              id="scenario-notes"
+              rows={2}
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+            />
           </div>
         </div>
-        <DialogFooter>
-          <Button variant="ghost" onClick={() => setOpen(false)}>
-            {t("common.cancel", { defaultValue: "Cancel" })}
-          </Button>
-          <Button
-            onClick={() => {
-              const n = name.trim();
-              if (!n) return;
-              const m = Math.max(1, Math.min(60, Math.floor(Number(monthsStr) || 6)));
-              onSubmit({
-                name: n,
-                description: description.trim() || undefined,
-                color,
-                months: m,
-                monthlyIncomeAdjust: Number(inc) || 0,
-                monthlyExpenseAdjust: Number(exp) || 0,
-                notes: notes.trim() || undefined,
-              });
-              setOpen(false);
-            }}
-          >
-            {mode === "edit"
-              ? t("common.save", { defaultValue: "Save" })
-              : t("common.create", { defaultValue: "Create" })}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+      </ResponsiveDialog>
+    </>
   );
 }
 
@@ -2224,6 +2431,17 @@ function LoanCard({
   fmt: (n: number, from?: string) => string;
 }) {
   const { t } = useTranslation();
+  const [editOpen, setEditOpen] = useState(false);
+  const [form, setForm] = useState({
+    name: loan.name,
+    principal: String(loan.principal),
+    apr: String(loan.apr),
+    term: String(loan.termMonths),
+    start: loan.startDate.slice(0, 10),
+    extra: String(loan.extraMonthly || 0),
+    notes: loan.notes ?? "",
+    color: loan.color as string | undefined,
+  });
   const schedule = useMemo(() => amortize(loan), [loan]);
   const paidMonths = Math.max(
     0,
@@ -2252,12 +2470,48 @@ function LoanCard({
               date: format(new Date(loan.startDate), "MMM yyyy"),
             })}
           </div>
+          {loan.notes ? (
+            <div className="text-xs text-muted-foreground mt-0.5">{loan.notes}</div>
+          ) : null}
         </div>
         <div className="flex items-center gap-1">
+          <Button
+            size="icon"
+            variant="ghost"
+            aria-label={t("planning.loans.editAria", { defaultValue: "Edit loan" })}
+            onClick={() => {
+              setForm({
+                name: loan.name,
+                principal: String(loan.principal),
+                apr: String(loan.apr),
+                term: String(loan.termMonths),
+                start: loan.startDate.slice(0, 10),
+                extra: String(loan.extraMonthly || 0),
+                notes: loan.notes ?? "",
+                color: loan.color,
+              });
+              setEditOpen(true);
+            }}
+          >
+            <Pencil className="h-3.5 w-3.5" />
+          </Button>
           <Button size="sm" variant="secondary" onClick={onToggle}>
             {open ? t("planning.loans.hide") : t("planning.loans.schedule")}
           </Button>
-          <Button size="icon" variant="ghost" onClick={onRemove}>
+          <Button
+            size="icon"
+            variant="ghost"
+            aria-label={t("planning.loans.deleteAria", { defaultValue: "Delete loan" })}
+            onClick={() => {
+              if (
+                confirm(
+                  t("planning.loans.deleteConfirm", { defaultValue: "Delete this loan?" }),
+                )
+              ) {
+                onRemove();
+              }
+            }}
+          >
             <Trash2 className="h-3.5 w-3.5" />
           </Button>
         </div>
@@ -2282,6 +2536,7 @@ function LoanCard({
           <Input
             className="h-7 w-28"
             inputMode="decimal"
+            key={`${loan.id}-extra-${loan.extraMonthly ?? 0}`}
             defaultValue={String(loan.extraMonthly || 0)}
             onBlur={(e) => {
               const v = Number(e.target.value);
@@ -2291,35 +2546,170 @@ function LoanCard({
           />
         </div>
 
-        {open ? (
-          <div className="max-h-72 overflow-auto rounded-md border border-border/60 mt-2">
-            <table className="w-full text-xs">
-              <thead className="bg-muted/40 sticky top-0">
-                <tr>
-                  <th className="text-left p-2">{t("planning.loans.tbl.n")}</th>
-                  <th className="text-left p-2">{t("planning.loans.tbl.date")}</th>
-                  <th className="text-right p-2">{t("planning.loans.tbl.payment")}</th>
-                  <th className="text-right p-2">{t("planning.loans.tbl.interest")}</th>
-                  <th className="text-right p-2">{t("planning.loans.tbl.principal")}</th>
-                  <th className="text-right p-2">{t("planning.loans.tbl.balance")}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {schedule.rows.map((r) => (
-                  <tr key={r.index} className="border-t border-border/40">
-                    <td className="p-2">{r.index}</td>
-                    <td className="p-2">{format(new Date(r.date), "MMM yyyy")}</td>
-                    <td className="p-2 text-right tabular-nums">{f(r.payment)}</td>
-                    <td className="p-2 text-right tabular-nums text-rose-500">{f(r.interest)}</td>
-                    <td className="p-2 text-right tabular-nums text-emerald-500">
-                      {f(r.principal + r.extra)}
-                    </td>
-                    <td className="p-2 text-right tabular-nums">{f(r.balance)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        <ResponsiveDialog
+          open={editOpen}
+          onOpenChange={setEditOpen}
+          title={t("planning.loans.editTitle", { defaultValue: "Edit loan" })}
+          className="max-h-[92dvh] w-full max-w-2xl"
+          showClose
+        >
+          <div className="space-y-3 pb-2">
+            <div>
+              <Label>{t("planning.loans.name")}</Label>
+              <Input
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label>{t("planning.loans.principal")}</Label>
+                <Input
+                  inputMode="decimal"
+                  value={form.principal}
+                  onChange={(e) => setForm({ ...form, principal: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label>{t("planning.loans.apr")}</Label>
+                <Input
+                  inputMode="decimal"
+                  value={form.apr}
+                  onChange={(e) => setForm({ ...form, apr: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label>{t("planning.loans.termMonths")}</Label>
+                <Input
+                  inputMode="numeric"
+                  value={form.term}
+                  onChange={(e) => setForm({ ...form, term: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label>{t("planning.loans.start")}</Label>
+                <Input
+                  type="date"
+                  value={form.start}
+                  onChange={(e) => setForm({ ...form, start: e.target.value })}
+                />
+              </div>
+            </div>
+            <div>
+              <Label>{t("planning.loans.extraOpt")}</Label>
+              <Input
+                inputMode="decimal"
+                value={form.extra}
+                onChange={(e) => setForm({ ...form, extra: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label>{t("planning.loans.notes")}</Label>
+              <Textarea
+                rows={2}
+                value={form.notes}
+                onChange={(e) => setForm({ ...form, notes: e.target.value })}
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <Label className="text-xs">
+                {t("planning.loans.color", { defaultValue: "Color" })}
+              </Label>
+              <ColorSwatchPicker
+                value={form.color}
+                onChange={(c) => setForm({ ...form, color: c })}
+              />
+            </div>
+            <Button
+              className="w-full"
+              onClick={() => {
+                const principal = Number(form.principal);
+                const apr = Number(form.apr);
+                const term = Math.floor(Number(form.term));
+                if (!form.name.trim() || !Number.isFinite(principal) || principal <= 0 || term <= 0)
+                  return;
+                onPatch({
+                  name: form.name.trim(),
+                  principal,
+                  apr: Number.isFinite(apr) ? apr : 0,
+                  termMonths: term,
+                  startDate: form.start,
+                  extraMonthly: Number(form.extra) || 0,
+                  notes: form.notes.trim() || undefined,
+                  color: form.color || loan.color,
+                });
+                setEditOpen(false);
+              }}
+            >
+              {t("common.save", { defaultValue: "Save" })}
+            </Button>
           </div>
+        </ResponsiveDialog>
+
+        {open ? (
+          <>
+            <div className="mt-2 space-y-2 md:hidden">
+              {schedule.rows.map((r) => (
+                <div
+                  key={r.index}
+                  className="rounded-xl border border-border/60 bg-muted/20 p-3 text-xs space-y-1.5"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-medium">
+                      #{r.index} · {format(new Date(r.date), "MMM yyyy")}
+                    </span>
+                    <span className="tabular-nums font-semibold">{f(r.payment)}</span>
+                  </div>
+                  <div className="flex flex-wrap gap-x-3 gap-y-1 text-muted-foreground">
+                    <span>
+                      {t("planning.loans.tbl.interest")}:{" "}
+                      <span className="tabular-nums text-rose-500">{f(r.interest)}</span>
+                    </span>
+                    <span>
+                      {t("planning.loans.tbl.principal")}:{" "}
+                      <span className="tabular-nums text-emerald-500">
+                        {f(r.principal + r.extra)}
+                      </span>
+                    </span>
+                    <span>
+                      {t("planning.loans.tbl.balance")}:{" "}
+                      <span className="tabular-nums text-foreground">{f(r.balance)}</span>
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="hidden md:block max-h-72 overflow-auto rounded-md border border-border/60 mt-2">
+              <table className="w-full text-xs">
+                <thead className="bg-muted/40 sticky top-0">
+                  <tr>
+                    <th className="text-left p-2">{t("planning.loans.tbl.n")}</th>
+                    <th className="text-left p-2">{t("planning.loans.tbl.date")}</th>
+                    <th className="text-right p-2">{t("planning.loans.tbl.payment")}</th>
+                    <th className="text-right p-2">{t("planning.loans.tbl.interest")}</th>
+                    <th className="text-right p-2">{t("planning.loans.tbl.principal")}</th>
+                    <th className="text-right p-2">{t("planning.loans.tbl.balance")}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {schedule.rows.map((r) => (
+                    <tr key={r.index} className="border-t border-border/40">
+                      <td className="p-2">{r.index}</td>
+                      <td className="p-2">{format(new Date(r.date), "MMM yyyy")}</td>
+                      <td className="p-2 text-right tabular-nums">{f(r.payment)}</td>
+                      <td className="p-2 text-right tabular-nums text-rose-500">{f(r.interest)}</td>
+                      <td className="p-2 text-right tabular-nums text-emerald-500">
+                        {f(r.principal + r.extra)}
+                      </td>
+                      <td className="p-2 text-right tabular-nums">{f(r.balance)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         ) : null}
       </CardContent>
     </Card>

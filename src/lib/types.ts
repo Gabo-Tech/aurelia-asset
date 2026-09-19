@@ -32,15 +32,38 @@ export type Recurrence = {
   until?: string;
 };
 
-/** Reference to an account participating in a transfer.
- *  - "liquidity" : the implicit cash pool
+/** Reference to an account participating in a transfer or payment.
+ *  - "liquidity" : legacy alias for the default cash account
+ *  - "cash:<id>" : a named cash account (checking, savings, …)
  *  - "holding:<id>" : a specific holding (typically short-term / cash-like)
  *  - "credit:<id>" : a credit card */
-export type AccountRef = "liquidity" | `holding:${string}` | `credit:${string}`;
+export type AccountRef =
+  | "liquidity"
+  | `cash:${string}`
+  | `holding:${string}`
+  | `credit:${string}`;
 
-/** How a one-off purchase is split. The expense entry stays in the list but
- *  is rendered as N scheduled charges; each occurrence is generated at expand
- *  time, similar to recurrences. */
+/** Named cash / bank-like balance. Replaces the single implicit liquidity pool. */
+export type CashAccount = {
+  id: string;
+  name: string;
+  color: string;
+  currency?: string;
+  /** The account formerly known as "liquidity". */
+  isDefault?: boolean;
+};
+
+/** Daily (or on-demand) net-worth snapshot for the timeline chart. */
+export type NetWorthSnapshot = {
+  date: string; // yyyy-MM-dd
+  portfolio: number;
+  liquidity: number;
+  debt: number;
+  /** portfolio + liquidity - debt */
+  netWorth: number;
+  currency?: string;
+};
+
 export type InstallmentPlan = {
   total: number;
   count: number;
@@ -119,6 +142,17 @@ export type Settings = {
   aiAdviceDisclaimerSeen?: boolean;
   /** Native first-run checklist completed or skipped. */
   onboardingSeen?: boolean;
+  appearance?: {
+    mode?: "light" | "dark" | "system";
+    paletteId?: "gold" | "ivory" | "navy" | "forest" | "burgundy" | "slate" | "custom";
+    custom?: {
+      primary: string;
+      accent: string;
+      background: string;
+      card: string;
+      chart?: [string, string, string, string, string];
+    };
+  };
 };
 
 export type CreditCard = {
@@ -234,6 +268,10 @@ export type AppState = {
   transactions: HoldingTransaction[];
   categories: Category[];
   creditCards: CreditCard[];
+  /** Named cash accounts (checking, savings, …). Always at least one default. */
+  cashAccounts: CashAccount[];
+  /** Append-only net-worth history for the timeline chart. */
+  netWorthSnapshots: NetWorthSnapshot[];
   /** Legacy flat budget list. New UI writes to `budgetPlans` instead; this
    *  is kept for backwards compatibility on load and migrated on first read. */
   budgets: Budget[];
@@ -264,10 +302,10 @@ export type HoldingTransaction = {
 
 /** Default palette per category group. */
 export const GROUP_COLORS: Record<CategoryGroup, string> = {
-  income: "#22c55e",
-  expense: "#ef4444",
-  savings: "#0ea5e9",
-  investment: "#10b981",
+  income: "#3d6b4f",
+  expense: "#8c2e22",
+  savings: "#3e5871",
+  investment: "#b7893a",
 };
 
 export const DEFAULT_CATEGORIES: Category[] = [
@@ -304,12 +342,21 @@ export const DEFAULT_CATEGORIES: Category[] = [
   },
 ];
 
+export const DEFAULT_CASH_ACCOUNT: CashAccount = {
+  id: "cash-default",
+  name: "Cash",
+  color: "#3e5871",
+  isDefault: true,
+};
+
 export const DEFAULT_STATE: AppState = {
   holdings: [],
   cashflows: [],
   transactions: [],
   categories: DEFAULT_CATEGORIES,
   creditCards: [],
+  cashAccounts: [DEFAULT_CASH_ACCOUNT],
+  netWorthSnapshots: [],
   budgets: [],
   budgetPlans: [],
   forecastScenarios: [],

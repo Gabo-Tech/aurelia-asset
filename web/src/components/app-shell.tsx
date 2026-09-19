@@ -66,7 +66,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
         <MobileHeader title={mobileHeader.title} subtitle={mobileHeader.subtitle} />
 
-        <main className="flex-1 min-w-0 pb-[calc(5.5rem+env(safe-area-inset-bottom))] lg:pb-12 flex flex-col min-h-[100dvh] lg:min-h-screen">
+        <main className="flex-1 min-w-0 pb-[var(--app-bottom-clearance)] lg:pb-12 flex flex-col min-h-[100dvh] lg:min-h-screen">
           <div
             className={cn(
               "flex-1 flex flex-col min-h-0 px-4 sm:px-6 lg:px-8 2xl:px-12 3xl:px-16 py-4 sm:py-8 lg:py-10",

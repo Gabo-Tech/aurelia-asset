@@ -64,6 +64,11 @@
 /* Premium light — airy off-white */
 :root {
   --radius: 12px;
+  /* Compact chrome (below `lg`): header row + tab bar (incl. item padding), without safe-area. */
+  --app-header-h: 3.75rem;
+  --app-tabbar-h: 4rem;
+  --app-bottom-clearance: calc(var(--app-tabbar-h) + 2.25rem + env(safe-area-inset-bottom, 0px));
+  --app-fab-offset: calc(var(--app-tabbar-h) + 2.5rem + env(safe-area-inset-bottom, 0px));
   --background: #faf9f7;
   --foreground: #1a1a1a;
   --card: #ffffff;
@@ -225,6 +230,15 @@
   }
   .active-press:active {
     transform: scale(0.98);
+  }
+  .scroll-mt-settings {
+    scroll-margin-top: calc(var(--app-header-h) + 3.25rem);
+  }
+}
+
+@media (min-width: 1024px) {
+  .scroll-mt-settings {
+    scroll-margin-top: 1.5rem;
   }
 }
 

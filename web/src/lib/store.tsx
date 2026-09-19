@@ -17,6 +17,9 @@ import {
   Settings,
   HoldingTransaction,
   CreditCard,
+  CashAccount,
+  NetWorthSnapshot,
+  DEFAULT_CASH_ACCOUNT,
   Budget,
   BudgetPlan,
   BudgetItem,
@@ -117,6 +120,14 @@ async function loadState(): Promise<AppState> {
       holdings: Array.isArray(parsed.holdings) ? parsed.holdings.map(withCcy) : [],
       transactions: (Array.isArray(parsed.transactions) ? parsed.transactions : []).map(withCcy),
       creditCards: (Array.isArray(parsed.creditCards) ? parsed.creditCards : []).map(withCcy),
+      cashAccounts: (() => {
+        const raw = Array.isArray(parsed.cashAccounts) ? parsed.cashAccounts : [];
+        if (raw.length === 0) return [DEFAULT_CASH_ACCOUNT];
+        const mapped = raw.map((a: CashAccount) => withCcy(a));
+        if (!mapped.some((a: CashAccount) => a.isDefault)) mapped[0] = { ...mapped[0], isDefault: true };
+        return mapped;
+      })(),
+      netWorthSnapshots: Array.isArray(parsed.netWorthSnapshots) ? parsed.netWorthSnapshots : [],
       budgets: (Array.isArray(parsed.budgets) ? parsed.budgets : []).map(withCcy),
       budgetPlans: plans,
       mainBudgetPlanId,
@@ -151,6 +162,10 @@ type Ctx = {
   addCreditCard: (c: Omit<CreditCard, "id">) => CreditCard;
   updateCreditCard: (id: string, patch: Partial<CreditCard>) => void;
   removeCreditCard: (id: string) => void;
+  addCashAccount: (c: Omit<CashAccount, "id">) => CashAccount;
+  updateCashAccount: (id: string, patch: Partial<CashAccount>) => void;
+  removeCashAccount: (id: string) => void;
+  recordNetWorthSnapshot: (snap: Omit<NetWorthSnapshot, "date"> & { date?: string }) => void;
   addCategory: (c: Omit<Category, "id">) => Category;
   updateCategory: (id: string, patch: Partial<Category>) => void;
   removeCategory: (id: string) => void;
@@ -393,6 +408,48 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           ...s,
           creditCards: (s.creditCards ?? []).filter((c) => c.id !== id),
         })),
+      addCashAccount: (c) => {
+        const created: CashAccount = { ...c, id: uid(), isDefault: false };
+        setState((s) => {
+          const existing = s.cashAccounts?.length ? s.cashAccounts : [DEFAULT_CASH_ACCOUNT];
+          return { ...s, cashAccounts: [...existing, created] };
+        });
+        return created;
+      },
+      updateCashAccount: (id, patch) =>
+        setState((s) => ({
+          ...s,
+          cashAccounts: (s.cashAccounts ?? [DEFAULT_CASH_ACCOUNT]).map((a) => {
+            if (a.id !== id) {
+              if (patch.isDefault) return { ...a, isDefault: false };
+              return a;
+            }
+            return { ...a, ...patch };
+          }),
+        })),
+      removeCashAccount: (id) =>
+        setState((s) => {
+          const list = s.cashAccounts ?? [DEFAULT_CASH_ACCOUNT];
+          const next = list.filter((a) => a.id !== id);
+          if (next.length === 0) return { ...s, cashAccounts: [DEFAULT_CASH_ACCOUNT] };
+          if (!next.some((a) => a.isDefault)) next[0] = { ...next[0], isDefault: true };
+          return { ...s, cashAccounts: next };
+        }),
+      recordNetWorthSnapshot: (snap) =>
+        setState((s) => {
+          const date = snap.date ?? new Date().toISOString().slice(0, 10);
+          const entry: NetWorthSnapshot = {
+            date,
+            portfolio: snap.portfolio,
+            liquidity: snap.liquidity,
+            debt: snap.debt,
+            netWorth: snap.netWorth,
+            currency: snap.currency,
+          };
+          const prev = s.netWorthSnapshots ?? [];
+          const without = prev.filter((p) => p.date !== date);
+          return { ...s, netWorthSnapshots: [...without, entry].sort((a, b) => a.date.localeCompare(b.date)) };
+        }),
       addCategory: (c) => {
         const created: Category = { ...c, id: uid() };
         setState((s) => ({ ...s, categories: [...s.categories, created] }));

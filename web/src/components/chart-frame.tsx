@@ -109,13 +109,13 @@ export function ChartFrame({ children, filename = "chart", title, className, ext
               onClick={(e) => e.stopPropagation()}
               style={{
                 width: "min(900px, 90vw)",
-                height: "min(620px, 85vh)",
+                height: "min(620px, 85dvh)",
                 resize: "both",
                 overflow: "hidden",
                 minWidth: 360,
                 minHeight: 280,
                 maxWidth: "95vw",
-                maxHeight: "92vh",
+                maxHeight: "92dvh",
               }}
               className="relative flex flex-col rounded-lg border border-border/60 bg-card shadow-2xl"
             >

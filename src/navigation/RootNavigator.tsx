@@ -149,6 +149,8 @@ function shortLabel(
   }
 }
 
+export const TAB_BAR_CONTENT_HEIGHT = 52;
+
 function CustomTabBar({ state, navigation }: BottomTabBarProps) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
@@ -161,7 +163,12 @@ function CustomTabBar({ state, navigation }: BottomTabBarProps) {
 
   return (
     <>
-      <View style={[styles.tabBar, { paddingBottom: bottomPad, height: 52 + bottomPad }]}>
+      <View
+        style={[
+          styles.tabBar,
+          { paddingBottom: bottomPad, height: TAB_BAR_CONTENT_HEIGHT + bottomPad },
+        ]}
+      >
         {PRIMARY.map((name) => {
           const route = state.routes.find((r) => r.name === name);
           if (!route) return null;

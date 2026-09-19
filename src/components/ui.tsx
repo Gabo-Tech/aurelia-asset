@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -8,13 +8,16 @@ import {
   Modal,
   ActivityIndicator,
   KeyboardAvoidingView,
+  Keyboard,
   Platform,
+  useWindowDimensions,
   type ViewStyle,
   type StyleProp,
   type TextStyle,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors, spacing, radii } from "@/theme/colors";
+import { useColors } from "@/theme/ThemeProvider";
 import { type as typography } from "@/theme/typography";
 
 export function Screen({
@@ -27,6 +30,7 @@ export function Screen({
   /** Wrap in KeyboardAvoidingView (disable for screens that pin a composer with IME insets). */
   avoidKeyboard?: boolean;
 }) {
+  const themeColors = useColors();
   const insets = useSafeAreaInsets();
   const pad = {
     paddingTop: Math.max(insets.top, spacing.sm),
@@ -54,7 +58,7 @@ export function Screen({
 
   if (scroll) {
     return (
-      <View style={styles.screenRoot}>
+      <View style={[styles.screenRoot, { backgroundColor: themeColors.bg }]}>
         <View style={styles.glow} pointerEvents="none" />
         {avoidKeyboard ? (
           <KeyboardAvoidingView {...kavProps}>{scrollBody}</KeyboardAvoidingView>
@@ -72,7 +76,7 @@ export function Screen({
   );
 
   return (
-    <View style={styles.screenRoot}>
+    <View style={[styles.screenRoot, { backgroundColor: themeColors.bg }]}>
       <View style={styles.glow} pointerEvents="none" />
       {avoidKeyboard ? (
         <KeyboardAvoidingView {...kavProps} style={[styles.flex, styles.screenPad, pad]}>
@@ -157,16 +161,21 @@ export function Metric({
   );
 }
 
-/** Horizontal equal-width metrics to avoid empty right half of cards. */
+/** Horizontal equal-width metrics; wraps to 2×2 on very narrow phones. */
 export function MetricRow({
   items,
 }: {
   items: { label: string; value: string; color?: string }[];
 }) {
+  const { width } = useWindowDimensions();
+  const wrap = width < 360 && items.length > 2;
   return (
-    <View style={styles.metricRow}>
+    <View style={[styles.metricRow, wrap && styles.metricRowWrap]}>
       {items.map((it) => (
-        <View key={it.label} style={styles.metricRowItem}>
+        <View
+          key={it.label}
+          style={[styles.metricRowItem, wrap && styles.metricRowItemHalf]}
+        >
           <Text style={styles.metricLabel}>{it.label}</Text>
           <Text
             style={[styles.metricValueCompact, it.color ? { color: it.color } : null]}
@@ -416,7 +425,7 @@ export const chipLabelStyle: TextStyle = {
 /** Shared container style for compact filter/action chips. */
 export const chipContainerStyle: ViewStyle = {
   paddingHorizontal: 12,
-  minHeight: 32,
+  minHeight: 44,
   borderRadius: radii.pill,
   borderWidth: StyleSheet.hairlineWidth,
   borderColor: colors.border,
@@ -440,6 +449,102 @@ export function ProgressBar({ progress }: { progress?: number }) {
         ]}
       />
     </View>
+  );
+}
+
+/** Bottom sheet for add/edit forms — keeps inputs on the item instead of the page footer. */
+export function FormSheet({
+  visible,
+  title,
+  onClose,
+  children,
+  footer,
+}: {
+  visible: boolean;
+  title: string;
+  onClose: () => void;
+  children: React.ReactNode;
+  footer?: React.ReactNode;
+}) {
+  const insets = useSafeAreaInsets();
+  const themeColors = useColors();
+  const { height: windowHeight } = useWindowDimensions();
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+
+  useEffect(() => {
+    if (!visible) {
+      setKeyboardHeight(0);
+      return;
+    }
+    const showEvt = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
+    const hideEvt = Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
+    const onShow = Keyboard.addListener(showEvt, (e) => {
+      setKeyboardHeight(e.endCoordinates?.height ?? 0);
+    });
+    const onHide = Keyboard.addListener(hideEvt, () => setKeyboardHeight(0));
+    return () => {
+      onShow.remove();
+      onHide.remove();
+    };
+  }, [visible]);
+
+  // Bound the scroller with a real pixel height. flex:1 inside maxHeight-only
+  // parents collapses to 0 on RN (header+footer visible, form gone).
+  const chromeReserve = 140 + Math.max(insets.bottom, spacing.md);
+  const bodyMaxHeight = Math.max(
+    160,
+    Math.min(
+      windowHeight * 0.6,
+      windowHeight * 0.92 - chromeReserve - keyboardHeight,
+    ),
+  );
+
+  return (
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      onRequestClose={onClose}
+      statusBarTranslucent
+    >
+      <View style={styles.sheetRoot}>
+        <Pressable style={styles.sheetScrim} onPress={onClose} accessibilityLabel="Close" />
+        <KeyboardAvoidingView
+          behavior="padding"
+          style={[
+            styles.sheetCard,
+            {
+              paddingBottom: Math.max(insets.bottom, spacing.md),
+              backgroundColor: themeColors.surface,
+              borderColor: themeColors.border,
+            },
+          ]}
+        >
+          <View style={styles.sheetHandleWrap} accessible={false}>
+            <View style={styles.sheetHandle} />
+          </View>
+          <View style={styles.sheetHeader}>
+            <Text style={styles.sheetTitle} numberOfLines={1}>
+              {title}
+            </Text>
+            <Pressable onPress={onClose} hitSlop={12} accessibilityRole="button">
+              <Text style={styles.sheetClose}>Close</Text>
+            </Pressable>
+          </View>
+          <ScrollView
+            style={[styles.sheetBody, { maxHeight: bodyMaxHeight }]}
+            contentContainerStyle={styles.sheetBodyContent}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
+            showsVerticalScrollIndicator={false}
+            bounces={false}
+          >
+            {children}
+          </ScrollView>
+          {footer ? <View style={styles.sheetFooter}>{footer}</View> : null}
+        </KeyboardAvoidingView>
+      </View>
+    </Modal>
   );
 }
 
@@ -534,7 +639,11 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     marginBottom: spacing.sm,
   },
+  metricRowWrap: {
+    flexWrap: "wrap",
+  },
   metricRowItem: { flex: 1, minWidth: 0 },
+  metricRowItemHalf: { flexBasis: "46%", flexGrow: 1, flexShrink: 1 },
   hero: {
     paddingVertical: spacing.lg,
     paddingHorizontal: spacing.md,
@@ -680,7 +789,7 @@ const styles = StyleSheet.create({
   },
   segmentItem: {
     flex: 1,
-    minHeight: 36,
+    minHeight: 44,
     paddingHorizontal: 4,
     justifyContent: "center",
     alignItems: "center",
@@ -696,5 +805,54 @@ const styles = StyleSheet.create({
     height: StyleSheet.hairlineWidth,
     backgroundColor: colors.border,
     marginVertical: spacing.sm,
+  },
+  sheetRoot: {
+    flex: 1,
+    justifyContent: "flex-end",
+  },
+  sheetScrim: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: "rgba(0,0,0,0.55)",
+  },
+  sheetCard: {
+    maxHeight: "92%",
+    backgroundColor: colors.surface,
+    borderTopLeftRadius: radii.xl,
+    borderTopRightRadius: radii.xl,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
+    borderBottomWidth: 0,
+    overflow: "hidden",
+  },
+  sheetHandleWrap: { alignItems: "center", paddingTop: 10, paddingBottom: 4 },
+  sheetHandle: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: colors.border,
+  },
+  sheetHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.sm,
+  },
+  sheetTitle: { ...typography.headline, color: colors.text, flex: 1, marginRight: spacing.sm },
+  sheetClose: { ...typography.caption, color: colors.accent, fontWeight: "600" },
+  /** Height comes from inline maxHeight — never flex:1 (collapses in maxHeight-only cards). */
+  sheetBody: { flexGrow: 0, flexShrink: 1 },
+  sheetBodyContent: {
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.md,
+    flexGrow: 0,
+  },
+  sheetFooter: {
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.sm,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.border,
+    gap: spacing.sm,
+    alignItems: "stretch",
   },
 });

@@ -580,6 +580,179 @@ export function resolveWriteTool(
       },
     };
   }
+  if (call.name === "add_goal") {
+    const name = typeof call.arguments.name === "string" ? call.arguments.name.trim() : "";
+    const targetAmount = Number(call.arguments.targetAmount);
+    if (!name || !isFinite(targetAmount) || targetAmount <= 0) return { error: "invalid-goal" };
+    const currentAmount =
+      typeof call.arguments.currentAmount === "number" && isFinite(call.arguments.currentAmount)
+        ? Math.max(0, call.arguments.currentAmount)
+        : 0;
+    const targetDate =
+      typeof call.arguments.targetDate === "string" && call.arguments.targetDate.trim()
+        ? call.arguments.targetDate.trim()
+        : undefined;
+    const payload = {
+      name,
+      targetAmount,
+      currentAmount,
+      targetDate,
+      currency: deps.currency,
+      color: "#3e5871",
+    };
+    return {
+      change: {
+        actions: [{ kind: "goal.add", payload }],
+        preview: [
+          {
+            label: name,
+            after: `${formatMoney(currentAmount, deps.currency)} → ${formatMoney(targetAmount, deps.currency)}`,
+          },
+        ],
+        summary: `Create savings goal "${name}".`,
+      },
+    };
+  }
+  if (call.name === "update_goal") {
+    const match = typeof call.arguments.match === "string" ? call.arguments.match.toLowerCase() : "";
+    const goal = deps.state.goals.find((g) => g.name.toLowerCase().includes(match));
+    if (!goal) return { error: "goal-not-found" };
+    const patch: Record<string, unknown> = {};
+    if (typeof call.arguments.targetAmount === "number" && isFinite(call.arguments.targetAmount))
+      patch.targetAmount = Math.abs(call.arguments.targetAmount);
+    if (typeof call.arguments.currentAmount === "number" && isFinite(call.arguments.currentAmount))
+      patch.currentAmount = Math.max(0, call.arguments.currentAmount);
+    if (!Object.keys(patch).length) return { error: "empty-patch" };
+    return {
+      change: {
+        actions: [{ kind: "goal.update", id: goal.id, patch }],
+        preview: [
+          {
+            label: goal.name,
+            before: formatMoney(goal.currentAmount, goal.currency || deps.currency),
+            after: formatMoney(
+              Number(patch.currentAmount ?? goal.currentAmount),
+              goal.currency || deps.currency,
+            ),
+          },
+        ],
+        summary: `Update goal "${goal.name}".`,
+      },
+    };
+  }
+  if (call.name === "add_loan") {
+    const name = typeof call.arguments.name === "string" ? call.arguments.name.trim() : "";
+    const principal = Number(call.arguments.principal);
+    const apr = Number(call.arguments.apr);
+    const termMonths = Number(call.arguments.termMonths);
+    if (!name || !isFinite(principal) || principal <= 0) return { error: "invalid-loan" };
+    if (!isFinite(apr) || apr < 0) return { error: "invalid-apr" };
+    if (!isFinite(termMonths) || termMonths < 1) return { error: "invalid-term" };
+    const startDate =
+      typeof call.arguments.startDate === "string" && call.arguments.startDate.trim()
+        ? call.arguments.startDate.trim()
+        : new Date().toISOString().slice(0, 10);
+    const payload = {
+      name,
+      principal,
+      apr,
+      termMonths: Math.round(termMonths),
+      startDate,
+      currency: deps.currency,
+      color: "#8c2e22",
+    };
+    return {
+      change: {
+        actions: [{ kind: "loan.add", payload }],
+        preview: [
+          {
+            label: name,
+            after: `${formatMoney(principal, deps.currency)} @ ${apr}% · ${Math.round(termMonths)} mo`,
+          },
+        ],
+        summary: `Create loan "${name}".`,
+      },
+    };
+  }
+  if (call.name === "add_holding") {
+    const symbol = typeof call.arguments.symbol === "string" ? call.arguments.symbol.trim().toUpperCase() : "";
+    const name = typeof call.arguments.name === "string" ? call.arguments.name.trim() : symbol;
+    const typeRaw = typeof call.arguments.type === "string" ? call.arguments.type.trim().toLowerCase() : "other";
+    const type = (["crypto", "stock", "etf", "metal", "other"].includes(typeRaw)
+      ? typeRaw
+      : "other") as "crypto" | "stock" | "etf" | "metal" | "other";
+    const quantity = Number(call.arguments.quantity);
+    const currentPrice = Number(call.arguments.currentPrice);
+    if (!symbol || !isFinite(quantity) || quantity <= 0 || !isFinite(currentPrice) || currentPrice < 0)
+      return { error: "invalid-holding" };
+    const payload = {
+      symbol,
+      name: name || symbol,
+      type,
+      quantity,
+      currentPrice,
+      priceCurrency: deps.currency,
+      color: "#b7893a",
+      horizon: "long" as const,
+    };
+    return {
+      change: {
+        actions: [{ kind: "holding.add", payload }],
+        preview: [
+          {
+            label: symbol,
+            after: `${quantity} × ${formatMoney(currentPrice, deps.currency)}`,
+          },
+        ],
+        summary: `Add holding ${symbol}.`,
+      },
+    };
+  }
+  if (call.name === "update_holding") {
+    const match = typeof call.arguments.match === "string" ? call.arguments.match.toLowerCase() : "";
+    const holding = deps.state.holdings.find(
+      (h) => h.symbol.toLowerCase().includes(match) || h.name.toLowerCase().includes(match),
+    );
+    if (!holding) return { error: "holding-not-found" };
+    const patch: Record<string, unknown> = {};
+    if (typeof call.arguments.quantity === "number" && isFinite(call.arguments.quantity))
+      patch.quantity = Math.max(0, call.arguments.quantity);
+    if (typeof call.arguments.currentPrice === "number" && isFinite(call.arguments.currentPrice))
+      patch.currentPrice = Math.max(0, call.arguments.currentPrice);
+    if (!Object.keys(patch).length) return { error: "empty-patch" };
+    return {
+      change: {
+        actions: [{ kind: "holding.update", id: holding.id, patch }],
+        preview: [
+          {
+            label: holding.symbol,
+            before: `${holding.quantity} @ ${formatMoney(holding.currentPrice, holding.priceCurrency || deps.currency)}`,
+            after: `${patch.quantity ?? holding.quantity} @ ${formatMoney(Number(patch.currentPrice ?? holding.currentPrice), holding.priceCurrency || deps.currency)}`,
+          },
+        ],
+        summary: `Update holding ${holding.symbol}.`,
+      },
+    };
+  }
+  if (call.name === "add_category") {
+    const name = typeof call.arguments.name === "string" ? call.arguments.name.trim() : "";
+    const kindRaw = typeof call.arguments.kind === "string" ? call.arguments.kind.trim().toLowerCase() : "";
+    const kind = kindRaw === "income" ? "income" : kindRaw === "expense" ? "expense" : null;
+    if (!name || !kind) return { error: "invalid-category" };
+    const payload = {
+      name,
+      kind,
+      group: kind === "income" ? ("income" as const) : ("expense" as const),
+      color: kind === "income" ? "#3d6b4f" : "#8c2e22",
+    };
+    return {
+      change: {
+        actions: [{ kind: "category.add", payload }],
+        preview: [{ label: name, after: kind }],
+        summary: `Create ${kind} category "${name}".`,
+      },
+    };
+  }
   return { error: "unsupported-write-tool" };
 }
 

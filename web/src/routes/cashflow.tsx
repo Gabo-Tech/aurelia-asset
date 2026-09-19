@@ -24,14 +24,6 @@ import { saveExportFile } from "@/lib/export";
 import { CURRENCIES } from "@/lib/currency";
 import { formatMoney } from "@/lib/format";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogDescription,
-} from "@/components/ui/dialog";
-import {
   Trash2,
   Plus,
   Palette,
@@ -126,6 +118,9 @@ import {
   type SankeyStages,
 } from "@/lib/sankey-build";
 import { CreditCardsManager } from "@/components/credit-cards-manager";
+import { CashAccountsManager } from "@/components/cash-accounts-manager";
+import { CashflowCsvImportButton } from "@/components/cashflow-csv-import";
+import { BillCalendar } from "@/components/bill-calendar";
 import { UpcomingPanel, UpcomingPreviewCard } from "@/components/cashflow-upcoming";
 import {
   expandCashflows,
@@ -411,6 +406,7 @@ function CashflowPage() {
   }, [expandedToToday, valuesTop, catByName, t]);
   const [breakdownOpen, setBreakdownOpen] = useState(false);
   const [addModalOpen, setAddModalOpen] = useState(false);
+  const [categoriesOpen, setCategoriesOpen] = useState(false);
   const [pageTab, setPageTab] = useState<"overview" | "upcoming">("overview");
   const [upcomingEditEntry, setUpcomingEditEntry] = useState<CashflowEntry | null>(null);
 
@@ -424,13 +420,19 @@ function CashflowPage() {
 
   const openUpcomingEdit = (parentId: string) => {
     const entry = cashflows.find((c) => c.id === parentId);
-    if (entry && entry.kind !== "transfer") setUpcomingEditEntry(entry);
+    if (!entry) return;
+    setAddModalOpen(false);
+    setUpcomingEditEntry(entry);
   };
 
   const openAddModal = () => {
     setPageTab("overview");
+    setUpcomingEditEntry(null);
     setAddModalOpen(true);
   };
+
+  const openManageCategories = () => setCategoriesOpen(true);
+  const formDialogOpen = addModalOpen || !!upcomingEditEntry;
 
   return (
     <>
@@ -438,21 +440,32 @@ function CashflowPage() {
         title={t("cashflow.title")}
         description={t("cashflow.description")}
         actions={
-          <Button onClick={openAddModal} data-tour="cf-add-trigger" className="gap-1.5">
-            <Plus className="h-4 w-4" />
-            {t("cashflow.addData", { defaultValue: "Add data" })}
-          </Button>
+          <>
+            <CashflowCsvImportButton />
+            <Button
+              variant="outline"
+              onClick={openManageCategories}
+              className="gap-1.5"
+            >
+              <SettingsIcon className="h-4 w-4" />
+              {t("cashflow.categories")}
+            </Button>
+            <Button onClick={openAddModal} data-tour="cf-add-trigger" className="gap-1.5">
+              <Plus className="h-4 w-4" />
+              {t("cashflow.addData", { defaultValue: "Add data" })}
+            </Button>
+          </>
         }
       />
 
-      <Tabs value={pageTab} onValueChange={(v) => setPageTab(v as typeof pageTab)} className="mt-2">
+      <Tabs value={pageTab} onValueChange={(v) => setPageTab(v as typeof pageTab)} className="mt-2 pb-[calc(var(--app-fab-offset))] lg:pb-0">
         <TabsList>
           <TabsTrigger value="overview">{t("cashflow.upcoming.tabOverview")}</TabsTrigger>
           <TabsTrigger value="upcoming">{t("cashflow.upcoming.tabUpcoming")}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="mt-4 space-y-0">
-      <div className="grid grid-cols-3 gap-2 sm:gap-5" data-tour="cf-summary">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 sm:gap-5" data-tour="cf-summary">
         <StatCard
           label={t("cashflow.income")}
           value={privacy ? MASK : formatMoney(totals.income, currency)}
@@ -532,6 +545,7 @@ function CashflowPage() {
           toDisplay={toDisplay}
           onRemove={removeCashflow}
           onUpdate={updateCashflow}
+          onManageCategories={openManageCategories}
         />
       </div>
 
@@ -673,7 +687,14 @@ function CashflowPage() {
         </CardContent>
       </Card>
 
-      <div className="mt-6">
+      <div className="mt-6 space-y-6">
+        <BillCalendar
+          onEdit={(parentId) => {
+            const parent = cashflows.find((c) => c.id === parentId);
+            if (parent) setUpcomingEditEntry(parent);
+          }}
+        />
+        <CashAccountsManager />
         <CreditCardsManager />
       </div>
         </TabsContent>
@@ -697,24 +718,42 @@ function CashflowPage() {
       />
 
       <ResponsiveDialog
-        open={addModalOpen}
-        onOpenChange={setAddModalOpen}
-        title={t("cashflow.addEntry")}
-        description={t("cashflow.addDataHint", {
-          defaultValue: "Log income, spending, or a transfer",
-        })}
+        open={formDialogOpen}
+        onOpenChange={(o) => {
+          if (!o) {
+            setAddModalOpen(false);
+            setUpcomingEditEntry(null);
+          }
+        }}
+        title={upcomingEditEntry ? t("cashflow.editEntry") : t("cashflow.addEntry")}
+        description={
+          upcomingEditEntry
+            ? t("cashflow.editEntryHint", {
+                defaultValue: "Update the details for this cashflow entry.",
+              })
+            : t("cashflow.addDataHint", {
+                defaultValue: "Log income, spending, or a transfer",
+              })
+        }
         className="max-h-[92dvh] w-full max-w-2xl lg:max-w-3xl"
         showClose
       >
         <AddForm
+          key={upcomingEditEntry?.id ?? "new"}
           embedded
+          editing={upcomingEditEntry}
           defaultCurrency={currency}
           categories={categories}
           subscribeOptions={subscribeOptions}
           onAddCategory={addCategory}
-          onUpdateCategory={updateCategory}
-          onRemoveCategory={removeCategory}
+          onManageCategories={openManageCategories}
           onAdd={(e) => {
+            if (upcomingEditEntry) {
+              updateCashflow(upcomingEditEntry.id, e as unknown as Partial<CashflowEntry>);
+              toast.success(t("more.entriesUpdated"));
+              setUpcomingEditEntry(null);
+              return;
+            }
             addCashflow(e as unknown as Omit<CashflowEntry, "id">);
             toast.success(
               e.kind === "income"
@@ -728,16 +767,14 @@ function CashflowPage() {
         />
       </ResponsiveDialog>
 
-      <EditEntryDialog
-        entry={upcomingEditEntry}
+      <CategoriesManager
         categories={categories}
-        subscribeOptions={subscribeOptions}
-        onClose={() => setUpcomingEditEntry(null)}
-        onSave={(patch) => {
-          if (upcomingEditEntry) updateCashflow(upcomingEditEntry.id, patch);
-          setUpcomingEditEntry(null);
-          toast.success(t("more.entriesUpdated"));
-        }}
+        onAdd={addCategory}
+        onUpdate={updateCategory}
+        onRemove={removeCategory}
+        open={categoriesOpen}
+        onOpenChange={setCategoriesOpen}
+        showTrigger={false}
       />
     </>
   );
@@ -758,8 +795,9 @@ function EntriesPanel({
   toDisplay,
   onRemove,
   onUpdate,
+  onManageCategories,
 }: {
-  cashflows: import("@/lib/types").CashflowEntry[];
+  cashflows: CashflowEntry[];
   categories: Category[];
   subscribeOptions: { id: string; kind: "income" | "expense"; label: string }[];
   currency: string;
@@ -768,10 +806,11 @@ function EntriesPanel({
   mask: (amount: number, from?: string) => string;
   toDisplay: (amount: number, from?: string) => number;
   onRemove: (id: string) => void;
-  onUpdate: (id: string, patch: Partial<import("@/lib/types").CashflowEntry>) => void;
+  onUpdate: (id: string, patch: Partial<CashflowEntry>) => void;
+  onManageCategories?: () => void;
 }) {
   const { t } = useTranslation();
-  const { state: storeState2 } = useStore();
+  const { state: storeState2, addCategory } = useStore();
   const holdings = storeState2.holdings;
   const creditCards = storeState2.creditCards ?? [];
   const labelAccount = (ref?: string): string => {
@@ -789,7 +828,7 @@ function EntriesPanel({
     }
     return ref;
   };
-  const [editing, setEditing] = useState<import("@/lib/types").CashflowEntry | null>(null);
+  const [editing, setEditing] = useState<CashflowEntry | null>(null);
   const [kindFilter, setKindFilter] = useState<"all" | "income" | "expense">("all");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [period, setPeriod] = useState<PeriodKey>("month");
@@ -1082,6 +1121,86 @@ function EntriesPanel({
     }
   }
 
+  const sortedEntries = useMemo(
+    () => [...filtered].sort((a, b) => +new Date(b.date) - +new Date(a.date)),
+    [filtered],
+  );
+
+  const kindLabel = (kind: CashflowEntry["kind"]) =>
+    kind === "income"
+      ? t("more.entriesIncome")
+      : kind === "expense"
+        ? t("more.entriesExpense")
+        : t("cashflow.transfer", { defaultValue: "Transfer" });
+
+  const entryLabel = (c: CashflowEntry) =>
+    c.kind === "transfer"
+      ? `${labelAccount(c.fromAccount)} → ${labelAccount(c.toAccount)}`
+      : c.kind === "income"
+        ? c.source
+        : c.category;
+
+  const amountDisplay = (c: CashflowEntry) => {
+    const isPct = (c.amountKind ?? "fixed") === "percent";
+    const computed = values.get(c.id) ?? 0;
+    if (privacy) return MASK;
+    if (isPct) {
+      return (
+        <>
+          {c.amount}%
+          <span className="ml-1 text-[10px] text-muted-foreground normal-case">
+            of {describePercentOf(c, cashflows)}
+          </span>
+          <span className="ml-1.5 text-[10px] uppercase text-muted-foreground">
+            ≈ {formatMoney(computed, currency)}
+          </span>
+        </>
+      );
+    }
+    return (
+      <>
+        {formatMoney(c.amount, (c.currency || currency).toUpperCase())}
+        {c.currency && c.currency.toUpperCase() !== currency && (
+          <span
+            className="ml-1.5 text-[10px] uppercase text-muted-foreground"
+            title={`≈ ${mask(c.amount, c.currency)} in ${currency}`}
+          >
+            ≈ {mask(c.amount, c.currency)}
+          </span>
+        )}
+      </>
+    );
+  };
+
+  const entryActions = (parent: CashflowEntry | null) => (
+    <div className="flex justify-end gap-1">
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-11 w-11"
+        onClick={() => parent && setEditing(parent)}
+        aria-label={t("more.entriesEditAria")}
+        disabled={!parent}
+      >
+        <Pencil className="h-4 w-4" />
+      </Button>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-11 w-11"
+        onClick={() => {
+          if (!parent) return;
+          if (parent.recurrence && !confirm(t("more.entriesDeleteRecurringConfirm"))) return;
+          onRemove(parent.id);
+        }}
+        aria-label={t("more.entriesDeleteAria")}
+        disabled={!parent}
+      >
+        <Trash2 className="h-4 w-4" />
+      </Button>
+    </div>
+  );
+
   return (
     <Card className="border-border/60 mt-5">
       <CardHeader
@@ -1307,21 +1426,20 @@ function EntriesPanel({
             {t("more.entriesEmpty")}
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left text-xs uppercase tracking-wider text-muted-foreground [&>th]:px-3 [&>th]:py-2">
-                  <th>{t("more.entriesDate")}</th>
-                  <th>{t("more.entriesType")}</th>
-                  <th>{t("more.entriesSourceCategory")}</th>
-                  <th className="text-right">{t("more.entriesAmount")}</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border/40 [&>tr>td]:px-3">
-                {[...filtered]
-                  .sort((a, b) => +new Date(b.date) - +new Date(a.date))
-                  .map((c) => {
+          <>
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-xs uppercase tracking-wider text-muted-foreground [&>th]:px-3 [&>th]:py-2">
+                    <th>{t("more.entriesDate")}</th>
+                    <th>{t("more.entriesType")}</th>
+                    <th>{t("more.entriesSourceCategory")}</th>
+                    <th className="text-right">{t("more.entriesAmount")}</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border/40 [&>tr>td]:px-3">
+                  {sortedEntries.map((c) => {
                     const parent = cashflows.find((p) => p.id === c.parentId) ?? null;
                     const recurring = !!parent?.recurrence;
                     return (
@@ -1340,11 +1458,7 @@ function EntriesPanel({
                                     : "bg-muted text-muted-foreground"
                               }`}
                             >
-                              {c.kind === "income"
-                                ? t("more.entriesIncome")
-                                : c.kind === "expense"
-                                  ? t("more.entriesExpense")
-                                  : c.kind}
+                              {kindLabel(c.kind)}
                             </span>
                             {c.kind === "expense" && c.paymentMethod?.startsWith("credit:") && (
                               <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-orange-500/15 text-orange-500">
@@ -1367,13 +1481,7 @@ function EntriesPanel({
                           </div>
                         </td>
                         <td className="py-2.5">
-                          <div>
-                            {c.kind === "transfer"
-                              ? `${labelAccount(c.fromAccount)} → ${labelAccount(c.toAccount)}`
-                              : c.kind === "income"
-                                ? c.source
-                                : c.category}
-                          </div>
+                          <div>{entryLabel(c)}</div>
                           {c.description && (
                             <div
                               className="text-[11px] text-muted-foreground truncate max-w-[28ch]"
@@ -1383,320 +1491,86 @@ function EntriesPanel({
                             </div>
                           )}
                         </td>
-
                         <td className="py-2.5 text-right tabular-nums font-medium">
-                          {(() => {
-                            const isPct = (c.amountKind ?? "fixed") === "percent";
-                            const computed = values.get(c.id) ?? 0;
-                            if (privacy) return MASK;
-                            if (isPct) {
-                              return (
-                                <>
-                                  {c.amount}%
-                                  <span className="ml-1 text-[10px] text-muted-foreground normal-case">
-                                    of {describePercentOf(c, cashflows)}
-                                  </span>
-                                  <span className="ml-1.5 text-[10px] uppercase text-muted-foreground">
-                                    ≈ {formatMoney(computed, currency)}
-                                  </span>
-                                </>
-                              );
-                            }
-                            return (
-                              <>
-                                {formatMoney(c.amount, (c.currency || currency).toUpperCase())}
-                                {c.currency && c.currency.toUpperCase() !== currency && (
-                                  <span
-                                    className="ml-1.5 text-[10px] uppercase text-muted-foreground"
-                                    title={`≈ ${mask(c.amount, c.currency)} in ${currency}`}
-                                  >
-                                    ≈ {mask(c.amount, c.currency)}
-                                  </span>
-                                )}
-                              </>
-                            );
-                          })()}
+                          {amountDisplay(c)}
                         </td>
-                        <td className="py-2.5 text-right">
-                          <div className="flex justify-end gap-1">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8"
-                              onClick={() => parent && setEditing(parent)}
-                              aria-label={t("more.entriesEditAria")}
-                              disabled={!parent}
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8"
-                              onClick={() => {
-                                if (!parent) return;
-                                if (
-                                  parent.recurrence &&
-                                  !confirm(t("more.entriesDeleteRecurringConfirm"))
-                                )
-                                  return;
-                                onRemove(parent.id);
-                              }}
-                              aria-label={t("more.entriesDeleteAria")}
-                              disabled={!parent}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </td>
+                        <td className="py-2.5 text-right">{entryActions(parent)}</td>
                       </tr>
                     );
                   })}
-              </tbody>
-            </table>
-          </div>
+                </tbody>
+              </table>
+            </div>
+
+            <div className="md:hidden space-y-2">
+              {sortedEntries.map((c) => {
+                const parent = cashflows.find((p) => p.id === c.parentId) ?? null;
+                return (
+                  <div
+                    key={c.id}
+                    className="rounded-lg border border-border/60 p-3 space-y-2"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0 space-y-1">
+                        <div className="text-xs text-muted-foreground">
+                          {format(new Date(c.date), "MMM d, yyyy")}
+                        </div>
+                        <span
+                          className={`text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded ${
+                            c.kind === "income"
+                              ? "bg-success/15 text-success"
+                              : c.kind === "expense"
+                                ? "bg-destructive/15 text-destructive"
+                                : "bg-muted text-muted-foreground"
+                          }`}
+                        >
+                          {kindLabel(c.kind)}
+                        </span>
+                        <div className="font-medium truncate">{entryLabel(c)}</div>
+                      </div>
+                      <div className="text-right tabular-nums font-medium shrink-0">
+                        {amountDisplay(c)}
+                      </div>
+                    </div>
+                    {entryActions(parent)}
+                  </div>
+                );
+              })}
+            </div>
+          </>
         )}
       </CardContent>
-      <EditEntryDialog
-        entry={editing}
-        categories={categories}
-        subscribeOptions={subscribeOptions}
-        onClose={() => setEditing(null)}
-        onSave={(patch) => {
-          if (editing) onUpdate(editing.id, patch);
-          setEditing(null);
-          toast.success(t("more.entriesUpdated"));
+      <ResponsiveDialog
+        open={!!editing}
+        onOpenChange={(o) => {
+          if (!o) setEditing(null);
         }}
-      />
+        title={t("cashflow.editEntry")}
+        description={t("cashflow.editEntryHint", {
+          defaultValue: "Update the details for this cashflow entry.",
+        })}
+        className="max-h-[92dvh] w-full max-w-2xl lg:max-w-3xl"
+        showClose
+      >
+        {editing && (
+          <AddForm
+            key={editing.id}
+            embedded
+            editing={editing}
+            defaultCurrency={currency}
+            categories={categories}
+            subscribeOptions={subscribeOptions}
+            onAddCategory={addCategory}
+            onManageCategories={onManageCategories}
+            onAdd={(e) => {
+              onUpdate(editing.id, e as unknown as Partial<CashflowEntry>);
+              setEditing(null);
+              toast.success(t("more.entriesUpdated"));
+            }}
+          />
+        )}
+      </ResponsiveDialog>
     </Card>
-  );
-}
-
-function EditEntryDialog({
-  entry,
-  categories,
-  subscribeOptions,
-  onClose,
-  onSave,
-}: {
-  entry: import("@/lib/types").CashflowEntry | null;
-  categories: Category[];
-  subscribeOptions: { id: string; kind: "income" | "expense"; label: string }[];
-  onClose: () => void;
-  onSave: (patch: Partial<import("@/lib/types").CashflowEntry>) => void;
-}) {
-  const [kind, setKind] = useState<"income" | "expense">("income");
-  const [name, setName] = useState("");
-  const [amount, setAmount] = useState("");
-  const [entryCurrency, setEntryCurrency] = useState("USD");
-  const [date, setDate] = useState(format(new Date(), "yyyy-MM-dd"));
-  const [recurring, setRecurring] = useState(false);
-  const [frequency, setFrequency] = useState<RecurrenceFrequency>("monthly");
-  const [until, setUntil] = useState("");
-  const [isPercent, setIsPercent] = useState(false);
-  const [percentOf, setPercentOf] = useState<string>("all-income");
-  const [description, setDescription] = useState("");
-
-  useEffect(() => {
-    if (!entry) return;
-    if (entry.kind === "transfer") return;
-    setKind(entry.kind);
-    setName(entry.kind === "income" ? entry.source : entry.category);
-    setAmount(String(entry.amount));
-    setEntryCurrency(entry.currency || "USD");
-    setDate(format(new Date(entry.date), "yyyy-MM-dd"));
-    setRecurring(!!entry.recurrence);
-    setFrequency(entry.recurrence?.frequency ?? "monthly");
-    setUntil(entry.recurrence?.until ? format(new Date(entry.recurrence.until), "yyyy-MM-dd") : "");
-    setIsPercent((entry.amountKind ?? "fixed") === "percent");
-    setPercentOf(entry.percentOf ?? "all-income");
-    setDescription(entry.description ?? "");
-  }, [entry]);
-
-  const visibleCategories = useMemo(
-    () => categories.filter((c) => c.kind === kind),
-    [categories, kind],
-  );
-
-  function submit() {
-    const a = parseFloat(amount);
-    if (!isFinite(a) || a <= 0) return toast.error("Amount must be > 0");
-    if (isPercent && a > 1000) return toast.error("Percentage looks too high");
-    if (!name.trim()) return toast.error("Pick a category");
-    onSave({
-      kind,
-      source: kind === "income" ? name : "",
-      category: kind === "expense" ? name : "",
-      amount: a,
-      currency: entryCurrency,
-      date: new Date(date).toISOString(),
-      recurrence: recurring
-        ? { frequency, ...(until ? { until: new Date(until).toISOString() } : {}) }
-        : undefined,
-      amountKind: isPercent ? "percent" : "fixed",
-      percentOf: isPercent ? percentOf : undefined,
-      description: description.trim().slice(0, 200) || undefined,
-    });
-  }
-
-  return (
-    <Dialog open={!!entry} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Edit entry</DialogTitle>
-          <DialogDescription>Update the details for this cashflow entry.</DialogDescription>
-        </DialogHeader>
-        <Tabs value={kind} onValueChange={(v) => setKind(v as "income" | "expense")}>
-          <TabsList className="grid grid-cols-2">
-            <TabsTrigger value="income">Income</TabsTrigger>
-            <TabsTrigger value="expense">Expense</TabsTrigger>
-          </TabsList>
-        </Tabs>
-        <div className="space-y-3">
-          <div>
-            <Label className="text-xs">{kind === "income" ? "Source" : "Category"}</Label>
-            <Select value={name} onValueChange={setName}>
-              <SelectTrigger className="mt-1.5">
-                <SelectValue placeholder="Select…" />
-              </SelectTrigger>
-              <SelectContent>
-                {visibleCategories.map((c) => (
-                  <SelectItem key={c.id} value={c.name}>
-                    {c.name}
-                  </SelectItem>
-                ))}
-                {name && !visibleCategories.find((c) => c.name === name) && (
-                  <SelectItem value={name}>{name}</SelectItem>
-                )}
-              </SelectContent>
-            </Select>
-          </div>
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={isPercent}
-              onChange={(e) => setIsPercent(e.target.checked)}
-              className="h-4 w-4"
-            />
-            <span>Use a percentage of another entry (e.g. taxes)</span>
-          </label>
-          {isPercent && (
-            <div>
-              <Label className="text-xs">Percent of</Label>
-              <PercentTargetPicker
-                value={percentOf}
-                onChange={setPercentOf}
-                options={subscribeOptions}
-                excludeId={entry?.id}
-                className="mt-1.5"
-              />
-            </div>
-          )}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label className="text-xs">{isPercent ? "Percent" : "Amount"}</Label>
-              <div className="relative mt-1.5">
-                <Input
-                  type="number"
-                  step="any"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  className={isPercent ? "pr-8" : ""}
-                />
-                {isPercent && (
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
-                    %
-                  </span>
-                )}
-              </div>
-            </div>
-            {!isPercent && (
-              <div>
-                <Label className="text-xs">Currency</Label>
-                <Select value={entryCurrency} onValueChange={setEntryCurrency}>
-                  <SelectTrigger className="mt-1.5">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="max-h-72">
-                    {CURRENCIES.map((c) => (
-                      <SelectItem key={c.code} value={c.code}>
-                        {c.code} · {c.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-          </div>
-          <div>
-            <Label className="text-xs">{recurring ? "Start date" : "Date"}</Label>
-            <Input
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              className="mt-1.5"
-            />
-          </div>
-          <div>
-            <Label className="text-xs">Description (optional)</Label>
-            <Input
-              type="text"
-              maxLength={200}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Short note"
-              className="mt-1.5"
-            />
-          </div>
-          <div className="rounded-md border border-border/60 p-3 space-y-3">
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={recurring}
-                onChange={(e) => setRecurring(e.target.checked)}
-                className="h-4 w-4"
-              />
-              <span>Repeats</span>
-            </label>
-            {recurring && (
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label className="text-xs">Frequency</Label>
-                  <Select
-                    value={frequency}
-                    onValueChange={(v) => setFrequency(v as RecurrenceFrequency)}
-                  >
-                    <SelectTrigger className="mt-1.5">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="weekly">Weekly</SelectItem>
-                      <SelectItem value="monthly">Monthly</SelectItem>
-                      <SelectItem value="yearly">Yearly</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label className="text-xs">Until (optional)</Label>
-                  <Input
-                    type="date"
-                    value={until}
-                    onChange={(e) => setUntil(e.target.value)}
-                    className="mt-1.5"
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-        <div className="flex justify-end gap-2 mt-2">
-          <Button variant="ghost" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button onClick={submit}>Save changes</Button>
-        </div>
-      </DialogContent>
-    </Dialog>
   );
 }
 
@@ -1839,7 +1713,7 @@ function StatCard({
           {label}
         </div>
         <div
-          className={`mt-1 sm:mt-2 text-base sm:text-2xl font-semibold tracking-tight truncate tabular-nums ${
+          className={`mt-1 sm:mt-2 text-lg sm:text-2xl font-semibold tracking-tight break-words tabular-nums leading-snug ${
             tone === "success" ? "text-success" : "text-destructive"
           }`}
           title={value}
@@ -1879,27 +1753,37 @@ function AddForm({
   categories,
   subscribeOptions,
   onAddCategory,
-  onUpdateCategory,
-  onRemoveCategory,
   embedded = false,
+  editing = null,
+  onManageCategories,
 }: {
   onAdd: (e: FormVals) => void;
   defaultCurrency: string;
   categories: Category[];
   subscribeOptions: { id: string; kind: "income" | "expense"; label: string }[];
   onAddCategory: (c: Omit<Category, "id">) => Category;
-  onUpdateCategory: (id: string, patch: Partial<Category>) => void;
-  onRemoveCategory: (id: string) => void;
   embedded?: boolean;
+  editing?: CashflowEntry | null;
+  onManageCategories?: () => void;
 }) {
   const { t } = useTranslation();
   const { state: storeState } = useStore();
   const holdings = storeState.holdings;
   const creditCards = storeState.creditCards ?? [];
   const accountOptions = useMemo(() => {
-    const opts: { value: string; label: string }[] = [
-      { value: "liquidity", label: t("cashflow.liquidityCash") },
-    ];
+    const cashAccounts = storeState.cashAccounts?.length
+      ? storeState.cashAccounts
+      : [{ id: "cash-default", name: t("cashflow.liquidityCash"), isDefault: true }];
+    const opts: { value: string; label: string }[] = cashAccounts.map((a) => ({
+      value: a.isDefault ? "liquidity" : `cash:${a.id}`,
+      label: a.isDefault
+        ? `${a.name} (${t("cashflow.accounts.default", { defaultValue: "default" })})`
+        : a.name,
+    }));
+    // Ensure legacy liquidity always present
+    if (!opts.some((o) => o.value === "liquidity")) {
+      opts.unshift({ value: "liquidity", label: t("cashflow.liquidityCash") });
+    }
     for (const h of holdings)
       opts.push({
         value: `holding:${h.id}`,
@@ -1908,7 +1792,7 @@ function AddForm({
     for (const c of creditCards)
       opts.push({ value: `credit:${c.id}`, label: `${t("cashflow.cardPrefix")} · ${c.name}` });
     return opts;
-  }, [holdings, creditCards, t]);
+  }, [holdings, creditCards, storeState.cashAccounts, t]);
 
   const [kind, setKind] = useState<"income" | "expense" | "transfer">("income");
   const [categoryName, setCategoryName] = useState<string>("");
@@ -1927,6 +1811,7 @@ function AddForm({
   const [instStart, setInstStart] = useState(format(new Date(), "yyyy-MM-dd"));
   const [fromAccount, setFromAccount] = useState<string>("liquidity");
   const [toAccount, setToAccount] = useState<string>(accountOptions[1]?.value ?? "liquidity");
+  const [formError, setFormError] = useState<{ field: string; message: string } | null>(null);
 
   const recurrencePreview = useMemo(() => {
     if (whenMode !== "recurring") return "";
@@ -1960,15 +1845,64 @@ function AddForm({
     }
   }, [visibleCategories, categoryName, kind]);
 
+  useEffect(() => {
+    if (!editing) return;
+    setKind(editing.kind);
+    setCategoryName(
+      editing.kind === "income"
+        ? editing.source
+        : editing.kind === "expense"
+          ? editing.category
+          : "",
+    );
+    setAmount(String(editing.amount));
+    setEntryCurrency(editing.currency || defaultCurrency);
+    setDate(format(new Date(editing.date), "yyyy-MM-dd"));
+    if (editing.installmentPlan) {
+      setWhenMode("installments");
+      setInstCount(String(editing.installmentPlan.count));
+      setInstFreq(editing.installmentPlan.frequency);
+      setInstStart(format(new Date(editing.installmentPlan.firstDueDate), "yyyy-MM-dd"));
+    } else if (editing.recurrence) {
+      setWhenMode("recurring");
+      setFrequency(editing.recurrence.frequency);
+      setUntil(
+        editing.recurrence.until ? format(new Date(editing.recurrence.until), "yyyy-MM-dd") : "",
+      );
+    } else {
+      setWhenMode("one-time");
+      setUntil("");
+    }
+    setIsPercent((editing.amountKind ?? "fixed") === "percent");
+    setPercentOf(editing.percentOf ?? "all-income");
+    setDescription(editing.description ?? "");
+    setPaymentMethod(editing.paymentMethod ?? "liquidity");
+    setFromAccount(editing.fromAccount ?? "liquidity");
+    setToAccount(editing.toAccount ?? "liquidity");
+  }, [editing, defaultCurrency]);
+
   function submit() {
     const a = parseFloat(amount);
-    if (!isFinite(a) || a <= 0) return toast.error(t("cashflow.amountGtZero"));
-    if (isPercent && a > 1000) return toast.error(t("cashflow.percentTooHigh"));
+    if (!isFinite(a) || a <= 0) {
+      setFormError({ field: "amount", message: t("cashflow.amountGtZero") });
+      return;
+    }
+    if (isPercent && a > 1000) {
+      setFormError({ field: "amount", message: t("cashflow.percentTooHigh") });
+      return;
+    }
     const desc = description.trim().slice(0, 200);
 
     if (kind === "transfer") {
-      if (!fromAccount || !toAccount) return toast.error(t("cashflow.pickBothAccounts"));
-      if (fromAccount === toAccount) return toast.error(t("cashflow.accountsMustDiffer"));
+      if (!fromAccount || !toAccount) {
+        setFormError({ field: "accounts", message: t("cashflow.pickBothAccounts") });
+        return;
+      }
+      if (fromAccount === toAccount) {
+        setFormError({ field: "accounts", message: t("cashflow.accountsMustDiffer") });
+        return;
+      }
+      setFormError(null);
       onAdd({
         kind: "transfer",
         source: "",
@@ -1980,12 +1914,17 @@ function AddForm({
         toAccount,
         description: desc || undefined,
       });
-      setAmount("");
-      setDescription("");
+      if (!editing) {
+        setAmount("");
+        setDescription("");
+      }
       return;
     }
 
-    if (!categoryName.trim()) return toast.error(t("cashflow.pickCategory"));
+    if (!categoryName.trim()) {
+      setFormError({ field: "category", message: t("cashflow.pickCategory") });
+      return;
+    }
     const useInstallments = whenMode === "installments";
     const recurring = whenMode === "recurring";
     const installmentPlan =
@@ -1997,6 +1936,7 @@ function AddForm({
             firstDueDate: new Date(instStart).toISOString(),
           }
         : undefined;
+    setFormError(null);
     onAdd({
       kind,
       source: kind === "income" ? categoryName : "",
@@ -2014,12 +1954,15 @@ function AddForm({
       paymentMethod: kind === "expense" ? paymentMethod : undefined,
       installmentPlan,
     });
-    setAmount("");
-    setDescription("");
+    if (!editing) {
+      setAmount("");
+      setDescription("");
+    }
   }
 
-  const submitLabel =
-    kind === "transfer"
+  const submitLabel = editing
+    ? t("common.save", { defaultValue: "Save changes" })
+    : kind === "transfer"
       ? t("cashflow.addTransferBtn")
       : kind === "income"
         ? whenMode === "recurring"
@@ -2031,18 +1974,27 @@ function AddForm({
             ? t("cashflow.addRecurringExpense")
             : t("cashflow.addExpenseBtn");
 
-  const categoriesManager = (
-    <CategoriesManager
-      categories={categories}
-      onAdd={onAddCategory}
-      onUpdate={onUpdateCategory}
-      onRemove={onRemoveCategory}
-    />
-  );
+  const manageCategoriesBtn = onManageCategories ? (
+    <Button
+      type="button"
+      variant="ghost"
+      size="sm"
+      className="h-8 text-xs"
+      onClick={onManageCategories}
+    >
+      {t("cashflow.manageCategories")}
+    </Button>
+  ) : null;
 
   const formBody = (
     <>
-        <Tabs value={kind} onValueChange={(v) => setKind(v as typeof kind)}>
+        <Tabs
+          value={kind}
+          onValueChange={(v) => {
+            setKind(v as typeof kind);
+            setFormError(null);
+          }}
+        >
           <TabsList className="grid grid-cols-3">
             <TabsTrigger value="income">{t("cashflow.income")}</TabsTrigger>
             <TabsTrigger value="expense">{t("cashflow.expense")}</TabsTrigger>
@@ -2063,8 +2015,9 @@ function AddForm({
                 />
               </Field>
               {sharedFields()}
-              <Field label={t("cashflow.descriptionLabel")}>
+              <Field htmlFor="cf-description" label={t("cashflow.descriptionLabel")}>
                 <Input
+                  id="cf-description"
                   type="text"
                   maxLength={200}
                   value={description}
@@ -2118,8 +2071,9 @@ function AddForm({
                   </Field>
                   {whenMode === "installments" && (
                     <div className="grid grid-cols-3 gap-3">
-                      <Field label={t("cashflow.payments")}>
+                      <Field htmlFor="cf-inst-count" label={t("cashflow.payments")}>
                         <Input
+                          id="cf-inst-count"
                           type="number"
                           min={1}
                           max={120}
@@ -2141,8 +2095,9 @@ function AddForm({
                           </SelectContent>
                         </Select>
                       </Field>
-                      <Field label={t("cashflow.firstDue")}>
+                      <Field htmlFor="cf-inst-start" label={t("cashflow.firstDue")}>
                         <Input
+                          id="cf-inst-start"
                           type="date"
                           value={instStart}
                           onChange={(e) => setInstStart(e.target.value)}
@@ -2168,8 +2123,9 @@ function AddForm({
                             </SelectContent>
                           </Select>
                         </Field>
-                        <Field label={t("cashflow.untilOptional")}>
+                        <Field htmlFor="cf-until" label={t("cashflow.untilOptional")}>
                           <Input
+                            id="cf-until"
                             type="date"
                             value={until}
                             onChange={(e) => setUntil(e.target.value)}
@@ -2224,8 +2180,9 @@ function AddForm({
                             </SelectContent>
                           </Select>
                         </Field>
-                        <Field label={t("cashflow.untilOptional")}>
+                        <Field htmlFor="cf-until" label={t("cashflow.untilOptional")}>
                           <Input
+                            id="cf-until"
                             type="date"
                             value={until}
                             onChange={(e) => setUntil(e.target.value)}
@@ -2274,13 +2231,18 @@ function AddForm({
                 </Field>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                <Field label={t("common.amount")}>
+                <Field htmlFor="cf-transfer-amount" label={t("common.amount")}>
                   <Input
+                    id="cf-transfer-amount"
                     type="number"
                     step="any"
                     value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
+                    onChange={(e) => {
+                      setAmount(e.target.value);
+                      if (formError?.field === "amount") setFormError(null);
+                    }}
                     placeholder="0.00"
+                    aria-invalid={formError?.field === "amount"}
                   />
                 </Field>
                 <Field label={t("common.currency")}>
@@ -2297,12 +2259,18 @@ function AddForm({
                     </SelectContent>
                   </Select>
                 </Field>
-                <Field label={t("common.date")}>
-                  <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+                <Field htmlFor="cf-transfer-date" label={t("common.date")}>
+                  <Input
+                    id="cf-transfer-date"
+                    type="date"
+                    value={date}
+                    onChange={(e) => setDate(e.target.value)}
+                  />
                 </Field>
               </div>
-              <Field label={t("cashflow.descriptionLabel")}>
+              <Field htmlFor="cf-transfer-description" label={t("cashflow.descriptionLabel")}>
                 <Input
+                  id="cf-transfer-description"
                   type="text"
                   maxLength={200}
                   value={description}
@@ -2313,8 +2281,13 @@ function AddForm({
             </TabsContent>
           )}
         </Tabs>
+        {formError ? (
+          <p className="mt-3 text-sm text-destructive" role="alert">
+            {formError.message}
+          </p>
+        ) : null}
         <Button className="mt-4 w-full" onClick={submit}>
-          <Plus className="mr-2 h-4 w-4" /> {submitLabel}
+          {!editing && <Plus className="mr-2 h-4 w-4" />} {submitLabel}
         </Button>
     </>
   );
@@ -2322,7 +2295,7 @@ function AddForm({
   if (embedded) {
     return (
       <div data-tour="cf-add" className="space-y-3 pb-2">
-        <div className="flex justify-end">{categoriesManager}</div>
+        {manageCategoriesBtn ? <div className="flex justify-end">{manageCategoriesBtn}</div> : null}
         {formBody}
       </div>
     );
@@ -2335,7 +2308,7 @@ function AddForm({
         data-tour="cf-add"
       >
         <CardTitle>{t("cashflow.addEntry")}</CardTitle>
-        {categoriesManager}
+        {manageCategoriesBtn}
       </CardHeader>
       <CardContent>{formBody}</CardContent>
     </Card>
@@ -2359,19 +2332,25 @@ function AddForm({
               value={percentOf}
               onChange={setPercentOf}
               options={subscribeOptions}
+              excludeId={editing?.id}
             />
           </Field>
         )}
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          <Field label={isPercent ? t("cashflow.percent") : t("common.amount")}>
+          <Field htmlFor="cf-amount" label={isPercent ? t("cashflow.percent") : t("common.amount")}>
             <div className="relative">
               <Input
+                id="cf-amount"
                 type="number"
                 step="any"
                 value={amount}
-                onChange={(e) => setAmount(e.target.value)}
+                onChange={(e) => {
+                  setAmount(e.target.value);
+                  if (formError?.field === "amount") setFormError(null);
+                }}
                 placeholder={isPercent ? "20" : "0.00"}
                 className={isPercent ? "pr-8" : ""}
+                aria-invalid={formError?.field === "amount"}
               />
               {isPercent && (
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
@@ -2398,13 +2377,19 @@ function AddForm({
           )}
           <div className={isPercent ? "col-span-1" : "col-span-2 sm:col-span-1"}>
             <Field
+              htmlFor="cf-date"
               label={
                 whenMode === "recurring"
                   ? t("cashflow.upcoming.startDate")
                   : t("common.date")
               }
             >
-              <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+              <Input
+                id="cf-date"
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+              />
             </Field>
           </div>
         </div>
@@ -2413,10 +2398,20 @@ function AddForm({
   }
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({
+  label,
+  children,
+  htmlFor,
+}: {
+  label: string;
+  children: React.ReactNode;
+  htmlFor?: string;
+}) {
   return (
     <div>
-      <Label className="text-xs">{label}</Label>
+      <Label className="text-xs" htmlFor={htmlFor}>
+        {label}
+      </Label>
       <div className="mt-1.5">{children}</div>
     </div>
   );
@@ -2437,6 +2432,7 @@ function PercentTargetPicker({
   excludeId?: string;
   className?: string;
 }) {
+  const { t } = useTranslation();
   const incomes = options.filter((o) => o.kind === "income" && o.id !== excludeId);
   const expenses = options.filter((o) => o.kind === "expense" && o.id !== excludeId);
   // If current value points to a missing/excluded entry, keep it selectable so the
@@ -2453,11 +2449,15 @@ function PercentTargetPicker({
         <SelectValue />
       </SelectTrigger>
       <SelectContent className="max-h-72">
-        <SelectItem value="all-income">All income (total)</SelectItem>
-        <SelectItem value="all-expense">All expenses (total)</SelectItem>
+        <SelectItem value="all-income">
+          {t("cashflow.percentTargetIncomeAll", { defaultValue: "All income (total)" })}
+        </SelectItem>
+        <SelectItem value="all-expense">
+          {t("cashflow.percentTargetExpenseAll", { defaultValue: "All expenses (total)" })}
+        </SelectItem>
         {incomes.length > 0 && (
           <div className="px-2 pt-2 pb-1 text-[10px] uppercase tracking-wider text-muted-foreground">
-            Income entries
+            {t("cashflow.incomeEntriesGroup", { defaultValue: "Income entries" })}
           </div>
         )}
         {incomes.map((o) => (
@@ -2467,7 +2467,7 @@ function PercentTargetPicker({
         ))}
         {expenses.length > 0 && (
           <div className="px-2 pt-2 pb-1 text-[10px] uppercase tracking-wider text-muted-foreground">
-            Expense entries
+            {t("cashflow.expenseEntriesGroup", { defaultValue: "Expense entries" })}
           </div>
         )}
         {expenses.map((o) => (
@@ -2475,7 +2475,11 @@ function PercentTargetPicker({
             {o.label}
           </SelectItem>
         ))}
-        {!known.has(value) && <SelectItem value={value}>(deleted entry)</SelectItem>}
+        {!known.has(value) && (
+          <SelectItem value={value}>
+            {t("cashflow.deletedEntry", { defaultValue: "(deleted entry)" })}
+          </SelectItem>
+        )}
       </SelectContent>
     </Select>
   );
@@ -2498,8 +2502,10 @@ function CategoryPicker({
   categories: Category[];
   onCreate: (c: Omit<Category, "id">) => void;
 }) {
+  const { t } = useTranslation();
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState("");
+  const [nameError, setNameError] = useState<string | null>(null);
   const [group, setGroup] = useState<CategoryGroup>(kind === "income" ? "income" : "expense");
   const [color, setColor] = useState<string>(
     GROUP_COLORS[kind === "income" ? "income" : "expense"],
@@ -2510,7 +2516,6 @@ function CategoryPicker({
     setColor(GROUP_COLORS[kind === "income" ? "income" : "expense"]);
   }, [kind]);
 
-  // Update default color when group changes.
   useEffect(() => {
     setColor(GROUP_COLORS[group]);
   }, [group]);
@@ -2520,9 +2525,13 @@ function CategoryPicker({
 
   function commit() {
     const n = name.trim();
-    if (!n) return toast.error("Name required");
+    if (!n) {
+      setNameError(t("more.mcNameRequired"));
+      return;
+    }
     onCreate({ name: n, kind, group, color });
     setName("");
+    setNameError(null);
     setCreating(false);
   }
 
@@ -2533,6 +2542,7 @@ function CategoryPicker({
         onValueChange={(v) => {
           if (v === NEW_CATEGORY_VALUE) {
             setCreating(true);
+            setNameError(null);
           } else {
             setCreating(false);
             onChange(v);
@@ -2540,7 +2550,7 @@ function CategoryPicker({
         }}
       >
         <SelectTrigger>
-          <SelectValue placeholder="Select a category" />
+          <SelectValue placeholder={t("cashflow.selectCategory", { defaultValue: "Select a category" })} />
         </SelectTrigger>
         <SelectContent>
           {categories.map((c) => (
@@ -2552,13 +2562,18 @@ function CategoryPicker({
                   aria-hidden
                 />
                 {c.name}
-                <span className="text-[10px] uppercase text-muted-foreground">{c.group}</span>
+                <span className="text-[10px] uppercase text-muted-foreground">
+                  {t(`more.mc${c.group[0].toUpperCase() + c.group.slice(1)}` as never)}
+                </span>
               </span>
             </SelectItem>
           ))}
           <SelectItem value={NEW_CATEGORY_VALUE}>
             <span className="inline-flex items-center gap-2 text-primary">
-              <Plus className="h-3.5 w-3.5" /> New {kind === "income" ? "source" : "category"}…
+              <Plus className="h-3.5 w-3.5" />{" "}
+              {kind === "income"
+                ? t("cashflow.newSourceOption", { defaultValue: "New source…" })
+                : t("cashflow.newCategoryOption", { defaultValue: "New category…" })}
             </span>
           </SelectItem>
         </SelectContent>
@@ -2570,8 +2585,18 @@ function CategoryPicker({
             <Input
               autoFocus
               value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder={kind === "income" ? "e.g. Bonuses" : "e.g. Subscriptions"}
+              onChange={(e) => {
+                setName(e.target.value);
+                if (nameError) setNameError(null);
+              }}
+              placeholder={
+                kind === "income"
+                  ? t("cashflow.categoryNameIncomePlaceholder", { defaultValue: "e.g. Bonuses" })
+                  : t("cashflow.categoryNameExpensePlaceholder", {
+                      defaultValue: "e.g. Subscriptions",
+                    })
+              }
+              aria-invalid={!!nameError}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   e.preventDefault();
@@ -2584,9 +2609,15 @@ function CategoryPicker({
               value={color}
               onChange={(e) => setColor(e.target.value)}
               className="h-9 w-12 cursor-pointer rounded border border-border/60 bg-transparent p-0"
-              title="Color"
+              title={t("common.color")}
+              aria-label={t("common.color")}
             />
           </div>
+          {nameError ? (
+            <p className="text-xs text-destructive" role="alert">
+              {nameError}
+            </p>
+          ) : null}
           <div className="grid grid-cols-[1fr,auto,auto] gap-2">
             <Select value={group} onValueChange={(v) => setGroup(v as CategoryGroup)}>
               <SelectTrigger className="h-8 text-xs">
@@ -2595,16 +2626,16 @@ function CategoryPicker({
               <SelectContent>
                 {groupOptions.map((g) => (
                   <SelectItem key={g} value={g}>
-                    {g[0].toUpperCase() + g.slice(1)}
+                    {t(`more.mc${g[0].toUpperCase() + g.slice(1)}` as never)}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
             <Button size="sm" variant="ghost" onClick={() => setCreating(false)}>
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button size="sm" onClick={commit}>
-              Create
+              {t("common.create")}
             </Button>
           </div>
         </div>
@@ -2615,23 +2646,35 @@ function CategoryPicker({
 
 /* ---------- Manage categories dialog ---------- */
 
-function CategoriesManager({
+export function CategoriesManager({
   categories,
   onAdd,
   onUpdate,
   onRemove,
+  open: openProp,
+  onOpenChange,
+  showTrigger = true,
 }: {
   categories: Category[];
   onAdd: (c: Omit<Category, "id">) => Category;
   onUpdate: (id: string, patch: Partial<Category>) => void;
   onRemove: (id: string) => void;
+  open?: boolean;
+  onOpenChange?: (o: boolean) => void;
+  showTrigger?: boolean;
 }) {
   const { t } = useTranslation();
-  const [open, setOpen] = useState(false);
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
+  const open = openProp ?? uncontrolledOpen;
+  const setOpen = (o: boolean) => {
+    if (openProp === undefined) setUncontrolledOpen(o);
+    onOpenChange?.(o);
+  };
   const [newName, setNewName] = useState("");
   const [newKind, setNewKind] = useState<"income" | "expense">("expense");
   const [newGroup, setNewGroup] = useState<CategoryGroup>("expense");
   const [newColor, setNewColor] = useState<string>(GROUP_COLORS.expense);
+  const [nameError, setNameError] = useState<string | null>(null);
 
   useEffect(() => {
     setNewGroup(newKind === "income" ? "income" : "expense");
@@ -2648,40 +2691,61 @@ function CategoriesManager({
 
   function create() {
     const n = newName.trim();
-    if (!n) return toast.error(t("more.mcNameRequired"));
+    if (!n) {
+      setNameError(t("more.mcNameRequired"));
+      return;
+    }
     onAdd({ name: n, kind: newKind, group: newGroup, color: newColor });
     setNewName("");
+    setNameError(null);
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="ghost" size="sm" className="h-8 gap-1.5 text-xs" title={t("more.mcTitle")}>
+    <>
+      {showTrigger && (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 gap-1.5 text-xs"
+          title={t("more.mcTitle")}
+          onClick={() => setOpen(true)}
+        >
           <SettingsIcon className="h-3.5 w-3.5" /> {t("more.mcTrigger")}
         </Button>
-      </DialogTrigger>
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
-          <DialogTitle>{t("more.mcTitle")}</DialogTitle>
-          <DialogDescription>{t("more.mcDesc")}</DialogDescription>
-        </DialogHeader>
-
+      )}
+      <ResponsiveDialog
+        open={open}
+        onOpenChange={setOpen}
+        title={t("more.mcTitle")}
+        description={t("more.mcDesc")}
+        className="max-w-lg"
+      >
         <div className="space-y-4">
           <div className="rounded-md border border-border/60 p-3">
             <div className="text-xs font-medium mb-2">{t("more.mcAddNew")}</div>
             <div className="grid grid-cols-[1fr,auto] gap-2">
               <Input
                 value={newName}
-                onChange={(e) => setNewName(e.target.value)}
+                onChange={(e) => {
+                  setNewName(e.target.value);
+                  if (nameError) setNameError(null);
+                }}
                 placeholder={t("more.mcNamePlaceholder")}
+                aria-invalid={!!nameError}
               />
               <input
                 type="color"
                 value={newColor}
                 onChange={(e) => setNewColor(e.target.value)}
                 className="h-9 w-12 cursor-pointer rounded border border-border/60 bg-transparent p-0"
+                aria-label={t("common.color")}
               />
             </div>
+            {nameError ? (
+              <p className="mt-1.5 text-xs text-destructive" role="alert">
+                {nameError}
+              </p>
+            ) : null}
             <div className="mt-2 grid grid-cols-3 gap-2">
               <Select value={newKind} onValueChange={(v) => setNewKind(v as "income" | "expense")}>
                 <SelectTrigger className="h-8 text-xs">
@@ -2726,8 +2790,8 @@ function CategoriesManager({
             onRemove={onRemove}
           />
         </div>
-      </DialogContent>
-    </Dialog>
+      </ResponsiveDialog>
+    </>
   );
 }
 
@@ -2742,6 +2806,7 @@ function CategoryList({
   onUpdate: (id: string, patch: Partial<Category>) => void;
   onRemove: (id: string) => void;
 }) {
+  const { t } = useTranslation();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draftName, setDraftName] = useState("");
 
@@ -2794,7 +2859,7 @@ function CategoryList({
                   : (["expense", "savings", "investment"] as CategoryGroup[])
                 ).map((g) => (
                   <SelectItem key={g} value={g}>
-                    {g[0].toUpperCase() + g.slice(1)}
+                    {t(`more.mc${g[0].toUpperCase() + g.slice(1)}` as never)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -2803,7 +2868,10 @@ function CategoryList({
               variant="ghost"
               size="icon"
               className="h-7 w-7"
-              aria-label={`Rename category ${c.name}`}
+              aria-label={t("more.mcRenameAria", {
+                name: c.name,
+                defaultValue: `Rename category ${c.name}`,
+              })}
               onClick={() => {
                 setEditingId(c.id);
                 setDraftName(c.name);
@@ -2815,7 +2883,10 @@ function CategoryList({
               variant="ghost"
               size="icon"
               className="h-7 w-7"
-              aria-label={`Delete category ${c.name}`}
+              aria-label={t("more.mcDeleteAria", {
+                name: c.name,
+                defaultValue: `Delete category ${c.name}`,
+              })}
               onClick={() => onRemove(c.id)}
             >
               <Trash2 className="h-3.5 w-3.5" />

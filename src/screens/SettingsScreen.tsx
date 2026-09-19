@@ -8,6 +8,7 @@ import {
   Alert,
   TextInput,
   Platform,
+  Pressable,
 } from "react-native";
 import { useTranslation } from "react-i18next";
 import {
@@ -53,6 +54,7 @@ import { clearPriceHistoryCache } from "@/lib/finance";
 import { CURRENCIES } from "@/lib/currency";
 import { SUPPORTED_LANGUAGES } from "@/i18n";
 import { colors, spacing } from "@/theme/colors";
+import { PALETTE_CHIPS } from "@/theme/palettes";
 
 const ALLOWED_CORS_PROXIES = [
   "https://corsproxy.io/?",
@@ -360,6 +362,52 @@ export function SettingsScreen() {
         automaticallyAdjustKeyboardInsets
       >
         <Header title={t("nav.settings")} subtitle={t("settings.subtitle")} />
+
+        <Card>
+          <Text style={styles.section}>Look & feel</Text>
+          <Text style={styles.meta}>Light or dark, and a color palette saved with your backup.</Text>
+          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 8 }}>
+            {(["light", "dark", "system"] as const).map((m) => {
+              const on = (state.settings.appearance?.mode ?? "dark") === m;
+              return (
+                <Chip
+                  key={m}
+                  label={m}
+                  active={on}
+                  onPress={() =>
+                    updateSettings({
+                      appearance: { ...state.settings.appearance, mode: m },
+                    })
+                  }
+                />
+              );
+            })}
+          </View>
+          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 12 }}>
+            {PALETTE_CHIPS.map((p) => {
+              const on = (state.settings.appearance?.paletteId ?? "gold") === p.id;
+              return (
+                <Pressable
+                  key={p.id}
+                  onPress={() =>
+                    updateSettings({
+                      appearance: { ...state.settings.appearance, paletteId: p.id },
+                    })
+                  }
+                  style={{
+                    width: 44,
+                    height: 44,
+                    borderRadius: 12,
+                    backgroundColor: p.swatch,
+                    borderWidth: on ? 2 : 1,
+                    borderColor: on ? colors.accent : colors.border,
+                  }}
+                  accessibilityLabel={p.label}
+                />
+              );
+            })}
+          </View>
+        </Card>
 
         <Card>
           <Text style={styles.section}>{t("settings.about.title")}</Text>

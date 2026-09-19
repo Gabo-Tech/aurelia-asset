@@ -35,7 +35,7 @@ export function FilterPillGroup({
           type="button"
           onClick={() => onToggle(p.id)}
           className={cn(
-            "inline-flex min-h-9 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors active-press",
+            "inline-flex min-h-11 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors active-press",
             p.active !== false
               ? "border-transparent bg-primary/10 text-foreground hover:bg-primary/20"
               : "border-border bg-transparent text-muted-foreground opacity-60",
@@ -53,7 +53,7 @@ export function FilterPillGroup({
             <button
               type="button"
               onClick={onShowAll}
-              className="min-h-9 text-xs text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
+              className="min-h-11 text-xs text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
             >
               {showAllLabel}
             </button>
@@ -63,7 +63,7 @@ export function FilterPillGroup({
             <button
               type="button"
               onClick={onHideAll}
-              className="min-h-9 text-xs text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
+              className="min-h-11 text-xs text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
             >
               {hideAllLabel}
             </button>

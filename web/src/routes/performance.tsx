@@ -31,6 +31,7 @@ import { cn } from "@/lib/utils";
 import { SITE_URL } from "@/lib/site-config";
 import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
 import { Loader2 } from "lucide-react";
+import { computePortfolioCostBasis, realizedGainsInRange } from "@/lib/cost-basis";
 
 export const Route = createFileRoute("/performance")({
   head: () => {
@@ -73,6 +74,22 @@ function PerformancePage() {
     },
     disabled: !state.holdings.length,
   });
+
+  const costBasis = useMemo(
+    () => computePortfolioCostBasis(state.holdings, state.transactions ?? []),
+    [state.holdings, state.transactions],
+  );
+  const year = new Date().getFullYear();
+  const realizedYtd = useMemo(
+    () =>
+      realizedGainsInRange(
+        state.holdings,
+        state.transactions ?? [],
+        `${year}-01-01`,
+        `${year}-12-31`,
+      ),
+    [state.holdings, state.transactions, year],
+  );
 
   const visibleKeys = useMemo(() => {
     const keys: string[] = [];
@@ -214,28 +231,75 @@ function PerformancePage() {
       )}
       <PageHeader title={t("performance.title")} description={t("performance.description")} />
 
+      <div className="mb-4 grid grid-cols-1 gap-2 sm:grid-cols-3 sm:gap-3" data-tour="perf-cost-basis">
+        <Card className="border-border/60 rounded-2xl shadow-sm">
+          <CardContent className="p-4">
+            <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
+              {t("performance.costBasis", { defaultValue: "Cost basis" })}
+            </div>
+            <div className="mt-1 text-lg font-semibold tabular-nums">
+              {privacy ? MASK : formatMoney(costBasis.costBasis, currency)}
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-border/60 rounded-2xl shadow-sm">
+          <CardContent className="p-4">
+            <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
+              {t("performance.unrealized", { defaultValue: "Unrealized P&L" })}
+            </div>
+            <div
+              className={`mt-1 text-lg font-semibold tabular-nums ${
+                costBasis.unrealizedGain >= 0 ? "text-success" : "text-destructive"
+              }`}
+            >
+              {privacy
+                ? MASK
+                : `${costBasis.unrealizedGain >= 0 ? "+" : "−"}${formatMoney(Math.abs(costBasis.unrealizedGain), currency)}`}
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-border/60 rounded-2xl shadow-sm">
+          <CardContent className="p-4">
+            <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
+              {t("performance.realizedYtd", { defaultValue: "Realized YTD" })}
+            </div>
+            <div
+              className={`mt-1 text-lg font-semibold tabular-nums ${
+                realizedYtd >= 0 ? "text-success" : "text-destructive"
+              }`}
+            >
+              {privacy
+                ? MASK
+                : `${realizedYtd >= 0 ? "+" : "−"}${formatMoney(Math.abs(realizedYtd), currency)}`}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       <div
-        className="mb-4 flex gap-1.5 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-1.5"
         data-tour="perf-period"
       >
-        {PERIODS.map((p) => (
-          <Button
-            key={p.id}
-            size="sm"
-            variant={period === p.id ? "default" : "outline"}
-            onClick={() => setPeriod(p.id)}
-            className={cn("h-10 shrink-0 rounded-full px-4", period === p.id && "shadow-sm")}
-          >
-            {p.label}
-          </Button>
-        ))}
-        <div className="ml-auto flex items-center gap-1 shrink-0">
+        <div className="flex gap-1.5 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {PERIODS.map((p) => (
+            <Button
+              key={p.id}
+              size="sm"
+              variant={period === p.id ? "default" : "outline"}
+              onClick={() => setPeriod(p.id)}
+              className={cn("h-11 shrink-0 rounded-full px-4", period === p.id && "shadow-sm")}
+            >
+              {p.label}
+            </Button>
+          ))}
+        </div>
+        <div className="flex items-center gap-1 sm:ml-auto shrink-0">
           <Button
             size="sm"
             variant={scaleMode === "value" ? "default" : "outline"}
             onClick={() => setScaleMode("value")}
             title="Absolute value"
-            className="h-10 rounded-full px-3"
+            className="h-11 rounded-full px-3"
           >
             {currency}
           </Button>
@@ -244,7 +308,7 @@ function PerformancePage() {
             variant={scaleMode === "indexed" ? "default" : "outline"}
             onClick={() => setScaleMode("indexed")}
             title="Percent change from start of period"
-            className="h-10 rounded-full px-3"
+            className="h-11 rounded-full px-3"
           >
             %
           </Button>
@@ -258,7 +322,7 @@ function PerformancePage() {
         <button
           onClick={() => setHideTotal((v) => !v)}
           className={cn(
-            "inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs font-medium transition-colors",
+            "inline-flex min-h-11 items-center gap-1.5 rounded-full border px-3 py-2 text-xs font-medium transition-colors",
             hideTotal
               ? "border-border/60 bg-muted text-muted-foreground opacity-60"
               : "border-border bg-card text-foreground hover:bg-accent",
@@ -282,7 +346,7 @@ function PerformancePage() {
               });
             }}
             className={cn(
-              "inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs font-medium transition-colors",
+              "inline-flex min-h-11 items-center gap-1.5 rounded-full border px-3 py-2 text-xs font-medium transition-colors",
               hidden.has(h.symbol)
                 ? "border-border/60 bg-muted text-muted-foreground opacity-60"
                 : "border-border bg-card text-foreground hover:bg-accent",

@@ -1,4 +1,5 @@
 import * as React from "react";
+import { useTranslation } from "react-i18next";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
   Dialog,
@@ -43,22 +44,30 @@ export function ResponsiveDialog({
   showClose = true,
 }: ResponsiveDialogProps) {
   const isMobile = useIsMobile();
+  const { t } = useTranslation();
+  const closeLabel = t("common.close", { defaultValue: "Close" });
 
   if (isMobile) {
     return (
       <Drawer open={open} onOpenChange={onOpenChange}>
-        <DrawerContent className={cn("max-h-[90dvh]", className)}>
-          <DrawerHeader className="text-left">
+        {/* Do not pass max-w-* className here — drawers are full-bleed. */}
+        <DrawerContent className="max-h-[92dvh]">
+          <DrawerHeader className="shrink-0 text-left">
             <DrawerTitle>{title}</DrawerTitle>
             {description ? <DrawerDescription>{description}</DrawerDescription> : null}
           </DrawerHeader>
-          <div className="overflow-y-auto px-4 pb-2">{children}</div>
+          {/* Bound with max-h, not unbounded flex-1 — flex-1 inside h-auto collapses to 0. */}
+          <div className="overflow-y-auto overscroll-contain px-4 pb-2 max-h-[min(60dvh,calc(92dvh-11rem))]">
+            {children}
+          </div>
           {(footer || showClose) && (
-            <DrawerFooter>
+            <DrawerFooter className="shrink-0 border-t border-border/50">
               {footer}
               {showClose && !footer ? (
                 <DrawerClose asChild>
-                  <Button variant="outline">Close</Button>
+                  <Button variant="outline" className="min-h-11">
+                    {closeLabel}
+                  </Button>
                 </DrawerClose>
               ) : null}
             </DrawerFooter>
@@ -70,13 +79,18 @@ export function ResponsiveDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={cn("rounded-2xl", className)}>
-        <DialogHeader>
+      <DialogContent
+        className={cn(
+          "rounded-2xl max-h-[90dvh] flex flex-col gap-4 overflow-hidden",
+          className,
+        )}
+      >
+        <DialogHeader className="shrink-0">
           <DialogTitle>{title}</DialogTitle>
           {description ? <DialogDescription>{description}</DialogDescription> : null}
         </DialogHeader>
-        {children}
-        {footer ? <DialogFooter>{footer}</DialogFooter> : null}
+        <div className="min-h-0 flex-1 overflow-y-auto -mx-1 px-1">{children}</div>
+        {footer ? <DialogFooter className="shrink-0">{footer}</DialogFooter> : null}
       </DialogContent>
     </Dialog>
   );

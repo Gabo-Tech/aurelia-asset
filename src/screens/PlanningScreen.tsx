@@ -13,6 +13,7 @@ import {
   EmptyState,
   Field,
   SegmentedControl,
+  FormSheet,
   chipLabelStyle,
   chipContainerStyle,
 } from "@/components/ui";
@@ -60,6 +61,8 @@ export function PlanningScreen() {
   const [loanMonths, setLoanMonths] = useState("120");
   const [loanExtra, setLoanExtra] = useState("");
   const [tab, setTab] = useState<"goals" | "budgets" | "loans" | "forecast">("goals");
+  const [addGoalOpen, setAddGoalOpen] = useState(false);
+  const [addLoanOpen, setAddLoanOpen] = useState(false);
 
   const [editGoal, setEditGoal] = useState<SavingsGoal | null>(null);
   const [gName, setGName] = useState("");
@@ -134,6 +137,7 @@ export function PlanningScreen() {
     setGoalName("");
     setGoalTarget("");
     setGoalDate("");
+    setAddGoalOpen(false);
   }
 
   function openGoal(g: SavingsGoal) {
@@ -185,6 +189,7 @@ export function PlanningScreen() {
     setLoanName("");
     setLoanPrincipal("");
     setLoanExtra("");
+    setAddLoanOpen(false);
   }
 
   function openLoan(loan: Loan) {
@@ -401,6 +406,30 @@ export function PlanningScreen() {
                 {t("planning.goals.title", { defaultValue: "Savings goals" })}
               </Text>
               <Text style={styles.meta}>{t("planning.goals.manualHint")}</Text>
+              <PrimaryButton
+                label={t("planning.goals.add", { defaultValue: "Add goal" })}
+                onPress={() => setAddGoalOpen(true)}
+              />
+            </Card>
+            <FormSheet
+              visible={addGoalOpen}
+              title={t("planning.goals.add", { defaultValue: "Add goal" })}
+              onClose={() => setAddGoalOpen(false)}
+              footer={
+                <View style={styles.row}>
+                  <PrimaryButton
+                    style={{ flex: 1 }}
+                    label={t("planning.goals.add", { defaultValue: "Add goal" })}
+                    onPress={onAddGoal}
+                  />
+                  <SecondaryButton
+                    style={{ flex: 1 }}
+                    label={t("common.cancel", { defaultValue: "Cancel" })}
+                    onPress={() => setAddGoalOpen(false)}
+                  />
+                </View>
+              }
+            >
               <Field label={t("planning.goals.name", { defaultValue: "Goal name" })}>
                 <TextInput
                   style={styles.input}
@@ -432,8 +461,7 @@ export function PlanningScreen() {
                   autoCapitalize="none"
                 />
               </Field>
-              <PrimaryButton label={t("planning.goals.add", { defaultValue: "Add goal" })} onPress={onAddGoal} />
-            </Card>
+            </FormSheet>
             {(state.goals ?? []).length === 0 ? (
               <EmptyState
                 title={t("planning.goals.empty", { defaultValue: "No goals yet" })}
@@ -441,7 +469,7 @@ export function PlanningScreen() {
                   defaultValue: "Set a savings target to track progress toward something that matters.",
                 })}
                 actionLabel={t("planning.goals.add", { defaultValue: "Add goal" })}
-                onAction={onAddGoal}
+                onAction={() => setAddGoalOpen(true)}
               />
             ) : null}
             {(state.goals ?? []).map((g) => {
@@ -504,63 +532,71 @@ export function PlanningScreen() {
                 </Card>
               );
             })}
-            {editGoal ? (
-              <Card>
-                <Text style={styles.title}>Edit goal</Text>
-                <Field label="Name">
-                  <TextInput
-                    style={styles.input}
-                    value={gName}
-                    onChangeText={setGName}
-                    placeholder="Name"
-                    placeholderTextColor={colors.muted}
+            <FormSheet
+              visible={!!editGoal}
+              title="Edit goal"
+              onClose={() => setEditGoal(null)}
+              footer={
+                <View style={styles.row}>
+                  <PrimaryButton style={{ flex: 1 }} label="Save" onPress={saveGoal} />
+                  <SecondaryButton
+                    style={{ flex: 1 }}
+                    label="Cancel"
+                    onPress={() => setEditGoal(null)}
                   />
-                </Field>
-                <Field label="Target">
-                  <TextInput
-                    style={styles.input}
-                    value={gTarget}
-                    onChangeText={setGTarget}
-                    placeholder="Target"
-                    placeholderTextColor={colors.muted}
-                    keyboardType="decimal-pad"
-                  />
-                </Field>
-                <Field label="Current">
-                  <TextInput
-                    style={styles.input}
-                    value={gCurrent}
-                    onChangeText={setGCurrent}
-                    placeholder="Current"
-                    placeholderTextColor={colors.muted}
-                    keyboardType="decimal-pad"
-                  />
-                </Field>
-                <Field label="Target date YYYY-MM-DD">
-                  <TextInput
-                    style={styles.input}
-                    value={gDate}
-                    onChangeText={setGDate}
-                    placeholder="YYYY-MM-DD"
-                    placeholderTextColor={colors.muted}
-                    autoCapitalize="none"
-                  />
-                </Field>
-                <Field label="Notes">
-                  <TextInput
-                    style={[styles.input, styles.notes]}
-                    value={gNotes}
-                    onChangeText={setGNotes}
-                    placeholder="Notes"
-                    placeholderTextColor={colors.muted}
-                    multiline
-                  />
-                </Field>
-                <PrimaryButton label="Save" onPress={saveGoal} />
-                <View style={{ height: 8 }} />
-                <SecondaryButton label="Cancel" onPress={() => setEditGoal(null)} />
-              </Card>
-            ) : null}
+                </View>
+              }
+            >
+              <Field label="Name">
+                <TextInput
+                  style={styles.input}
+                  value={gName}
+                  onChangeText={setGName}
+                  placeholder="Name"
+                  placeholderTextColor={colors.muted}
+                />
+              </Field>
+              <Field label="Target">
+                <TextInput
+                  style={styles.input}
+                  value={gTarget}
+                  onChangeText={setGTarget}
+                  placeholder="Target"
+                  placeholderTextColor={colors.muted}
+                  keyboardType="decimal-pad"
+                />
+              </Field>
+              <Field label="Current">
+                <TextInput
+                  style={styles.input}
+                  value={gCurrent}
+                  onChangeText={setGCurrent}
+                  placeholder="Current"
+                  placeholderTextColor={colors.muted}
+                  keyboardType="decimal-pad"
+                />
+              </Field>
+              <Field label="Target date YYYY-MM-DD">
+                <TextInput
+                  style={styles.input}
+                  value={gDate}
+                  onChangeText={setGDate}
+                  placeholder="YYYY-MM-DD"
+                  placeholderTextColor={colors.muted}
+                  autoCapitalize="none"
+                />
+              </Field>
+              <Field label="Notes">
+                <TextInput
+                  style={[styles.input, styles.notes]}
+                  value={gNotes}
+                  onChangeText={setGNotes}
+                  placeholder="Notes"
+                  placeholderTextColor={colors.muted}
+                  multiline
+                />
+              </Field>
+            </FormSheet>
           </>
         ) : null}
 
@@ -712,9 +748,27 @@ export function PlanningScreen() {
                 </Card>
               );
             })}
-            {livePlan ? (
-              <Card>
-                <Text style={styles.title}>Edit plan</Text>
+            <FormSheet
+              visible={!!editPlan}
+              title="Edit plan"
+              onClose={() => {
+                setEditPlan(null);
+                setEditLineId(null);
+                setLineCategoryId(null);
+              }}
+              footer={
+                <SecondaryButton
+                  label="Close"
+                  onPress={() => {
+                    setEditPlan(null);
+                    setEditLineId(null);
+                    setLineCategoryId(null);
+                  }}
+                />
+              }
+            >
+              {livePlan ? (
+                <>
                 <TextInput
                   style={styles.input}
                   value={pName}
@@ -861,17 +915,9 @@ export function PlanningScreen() {
                     </View>
                   );
                 })}
-                <View style={{ height: 8 }} />
-                <PrimaryButton
-                  label="Close"
-                  onPress={() => {
-                    setEditPlan(null);
-                    setEditLineId(null);
-                    setLineCategoryId(null);
-                  }}
-                />
-              </Card>
-            ) : null}
+                </>
+              ) : null}
+            </FormSheet>
             {mainPlan ? <Text style={styles.hint}>Main plan: {mainPlan.name}</Text> : null}
           </>
         ) : null}
@@ -880,6 +926,23 @@ export function PlanningScreen() {
           <>
             <Card>
               <Text style={styles.section}>Loans</Text>
+              <PrimaryButton label="Add loan" onPress={() => setAddLoanOpen(true)} />
+            </Card>
+            <FormSheet
+              visible={addLoanOpen}
+              title="Add loan"
+              onClose={() => setAddLoanOpen(false)}
+              footer={
+                <View style={styles.row}>
+                  <PrimaryButton style={{ flex: 1 }} label="Add loan" onPress={onAddLoan} />
+                  <SecondaryButton
+                    style={{ flex: 1 }}
+                    label="Cancel"
+                    onPress={() => setAddLoanOpen(false)}
+                  />
+                </View>
+              }
+            >
               <TextInput
                 style={styles.input}
                 placeholder="Loan name"
@@ -919,8 +982,7 @@ export function PlanningScreen() {
                 value={loanExtra}
                 onChangeText={setLoanExtra}
               />
-              <PrimaryButton label="Add loan" onPress={onAddLoan} />
-            </Card>
+            </FormSheet>
             {(state.loans ?? []).length === 0 ? (
               <EmptyState
                 title={t("planning.loans.empty", { defaultValue: "No loans yet" })}
@@ -928,7 +990,7 @@ export function PlanningScreen() {
                   defaultValue: "Add a loan to see monthly payment and amortization.",
                 })}
                 actionLabel={t("planning.loans.add", { defaultValue: "Add loan" })}
-                onAction={onAddLoan}
+                onAction={() => setAddLoanOpen(true)}
               />
             ) : null}
             {(state.loans ?? []).map((loan) => {
@@ -995,61 +1057,65 @@ export function PlanningScreen() {
                 </Card>
               );
             })}
-            {editLoan ? (
-              <Card>
-                <Text style={styles.title}>Edit loan</Text>
-                <TextInput
-                  style={styles.input}
-                  value={lName}
-                  onChangeText={setLName}
-                  placeholder="Name"
-                  placeholderTextColor={colors.muted}
-                />
-                <TextInput
-                  style={styles.input}
-                  value={lPrincipal}
-                  onChangeText={setLPrincipal}
-                  placeholder="Principal"
-                  placeholderTextColor={colors.muted}
-                  keyboardType="decimal-pad"
-                />
-                <TextInput
-                  style={styles.input}
-                  value={lApr}
-                  onChangeText={setLApr}
-                  placeholder="APR %"
-                  placeholderTextColor={colors.muted}
-                  keyboardType="decimal-pad"
-                />
-                <TextInput
-                  style={styles.input}
-                  value={lMonths}
-                  onChangeText={setLMonths}
-                  placeholder="Term months"
-                  placeholderTextColor={colors.muted}
-                  keyboardType="number-pad"
-                />
-                <TextInput
-                  style={styles.input}
-                  value={lExtra}
-                  onChangeText={setLExtra}
-                  placeholder="Extra monthly"
-                  placeholderTextColor={colors.muted}
-                  keyboardType="decimal-pad"
-                />
-                <TextInput
-                  style={[styles.input, styles.notes]}
-                  value={lNotes}
-                  onChangeText={setLNotes}
-                  placeholder="Notes"
-                  placeholderTextColor={colors.muted}
-                  multiline
-                />
-                <PrimaryButton label="Save" onPress={saveLoan} />
-                <View style={{ height: 8 }} />
-                <PrimaryButton label="Cancel" onPress={() => setEditLoan(null)} />
-              </Card>
-            ) : null}
+            <FormSheet
+              visible={!!editLoan}
+              title="Edit loan"
+              onClose={() => setEditLoan(null)}
+              footer={
+                <View style={styles.row}>
+                  <PrimaryButton style={{ flex: 1 }} label="Save" onPress={saveLoan} />
+                  <SecondaryButton style={{ flex: 1 }} label="Cancel" onPress={() => setEditLoan(null)} />
+                </View>
+              }
+            >
+              <TextInput
+                style={styles.input}
+                value={lName}
+                onChangeText={setLName}
+                placeholder="Name"
+                placeholderTextColor={colors.muted}
+              />
+              <TextInput
+                style={styles.input}
+                value={lPrincipal}
+                onChangeText={setLPrincipal}
+                placeholder="Principal"
+                placeholderTextColor={colors.muted}
+                keyboardType="decimal-pad"
+              />
+              <TextInput
+                style={styles.input}
+                value={lApr}
+                onChangeText={setLApr}
+                placeholder="APR %"
+                placeholderTextColor={colors.muted}
+                keyboardType="decimal-pad"
+              />
+              <TextInput
+                style={styles.input}
+                value={lMonths}
+                onChangeText={setLMonths}
+                placeholder="Term months"
+                placeholderTextColor={colors.muted}
+                keyboardType="number-pad"
+              />
+              <TextInput
+                style={styles.input}
+                value={lExtra}
+                onChangeText={setLExtra}
+                placeholder="Extra monthly"
+                placeholderTextColor={colors.muted}
+                keyboardType="decimal-pad"
+              />
+              <TextInput
+                style={[styles.input, styles.notes]}
+                value={lNotes}
+                onChangeText={setLNotes}
+                placeholder="Notes"
+                placeholderTextColor={colors.muted}
+                multiline
+              />
+            </FormSheet>
           </>
         ) : null}
 
@@ -1142,53 +1208,61 @@ export function PlanningScreen() {
                 </View>
               ))}
             </Card>
-            {editScenario ? (
-              <Card>
-                <Text style={styles.title}>Edit scenario</Text>
-                <TextInput
-                  style={styles.input}
-                  value={sName}
-                  onChangeText={setSName}
-                  placeholder="Name"
-                  placeholderTextColor={colors.muted}
-                />
-                <TextInput
-                  style={styles.input}
-                  value={sMonths}
-                  onChangeText={setSMonths}
-                  placeholder="Months (1–60)"
-                  placeholderTextColor={colors.muted}
-                  keyboardType="number-pad"
-                />
-                <TextInput
-                  style={styles.input}
-                  value={sInc}
-                  onChangeText={setSInc}
-                  placeholder="Monthly income adjust"
-                  placeholderTextColor={colors.muted}
-                  keyboardType="decimal-pad"
-                />
-                <TextInput
-                  style={styles.input}
-                  value={sExp}
-                  onChangeText={setSExp}
-                  placeholder="Monthly expense adjust"
-                  placeholderTextColor={colors.muted}
-                  keyboardType="decimal-pad"
-                />
-                <TextInput
-                  style={[styles.input, styles.notes]}
-                  value={sNotes}
-                  onChangeText={setSNotes}
-                  placeholder="Notes"
-                  placeholderTextColor={colors.muted}
-                  multiline
-                />
-                <PrimaryButton label="Save" onPress={saveScenario} />
-                <View style={{ height: 8 }} />
-                <PrimaryButton label="Cancel" onPress={() => setEditScenario(null)} />
-              </Card>
-            ) : null}
+            <FormSheet
+              visible={!!editScenario}
+              title="Edit scenario"
+              onClose={() => setEditScenario(null)}
+              footer={
+                <View style={styles.row}>
+                  <PrimaryButton style={{ flex: 1 }} label="Save" onPress={saveScenario} />
+                  <SecondaryButton
+                    style={{ flex: 1 }}
+                    label="Cancel"
+                    onPress={() => setEditScenario(null)}
+                  />
+                </View>
+              }
+            >
+              <TextInput
+                style={styles.input}
+                value={sName}
+                onChangeText={setSName}
+                placeholder="Name"
+                placeholderTextColor={colors.muted}
+              />
+              <TextInput
+                style={styles.input}
+                value={sMonths}
+                onChangeText={setSMonths}
+                placeholder="Months (1–60)"
+                placeholderTextColor={colors.muted}
+                keyboardType="number-pad"
+              />
+              <TextInput
+                style={styles.input}
+                value={sInc}
+                onChangeText={setSInc}
+                placeholder="Monthly income adjust"
+                placeholderTextColor={colors.muted}
+                keyboardType="decimal-pad"
+              />
+              <TextInput
+                style={styles.input}
+                value={sExp}
+                onChangeText={setSExp}
+                placeholder="Monthly expense adjust"
+                placeholderTextColor={colors.muted}
+                keyboardType="decimal-pad"
+              />
+              <TextInput
+                style={[styles.input, styles.notes]}
+                value={sNotes}
+                onChangeText={setSNotes}
+                placeholder="Notes"
+                placeholderTextColor={colors.muted}
+                multiline
+              />
+            </FormSheet>
             <Card>
               <Text style={styles.title}>{mainScenario?.name ?? "Scenario"} projection</Text>
               {forecast.length > 0 ? (

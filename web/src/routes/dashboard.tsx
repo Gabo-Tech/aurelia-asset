@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { PageHeader } from "@/components/app-shell";
 import { ChartFrame } from "@/components/chart-frame";
+import { NetWorthTimeline } from "@/components/net-worth-timeline";
 import { useTranslation } from "react-i18next";
 import i18n from "@/i18n";
 import { SITE_URL } from "@/lib/site-config";
@@ -234,6 +235,10 @@ function Dashboard() {
           icon={<TrendingUp className="h-4 w-4" />}
           label={t("nav.short.performance")}
         />
+      </div>
+
+      <div className="mt-5" data-tour="dash-networth-timeline">
+        <NetWorthTimeline />
       </div>
 
       <div className="mt-5 grid gap-4 sm:gap-5 lg:grid-cols-5">

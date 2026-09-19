@@ -3,14 +3,7 @@ import { CreditCard as CardIcon, Plus, Trash2, Pencil, ArrowRightLeft } from "lu
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
+import { ResponsiveDialog } from "@/components/design/responsive-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useStore, useMoney } from "@/lib/store";
@@ -219,7 +212,6 @@ export function CreditCardsManager() {
         initial={emptyForm(currency)}
         onClose={() => setAddOpen(false)}
         onSubmit={(f) => {
-          if (!f.name.trim()) return toast.error(t("cards.nameRequired"));
           addCreditCard(toPatch(f) as Omit<CreditCard, "id">);
           toast.success(t("cards.cardAdded"));
           setAddOpen(false);
@@ -233,7 +225,6 @@ export function CreditCardsManager() {
         onClose={() => setEditing(null)}
         onSubmit={(f) => {
           if (!editing) return;
-          if (!f.name.trim()) return toast.error(t("cards.nameRequired"));
           updateCreditCard(editing.id, toPatch(f));
           toast.success(t("cards.cardUpdated"));
           setEditing(null);
@@ -281,26 +272,59 @@ function CardFormDialog({
 }) {
   const { t } = useTranslation();
   const [f, setF] = useState<FormState>(initial);
+  const [nameError, setNameError] = useState<string | null>(null);
   useEffect(() => {
-    if (open) setF(initial);
+    if (open) {
+      setF(initial);
+      setNameError(null);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   return (
-    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>{t("cards.dialogDescription")}</DialogDescription>
-        </DialogHeader>
+    <ResponsiveDialog
+      open={open}
+      onOpenChange={(o) => !o && onClose()}
+      title={title}
+      description={t("cards.dialogDescription")}
+      showClose={false}
+      footer={
+        <>
+          <Button variant="ghost" onClick={onClose}>
+            {t("cards.cancel")}
+          </Button>
+          <Button
+            onClick={() => {
+              if (!f.name.trim()) {
+                setNameError(t("cards.nameRequired"));
+                return;
+              }
+              onSubmit(f);
+            }}
+          >
+            {t("cards.save")}
+          </Button>
+        </>
+      }
+    >
         <div className="space-y-3">
           <div>
-            <Label>{t("cards.name")}</Label>
+            <Label htmlFor="card-name">{t("cards.name")}</Label>
             <Input
+              id="card-name"
               value={f.name}
-              onChange={(e) => setF({ ...f, name: e.target.value })}
+              onChange={(e) => {
+                setF({ ...f, name: e.target.value });
+                if (nameError) setNameError(null);
+              }}
               placeholder={t("cards.namePlaceholder")}
+              aria-invalid={!!nameError}
             />
+            {nameError ? (
+              <p className="mt-1 text-xs text-destructive" role="alert">
+                {nameError}
+              </p>
+            ) : null}
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -319,8 +343,9 @@ function CardFormDialog({
               </Select>
             </div>
             <div>
-              <Label>{t("cards.creditLimit")}</Label>
+              <Label htmlFor="card-limit">{t("cards.creditLimit")}</Label>
               <Input
+                id="card-limit"
                 type="number"
                 value={f.creditLimit}
                 onChange={(e) => setF({ ...f, creditLimit: e.target.value })}
@@ -330,8 +355,9 @@ function CardFormDialog({
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label>{t("cards.statementDayLabel")}</Label>
+              <Label htmlFor="card-statement">{t("cards.statementDayLabel")}</Label>
               <Input
+                id="card-statement"
                 type="number"
                 min={1}
                 max={31}
@@ -341,8 +367,9 @@ function CardFormDialog({
               />
             </div>
             <div>
-              <Label>{t("cards.dueDayLabel")}</Label>
+              <Label htmlFor="card-due">{t("cards.dueDayLabel")}</Label>
               <Input
+                id="card-due"
                 type="number"
                 min={1}
                 max={31}
@@ -358,6 +385,7 @@ function CardFormDialog({
               {DEFAULT_COLORS.map((c) => (
                 <button
                   key={c}
+                  type="button"
                   onClick={() => setF({ ...f, color: c })}
                   className={`h-7 w-7 rounded-full ring-2 ring-offset-2 ring-offset-background ${f.color === c ? "ring-foreground" : "ring-transparent"}`}
                   style={{ backgroundColor: c }}
@@ -367,14 +395,7 @@ function CardFormDialog({
             </div>
           </div>
         </div>
-        <DialogFooter>
-          <Button variant="ghost" onClick={onClose}>
-            {t("cards.cancel")}
-          </Button>
-          <Button onClick={() => onSubmit(f)}>{t("cards.save")}</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    </ResponsiveDialog>
   );
 }
 
@@ -395,11 +416,13 @@ function PayCardDialog({
   const { state } = useStore();
   const [amount, setAmount] = useState("");
   const [from, setFrom] = useState("liquidity");
+  const [amountError, setAmountError] = useState<string | null>(null);
 
   useEffect(() => {
     if (card) {
       setAmount(currentDebt > 0 ? currentDebt.toFixed(2) : "");
       setFrom("liquidity");
+      setAmountError(null);
     }
   }, [card, currentDebt]);
 
@@ -407,22 +430,45 @@ function PayCardDialog({
     { value: "liquidity", label: t("cashflow.liquidityCash") },
     ...state.holdings.map((h) => ({
       value: `holding:${h.id}`,
-      label: `📈 ${h.symbol || h.name}`,
+      label: `${t("cashflow.holdingPrefix")} · ${h.symbol || h.name}`,
     })),
   ];
 
   return (
-    <Dialog open={!!card} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-sm">
-        <DialogHeader>
-          <DialogTitle>{t("cards.payTitle", { name: card?.name ?? "" })}</DialogTitle>
-          <DialogDescription>
-            {t("cards.payDesc")}{" "}
-            <span className={currentDebt > 0 ? "text-destructive" : "text-emerald-500"}>
-              {formatMoney(currentDebt, displayCurrency)}
-            </span>
-          </DialogDescription>
-        </DialogHeader>
+    <ResponsiveDialog
+      open={!!card}
+      onOpenChange={(o) => !o && onClose()}
+      title={t("cards.payTitle", { name: card?.name ?? "" })}
+      description={
+        <>
+          {t("cards.payDesc")}{" "}
+          <span className={currentDebt > 0 ? "text-destructive" : "text-emerald-500"}>
+            {formatMoney(currentDebt, displayCurrency)}
+          </span>
+        </>
+      }
+      className="max-w-sm"
+      showClose={false}
+      footer={
+        <>
+          <Button variant="ghost" onClick={onClose}>
+            {t("cards.cancel")}
+          </Button>
+          <Button
+            onClick={() => {
+              const a = parseFloat(amount);
+              if (!isFinite(a) || a <= 0) {
+                setAmountError(t("cashflow.amountGtZero"));
+                return;
+              }
+              onPay(a, from);
+            }}
+          >
+            {t("cards.recordPayment")}
+          </Button>
+        </>
+      }
+    >
         <div className="space-y-3">
           <div>
             <Label>{t("cards.payFrom")}</Label>
@@ -440,36 +486,28 @@ function PayCardDialog({
             </Select>
           </div>
           <div>
-            <Label>
+            <Label htmlFor="card-pay-amount">
               {t("cards.amount")} ({card?.currency})
             </Label>
             <Input
+              id="card-pay-amount"
               type="number"
               step="any"
               value={amount}
-              onChange={(e) => setAmount(e.target.value)}
+              onChange={(e) => {
+                setAmount(e.target.value);
+                if (amountError) setAmountError(null);
+              }}
               placeholder="0.00"
+              aria-invalid={!!amountError}
             />
+            {amountError ? (
+              <p className="mt-1 text-xs text-destructive" role="alert">
+                {amountError}
+              </p>
+            ) : null}
           </div>
         </div>
-        <DialogFooter>
-          <Button variant="ghost" onClick={onClose}>
-            {t("cards.cancel")}
-          </Button>
-          <Button
-            onClick={() => {
-              const a = parseFloat(amount);
-              if (!isFinite(a) || a <= 0) {
-                toast.error(t("cashflow.amountGtZero"));
-                return;
-              }
-              onPay(a, from);
-            }}
-          >
-            {t("cards.recordPayment")}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    </ResponsiveDialog>
   );
 }

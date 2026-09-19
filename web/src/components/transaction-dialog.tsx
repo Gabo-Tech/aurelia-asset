@@ -1,13 +1,6 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { ResponsiveDialog } from "@/components/design";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -31,9 +24,16 @@ type Props = {
   onOpenChange: (b: boolean) => void;
   editing?: HoldingTransaction | null;
   defaultHoldingId?: string;
+  defaultKind?: "buy" | "sell";
 };
 
-export function TransactionDialog({ open, onOpenChange, editing, defaultHoldingId }: Props) {
+export function TransactionDialog({
+  open,
+  onOpenChange,
+  editing,
+  defaultHoldingId,
+  defaultKind = "buy",
+}: Props) {
   const { t } = useTranslation();
   const { state, addTransaction, updateTransaction } = useStore();
   const holdings = state.holdings;
@@ -46,6 +46,7 @@ export function TransactionDialog({ open, onOpenChange, editing, defaultHoldingI
   const [fees, setFees] = useState("");
   const [currency, setCurrency] = useState<string>(state.settings.displayCurrency || "USD");
   const [notes, setNotes] = useState("");
+  const [formError, setFormError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -64,7 +65,7 @@ export function TransactionDialog({ open, onOpenChange, editing, defaultHoldingI
     } else {
       const hid = defaultHoldingId || holdings[0]?.id || "";
       setHoldingId(hid);
-      setKind("buy");
+      setKind(defaultKind);
       setDate(format(new Date(), "yyyy-MM-dd"));
       setQuantity("");
       setPrice("");
@@ -72,7 +73,8 @@ export function TransactionDialog({ open, onOpenChange, editing, defaultHoldingI
       setCurrency(resolveDefaultCurrency(holdings, hid, state.settings.displayCurrency));
       setNotes("");
     }
-  }, [open, editing, defaultHoldingId, holdings, state.settings.displayCurrency]);
+    setFormError(null);
+  }, [open, editing, defaultHoldingId, defaultKind, holdings, state.settings.displayCurrency]);
 
   // When holding changes (new tx), default the currency to the holding's price currency.
   useEffect(() => {
@@ -81,11 +83,20 @@ export function TransactionDialog({ open, onOpenChange, editing, defaultHoldingI
   }, [holdingId, editing, holdings, state.settings.displayCurrency]);
 
   function save() {
-    if (!holdingId) return toast.error(t("holdings.txDialog.pickHoldingError"));
+    if (!holdingId) {
+      setFormError(t("holdings.txDialog.pickHoldingError"));
+      return;
+    }
     const qty = parseFloat(quantity);
     const px = parseFloat(price);
-    if (!isFinite(qty) || qty <= 0) return toast.error(t("holdings.txDialog.qtyGtZero"));
-    if (!isFinite(px) || px < 0) return toast.error(t("holdings.txDialog.priceGteZero"));
+    if (!isFinite(qty) || qty <= 0) {
+      setFormError(t("holdings.txDialog.qtyGtZero"));
+      return;
+    }
+    if (!isFinite(px) || px < 0) {
+      setFormError(t("holdings.txDialog.priceGteZero"));
+      return;
+    }
     const fee = fees.trim() ? parseFloat(fees) : undefined;
     const payload: Omit<HoldingTransaction, "id"> = {
       holdingId,
@@ -110,14 +121,22 @@ export function TransactionDialog({ open, onOpenChange, editing, defaultHoldingI
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>
-            {editing ? t("holdings.txDialog.editTitle") : t("holdings.txDialog.addTitle")}
-          </DialogTitle>
-          <DialogDescription>{t("holdings.txDialog.description")}</DialogDescription>
-        </DialogHeader>
+    <ResponsiveDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title={editing ? t("holdings.txDialog.editTitle") : t("holdings.txDialog.addTitle")}
+      description={t("holdings.txDialog.description")}
+      className="max-w-md"
+      showClose={false}
+      footer={
+        <>
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>
+            {t("common.cancel")}
+          </Button>
+          <Button onClick={save}>{editing ? t("common.save") : t("holdings.txDialog.add")}</Button>
+        </>
+      }
+    >
 
         <div className="space-y-3">
           <div>
@@ -242,16 +261,13 @@ export function TransactionDialog({ open, onOpenChange, editing, defaultHoldingI
               className="mt-1.5 h-20"
             />
           </div>
+          {formError ? (
+            <p className="text-sm text-destructive" role="alert">
+              {formError}
+            </p>
+          ) : null}
         </div>
-
-        <DialogFooter>
-          <Button variant="ghost" onClick={() => onOpenChange(false)}>
-            {t("common.cancel")}
-          </Button>
-          <Button onClick={save}>{editing ? t("common.save") : t("holdings.txDialog.add")}</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    </ResponsiveDialog>
   );
 }
 

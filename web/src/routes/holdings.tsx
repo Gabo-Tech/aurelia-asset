@@ -48,6 +48,7 @@ import { fetchCurrentQuote } from "@/lib/finance";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Fab } from "@/components/design/fab";
+import { EmptyState } from "@/components/design/empty-state";
 import type { Holding } from "@/lib/types";
 import { SITE_URL } from "@/lib/site-config";
 import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
@@ -81,6 +82,7 @@ function HoldingsPage() {
   const [editing, setEditing] = useState<Holding | null>(null);
   const [txOpen, setTxOpen] = useState(false);
   const [txHoldingId, setTxHoldingId] = useState<string | undefined>(undefined);
+  const [txKind, setTxKind] = useState<"buy" | "sell">("buy");
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [sort, setSort] = useState<{ key: SortKey; dir: "asc" | "desc" }>({
@@ -134,6 +136,26 @@ function HoldingsPage() {
     setSort((s) =>
       s.key === key ? { key, dir: s.dir === "asc" ? "desc" : "asc" } : { key, dir: "desc" },
     );
+  }
+
+  function openTx(id: string, kind: "buy" | "sell") {
+    setTxHoldingId(id);
+    setTxKind(kind);
+    setTxOpen(true);
+  }
+
+  function confirmRemove(h: { id: string; symbol: string }) {
+    if (
+      !confirm(
+        t("holdings.deleteConfirm", {
+          symbol: h.symbol,
+          defaultValue: `Remove ${h.symbol} and its trades?`,
+        }),
+      )
+    )
+      return;
+    removeHolding(h.id);
+    toast.success(t("holdings.removed", { symbol: h.symbol }));
   }
 
   async function refreshPrices() {
@@ -210,9 +232,9 @@ function HoldingsPage() {
       />
 
       <Card className="border-border/60 rounded-2xl shadow-sm">
-        <CardContent className="p-4 sm:p-6 space-y-4">
+        <CardContent className="p-4 sm:p-6 space-y-4 pb-[calc(var(--app-fab-offset)+1rem)] lg:pb-6">
           <div
-            className="sticky top-14 z-10 -mx-1 flex flex-wrap items-center gap-2 rounded-xl bg-background/90 px-1 py-2 backdrop-blur lg:static lg:bg-transparent lg:backdrop-blur-none"
+            className="sticky top-[var(--app-header-h)] z-10 -mx-1 flex flex-wrap items-center gap-2 rounded-xl bg-background/90 px-1 py-2 backdrop-blur lg:static lg:bg-transparent lg:backdrop-blur-none"
             data-tour="holdings-filters"
           >
             <Input
@@ -245,7 +267,21 @@ function HoldingsPage() {
             </Select>
           </div>
 
-          {rows.length === 0 ? (
+          {state.holdings.length === 0 ? (
+            <div data-tour="holdings-table">
+              <EmptyState
+                title={t("holdings.emptyTitle", { defaultValue: "No holdings yet" })}
+                description={t("holdings.emptyBody", {
+                  defaultValue: "Add a stock, crypto, or custom asset to start tracking.",
+                })}
+                actionLabel={t("holdings.addHolding")}
+                onAction={() => {
+                  setEditing(null);
+                  setOpen(true);
+                }}
+              />
+            </div>
+          ) : rows.length === 0 ? (
             <div
               className="py-16 text-center text-sm text-muted-foreground"
               data-tour="holdings-table"
@@ -297,20 +333,16 @@ function HoldingsPage() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem
-                          onClick={() => {
-                            setTxHoldingId(h.id);
-                            setTxOpen(true);
-                          }}
+                          onClick={() => openTx(h.id, "buy")}
                         >
-                          <ArrowUpRight className="mr-2 h-4 w-4 text-success" /> Add buy
+                          <ArrowUpRight className="mr-2 h-4 w-4 text-success" />{" "}
+                          {t("holdings.addBuy", { defaultValue: "Add buy" })}
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          onClick={() => {
-                            setTxHoldingId(h.id);
-                            setTxOpen(true);
-                          }}
+                          onClick={() => openTx(h.id, "sell")}
                         >
-                          <ArrowDownRight className="mr-2 h-4 w-4 text-destructive" /> Add sell
+                          <ArrowDownRight className="mr-2 h-4 w-4 text-destructive" />{" "}
+                          {t("holdings.addSell", { defaultValue: "Add sell" })}
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() => {
@@ -318,16 +350,13 @@ function HoldingsPage() {
                             setOpen(true);
                           }}
                         >
-                          <Pencil className="mr-2 h-4 w-4" /> Edit
+                          <Pencil className="mr-2 h-4 w-4" /> {t("common.edit")}
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           className="text-destructive focus:text-destructive"
-                          onClick={() => {
-                            removeHolding(h.id);
-                            toast.success(t("holdings.removed", { symbol: h.symbol }));
-                          }}
+                          onClick={() => confirmRemove(h)}
                         >
-                          <Trash2 className="mr-2 h-4 w-4" /> Delete
+                          <Trash2 className="mr-2 h-4 w-4" /> {t("common.delete")}
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -429,21 +458,16 @@ function HoldingsPage() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem
-                                onClick={() => {
-                                  setTxHoldingId(h.id);
-                                  setTxOpen(true);
-                                }}
+                                onClick={() => openTx(h.id, "buy")}
                               >
-                                <ArrowUpRight className="mr-2 h-4 w-4 text-success" /> Add buy
+                                <ArrowUpRight className="mr-2 h-4 w-4 text-success" />{" "}
+                                {t("holdings.addBuy", { defaultValue: "Add buy" })}
                               </DropdownMenuItem>
                               <DropdownMenuItem
-                                onClick={() => {
-                                  setTxHoldingId(h.id);
-                                  setTxOpen(true);
-                                }}
+                                onClick={() => openTx(h.id, "sell")}
                               >
-                                <ArrowDownRight className="mr-2 h-4 w-4 text-destructive" /> Add
-                                sell
+                                <ArrowDownRight className="mr-2 h-4 w-4 text-destructive" />{" "}
+                                {t("holdings.addSell", { defaultValue: "Add sell" })}
                               </DropdownMenuItem>
                               <DropdownMenuItem
                                 onClick={() => {
@@ -451,16 +475,13 @@ function HoldingsPage() {
                                   setOpen(true);
                                 }}
                               >
-                                <Pencil className="mr-2 h-4 w-4" /> Edit
+                                <Pencil className="mr-2 h-4 w-4" /> {t("common.edit")}
                               </DropdownMenuItem>
                               <DropdownMenuItem
                                 className="text-destructive focus:text-destructive"
-                                onClick={() => {
-                                  removeHolding(h.id);
-                                  toast.success(t("holdings.removed", { symbol: h.symbol }));
-                                }}
+                                onClick={() => confirmRemove(h)}
                               >
-                                <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                <Trash2 className="mr-2 h-4 w-4" /> {t("common.delete")}
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -506,7 +527,14 @@ function HoldingsPage() {
       </div>
       <TransactionsPanel />
 
-      <HoldingDialog open={open} onOpenChange={setOpen} editing={editing} />
+      <HoldingDialog
+        open={open}
+        onOpenChange={(b) => {
+          setOpen(b);
+          if (!b) setEditing(null);
+        }}
+        editing={editing}
+      />
       <TransactionDialog
         open={txOpen}
         onOpenChange={(b) => {
@@ -514,6 +542,7 @@ function HoldingsPage() {
           if (!b) setTxHoldingId(undefined);
         }}
         defaultHoldingId={txHoldingId}
+        defaultKind={txKind}
       />
 
       <Fab

@@ -26,7 +26,7 @@ import { toast } from "sonner";
 
 import type { ChatMessage, EngineMessage } from "@/lib/ai/types";
 import { runAssistant, getAiCapabilities, type ToolDeps } from "@/lib/ai/provider";
-import { proposalToCashflow } from "@/lib/ai/tools";
+import { applyProposedChange } from "@/lib/ai/tools";
 import {
   VoiceListener,
   detectVoiceCapabilities,
@@ -73,7 +73,22 @@ function uid(): string {
 function AssistantPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { state, addCashflow, updateSettings } = useStore();
+  const {
+    state,
+    addCashflow,
+    updateCashflow,
+    removeCashflow,
+    addBudgetPlan,
+    addBudgetItem,
+    updateBudgetItem,
+    addGoal,
+    updateGoal,
+    addLoan,
+    addHolding,
+    updateHolding,
+    addCategory,
+    updateSettings,
+  } = useStore();
   const { currency, toDisplay } = useMoney();
   const assistantEnabled = state.settings.aiAssistantEnabled !== false;
 
@@ -211,7 +226,7 @@ function AssistantPage() {
           role: "assistant",
           content: result.reply,
           createdAt: Date.now(),
-          pendingExpense: result.proposedExpense,
+          pendingChange: result.proposedChange,
           toolTrace: result.toolTrace,
           error: result.error,
         });
@@ -286,42 +301,58 @@ function AssistantPage() {
     else startListening();
   }, [pipeline, startListening, stopListening]);
 
-  // ---- Confirm / dismiss a proposed expense ----
-  const confirmExpense = useCallback(
+  // ---- Confirm / dismiss a proposed write ----
+  const confirmChange = useCallback(
     (messageId: string) => {
       setMessages((prev) => {
         const msg = prev.find((m) => m.id === messageId);
-        if (!msg?.pendingExpense) return prev;
-        const proposal = msg.pendingExpense;
-        addCashflow(proposalToCashflow(proposal));
+        if (!msg?.pendingChange) return prev;
+        applyProposedChange(msg.pendingChange, {
+          addCashflow,
+          updateCashflow,
+          removeCashflow,
+          addBudgetPlan,
+          addBudgetItem,
+          updateBudgetItem,
+          addGoal,
+          updateGoal,
+          addLoan,
+          addHolding,
+          updateHolding,
+          addCategory,
+        });
         toast.success(
-          t("assistant.expenseAdded", {
-            defaultValue: "Expense added",
+          t("assistant.changeApplied", {
+            defaultValue: "Change applied",
           }),
         );
-        const updated = prev.map((m) =>
-          m.id === messageId ? { ...m, pendingExpense: undefined, committedExpense: proposal } : m,
+        return prev.map((m) =>
+          m.id === messageId
+            ? { ...m, pendingChange: undefined, content: m.content + " ✓" }
+            : m,
         );
-        return [
-          ...updated,
-          {
-            id: uid(),
-            role: "assistant" as const,
-            content: t("assistant.expenseAddedMsg", {
-              amount: formatMoney(proposal.amount, proposal.currency),
-              category: proposal.categoryName,
-            }),
-            createdAt: Date.now(),
-          },
-        ];
       });
     },
-    [addCashflow, t],
+    [
+      addCashflow,
+      updateCashflow,
+      removeCashflow,
+      addBudgetPlan,
+      addBudgetItem,
+      updateBudgetItem,
+      addGoal,
+      updateGoal,
+      addLoan,
+      addHolding,
+      updateHolding,
+      addCategory,
+      t,
+    ],
   );
 
-  const dismissExpense = useCallback((messageId: string) => {
+  const dismissChange = useCallback((messageId: string) => {
     setMessages((prev) =>
-      prev.map((m) => (m.id === messageId ? { ...m, pendingExpense: undefined } : m)),
+      prev.map((m) => (m.id === messageId ? { ...m, pendingChange: undefined } : m)),
     );
   }, []);
 
@@ -388,8 +419,8 @@ function AssistantPage() {
               <MessageBubble
                 key={m.id}
                 message={m}
-                onConfirm={() => confirmExpense(m.id)}
-                onDismiss={() => dismissExpense(m.id)}
+                onConfirm={() => confirmChange(m.id)}
+                onDismiss={() => dismissChange(m.id)}
                 onRetry={() => {
                   // Retry: resend the previous user message.
                   const idx = messages.findIndex((x) => x.id === m.id);
@@ -427,7 +458,7 @@ function AssistantPage() {
 
       {/* Input bar — sticky on mobile so keyboard doesn't hide controls */}
       <div
-        className="sticky bottom-0 z-10 mt-3 flex items-end gap-2 border-t border-border/40 glass rounded-t-2xl px-1 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-3 sm:static sm:rounded-none sm:border-t-0 sm:bg-transparent sm:p-0 sm:backdrop-blur-none"
+        className="sticky bottom-[calc(var(--app-tabbar-h)+env(safe-area-inset-bottom,0px))] z-10 mt-3 flex items-end gap-2 border-t border-border/40 glass rounded-t-2xl px-1 pb-2 pt-3 lg:static lg:bottom-auto lg:rounded-none lg:border-t-0 lg:bg-transparent lg:p-0 lg:backdrop-blur-none"
         data-tour="assistant-input"
       >
         <div className="relative flex-1">
@@ -568,10 +599,8 @@ function MessageBubble({
   cancelLabel: string;
   retryLabel: string;
 }) {
-  const { i18n } = useTranslation();
   const isUser = message.role === "user";
-  const p = message.pendingExpense;
-  const committed = message.committedExpense;
+  const change = message.pendingChange;
 
   return (
     <div className={cn("flex gap-2.5", isUser && "flex-row-reverse")}>
@@ -597,48 +626,38 @@ function MessageBubble({
           {message.content}
         </div>
 
-        {/* Confirm-first expense card */}
-        {p && (
-          <div className="mt-2 rounded-xl border border-primary/30 bg-primary/5 p-3">
-            <div className="flex items-center justify-between gap-2 text-sm">
-              <span className="font-medium">{formatMoney(p.amount, p.currency)}</span>
-              <span className="text-muted-foreground">{p.categoryName}</span>
-            </div>
-            <div className="mt-0.5 text-xs text-muted-foreground">
-              {new Date(p.date).toLocaleDateString(i18n.language, {
-                weekday: "short",
-                month: "short",
-                day: "numeric",
-              })}
-              {p.description ? ` · ${p.description}` : ""}
+        {change ? (
+          <div className="mt-2 rounded-xl border border-primary/30 bg-primary/5 p-3 space-y-2">
+            {change.summary ? (
+              <div className="text-sm font-medium">{change.summary}</div>
+            ) : null}
+            <div className="space-y-1">
+              {change.preview.slice(0, 6).map((row) => (
+                <div
+                  key={`${row.label}-${row.after}`}
+                  className="flex items-start justify-between gap-2 text-xs text-muted-foreground"
+                >
+                  <span className="font-medium text-foreground">{row.label}</span>
+                  <span className="text-right tabular-nums">
+                    {row.before ? `${row.before} → ` : ""}
+                    {row.after}
+                  </span>
+                </div>
+              ))}
             </div>
             <div className="mt-2.5 flex flex-wrap gap-2">
               <Button size="sm" className="h-9 min-w-[5.5rem]" onClick={onConfirm}>
                 <Check className="h-3.5 w-3.5" />
                 {confirmLabel}
               </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                className="h-9 min-w-[5.5rem]"
-                onClick={onDismiss}
-              >
+              <Button size="sm" variant="outline" className="h-9" onClick={onDismiss}>
                 {cancelLabel}
               </Button>
             </div>
           </div>
-        )}
+        ) : null}
 
-        {/* Success indicator */}
-        {committed && (
-          <div className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-success/30 bg-success/10 px-2.5 py-1 text-xs text-success">
-            <Check className="h-3.5 w-3.5" />
-            {formatMoney(committed.amount, committed.currency)} · {committed.categoryName}
-          </div>
-        )}
-
-        {/* Retry on error */}
-        {message.error && !isUser && !p && (
+        {message.error && !isUser && !change ? (
           <button
             type="button"
             onClick={onRetry}
@@ -647,7 +666,7 @@ function MessageBubble({
             <RotateCcw className="h-3 w-3" />
             {retryLabel}
           </button>
-        )}
+        ) : null}
       </div>
     </div>
   );

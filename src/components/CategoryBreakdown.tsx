@@ -180,7 +180,7 @@ const styles = StyleSheet.create({
   stack: { gap: 10, paddingVertical: 4 },
   row: { flexDirection: "row", alignItems: "flex-start", gap: 8 },
   swatch: { width: 8, height: 8, borderRadius: 4, marginTop: 4 },
-  labelCol: { width: 88, flexShrink: 0 },
+  labelCol: { flex: 1, minWidth: 0, flexShrink: 1 },
   label: {
     ...typography.caption,
     color: colors.text,
@@ -194,7 +194,7 @@ const styles = StyleSheet.create({
     fontVariant: ["tabular-nums"],
   },
   labelDim: { color: colors.muted, textDecorationLine: "line-through", opacity: 0.55 },
-  trackWrap: { flex: 1, justifyContent: "center", minHeight: 18, paddingTop: 4 },
+  trackWrap: { flex: 1.2, justifyContent: "center", minHeight: 18, paddingTop: 4, minWidth: 48 },
   track: {
     height: 6,
     backgroundColor: colors.surfaceAlt,
@@ -205,7 +205,9 @@ const styles = StyleSheet.create({
   value: {
     ...typography.caption,
     color: colors.muted,
-    width: 72,
+    flexShrink: 0,
+    maxWidth: "34%",
+    minWidth: 56,
     textAlign: "right",
     marginTop: 2,
   },

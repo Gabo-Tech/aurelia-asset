@@ -32,11 +32,37 @@ export type Recurrence = {
   until?: string;
 };
 
-/** Reference to an account participating in a transfer.
- *  - "liquidity" : the implicit cash pool
+/** Reference to an account participating in a transfer or payment.
+ *  - "liquidity" : legacy alias for the default cash account
+ *  - "cash:<id>" : a named cash account (checking, savings, …)
  *  - "holding:<id>" : a specific holding (typically short-term / cash-like)
  *  - "credit:<id>" : a credit card */
-export type AccountRef = "liquidity" | `holding:${string}` | `credit:${string}`;
+export type AccountRef =
+  | "liquidity"
+  | `cash:${string}`
+  | `holding:${string}`
+  | `credit:${string}`;
+
+/** Named cash / bank-like balance. Replaces the single implicit liquidity pool. */
+export type CashAccount = {
+  id: string;
+  name: string;
+  color: string;
+  currency?: string;
+  /** The account formerly known as "liquidity". */
+  isDefault?: boolean;
+};
+
+/** Daily (or on-demand) net-worth snapshot for the timeline chart. */
+export type NetWorthSnapshot = {
+  date: string; // yyyy-MM-dd
+  portfolio: number;
+  liquidity: number;
+  debt: number;
+  /** portfolio + liquidity - debt */
+  netWorth: number;
+  currency?: string;
+};
 
 /** How a one-off purchase is split. The expense entry stays in the list but
  *  is rendered as N scheduled charges; each occurrence is generated at expand
@@ -117,6 +143,17 @@ export type Settings = {
   aiModelSetup?: "pending" | "done" | "declined";
   /** User has seen the one-time financial-advice responsibility disclaimer. */
   aiAdviceDisclaimerSeen?: boolean;
+  appearance?: {
+    mode?: "light" | "dark" | "system";
+    paletteId?: "gold" | "ivory" | "navy" | "forest" | "burgundy" | "slate" | "custom";
+    custom?: {
+      primary: string;
+      accent: string;
+      background: string;
+      card: string;
+      chart?: [string, string, string, string, string];
+    };
+  };
 };
 
 export type CreditCard = {
@@ -232,6 +269,10 @@ export type AppState = {
   transactions: HoldingTransaction[];
   categories: Category[];
   creditCards: CreditCard[];
+  /** Named cash accounts (checking, savings, …). Always at least one default. */
+  cashAccounts: CashAccount[];
+  /** Append-only net-worth history for the timeline chart. */
+  netWorthSnapshots: NetWorthSnapshot[];
   /** Legacy flat budget list. New UI writes to `budgetPlans` instead; this
    *  is kept for backwards compatibility on load and migrated on first read. */
   budgets: Budget[];
@@ -262,45 +303,52 @@ export type HoldingTransaction = {
 
 /** Default palette per category group. */
 export const GROUP_COLORS: Record<CategoryGroup, string> = {
-  income: "#22c55e",
-  expense: "#ef4444",
-  savings: "#0ea5e9",
-  investment: "#10b981",
+  income: "#3d6b4f",
+  expense: "#8c2e22",
+  savings: "#3e5871",
+  investment: "#b7893a",
 };
 
 export const DEFAULT_CATEGORIES: Category[] = [
   // Income
-  { id: "cat-salary", name: "Salary", kind: "income", group: "income", color: "#22c55e" },
-  { id: "cat-freelance", name: "Freelance", kind: "income", group: "income", color: "#34d399" },
-  { id: "cat-dividends", name: "Dividends", kind: "income", group: "income", color: "#4ade80" },
+  { id: "cat-salary", name: "Salary", kind: "income", group: "income", color: "#3d6b4f" },
+  { id: "cat-freelance", name: "Freelance", kind: "income", group: "income", color: "#4a7c59" },
+  { id: "cat-dividends", name: "Dividends", kind: "income", group: "income", color: "#6b8f71" },
   {
     id: "cat-other-income",
     name: "Other Income",
     kind: "income",
     group: "income",
-    color: "#86efac",
+    color: "#8fa98a",
   },
   // Expenses
-  { id: "cat-rent", name: "Rent", kind: "expense", group: "expense", color: "#ef4444" },
-  { id: "cat-food", name: "Food", kind: "expense", group: "expense", color: "#f97316" },
-  { id: "cat-transport", name: "Transport", kind: "expense", group: "expense", color: "#fb7185" },
+  { id: "cat-rent", name: "Rent", kind: "expense", group: "expense", color: "#8c2e22" },
+  { id: "cat-food", name: "Food", kind: "expense", group: "expense", color: "#a34a32" },
+  { id: "cat-transport", name: "Transport", kind: "expense", group: "expense", color: "#b48a6b" },
   {
     id: "cat-entertainment",
     name: "Entertainment",
     kind: "expense",
     group: "expense",
-    color: "#f59e0b",
+    color: "#b7893a",
   },
   // Savings / Investments (still outflows from the cash pool)
-  { id: "cat-savings", name: "Savings", kind: "expense", group: "savings", color: "#0ea5e9" },
+  { id: "cat-savings", name: "Savings", kind: "expense", group: "savings", color: "#3e5871" },
   {
     id: "cat-investments",
     name: "Investments",
     kind: "expense",
     group: "investment",
-    color: "#10b981",
+    color: "#b7893a",
   },
 ];
+
+export const DEFAULT_CASH_ACCOUNT: CashAccount = {
+  id: "cash-default",
+  name: "Cash",
+  color: "#3e5871",
+  isDefault: true,
+};
 
 export const DEFAULT_STATE: AppState = {
   holdings: [],
@@ -308,6 +356,8 @@ export const DEFAULT_STATE: AppState = {
   transactions: [],
   categories: DEFAULT_CATEGORIES,
   creditCards: [],
+  cashAccounts: [DEFAULT_CASH_ACCOUNT],
+  netWorthSnapshots: [],
   budgets: [],
   budgetPlans: [],
   forecastScenarios: [],

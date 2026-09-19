@@ -19,6 +19,7 @@ import {
   MetricRow,
   EmptyState,
   Field,
+  FormSheet,
   chipLabelStyle,
   chipContainerStyle,
 } from "@/components/ui";
@@ -47,6 +48,7 @@ export function HoldingsScreen() {
   const [qty, setQty] = useState("1");
   const [mode, setMode] = useState<"stock" | "crypto" | "custom">("stock");
   const [busy, setBusy] = useState(false);
+  const [addOpen, setAddOpen] = useState(false);
   const [txHoldingId, setTxHoldingId] = useState<string | null>(null);
   const [txQty, setTxQty] = useState("1");
   const [txPrice, setTxPrice] = useState("");
@@ -151,6 +153,7 @@ export function HoldingsScreen() {
         setCustomName("");
         setCustomPrice("");
         setCustomHistoryText("");
+        setAddOpen(false);
         return;
       }
 
@@ -192,6 +195,7 @@ export function HoldingsScreen() {
       addHolding(rest);
       setSymbol("");
       setQty("1");
+      setAddOpen(false);
     } finally {
       setBusy(false);
     }
@@ -350,6 +354,35 @@ export function HoldingsScreen() {
         <TransactionsPanel />
 
         <Card>
+          <PrimaryButton label="Add holding" onPress={() => setAddOpen(true)} />
+          <View style={{ height: 8 }} />
+          <View style={styles.row}>
+            <PrimaryButton compact style={{ flex: 1 }} label="Refresh" onPress={refreshPrices} disabled={busy} />
+            <PrimaryButton
+              compact
+              style={{ flex: 1 }}
+              label="Export holdings CSV"
+              onPress={() => void exportCsv()}
+            />
+          </View>
+        </Card>
+
+        <FormSheet
+          visible={addOpen}
+          title="Add holding"
+          onClose={() => setAddOpen(false)}
+          footer={
+            <View style={styles.row}>
+              <PrimaryButton
+                style={{ flex: 1 }}
+                label={busy ? "…" : "Add holding"}
+                onPress={onAdd}
+                disabled={busy}
+              />
+              <SecondaryButton style={{ flex: 1 }} label="Cancel" onPress={() => setAddOpen(false)} />
+            </View>
+          }
+        >
           <View style={styles.row}>
             <Pressable
               onPress={() => setMode("stock")}
@@ -416,14 +449,7 @@ export function HoldingsScreen() {
             value={qty}
             onChangeText={setQty}
           />
-          <View style={styles.row}>
-            <PrimaryButton label={busy ? "…" : "Add holding"} onPress={onAdd} disabled={busy} />
-            <View style={{ width: 8 }} />
-            <PrimaryButton label="Refresh" onPress={refreshPrices} disabled={busy} />
-          </View>
-          <View style={{ height: 8 }} />
-          <PrimaryButton label="Export holdings CSV" onPress={() => void exportCsv()} />
-        </Card>
+        </FormSheet>
 
         <Card>
           <Text style={styles.title}>Filter</Text>
@@ -544,148 +570,159 @@ export function HoldingsScreen() {
           );
         })}
 
-        {editing ? (
-          <Card>
-            <Text style={styles.title}>Edit {editing.symbol}</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Name"
-              placeholderTextColor={colors.muted}
-              value={editName}
-              onChangeText={setEditName}
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Quantity"
-              placeholderTextColor={colors.muted}
-              keyboardType="decimal-pad"
-              value={editQty}
-              onChangeText={setEditQty}
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Manual price (optional)"
-              placeholderTextColor={colors.muted}
-              keyboardType="decimal-pad"
-              value={editManual}
-              onChangeText={setEditManual}
-            />
-            <TextInput
-              style={[styles.input, styles.notes]}
-              placeholder="Notes"
-              placeholderTextColor={colors.muted}
-              value={editNotes}
-              onChangeText={setEditNotes}
-              multiline
-            />
-            <Text style={styles.meta}>
-              Custom price history (date,price): {parseCsvHistory(editHistoryText).length} points
-            </Text>
-            <TextInput
-              style={[styles.input, styles.notes]}
-              placeholder={"2024-01-01,100\n2024-06-01,110"}
-              placeholderTextColor={colors.muted}
-              value={editHistoryText}
-              onChangeText={setEditHistoryText}
-              multiline
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
+        <FormSheet
+          visible={!!editing}
+          title={`Edit ${editing?.symbol ?? ""}`}
+          onClose={() => setEditing(null)}
+          footer={
             <View style={styles.row}>
-              <Pressable
-                onPress={() => setEditHorizon("long")}
-                style={[styles.chip, editHorizon === "long" && styles.chipOn]}
-              >
-                <Text style={styles.chipText}>Long</Text>
-              </Pressable>
-              <Pressable
-                onPress={() => setEditHorizon("short")}
-                style={[styles.chip, editHorizon === "short" && styles.chipOn]}
-              >
-                <Text style={styles.chipText}>Short / cash-like</Text>
-              </Pressable>
+              <PrimaryButton style={{ flex: 1 }} label="Save" onPress={saveEdit} />
+              <SecondaryButton style={{ flex: 1 }} label="Cancel" onPress={() => setEditing(null)} />
             </View>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 8 }}>
-              {PALETTE.map((c) => (
-                <Pressable
-                  key={c}
-                  onPress={() => setEditColor(c)}
-                  style={[
-                    styles.swatch,
-                    { backgroundColor: c },
-                    editColor === c && styles.swatchOn,
-                  ]}
-                />
-              ))}
-            </ScrollView>
-            <PrimaryButton label="Save" onPress={saveEdit} />
-            <View style={{ height: 8 }} />
-            <SecondaryButton label="Cancel" onPress={() => setEditing(null)} />
-            <View style={{ height: 8 }} />
+          }
+        >
+          <TextInput
+            style={styles.input}
+            placeholder="Name"
+            placeholderTextColor={colors.muted}
+            value={editName}
+            onChangeText={setEditName}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Quantity"
+            placeholderTextColor={colors.muted}
+            keyboardType="decimal-pad"
+            value={editQty}
+            onChangeText={setEditQty}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Manual price (optional)"
+            placeholderTextColor={colors.muted}
+            keyboardType="decimal-pad"
+            value={editManual}
+            onChangeText={setEditManual}
+          />
+          <TextInput
+            style={[styles.input, styles.notes]}
+            placeholder="Notes"
+            placeholderTextColor={colors.muted}
+            value={editNotes}
+            onChangeText={setEditNotes}
+            multiline
+          />
+          <Text style={styles.meta}>
+            Custom price history (date,price): {parseCsvHistory(editHistoryText).length} points
+          </Text>
+          <TextInput
+            style={[styles.input, styles.notes]}
+            placeholder={"2024-01-01,100\n2024-06-01,110"}
+            placeholderTextColor={colors.muted}
+            value={editHistoryText}
+            onChangeText={setEditHistoryText}
+            multiline
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+          <View style={styles.row}>
+            <Pressable
+              onPress={() => setEditHorizon("long")}
+              style={[styles.chip, editHorizon === "long" && styles.chipOn]}
+            >
+              <Text style={styles.chipText}>Long</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => setEditHorizon("short")}
+              style={[styles.chip, editHorizon === "short" && styles.chipOn]}
+            >
+              <Text style={styles.chipText}>Short / cash-like</Text>
+            </Pressable>
+          </View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 8 }}>
+            {PALETTE.map((c) => (
+              <Pressable
+                key={c}
+                onPress={() => setEditColor(c)}
+                style={[
+                  styles.swatch,
+                  { backgroundColor: c },
+                  editColor === c && styles.swatchOn,
+                ]}
+              />
+            ))}
+          </ScrollView>
+          {editing ? (
             <DangerButton label="Delete holding" onPress={() => onDelete(editing)} />
-          </Card>
-        ) : null}
+          ) : null}
+        </FormSheet>
 
-        {txHoldingId ? (
-          <Card>
-            <Text style={styles.title}>Transaction</Text>
+        <FormSheet
+          visible={!!txHoldingId}
+          title="Buy / sell"
+          onClose={() => setTxHoldingId(null)}
+          footer={
             <View style={styles.row}>
-              <Pressable
-                onPress={() => setTxKind("buy")}
-                style={[styles.chip, txKind === "buy" && styles.chipOn]}
-              >
-                <Text style={styles.chipText}>Buy</Text>
-              </Pressable>
-              <Pressable
-                onPress={() => setTxKind("sell")}
-                style={[styles.chip, txKind === "sell" && styles.chipOn]}
-              >
-                <Text style={styles.chipText}>Sell</Text>
-              </Pressable>
+              <PrimaryButton style={{ flex: 1 }} label="Save transaction" onPress={submitTx} />
+              <SecondaryButton style={{ flex: 1 }} label="Cancel" onPress={() => setTxHoldingId(null)} />
             </View>
-            <Field label="Quantity">
-              <TextInput
-                style={styles.input}
-                placeholder="0"
-                placeholderTextColor={colors.muted}
-                keyboardType="decimal-pad"
-                value={txQty}
-                onChangeText={setTxQty}
-              />
-            </Field>
-            <Field label="Price per unit">
-              <TextInput
-                style={styles.input}
-                placeholder="0.00"
-                placeholderTextColor={colors.muted}
-                keyboardType="decimal-pad"
-                value={txPrice}
-                onChangeText={setTxPrice}
-              />
-            </Field>
-            <Field label="Fees (optional)">
-              <TextInput
-                style={styles.input}
-                placeholder="0"
-                placeholderTextColor={colors.muted}
-                keyboardType="decimal-pad"
-                value={txFees}
-                onChangeText={setTxFees}
-              />
-            </Field>
-            <PrimaryButton label="Save transaction" onPress={submitTx} />
-            <View style={{ height: 8 }} />
-            <SecondaryButton label="Cancel" onPress={() => setTxHoldingId(null)} />
-          </Card>
-        ) : null}
+          }
+        >
+          <View style={styles.row}>
+            <Pressable
+              onPress={() => setTxKind("buy")}
+              style={[styles.chip, txKind === "buy" && styles.chipOn]}
+            >
+              <Text style={styles.chipText}>Buy</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => setTxKind("sell")}
+              style={[styles.chip, txKind === "sell" && styles.chipOn]}
+            >
+              <Text style={styles.chipText}>Sell</Text>
+            </Pressable>
+          </View>
+          <Field label="Quantity">
+            <TextInput
+              style={styles.input}
+              placeholder="0"
+              placeholderTextColor={colors.muted}
+              keyboardType="decimal-pad"
+              value={txQty}
+              onChangeText={setTxQty}
+            />
+          </Field>
+          <Field label="Price per unit">
+            <TextInput
+              style={styles.input}
+              placeholder="0.00"
+              placeholderTextColor={colors.muted}
+              keyboardType="decimal-pad"
+              value={txPrice}
+              onChangeText={setTxPrice}
+            />
+          </Field>
+          <Field label="Fees (optional)">
+            <TextInput
+              style={styles.input}
+              placeholder="0"
+              placeholderTextColor={colors.muted}
+              keyboardType="decimal-pad"
+              value={txFees}
+              onChangeText={setTxFees}
+            />
+          </Field>
+        </FormSheet>
 
         {state.holdings.length === 0 ? (
           <EmptyState
             title={t("holdings.emptyTitle", { defaultValue: "No holdings yet" })}
             body={t("holdings.emptyBody", {
               defaultValue:
-                "Use the form above to add a stock, crypto, or custom asset. Or import a backup from Settings under More.",
+                "Add a stock, crypto, or custom asset. Or import a backup from Settings under More.",
             })}
+            actionLabel="Add holding"
+            onAction={() => setAddOpen(true)}
           />
         ) : filtered.length === 0 ? (
           <EmptyState title="No matches" body="Try a different search or filter." />

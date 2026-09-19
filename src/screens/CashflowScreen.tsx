@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useRef } from "react";
+import React, { useMemo, useState } from "react";
 import {
   ScrollView,
   Text,
@@ -7,7 +7,6 @@ import {
   View,
   Alert,
   Pressable,
-  type LayoutChangeEvent,
 } from "react-native";
 import { useTranslation } from "react-i18next";
 import { startOfMonth, endOfMonth, subMonths, startOfYear } from "date-fns";
@@ -22,6 +21,7 @@ import {
   Chip,
   EmptyState,
   Field,
+  FormSheet,
   chipLabelStyle,
   chipContainerStyle,
 } from "@/components/ui";
@@ -100,8 +100,7 @@ export function CashflowScreen() {
   const [entryDate, setEntryDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [entryCurrency, setEntryCurrency] = useState(currency);
   const [recurUntil, setRecurUntil] = useState("");
-  const scrollRef = useRef<ScrollView>(null);
-  const formY = useRef(0);
+  const [formOpen, setFormOpen] = useState(false);
 
   const { rows, totals, sankeyData, chartData, periodLabel, expenseSlices, incomeSlices } =
     useMemo(() => {
@@ -284,9 +283,16 @@ export function CashflowScreen() {
   }, [categoryFilter, filterCategories]);
 
   const accountOptions = useMemo(() => {
-    const items: { id: string; label: string }[] = [
-      { id: "liquidity", label: "Liquidity (cash)" },
-    ];
+    const cashAccounts = state.cashAccounts?.length
+      ? state.cashAccounts
+      : [{ id: "cash-default", name: "Cash", isDefault: true as const }];
+    const items: { id: string; label: string }[] = cashAccounts.map((a) => ({
+      id: a.isDefault ? "liquidity" : `cash:${a.id}`,
+      label: a.isDefault ? `${a.name} (default)` : a.name,
+    }));
+    if (!items.some((a) => a.id === "liquidity")) {
+      items.unshift({ id: "liquidity", label: "Liquidity (cash)" });
+    }
     for (const h of state.holdings ?? []) {
       items.push({ id: `holding:${h.id}`, label: `${h.symbol} · ${h.name}` });
     }
@@ -294,7 +300,7 @@ export function CashflowScreen() {
       items.push({ id: `credit:${c.id}`, label: c.name });
     }
     return items;
-  }, [state.holdings, state.creditCards]);
+  }, [state.holdings, state.creditCards, state.cashAccounts]);
 
   const payMethods = useMemo(
     () => accountOptions.filter((a) => !a.id.startsWith("holding:")),
@@ -468,6 +474,12 @@ export function CashflowScreen() {
       addCashflow(payload);
     }
     resetForm();
+    setFormOpen(false);
+  }
+
+  function openAddForm() {
+    resetForm();
+    setFormOpen(true);
   }
 
   function onEdit(id: string) {
@@ -508,9 +520,7 @@ export function CashflowScreen() {
       setCategoryId(null);
     }
     setMode("activity");
-    requestAnimationFrame(() => {
-      scrollRef.current?.scrollTo({ y: Math.max(0, formY.current - 12), animated: true });
-    });
+    setFormOpen(true);
   }
 
   function onDelete(id: string, parentId: string, isOccurrence: boolean) {
@@ -552,7 +562,6 @@ export function CashflowScreen() {
   return (
     <Screen>
       <ScrollView
-        ref={scrollRef}
         style={{ flex: 1 }}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
@@ -620,13 +629,19 @@ export function CashflowScreen() {
               <View style={styles.buttonStack}>
                 <PrimaryButton
                   compact
-                  style={{ flex: 1 }}
+                  style={styles.buttonStackItem}
+                  label={t("cashflow.addEntry", { defaultValue: "Add entry" })}
+                  onPress={openAddForm}
+                />
+                <PrimaryButton
+                  compact
+                  style={styles.buttonStackItem}
                   label="Export period CSV"
                   onPress={() => void exportCsv()}
                 />
                 <PrimaryButton
                   compact
-                  style={{ flex: 1 }}
+                  style={styles.buttonStackItem}
                   label={t("cashflow.exportPdf", { defaultValue: "Export PDF" })}
                   onPress={() => void exportPdf()}
                 />
@@ -645,18 +660,35 @@ export function CashflowScreen() {
                 onViewAll={() => setMode("upcoming")}
                 onEdit={(id) => {
                   onEdit(id);
-                  scrollRef.current?.scrollTo({ y: Math.max(0, formY.current - 12), animated: true });
                 }}
               />
             </Card>
 
-            <View
-              onLayout={(e: LayoutChangeEvent) => {
-                formY.current = e.nativeEvent.layout.y;
+            <FormSheet
+              visible={formOpen}
+              title={editingId ? "Edit entry" : "Add entry"}
+              onClose={() => {
+                resetForm();
+                setFormOpen(false);
               }}
+              footer={
+                <View style={styles.buttonStack}>
+                  <PrimaryButton
+                    label={editingId ? "Save changes" : "Add entry"}
+                    onPress={onAdd}
+                    style={{ flex: 1 }}
+                  />
+                  <SecondaryButton
+                    label="Cancel"
+                    onPress={() => {
+                      resetForm();
+                      setFormOpen(false);
+                    }}
+                    style={{ flex: 1 }}
+                  />
+                </View>
+              }
             >
-              <Card>
-                <Text style={styles.label}>{editingId ? "Edit entry" : "Quick add"}</Text>
                 <View style={styles.row}>
                   <Pressable
                     onPress={() => {
@@ -1027,18 +1059,7 @@ export function CashflowScreen() {
                     ) : null}
                   </>
                 ) : null}
-                <View style={styles.buttonStack}>
-                  <PrimaryButton
-                    label={editingId ? "Save changes" : "Add entry"}
-                    onPress={onAdd}
-                    style={{ flex: 1 }}
-                  />
-                  {editingId ? (
-                    <SecondaryButton label="Cancel" onPress={resetForm} style={{ flex: 1 }} />
-                  ) : null}
-                </View>
-              </Card>
-            </View>
+            </FormSheet>
 
             <Text style={styles.section}>Entries ({rows.length})</Text>
             {rows.length === 0 ? (
@@ -1048,9 +1069,7 @@ export function CashflowScreen() {
                   defaultValue: "Add some income and expenses to see your cashflow.",
                 })}
                 actionLabel={t("cashflow.addFirst", { defaultValue: "Add your first entry" })}
-                onAction={() => {
-                  scrollRef.current?.scrollTo({ y: Math.max(0, formY.current - 12), animated: true });
-                }}
+                onAction={openAddForm}
               />
             ) : (
               <>
@@ -1112,7 +1131,6 @@ export function CashflowScreen() {
               onEdit={(id) => {
                 setMode("activity");
                 onEdit(id);
-                scrollRef.current?.scrollTo({ y: Math.max(0, formY.current - 12), animated: true });
               }}
             />
           </>
@@ -1233,9 +1251,15 @@ export function CashflowScreen() {
 const styles = StyleSheet.create({
   buttonStack: {
     flexDirection: "row",
+    flexWrap: "wrap",
     gap: spacing.sm,
     marginTop: spacing.xs,
     alignItems: "stretch",
+  },
+  buttonStackItem: {
+    flexGrow: 1,
+    flexBasis: "46%",
+    minWidth: 140,
   },
   pills: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: spacing.md },
   pill: {
@@ -1263,7 +1287,7 @@ const styles = StyleSheet.create({
   link: { color: colors.accent, fontSize: 13 },
   kindBtn: {
     flex: 1,
-    minHeight: 40,
+    minHeight: 44,
     paddingHorizontal: 8,
     borderRadius: 8,
     borderWidth: 1,

@@ -1,13 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
+import { ResponsiveDialog } from "@/components/design";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -127,7 +120,7 @@ export function HoldingDialog({ open, onOpenChange, editing }: Props) {
   }, [open, editing, defaultCurrency]);
 
   useEffect(() => {
-    if (!open || editing || mode === "custom") return;
+    if (!open || mode === "custom") return;
     const q = query.trim();
     if (!q) {
       setResults([]);
@@ -219,6 +212,7 @@ export function HoldingDialog({ open, onOpenChange, editing }: Props) {
         priceCurrency: currency,
         lastPriceAt: Date.now(),
         horizon,
+        notes: customNotes.trim() || undefined,
       };
       if (manual == null) {
         try {
@@ -250,16 +244,26 @@ export function HoldingDialog({ open, onOpenChange, editing }: Props) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>
-            {editing ? t("holdings.dialog.editTitle") : t("holdings.dialog.addTitle")}
-          </DialogTitle>
-          <DialogDescription>{t("holdings.dialog.description")}</DialogDescription>
-        </DialogHeader>
-
-        {!editing && (
+    <ResponsiveDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title={editing ? t("holdings.dialog.editTitle") : t("holdings.dialog.addTitle")}
+      description={t("holdings.dialog.description")}
+      className="max-w-lg"
+      showClose={false}
+      footer={
+        <>
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>
+            {t("common.cancel")}
+          </Button>
+          <Button onClick={handleSave} disabled={saving}>
+            {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {editing ? t("holdings.dialog.saveChanges") : t("holdings.addHolding")}
+          </Button>
+        </>
+      }
+    >
+      <div className="space-y-4">
           <Tabs value={mode} onValueChange={(v) => setMode(v as Mode)}>
             <TabsList className="grid grid-cols-3">
               <TabsTrigger value="stock">{t("holdings.dialog.tabStock")}</TabsTrigger>
@@ -381,7 +385,6 @@ export function HoldingDialog({ open, onOpenChange, editing }: Props) {
               </div>
             </TabsContent>
           </Tabs>
-        )}
 
         {selected && mode !== "custom" && (
           <div className="rounded-lg bg-muted/40 px-3 py-2 text-xs">
@@ -500,17 +503,20 @@ export function HoldingDialog({ open, onOpenChange, editing }: Props) {
           <p className="mt-1 text-xs text-muted-foreground">{t("holdings.dialog.horizonHint")}</p>
         </div>
 
-        <DialogFooter>
-          <Button variant="ghost" onClick={() => onOpenChange(false)}>
-            {t("common.cancel")}
-          </Button>
-          <Button onClick={handleSave} disabled={saving}>
-            {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {editing ? t("holdings.dialog.saveChanges") : t("holdings.addHolding")}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        {mode !== "custom" ? (
+          <div>
+            <Label htmlFor="hnotes">{t("holdings.dialog.notesOptional", { defaultValue: "Notes (optional)" })}</Label>
+            <Input
+              id="hnotes"
+              value={customNotes}
+              onChange={(e) => setCustomNotes(e.target.value)}
+              placeholder={t("holdings.dialog.notesPlaceholder", { defaultValue: "Broker, lot, or reminder" })}
+              className="mt-1.5"
+            />
+          </div>
+        ) : null}
+      </div>
+    </ResponsiveDialog>
   );
 }
 

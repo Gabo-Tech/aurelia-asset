@@ -39,8 +39,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { PageHeader } from "@/components/app-shell";
 import { LocalFirstBadge } from "@/components/design";
 import { SettingsSectionNav } from "@/components/settings-section-nav";
-import { ThemeToggle } from "@/components/theme-toggle";
-import { TourLauncher } from "@/components/tour-launcher";
+import { AppearancePanel } from "@/components/appearance-panel";
+import { CategoriesManager } from "@/routes/cashflow";
 import {
   Download,
   Upload,
@@ -128,7 +128,7 @@ const recurrenceSchema = z.object({
 const accountRefSchema = z
   .string()
   .max(160)
-  .regex(/^(liquidity|holding:[\w-]+|credit:[\w-]+)$/);
+  .regex(/^(liquidity|cash:[\w-]+|holding:[\w-]+|credit:[\w-]+)$/);
 
 const installmentPlanSchema = z.object({
   total: finiteNumber,
@@ -338,7 +338,8 @@ export const Route = createFileRoute("/settings")({
 
 function SettingsPage() {
   const queryClient = useQueryClient();
-  const { state, updateSettings, importState, reset } = useStore();
+  const { state, updateSettings, importState, reset, addCategory, updateCategory, removeCategory } =
+    useStore();
   const { t } = useTranslation();
   const { language, setLanguage, languages } = useLanguage();
   const [finnhub, setFinnhub] = useState(state.settings.finnhubKey ?? "");
@@ -347,6 +348,7 @@ function SettingsPage() {
   const [pasteOpen, setPasteOpen] = useState(false);
   const [pasteValue, setPasteValue] = useState("");
   const [importing, setImporting] = useState(false);
+  const [categoriesOpen, setCategoriesOpen] = useState(false);
 
   async function buildExportJson() {
     const envelope = {
@@ -405,6 +407,24 @@ function SettingsPage() {
       ];
       const csv = rowsToCsv(rows);
       const filename = datedFilename("holdings", "csv");
+      const method = await saveExportFile(filename, { text: csv });
+      if (method === "cancelled") return;
+      toast.success(t("settings.data.exported", { defaultValue: "Export completed" }), {
+        description: exportMethodDescription(method, filename, t),
+      });
+    } catch (e) {
+      toast.error(
+        `${t("settings.data.exportFailed", { defaultValue: "Export failed" })}: ${(e as Error).message}`,
+      );
+    }
+  }
+
+  async function exportTaxCsv() {
+    try {
+      const { costBasisToTaxCsv } = await import("@/lib/cost-basis");
+      const year = new Date().getFullYear();
+      const csv = costBasisToTaxCsv(state.holdings, state.transactions ?? [], year);
+      const filename = datedFilename(`tax-lots-${year}`, "csv");
       const method = await saveExportFile(filename, { text: csv });
       if (method === "cancelled") return;
       toast.success(t("settings.data.exported", { defaultValue: "Export completed" }), {
@@ -499,7 +519,9 @@ function SettingsPage() {
         items={[
           { id: "settings-profile", label: t("settings.sections.profile", { defaultValue: "Profile" }) },
           { id: "settings-appearance", label: t("settings.sections.appearance", { defaultValue: "Look" }) },
+          { id: "settings-categories", label: t("settings.sections.categories", { defaultValue: "Categories" }) },
           { id: "settings-api", label: t("settings.sections.currency", { defaultValue: "Currency" }) },
+          { id: "settings-language", label: t("settings.language.title", { defaultValue: "Language" }) },
           { id: "settings-data", label: t("settings.sections.data", { defaultValue: "Data" }) },
           { id: "settings-ai", label: t("settings.sections.ai", { defaultValue: "AI" }) },
         ]}
@@ -516,7 +538,7 @@ function SettingsPage() {
         </span>
       </div>
 
-      <Card id="settings-profile" className="border-border/60 rounded-2xl shadow-sm mb-5" data-tour="settings-profile">
+      <Card id="settings-profile" className="scroll-mt-settings border-border/60 rounded-2xl shadow-sm mb-5" data-tour="settings-profile">
         <CardHeader>
           <CardTitle>{t("settings.profile.title", { defaultValue: "Profile" })}</CardTitle>
           <CardDescription>
@@ -535,48 +557,64 @@ function SettingsPage() {
               className="mt-1.5"
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
+              onBlur={() => {
+                const trimmed = displayName.trim();
+                updateSettings({ displayName: trimmed || undefined });
+                setDisplayName(trimmed);
+              }}
               placeholder="e.g. Gabriel"
               autoComplete="given-name"
             />
+            <p className="mt-1.5 text-xs text-muted-foreground">
+              {t("settings.profile.autoSave", { defaultValue: "Saved when you leave this field." })}
+            </p>
           </div>
-          <Button
-            type="button"
-            onClick={() => {
-              const trimmed = displayName.trim();
-              updateSettings({ displayName: trimmed || undefined });
-              setDisplayName(trimmed);
-              toast.success(
-                trimmed
-                  ? t("settings.profile.saved", {
-                      defaultValue: `Greeting will say Hi ${trimmed}`,
-                      name: trimmed,
-                    })
-                  : t("settings.profile.cleared", { defaultValue: "Name cleared" }),
-              );
-            }}
-          >
-            {t("settings.profile.save", { defaultValue: "Save name" })}
-          </Button>
         </CardContent>
       </Card>
 
-      <Card id="settings-appearance" className="border-border/60 rounded-2xl shadow-sm mb-5 lg:hidden">
+      <Card id="settings-appearance" className="scroll-mt-settings border-border/60 rounded-2xl shadow-sm mb-5">
         <CardHeader>
           <CardTitle>{t("settings.appearance.title", { defaultValue: "Look & feel" })}</CardTitle>
           <CardDescription>
             {t("settings.appearance.description", {
-              defaultValue: "Theme and the guided tour live here on your phone.",
+              defaultValue: "Light or dark, a color palette, and the guided tour.",
             })}
           </CardDescription>
         </CardHeader>
-        <CardContent className="flex flex-wrap items-center gap-3">
-          <ThemeToggle className="h-12 w-12" />
-          <TourLauncher className="h-12 w-12" />
+        <CardContent>
+          <AppearancePanel />
+        </CardContent>
+      </Card>
+
+      <Card id="settings-categories" className="scroll-mt-settings border-border/60 rounded-2xl shadow-sm mb-5">
+        <CardHeader>
+          <CardTitle>
+            {t("settings.categories.title", { defaultValue: "Cashflow categories" })}
+          </CardTitle>
+          <CardDescription>
+            {t("settings.categories.description", {
+              defaultValue: "Income sources and expense groups used when you add entries.",
+            })}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button variant="outline" onClick={() => setCategoriesOpen(true)}>
+            {t("settings.categories.manage", { defaultValue: "Manage categories" })}
+          </Button>
+          <CategoriesManager
+            categories={state.categories}
+            onAdd={addCategory}
+            onUpdate={updateCategory}
+            onRemove={removeCategory}
+            open={categoriesOpen}
+            onOpenChange={setCategoriesOpen}
+            showTrigger={false}
+          />
         </CardContent>
       </Card>
 
       <div className="grid gap-5 lg:grid-cols-2">
-        <Card id="settings-api" className="border-border/60 rounded-2xl shadow-sm" data-tour="settings-api">
+        <Card id="settings-api" className="scroll-mt-settings border-border/60 rounded-2xl shadow-sm" data-tour="settings-api">
           <CardHeader>
             <CardTitle>{t("settings.api.title")}</CardTitle>
             <CardDescription>{t("settings.api.description")}</CardDescription>
@@ -702,7 +740,7 @@ function SettingsPage() {
         </Card>
 
         <div className="space-y-5">
-          <Card id="settings-language" className="border-border/60" data-tour="settings-language">
+          <Card id="settings-language" className="scroll-mt-settings border-border/60" data-tour="settings-language">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Languages className="h-4 w-4" />
@@ -729,7 +767,7 @@ function SettingsPage() {
 
           <AiSettingsCard />
 
-          <Card id="settings-data" className="border-border/60" data-tour="settings-data">
+          <Card id="settings-data" className="scroll-mt-settings border-border/60" data-tour="settings-data">
             <CardHeader>
               <CardTitle>{t("settings.data.title")}</CardTitle>
               <CardDescription>{t("settings.data.description")}</CardDescription>
@@ -748,6 +786,12 @@ function SettingsPage() {
               </Button>
               <Button variant="outline" className="w-full justify-start" onClick={exportCsv}>
                 <FileSpreadsheet className="mr-2 h-4 w-4" /> {t("settings.data.exportCsv")}
+              </Button>
+              <Button variant="outline" className="w-full justify-start" onClick={() => void exportTaxCsv()}>
+                <FileSpreadsheet className="mr-2 h-4 w-4" />{" "}
+                {t("settings.data.exportTaxCsv", {
+                  defaultValue: "Export tax lots CSV (FIFO, this year)",
+                })}
               </Button>
               <Button
                 variant="outline"
@@ -1061,7 +1105,7 @@ function AiSettingsCard() {
   };
 
   return (
-    <Card id="settings-ai" className="border-border/60" data-tour="settings-ai">
+    <Card id="settings-ai" className="scroll-mt-settings border-border/60" data-tour="settings-ai">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Sparkles className="h-4 w-4" />

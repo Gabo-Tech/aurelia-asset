@@ -17,15 +17,19 @@ type DesktopSidebarProps = {
 export function DesktopSidebar({ pathname, nav, brand, brandTagline }: DesktopSidebarProps) {
   return (
     <aside className="hidden lg:flex lg:w-64 lg:flex-col 2xl:w-72 3xl:w-80 border-r border-border/60 bg-sidebar min-h-screen sticky top-0">
-      <div className="flex items-center gap-2 px-5 py-6">
-        <img src={ASSETS.logo} alt="" className="h-9 w-9 rounded-xl object-contain" />
-        <div className="min-w-0 flex-1">
-          <div className="text-sm font-semibold tracking-tight">{brand}</div>
-          <div className="text-xs text-muted-foreground">{brandTagline}</div>
+      <div className="flex flex-col gap-3 px-5 py-6">
+        <div className="flex items-center gap-2">
+          <img src={ASSETS.logo} alt="" className="h-9 w-9 rounded-xl object-contain" />
+          <div className="min-w-0 flex-1">
+            <div className="text-sm font-semibold tracking-tight">{brand}</div>
+            <div className="text-xs text-muted-foreground">{brandTagline}</div>
+          </div>
         </div>
-        <ThemeToggle className="h-9 w-9" />
-        <TourLauncher />
-        <PrivacyToggle className="h-9 w-9" />
+        <div className="flex items-center gap-1">
+          <ThemeToggle className="h-9 w-9" />
+          <TourLauncher />
+          <PrivacyToggle className="h-9 w-9" />
+        </div>
       </div>
       <nav className="flex-1 space-y-1 px-3" data-tour="sidebar-nav">
         {nav.map((item) => {
