@@ -7,7 +7,7 @@ import {
   View,
   ScrollView,
 } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { SafeAreaProvider, initialWindowMetrics, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import Svg, { Circle, Path, Rect } from "react-native-svg";
 import { colors, spacing, radii } from "@/theme/colors";
@@ -87,7 +87,6 @@ export function MoreSheet({
   onTakeTour: () => void;
 }) {
   const { t } = useTranslation();
-  const insets = useSafeAreaInsets();
 
   const rows: MoreRow[] = [
     {
@@ -118,45 +117,73 @@ export function MoreSheet({
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel="Close">
-        <Pressable
-          style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, spacing.md) }]}
-          onPress={(e) => e.stopPropagation()}
-        >
-          <View style={styles.handle} />
-          <Text style={styles.heading}>
-            {t("nav.more")}
-          </Text>
-          <ScrollView bounces={false}>
-            {rows.map((row) => {
-              const active = row.id !== "tour" && activeRoute === row.id;
-              return (
-                <Pressable
-                  key={row.id}
-                  onPress={() => {
-                    onClose();
-                    if (row.id === "tour") onTakeTour();
-                    else onNavigate(row.id);
-                  }}
-                  style={[styles.row, active && styles.rowActive]}
-                  accessibilityRole="button"
-                >
-                  <View style={styles.iconWrap}>
-                    <RowIcon id={row.id} />
-                  </View>
-                  <View style={styles.rowText}>
-                    <Text style={[styles.rowTitle, active && styles.rowTitleActive]}>
-                      {row.title}
-                    </Text>
-                    <Text style={styles.rowBody}>{row.body}</Text>
-                  </View>
-                </Pressable>
-              );
-            })}
-          </ScrollView>
-        </Pressable>
-      </Pressable>
+      <SafeAreaProvider initialMetrics={initialWindowMetrics ?? undefined}>
+        <MoreSheetBody
+          rows={rows}
+          activeRoute={activeRoute}
+          onClose={onClose}
+          onNavigate={onNavigate}
+          onTakeTour={onTakeTour}
+        />
+      </SafeAreaProvider>
     </Modal>
+  );
+}
+
+function MoreSheetBody({
+  rows,
+  activeRoute,
+  onClose,
+  onNavigate,
+  onTakeTour,
+}: {
+  rows: MoreRow[];
+  activeRoute?: keyof RootTabParamList;
+  onClose: () => void;
+  onNavigate: (route: MoreDestination) => void;
+  onTakeTour: () => void;
+}) {
+  const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
+  const bottomPad = Math.max(insets.bottom, spacing.md) + spacing.md;
+
+  return (
+    <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel="Close">
+      <Pressable
+        style={[styles.sheet, { paddingBottom: bottomPad }]}
+        onPress={(e) => e.stopPropagation()}
+      >
+        <View style={styles.handle} />
+        <Text style={styles.heading}>{t("nav.more")}</Text>
+        <ScrollView bounces={false}>
+          {rows.map((row) => {
+            const active = row.id !== "tour" && activeRoute === row.id;
+            return (
+              <Pressable
+                key={row.id}
+                onPress={() => {
+                  onClose();
+                  if (row.id === "tour") onTakeTour();
+                  else onNavigate(row.id);
+                }}
+                style={[styles.row, active && styles.rowActive]}
+                accessibilityRole="button"
+              >
+                <View style={styles.iconWrap}>
+                  <RowIcon id={row.id} />
+                </View>
+                <View style={styles.rowText}>
+                  <Text style={[styles.rowTitle, active && styles.rowTitleActive]}>
+                    {row.title}
+                  </Text>
+                  <Text style={styles.rowBody}>{row.body}</Text>
+                </View>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+      </Pressable>
+    </Pressable>
   );
 }
 

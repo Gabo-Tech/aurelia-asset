@@ -61,7 +61,7 @@ export function ResponsiveDialog({
             {children}
           </div>
           {(footer || showClose) && (
-            <DrawerFooter className="shrink-0 border-t border-border/50">
+            <DrawerFooter className="shrink-0 border-t border-border/50 gap-2">
               {footer}
               {showClose && !footer ? (
                 <DrawerClose asChild>

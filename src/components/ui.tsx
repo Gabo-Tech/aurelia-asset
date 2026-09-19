@@ -15,7 +15,11 @@ import {
   type StyleProp,
   type TextStyle,
 } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  SafeAreaProvider,
+  initialWindowMetrics,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import { colors, spacing, radii } from "@/theme/colors";
 import { useColors } from "@/theme/ThemeProvider";
 import { type as typography } from "@/theme/typography";
@@ -466,16 +470,41 @@ export function FormSheet({
   children: React.ReactNode;
   footer?: React.ReactNode;
 }) {
+  // Modal hosts its own root — re-provide metrics so insets aren't 0 inside.
+  return (
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      onRequestClose={onClose}
+      statusBarTranslucent
+    >
+      <SafeAreaProvider initialMetrics={initialWindowMetrics ?? undefined}>
+        <FormSheetBody title={title} onClose={onClose} footer={footer}>
+          {children}
+        </FormSheetBody>
+      </SafeAreaProvider>
+    </Modal>
+  );
+}
+
+function FormSheetBody({
+  title,
+  onClose,
+  children,
+  footer,
+}: {
+  title: string;
+  onClose: () => void;
+  children: React.ReactNode;
+  footer?: React.ReactNode;
+}) {
   const insets = useSafeAreaInsets();
   const themeColors = useColors();
   const { height: windowHeight } = useWindowDimensions();
   const [keyboardHeight, setKeyboardHeight] = useState(0);
 
   useEffect(() => {
-    if (!visible) {
-      setKeyboardHeight(0);
-      return;
-    }
     const showEvt = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
     const hideEvt = Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
     const onShow = Keyboard.addListener(showEvt, (e) => {
@@ -486,11 +515,17 @@ export function FormSheet({
       onShow.remove();
       onHide.remove();
     };
-  }, [visible]);
+  }, []);
+
+  // Extra gap above the home indicator so actions stay tappable.
+  const footerPadBottom =
+    keyboardHeight > 0
+      ? spacing.md
+      : Math.max(insets.bottom, spacing.md) + spacing.md;
 
   // Bound the scroller with a real pixel height. flex:1 inside maxHeight-only
   // parents collapses to 0 on RN (header+footer visible, form gone).
-  const chromeReserve = 140 + Math.max(insets.bottom, spacing.md);
+  const chromeReserve = 140 + footerPadBottom;
   const bodyMaxHeight = Math.max(
     160,
     Math.min(
@@ -500,51 +535,46 @@ export function FormSheet({
   );
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="slide"
-      onRequestClose={onClose}
-      statusBarTranslucent
-    >
-      <View style={styles.sheetRoot}>
-        <Pressable style={styles.sheetScrim} onPress={onClose} accessibilityLabel="Close" />
-        <KeyboardAvoidingView
-          behavior="padding"
-          style={[
-            styles.sheetCard,
-            {
-              paddingBottom: Math.max(insets.bottom, spacing.md),
-              backgroundColor: themeColors.surface,
-              borderColor: themeColors.border,
-            },
-          ]}
+    <View style={styles.sheetRoot}>
+      <Pressable style={styles.sheetScrim} onPress={onClose} accessibilityLabel="Close" />
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        style={[
+          styles.sheetCard,
+          {
+            backgroundColor: themeColors.surface,
+            borderColor: themeColors.border,
+          },
+        ]}
+      >
+        <View style={styles.sheetHandleWrap} accessible={false}>
+          <View style={styles.sheetHandle} />
+        </View>
+        <View style={styles.sheetHeader}>
+          <Text style={styles.sheetTitle} numberOfLines={1}>
+            {title}
+          </Text>
+          <Pressable onPress={onClose} hitSlop={12} accessibilityRole="button">
+            <Text style={styles.sheetClose}>Close</Text>
+          </Pressable>
+        </View>
+        <ScrollView
+          style={[styles.sheetBody, { maxHeight: bodyMaxHeight }]}
+          contentContainerStyle={styles.sheetBodyContent}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+          showsVerticalScrollIndicator={false}
+          bounces={false}
         >
-          <View style={styles.sheetHandleWrap} accessible={false}>
-            <View style={styles.sheetHandle} />
+          {children}
+        </ScrollView>
+        {footer ? (
+          <View style={[styles.sheetFooter, { paddingBottom: footerPadBottom }]}>
+            {footer}
           </View>
-          <View style={styles.sheetHeader}>
-            <Text style={styles.sheetTitle} numberOfLines={1}>
-              {title}
-            </Text>
-            <Pressable onPress={onClose} hitSlop={12} accessibilityRole="button">
-              <Text style={styles.sheetClose}>Close</Text>
-            </Pressable>
-          </View>
-          <ScrollView
-            style={[styles.sheetBody, { maxHeight: bodyMaxHeight }]}
-            contentContainerStyle={styles.sheetBodyContent}
-            keyboardShouldPersistTaps="handled"
-            keyboardDismissMode="on-drag"
-            showsVerticalScrollIndicator={false}
-            bounces={false}
-          >
-            {children}
-          </ScrollView>
-          {footer ? <View style={styles.sheetFooter}>{footer}</View> : null}
-        </KeyboardAvoidingView>
-      </View>
-    </Modal>
+        ) : null}
+      </KeyboardAvoidingView>
+    </View>
   );
 }
 

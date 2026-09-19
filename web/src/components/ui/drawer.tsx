@@ -58,7 +58,7 @@ DrawerHeader.displayName = "DrawerHeader";
 const DrawerFooter = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      "mt-auto flex flex-col gap-2 p-4 pb-[max(1rem,env(safe-area-inset-bottom,0px))] [&_button]:min-h-11",
+      "mt-auto flex flex-col gap-2 p-4 pb-[max(1.25rem,calc(env(safe-area-inset-bottom,0px)+0.75rem))] [&_button]:min-h-11",
       className,
     )}
     {...props}
