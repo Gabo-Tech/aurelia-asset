@@ -220,7 +220,7 @@ const es: Translation = {
     headerTagline: "Tuyo · Privado · Gratis",
     openApp: "Abrir Aurelia",
     logoAlt: "Logo de Aurelia",
-    nav: { features: "Funciones", how: "Cómo funciona", faq: "Preguntas" },
+    nav: { features: "Funciones", how: "Cómo funciona", downloads: "Descargar", faq: "Preguntas" },
     hero: {
       badge: "Sin cuenta. Sin rastreo. Tus datos se quedan contigo.",
       titleStart: "Tu dinero,",
@@ -229,6 +229,7 @@ const es: Translation = {
         "Ve todo lo que tienes, entiende a dónde va cada euro y planifica lo que viene - en un gestor elegante que nunca te pide quién eres.",
       ctaPrimary: "Abrir tu gestor",
       ctaSecondary: "Ver qué obtienes",
+      ctaDownload: "Descargar la app",
       screenshotAlt: "Panel del gestor con asignación y flujo de caja",
     },
     proof: {
@@ -337,6 +338,8 @@ const es: Translation = {
       web: "O ábrelo directamente en el navegador",
       soon: "Próximamente",
       comingSoon: "Próximamente",
+      action: "Descargar",
+      recommended: "Para este dispositivo",
       unsignedNotice:
         "Todas las compilaciones son sin firmar y se distribuyen directamente. Tu sistema puede mostrar un aviso la primera vez - es normal.",
       platforms: {
@@ -592,6 +595,11 @@ const es: Translation = {
     addFinancedExpense: "Añadir gasto financiado",
     emptyFlow: "Añade algún ingreso y gasto para ver el flujo.",
     pickCategory: "Elige una categoría",
+    selectCategory: "Selecciona una categoría",
+    newSourceOption: "Nueva fuente…",
+    newCategoryOption: "Nueva categoría…",
+    categoryNameIncomePlaceholder: "p. ej. Bonus",
+    categoryNameExpensePlaceholder: "p. ej. Suscripciones",
     amountGtZero: "El importe debe ser > 0",
     percentTooHigh: "El porcentaje parece demasiado alto",
     pickBothAccounts: "Elige ambas cuentas",
@@ -723,13 +731,19 @@ const es: Translation = {
     sections: {
       profile: "Perfil",
       appearance: "Aspecto",
+      categories: "Categorías",
       currency: "Moneda",
       data: "Datos",
       ai: "IA",
     },
     appearance: {
       title: "Aspecto",
-      description: "Tema y tour guiado, aquí en el móvil.",
+      description: "Claro u oscuro, una paleta de color y el tour guiado.",
+    },
+    categories: {
+      title: "Categorías de flujo",
+      description: "Fuentes de ingreso y grupos de gasto al añadir movimientos.",
+      manage: "Gestionar categorías",
     },
     api: {
       title: "API y fiabilidad",

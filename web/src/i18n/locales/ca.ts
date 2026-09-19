@@ -220,7 +220,7 @@ const ca: Translation = {
     headerTagline: "Teu · Privat · Gratuït",
     openApp: "Obrir Aurelia",
     logoAlt: "Logotip d'Aurelia",
-    nav: { features: "Funcions", how: "Com funciona", faq: "Preguntes" },
+    nav: { features: "Funcions", how: "Com funciona", downloads: "Descarregar", faq: "Preguntes" },
     hero: {
       badge: "Sense compte. Sense rastreig. Les teues dades es queden amb tu.",
       titleStart: "Els teus diners,",
@@ -229,6 +229,7 @@ const ca: Translation = {
         "Veges tot el que tens, entén on va cada euro i planifica el que ve - en un gestor elegant que mai no et pregunta qui eres.",
       ctaPrimary: "Obrir el teu gestor",
       ctaSecondary: "Veure què obtens",
+      ctaDownload: "Descarregar l'app",
       screenshotAlt: "Panell del gestor elegant amb assignació i flux de caixa",
     },
     proof: {
@@ -336,6 +337,8 @@ const ca: Translation = {
       web: "O obre-la directament al navegador",
       soon: "Properament",
       comingSoon: "Pròximament",
+      action: "Descarregar",
+      recommended: "Per a aquest dispositiu",
       unsignedNotice:
         "Totes les compilacions són sense signar i es distribueixen directament. El teu sistema pot mostrar un avís la primera vegada - és normal.",
       platforms: {
@@ -586,6 +589,11 @@ const ca: Translation = {
     addFinancedExpense: "Afegir despesa finançada",
     emptyFlow: "Afig algun ingrés i despesa per a vore el flux.",
     pickCategory: "Tria una categoria",
+    selectCategory: "Selecciona una categoria",
+    newSourceOption: "Font nova…",
+    newCategoryOption: "Categoria nova…",
+    categoryNameIncomePlaceholder: "p. ex. Bonus",
+    categoryNameExpensePlaceholder: "p. ex. Subscripcions",
     amountGtZero: "L'import ha de ser > 0",
     percentTooHigh: "El percentatge sembla massa alt",
     pickBothAccounts: "Tria els dos comptes",
@@ -716,13 +724,19 @@ const ca: Translation = {
     sections: {
       profile: "Perfil",
       appearance: "Aspecte",
+      categories: "Categories",
       currency: "Moneda",
       data: "Dades",
       ai: "IA",
     },
     appearance: {
       title: "Aspecte",
-      description: "Tema i tour guiat, ací al mòbil.",
+      description: "Clar o fosc, una paleta de colors i el tour guiat.",
+    },
+    categories: {
+      title: "Categories de flux",
+      description: "Fonts d'ingressos i grups de despesa que uses en afegir moviments.",
+      manage: "Gestionar categories",
     },
     api: {
       title: "API i fiabilitat",

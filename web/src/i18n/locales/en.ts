@@ -217,6 +217,7 @@ const en = {
     nav: {
       features: "Features",
       how: "How it works",
+      downloads: "Download",
       faq: "FAQ",
     },
     hero: {
@@ -227,6 +228,7 @@ const en = {
         "Track what you own, see where cash goes, and plan what's next. Aurelia runs on your phone or laptop and never asks who you are.",
       ctaPrimary: "Open Aurelia",
       ctaSecondary: "See what you get",
+      ctaDownload: "Download the app",
       screenshotAlt: "Aurelia dashboard with allocation chart and cashflow summary",
     },
     proof: {
@@ -332,6 +334,8 @@ const en = {
       web: "Or open it in your browser",
       soon: "Coming soon",
       comingSoon: "Coming soon",
+      action: "Download",
+      recommended: "For this device",
       unsignedNotice:
         "Builds are unsigned and distributed directly. Your OS may warn on first launch. That is expected.",
       platforms: {
@@ -587,6 +591,11 @@ const en = {
     addFinancedExpense: "Add financed expense",
     emptyFlow: "Add some income and expenses to see the flow.",
     pickCategory: "Pick a category",
+    selectCategory: "Select a category",
+    newSourceOption: "New source…",
+    newCategoryOption: "New category…",
+    categoryNameIncomePlaceholder: "e.g. Bonuses",
+    categoryNameExpensePlaceholder: "e.g. Subscriptions",
     amountGtZero: "Amount must be > 0",
     percentTooHigh: "Percentage looks too high",
     pickBothAccounts: "Pick both accounts",
@@ -717,13 +726,19 @@ const en = {
     sections: {
       profile: "Profile",
       appearance: "Look",
+      categories: "Categories",
       currency: "Currency",
       data: "Data",
       ai: "AI",
     },
     appearance: {
       title: "Look & feel",
-      description: "Theme and the guided tour live here on your phone.",
+      description: "Light or dark, a color palette, and the guided tour.",
+    },
+    categories: {
+      title: "Cashflow categories",
+      description: "Income sources and expense groups used when you add entries.",
+      manage: "Manage categories",
     },
     api: {
       title: "API & reliability",

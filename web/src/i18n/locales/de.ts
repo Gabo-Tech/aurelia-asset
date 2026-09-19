@@ -220,7 +220,7 @@ const de: Translation = {
     headerTagline: "Deins · Privat · Kostenlos",
     openApp: "App öffnen",
     logoAlt: "Aurelia-Logo",
-    nav: { features: "Funktionen", how: "Wie es funktioniert", faq: "FAQ" },
+    nav: { features: "Funktionen", how: "Wie es funktioniert", downloads: "Download", faq: "FAQ" },
     hero: {
       badge: "Kein Konto. Kein Tracking. Deine Daten bleiben bei dir.",
       titleStart: "Dein Geld,",
@@ -229,6 +229,7 @@ const de: Translation = {
         "Sieh alles, was du besitzt, verstehe, wohin dein Geld wirklich fließt, und plane, was als Nächstes kommt - in einem eleganten Tracker, der nie fragt, wer du bist.",
       ctaPrimary: "Deinen Tracker öffnen",
       ctaSecondary: "Sieh, was du bekommst",
+      ctaDownload: "App herunterladen",
       screenshotAlt: "Aurelia-Dashboard mit Allokation und Cashflow",
     },
     proof: {
@@ -336,6 +337,8 @@ const de: Translation = {
       web: "Oder einfach im Browser öffnen",
       soon: "Demnächst",
       comingSoon: "Demnächst",
+      action: "Herunterladen",
+      recommended: "Für dieses Gerät",
       unsignedNotice:
         "Alle Builds sind unsigniert und werden direkt verteilt. Dein System zeigt evtl. eine Warnung beim ersten Start - das ist normal.",
       platforms: {
@@ -591,6 +594,11 @@ const de: Translation = {
     addFinancedExpense: "Finanzierte Ausgabe hinzufügen",
     emptyFlow: "Füge Einnahmen und Ausgaben hinzu, um den Fluss zu sehen.",
     pickCategory: "Kategorie wählen",
+    selectCategory: "Kategorie auswählen",
+    newSourceOption: "Neue Quelle…",
+    newCategoryOption: "Neue Kategorie…",
+    categoryNameIncomePlaceholder: "z. B. Boni",
+    categoryNameExpensePlaceholder: "z. B. Abos",
     amountGtZero: "Betrag muss > 0 sein",
     percentTooHigh: "Prozentsatz scheint zu hoch",
     pickBothAccounts: "Beide Konten wählen",
@@ -722,13 +730,19 @@ const de: Translation = {
     sections: {
       profile: "Profil",
       appearance: "Darstellung",
+      categories: "Kategorien",
       currency: "Währung",
       data: "Daten",
       ai: "KI",
     },
     appearance: {
       title: "Darstellung",
-      description: "Theme und Tour findest du hier auf dem Handy.",
+      description: "Hell oder dunkel, eine Farbpalette und die Tour.",
+    },
+    categories: {
+      title: "Cashflow-Kategorien",
+      description: "Einnahmequellen und Ausgabengruppen beim Erfassen von Buchungen.",
+      manage: "Kategorien verwalten",
     },
     api: {
       title: "API & Zuverlässigkeit",

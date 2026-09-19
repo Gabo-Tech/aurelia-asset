@@ -45,10 +45,10 @@ export function MouseGlow() {
     <div aria-hidden className="pointer-events-none fixed inset-0 z-[2] overflow-hidden">
       <div
         ref={ref}
-        className="absolute h-[760px] w-[760px] rounded-full opacity-75 blur-3xl will-change-transform"
+        className="absolute h-[640px] w-[640px] rounded-full opacity-30 blur-3xl will-change-transform"
         style={{
           background:
-            "radial-gradient(circle, color-mix(in srgb, var(--primary) 80%, white 20%) 0%, color-mix(in srgb, var(--primary) 55%, transparent) 34%, transparent 72%)",
+            "radial-gradient(circle, color-mix(in srgb, var(--primary) 35%, transparent) 0%, transparent 70%)",
         }}
       />
     </div>
@@ -92,25 +92,25 @@ export function ScrollAurora() {
     <div aria-hidden className="pointer-events-none fixed inset-0 z-[2] overflow-hidden">
       <div
         ref={aRef}
-        className="absolute -top-36 -left-24 h-[82vh] w-[82vh] rounded-full opacity-80 blur-3xl animate-aurora-drift-slow"
+        className="absolute -top-36 -left-24 h-[70vh] w-[70vh] rounded-full opacity-25 blur-3xl animate-aurora-drift-slow"
         style={{
           background:
-            "radial-gradient(circle, color-mix(in srgb, var(--primary) 85%, white 15%) 0%, color-mix(in srgb, var(--primary) 42%, transparent) 42%, transparent 74%)",
+            "radial-gradient(circle, color-mix(in srgb, var(--primary) 40%, transparent) 0%, transparent 72%)",
         }}
       />
       <div
         ref={bRef}
-        className="absolute top-[32vh] -right-28 h-[86vh] w-[86vh] rounded-full opacity-75 blur-3xl animate-aurora-drift-slower"
+        className="absolute top-[40vh] -right-28 h-[60vh] w-[60vh] rounded-full opacity-20 blur-3xl animate-aurora-drift-slower"
         style={{
           background:
-            "radial-gradient(circle, color-mix(in srgb, var(--chart-2) 78%, white 22%) 0%, color-mix(in srgb, var(--chart-4) 46%, transparent) 44%, transparent 76%)",
+            "radial-gradient(circle, color-mix(in srgb, var(--chart-2) 28%, transparent) 0%, transparent 74%)",
         }}
       />
       <div
-        className="absolute left-1/2 top-1/4 h-[65vh] w-[65vh] -translate-x-1/2 rounded-full opacity-50 blur-3xl"
+        className="absolute left-1/2 top-1/4 h-[50vh] w-[50vh] -translate-x-1/2 rounded-full opacity-15 blur-3xl"
         style={{
           background:
-            "radial-gradient(circle, color-mix(in srgb, var(--chart-3) 50%, transparent) 0%, transparent 68%)",
+            "radial-gradient(circle, color-mix(in srgb, var(--chart-3) 22%, transparent) 0%, transparent 70%)",
         }}
       />
     </div>

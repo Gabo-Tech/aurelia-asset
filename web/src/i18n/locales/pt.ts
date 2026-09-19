@@ -219,7 +219,7 @@ const pt: Translation = {
     headerTagline: "Seu · Privado · Grátis",
     openApp: "Abrir Aurelia",
     logoAlt: "Logótipo Aurelia",
-    nav: { features: "Funcionalidades", how: "Como funciona", faq: "FAQ" },
+    nav: { features: "Funcionalidades", how: "Como funciona", downloads: "Transferir", faq: "FAQ" },
     hero: {
       badge: "Sem conta. Sem rastreio. Os seus dados ficam consigo.",
       titleStart: "O seu dinheiro,",
@@ -228,6 +228,7 @@ const pt: Translation = {
         "Veja tudo o que possui, entenda para onde vai cada euro e planeie o que vem a seguir - num gestor elegante que nunca lhe pergunta quem é.",
       ctaPrimary: "Abrir o seu gestor",
       ctaSecondary: "Ver o que recebe",
+      ctaDownload: "Transferir a app",
       screenshotAlt: "Painel do gestor com alocação e fluxo de caixa",
     },
     proof: {
@@ -335,6 +336,8 @@ const pt: Translation = {
       web: "Ou abra-o diretamente no navegador",
       soon: "Em breve",
       comingSoon: "Em breve",
+      action: "Transferir",
+      recommended: "Para este dispositivo",
       unsignedNotice:
         "Todas as compilações são sem assinatura e distribuídas diretamente. O seu sistema pode mostrar um aviso na primeira execução - é esperado.",
       platforms: {
@@ -589,6 +592,11 @@ const pt: Translation = {
     addFinancedExpense: "Adicionar despesa financiada",
     emptyFlow: "Adicione receitas e despesas para ver o fluxo.",
     pickCategory: "Escolha uma categoria",
+    selectCategory: "Selecione uma categoria",
+    newSourceOption: "Nova fonte…",
+    newCategoryOption: "Nova categoria…",
+    categoryNameIncomePlaceholder: "ex. Bónus",
+    categoryNameExpensePlaceholder: "ex. Subscrições",
     amountGtZero: "O valor tem de ser > 0",
     percentTooHigh: "A percentagem parece alta demais",
     pickBothAccounts: "Escolha ambas as contas",
@@ -719,13 +727,19 @@ const pt: Translation = {
     sections: {
       profile: "Perfil",
       appearance: "Aspeto",
+      categories: "Categorias",
       currency: "Moeda",
       data: "Dados",
       ai: "IA",
     },
     appearance: {
       title: "Aspeto",
-      description: "Tema e tour guiado, aqui no telemóvel.",
+      description: "Claro ou escuro, uma paleta de cores e o tour guiado.",
+    },
+    categories: {
+      title: "Categorias de fluxo",
+      description: "Fontes de rendimento e grupos de despesa ao adicionar movimentos.",
+      manage: "Gerir categorias",
     },
     api: {
       title: "API e fiabilidade",

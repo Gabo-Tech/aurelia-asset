@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useServerFn } from "@tanstack/react-start";
 import { useTranslation } from "react-i18next";
 import {
   ArrowRight,
@@ -19,11 +18,14 @@ import {
   Smartphone,
   MonitorDown,
   Download,
+  Package,
 } from "lucide-react";
-import { getGithubRepo } from "@/lib/repo.functions";
-import { ASSETS, SITE_URL, githubSourceUrl } from "@/lib/site-config";
-
+import { ASSETS, SITE_URL, githubRepoUrl, githubSourceUrl } from "@/lib/site-config";
+import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { AppCard, AppCardContent, AppCardHeader } from "@/components/design";
 import { MouseGlow, ScrollAurora, Reveal } from "@/components/landing-ambient";
+import { cn } from "@/lib/utils";
 import i18n from "@/i18n";
 
 const OG_IMAGE = SITE_URL + ASSETS.ogImage;
@@ -147,7 +149,7 @@ function LandingPage() {
     <div className="relative min-h-screen overflow-hidden bg-background text-foreground">
       <ScrollAurora />
       <MouseGlow />
-      <div className="relative z-10 [&_section]:relative [&_section]:z-10 [&_section]:bg-background/70 [&_section]:backdrop-blur-[1px] [&_header]:bg-background/70">
+      <div className="relative z-10">
         <SiteHeader />
         <Hero />
         <Reveal>
@@ -181,40 +183,42 @@ function SiteHeader() {
   const { t } = useTranslation();
   return (
     <header className="sticky top-0 z-40 border-b border-border/50 glass">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
-        <Link to="/" className="flex items-center gap-2">
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-2.5 sm:px-6">
+        <Link to="/" className="flex min-w-0 items-center gap-2">
           <img
             src={ASSETS.logo}
             alt={t("landing.logoAlt")}
-            className="h-8 w-8 rounded-xl object-contain"
-            width={32}
-            height={32}
+            className="h-9 w-9 rounded-xl object-contain"
+            width={36}
+            height={36}
           />
-
-          <div className="leading-tight">
-            <div className="font-display text-base tracking-tight">{t("landing.footer.brand")}</div>
-            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
-              {t("landing.headerTagline")}
-            </div>
+          <div className="min-w-0 leading-tight">
+            <div className="text-sm font-semibold tracking-tight">{t("landing.footer.brand")}</div>
+            <div className="truncate text-xs text-muted-foreground">{t("landing.headerTagline")}</div>
           </div>
         </Link>
-        <nav className="hidden items-center gap-7 text-sm text-muted-foreground md:flex">
+        <nav className="hidden items-center gap-6 text-sm text-muted-foreground lg:flex">
           <a href="#features" className="hover:text-foreground">
             {t("landing.nav.features")}
           </a>
           <a href="#how" className="hover:text-foreground">
             {t("landing.nav.how")}
           </a>
+          <a href="#downloads" className="hover:text-foreground">
+            {t("landing.nav.downloads", { defaultValue: "Download" })}
+          </a>
           <a href="#faq" className="hover:text-foreground">
             {t("landing.nav.faq")}
           </a>
         </nav>
-        <Link
-          to="/dashboard"
-          className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90 active-press"
-        >
-          {t("landing.openApp")} <ArrowRight className="h-3.5 w-3.5" />
-        </Link>
+        <div className="flex items-center gap-1">
+          <ThemeToggle className="h-11 w-11" />
+          <Button asChild size="sm" className="min-h-11 px-4">
+            <Link to="/dashboard">
+              {t("landing.openApp")} <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </Button>
+        </div>
       </div>
     </header>
   );
@@ -251,45 +255,35 @@ function Hero() {
         </p>
 
         <div
-          className="mt-10 flex animate-fade-in flex-col items-center justify-center gap-4 sm:flex-row sm:flex-wrap"
+          className="mt-10 flex animate-fade-in flex-col items-center justify-center gap-3 sm:flex-row sm:flex-wrap"
           style={{ animationDelay: "360ms", animationDuration: "700ms", animationFillMode: "both" }}
         >
-          <Link
-            to="/dashboard"
-            aria-label={t("landing.hero.ctaPrimary")}
-            className="group relative inline-flex items-center gap-2.5 overflow-hidden rounded-2xl bg-primary px-8 py-4 text-base font-semibold text-primary-foreground shadow-2xl shadow-primary/30 ring-1 ring-primary/40 transition-all hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-primary/40 sm:text-lg"
-          >
-            <span
-              aria-hidden
-              className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700 group-hover:translate-x-full"
-            />
-            <span
-              className="pointer-events-none absolute -inset-1 -z-10 rounded-2xl bg-primary/40 opacity-70 blur-xl animate-pulse"
-              aria-hidden
-            />
-            {t("landing.hero.ctaPrimary")}
-            <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
-          </Link>
-          <a
-            href="#features"
-            className="inline-flex items-center gap-2 rounded-2xl border border-border bg-card/60 px-6 py-4 text-base font-medium text-foreground transition-colors hover:bg-card"
-          >
-            {t("landing.hero.ctaSecondary")}
-          </a>
+          <Button asChild size="lg" className="min-h-12 px-6 text-base">
+            <Link to="/dashboard" aria-label={t("landing.hero.ctaPrimary")}>
+              {t("landing.hero.ctaPrimary")}
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </Button>
+          <Button asChild size="lg" variant="outline" className="min-h-12 px-6 text-base">
+            <a href="#downloads">{t("landing.hero.ctaDownload", { defaultValue: "Download the app" })}</a>
+          </Button>
+          <Button asChild size="lg" variant="ghost" className="min-h-12 px-6 text-base">
+            <a href="#features">{t("landing.hero.ctaSecondary")}</a>
+          </Button>
         </div>
 
         <div
           className="mx-auto mt-14 max-w-5xl animate-fade-in"
           style={{ animationDelay: "480ms", animationDuration: "900ms", animationFillMode: "both" }}
         >
-          <div className="rounded-2xl border border-border/60 bg-card/40 p-2 shadow-elevated">
+          <AppCard elevated className="p-2">
             <img
               src={ASSETS.hero}
               alt={t("landing.hero.screenshotAlt")}
               loading="lazy"
               className="w-full rounded-xl"
             />
-          </div>
+          </AppCard>
         </div>
       </div>
     </section>
@@ -366,18 +360,19 @@ function Features() {
           <p className="mt-3 text-muted-foreground">{t("landing.features.subheading")}</p>
         </div>
 
-        <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {features.map((f) => (
-            <article
-              key={f.title}
-              className="rounded-2xl border border-border/60 bg-card p-6 shadow-sm transition-colors hover:border-border hover:shadow-md active-press"
-            >
-              <div className="grid h-10 w-10 place-items-center rounded-xl bg-primary/15 text-primary">
-                <f.icon className="h-5 w-5" />
-              </div>
-              <h3 className="mt-4 text-base font-semibold">{f.title}</h3>
-              <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{f.body}</p>
-            </article>
+            <AppCard key={f.title}>
+              <AppCardHeader>
+                <div className="grid h-10 w-10 place-items-center rounded-xl bg-primary/15 text-primary">
+                  <f.icon className="h-5 w-5" />
+                </div>
+                <h3 className="mt-3 text-base font-semibold text-foreground">{f.title}</h3>
+              </AppCardHeader>
+              <AppCardContent>
+                <p className="text-sm leading-relaxed text-muted-foreground">{f.body}</p>
+              </AppCardContent>
+            </AppCard>
           ))}
         </div>
       </div>
@@ -400,25 +395,27 @@ function HowItWorks() {
             {t("landing.how.heading")}
           </h2>
         </div>
-        <ol className="mt-12 grid gap-5 md:grid-cols-3">
+        <ol className="mt-12 grid gap-4 md:grid-cols-3">
           {steps.map((s) => (
-            <li
-              key={s.n}
-              className="relative rounded-2xl border border-border/60 bg-background/50 p-6"
-            >
-              <div className="text-xs font-semibold tracking-widest text-primary">{s.n}</div>
-              <h3 className="mt-2 text-lg font-semibold">{s.title}</h3>
-              <p className="mt-2 text-sm text-muted-foreground">{s.body}</p>
+            <li key={s.n}>
+              <AppCard className="h-full">
+                <AppCardHeader>
+                  <div className="text-xs font-semibold tracking-widest text-primary">{s.n}</div>
+                  <h3 className="text-lg font-semibold text-foreground">{s.title}</h3>
+                </AppCardHeader>
+                <AppCardContent>
+                  <p className="text-sm text-muted-foreground">{s.body}</p>
+                </AppCardContent>
+              </AppCard>
             </li>
           ))}
         </ol>
         <div className="mt-10 text-center">
-          <Link
-            to="/dashboard"
-            className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-          >
-            {t("landing.how.cta")} <ArrowRight className="h-4 w-4" />
-          </Link>
+          <Button asChild>
+            <Link to="/dashboard">
+              {t("landing.how.cta")} <ArrowRight className="h-4 w-4" />
+            </Link>
+          </Button>
         </div>
       </div>
     </section>
@@ -444,7 +441,7 @@ function Comparison() {
           </h2>
           <p className="mt-3 text-muted-foreground">{t("landing.comparison.subheading")}</p>
         </div>
-        <div className="mt-10 overflow-x-auto rounded-2xl border border-border/60">
+        <AppCard className="mt-10 overflow-x-auto">
           <table className="w-full min-w-[320px] text-sm">
             <thead className="bg-card/50 text-xs uppercase tracking-wider text-muted-foreground">
               <tr>
@@ -465,7 +462,7 @@ function Comparison() {
               ))}
             </tbody>
           </table>
-        </div>
+        </AppCard>
       </div>
     </section>
   );
@@ -491,9 +488,9 @@ function FAQ() {
           {faqs.map((f) => (
             <details
               key={f.q}
-              className="group rounded-xl border border-border/60 bg-background/60 px-5 py-4"
+              className="group rounded-2xl border border-border/40 bg-card/80 px-5 py-4"
             >
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-sm font-medium">
+              <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-4 text-sm font-medium">
                 {f.q}
                 <span className="text-muted-foreground transition-transform group-open:rotate-45">
                   +
@@ -514,63 +511,63 @@ type PlatformKey =
 const DOWNLOAD_PLATFORMS: Array<{
   key: PlatformKey;
   icon: typeof MonitorDown;
-  /** Filename suffix pattern at github.com/<repo>/releases/latest/download/. Null = link to release page. */
-  assetGlob: string | null;
-  /** Asset filename on GitHub Releases. */
+  /** Asset filename on GitHub Releases /latest/download and /downloads/. */
   releaseAsset?: string;
-  /** Suggested filename for the downloaded file. */
-  downloadAs?: string;
-  /** Marks the platform as not yet available. */
   comingSoon?: boolean;
 }> = [
-  { key: "windows", icon: MonitorDown, assetGlob: ".msi", comingSoon: true },
-  { key: "mac", icon: Apple, assetGlob: ".dmg", comingSoon: true },
   {
     key: "linuxAppImage",
     icon: Download,
-    assetGlob: ".AppImage",
     releaseAsset: "Aurelia_0.1.2_amd64.AppImage",
-    downloadAs: "Aurelia_0.1.2_amd64.AppImage",
   },
   {
     key: "linuxDeb",
-    icon: Download,
-    assetGlob: ".deb",
+    icon: Package,
     releaseAsset: "Aurelia_0.1.2_amd64.deb",
-    downloadAs: "Aurelia_0.1.2_amd64.deb",
   },
   {
     key: "linuxRpm",
-    icon: Download,
-    assetGlob: ".rpm",
+    icon: Package,
     releaseAsset: "Aurelia-0.1.2-1.x86_64.rpm",
-    downloadAs: "Aurelia-0.1.2-1.x86_64.rpm",
   },
   {
     key: "android",
     icon: Smartphone,
-    assetGlob: ".apk",
     releaseAsset: "portfolio-tracker.apk",
-    downloadAs: "portfolio-tracker.apk",
   },
-  { key: "ios", icon: Apple, assetGlob: ".ipa", comingSoon: true },
+  { key: "windows", icon: MonitorDown, comingSoon: true },
+  { key: "mac", icon: Apple, comingSoon: true },
+  { key: "ios", icon: Apple, comingSoon: true },
 ];
+
+function githubDownloadUrl(filename: string) {
+  return `${githubRepoUrl()}/releases/latest/download/${encodeURIComponent(filename)}`;
+}
+
+function detectRecommended(): PlatformKey | null {
+  if (typeof navigator === "undefined") return null;
+  const ua = navigator.userAgent;
+  if (/Android/i.test(ua)) return "android";
+  if (/iPhone|iPad|iPod/i.test(ua)) return "ios";
+  if (/Win/i.test(ua)) return "windows";
+  if (/Mac/i.test(ua)) return "mac";
+  if (/Linux/i.test(ua)) {
+    if (/Ubuntu|Debian|Mint/i.test(ua)) return "linuxDeb";
+    if (/Fedora|Red Hat|SUSE/i.test(ua)) return "linuxRpm";
+    return "linuxAppImage";
+  }
+  return null;
+}
 
 function Downloads() {
   const { t } = useTranslation();
-  const fetchRepo = useServerFn(getGithubRepo);
-  const [repo, setRepo] = useState<string | null>(null);
+  const [recommended, setRecommended] = useState<PlatformKey | null>(null);
   useEffect(() => {
-    fetchRepo({})
-      .then((r) => setRepo(r?.repo ?? null))
-      .catch(() => setRepo(null));
-  }, [fetchRepo]);
+    setRecommended(detectRecommended());
+  }, []);
 
-  const releaseBase = repo ? `https://github.com/${repo}/releases/latest` : null;
-
-  function siteDownloadUrl(filename: string) {
-    return `/downloads/${encodeURIComponent(filename)}`;
-  }
+  const available = DOWNLOAD_PLATFORMS.filter((d) => !d.comingSoon);
+  const soon = DOWNLOAD_PLATFORMS.filter((d) => d.comingSoon);
 
   return (
     <section id="downloads" className="border-b border-border/50">
@@ -581,49 +578,78 @@ function Downloads() {
           </h2>
           <p className="mt-3 text-muted-foreground">{t("landing.downloads.subheading")}</p>
         </div>
-        <div className="mt-12 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-          {DOWNLOAD_PLATFORMS.map((d) => {
+        <div className="mt-12 grid gap-4 sm:grid-cols-2">
+          {available.map((d) => {
             const Icon = d.icon;
             const label = t(`landing.downloads.platforms.${d.key}`);
             const note = t(`landing.downloads.notes.${d.key}`, { defaultValue: "" });
-            const releaseHref = d.releaseAsset ? siteDownloadUrl(d.releaseAsset) : null;
-            const href = releaseHref ?? releaseBase ?? githubSourceUrl();
-            const cls =
-              "relative flex flex-col items-center justify-center rounded-2xl border border-border/60 bg-card/40 p-6 text-center transition-colors hover:border-primary/60 hover:bg-card";
-            if (d.comingSoon) {
-              return (
-                <div
-                  key={d.key}
-                  className="relative flex flex-col items-center justify-center rounded-2xl border border-border/60 bg-card/20 p-6 text-center opacity-60"
-                  aria-disabled="true"
-                >
-                  <Icon className="h-7 w-7 text-muted-foreground" />
-                  <div className="mt-3 text-sm font-semibold">{label}</div>
-                  <div className="mt-1 text-[10px] font-medium uppercase tracking-wide text-primary/80">
-                    {t("landing.downloads.comingSoon", { defaultValue: "Coming soon" })}
+            const href = d.releaseAsset ? githubDownloadUrl(d.releaseAsset) : githubSourceUrl();
+            const isRecommended = recommended === d.key;
+            return (
+              <AppCard
+                key={d.key}
+                className={cn(
+                  "flex flex-col sm:flex-row sm:items-center gap-4 p-5",
+                  isRecommended && "border-primary/40 ring-1 ring-primary/20",
+                )}
+              >
+                <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-primary/15 text-primary">
+                  <Icon className="h-5 w-5" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="text-sm font-semibold">{label}</div>
+                    {isRecommended ? (
+                      <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-primary">
+                        {t("landing.downloads.recommended", { defaultValue: "For this device" })}
+                      </span>
+                    ) : null}
+                  </div>
+                  {note ? <p className="mt-1 text-xs text-muted-foreground">{note}</p> : null}
+                </div>
+                <Button asChild className="min-h-11 w-full sm:w-auto">
+                  <a href={href} download={d.releaseAsset} rel="noopener noreferrer">
+                    <Download className="h-4 w-4" />
+                    {t("landing.downloads.action", { defaultValue: "Download" })}
+                  </a>
+                </Button>
+              </AppCard>
+            );
+          })}
+        </div>
+        <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
+          {soon.map((d) => {
+            const Icon = d.icon;
+            const label = t(`landing.downloads.platforms.${d.key}`);
+            return (
+              <div
+                key={d.key}
+                className="flex items-center gap-3 rounded-2xl border border-border/40 bg-card/40 px-4 py-3 opacity-70"
+                aria-disabled="true"
+              >
+                <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-muted text-muted-foreground">
+                  <Icon className="h-4 w-4" />
+                </div>
+                <div className="min-w-0">
+                  <div className="text-sm font-medium">{label}</div>
+                  <div className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                    {t("landing.downloads.comingSoon")}
                   </div>
                 </div>
-              );
-            }
-            return (
-              <a key={d.key} href={href} target="_blank" rel="noopener noreferrer" className={cls}>
-                <Icon className="h-7 w-7 text-primary" />
-                <div className="mt-3 text-sm font-semibold">{label}</div>
-                {note && (
-                  <div className="mt-1 text-[10px] leading-tight text-muted-foreground">{note}</div>
-                )}
-              </a>
+              </div>
             );
           })}
         </div>
         <p className="mt-6 text-center text-xs text-muted-foreground">
           {t("landing.downloads.unsignedNotice")}
         </p>
-        <div className="mt-8 text-center text-sm text-muted-foreground">
-          <Link to="/dashboard" className="inline-flex items-center gap-1.5 hover:text-foreground">
-            <Globe className="h-4 w-4" />
-            {t("landing.downloads.web")} <ArrowRight className="h-3.5 w-3.5" />
-          </Link>
+        <div className="mt-8 text-center">
+          <Button asChild variant="ghost">
+            <Link to="/dashboard">
+              <Globe className="h-4 w-4" />
+              {t("landing.downloads.web")} <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </Button>
         </div>
       </div>
     </section>
@@ -640,12 +666,11 @@ function FinalCTA() {
         </h2>
         <p className="mx-auto mt-4 max-w-xl text-muted-foreground">{t("landing.cta.subheading")}</p>
         <div className="mt-8">
-          <Link
-            to="/dashboard"
-            className="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3.5 text-base font-medium text-primary-foreground shadow-lg shadow-primary/20 hover:bg-primary/90"
-          >
-            {t("landing.cta.button")} <ArrowRight className="h-4 w-4" />
-          </Link>
+          <Button asChild size="lg" className="min-h-12 px-6 text-base">
+            <Link to="/dashboard">
+              {t("landing.cta.button")} <ArrowRight className="h-4 w-4" />
+            </Link>
+          </Button>
         </div>
         <p className="mt-4 text-xs text-muted-foreground">
           <TrendingUp className="mr-1 inline h-3 w-3" />
@@ -674,10 +699,13 @@ function SiteFooter() {
             {t("landing.footer.brand")} · © {new Date().getFullYear()}
           </span>
         </div>
-        <div className="flex items-center gap-5">
+        <div className="flex flex-wrap items-center justify-center gap-5">
           <Link to="/dashboard" className="hover:text-foreground">
             {t("landing.openApp")}
           </Link>
+          <a href="#downloads" className="hover:text-foreground">
+            {t("landing.nav.downloads", { defaultValue: "Download" })}
+          </a>
           <a href="#features" className="hover:text-foreground">
             {t("landing.nav.features")}
           </a>

@@ -219,7 +219,7 @@ const nl: Translation = {
     headerTagline: "Van jou · Privé · Gratis",
     openApp: "Aurelia openen",
     logoAlt: "Aurelia-logo",
-    nav: { features: "Functies", how: "Hoe het werkt", faq: "FAQ" },
+    nav: { features: "Functies", how: "Hoe het werkt", downloads: "Download", faq: "FAQ" },
     hero: {
       badge: "Geen account. Geen tracking. Je gegevens blijven bij jou.",
       titleStart: "Jouw geld,",
@@ -228,6 +228,7 @@ const nl: Translation = {
         "Zie alles wat je bezit, begrijp waar je geld echt heengaat en plan wat komt - in één elegante tracker die nooit vraagt wie je bent.",
       ctaPrimary: "Open je tracker",
       ctaSecondary: "Zie wat je krijgt",
+      ctaDownload: "App downloaden",
       screenshotAlt: "Aurelia dashboard met allocatie en kasstroom",
     },
     proof: {
@@ -334,6 +335,8 @@ const nl: Translation = {
       web: "Of open hem direct in de browser",
       soon: "Binnenkort",
       comingSoon: "Binnenkort",
+      action: "Downloaden",
+      recommended: "Voor dit apparaat",
       unsignedNotice:
         "Alle builds zijn niet ondertekend en worden direct verspreid. Je systeem kan de eerste keer een waarschuwing tonen - dat is normaal.",
       platforms: {
@@ -584,6 +587,11 @@ const nl: Translation = {
     addFinancedExpense: "Gefinancierde uitgave toevoegen",
     emptyFlow: "Voeg inkomsten en uitgaven toe om de stroom te zien.",
     pickCategory: "Kies een categorie",
+    selectCategory: "Selecteer een categorie",
+    newSourceOption: "Nieuwe bron…",
+    newCategoryOption: "Nieuwe categorie…",
+    categoryNameIncomePlaceholder: "bijv. Bonus",
+    categoryNameExpensePlaceholder: "bijv. Abonnementen",
     amountGtZero: "Bedrag moet > 0 zijn",
     percentTooHigh: "Percentage lijkt te hoog",
     pickBothAccounts: "Kies beide rekeningen",
@@ -715,13 +723,19 @@ const nl: Translation = {
     sections: {
       profile: "Profiel",
       appearance: "Weergave",
+      categories: "Categorieën",
       currency: "Valuta",
       data: "Data",
       ai: "AI",
     },
     appearance: {
       title: "Weergave",
-      description: "Thema en rondleiding staan hier op je telefoon.",
+      description: "Licht of donker, een kleurenpalet en de rondleiding.",
+    },
+    categories: {
+      title: "Cashflow-categorieën",
+      description: "Inkomstenbronnen en uitgavengroepen bij het toevoegen van boekingen.",
+      manage: "Categorieën beheren",
     },
     api: {
       title: "API & betrouwbaarheid",
