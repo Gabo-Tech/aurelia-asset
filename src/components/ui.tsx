@@ -20,7 +20,7 @@ import {
   initialWindowMetrics,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { colors, spacing, radii } from "@/theme/colors";
+import { spacing, radii } from "@/theme/colors";
 import { useColors } from "@/theme/ThemeProvider";
 import { type as typography } from "@/theme/typography";
 
@@ -34,7 +34,7 @@ export function Screen({
   /** Wrap in KeyboardAvoidingView (disable for screens that pin a composer with IME insets). */
   avoidKeyboard?: boolean;
 }) {
-  const themeColors = useColors();
+  const colors = useColors();
   const insets = useSafeAreaInsets();
   const pad = {
     paddingTop: Math.max(insets.top, spacing.sm),
@@ -62,8 +62,8 @@ export function Screen({
 
   if (scroll) {
     return (
-      <View style={[styles.screenRoot, { backgroundColor: themeColors.bg }]}>
-        <View style={styles.glow} pointerEvents="none" />
+      <View style={[styles.screenRoot, { backgroundColor: colors.bg }]}>
+        <View style={[styles.glow, { backgroundColor: colors.heroGlow }]} pointerEvents="none" />
         {avoidKeyboard ? (
           <KeyboardAvoidingView {...kavProps}>{scrollBody}</KeyboardAvoidingView>
         ) : (
@@ -80,8 +80,8 @@ export function Screen({
   );
 
   return (
-    <View style={[styles.screenRoot, { backgroundColor: themeColors.bg }]}>
-      <View style={styles.glow} pointerEvents="none" />
+    <View style={[styles.screenRoot, { backgroundColor: colors.bg }]}>
+      <View style={[styles.glow, { backgroundColor: colors.heroGlow }]} pointerEvents="none" />
       {avoidKeyboard ? (
         <KeyboardAvoidingView {...kavProps} style={[styles.flex, styles.screenPad, pad]}>
           {children}
@@ -94,19 +94,25 @@ export function Screen({
 }
 
 export function Header({ title, subtitle }: { title: string; subtitle?: string }) {
+  const colors = useColors();
   return (
     <View style={styles.header}>
-      <Text style={styles.title}>{title}</Text>
-      {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+      <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
+      {subtitle ? (
+        <Text style={[styles.subtitle, { color: colors.muted }]}>{subtitle}</Text>
+      ) : null}
     </View>
   );
 }
 
 export function BrandMark({ title, subtitle }: { title: string; subtitle?: string }) {
+  const colors = useColors();
   return (
     <View style={styles.header}>
-      <Text style={styles.brand}>{title}</Text>
-      {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+      <Text style={[styles.brand, { color: colors.accent }]}>{title}</Text>
+      {subtitle ? (
+        <Text style={[styles.subtitle, { color: colors.muted }]}>{subtitle}</Text>
+      ) : null}
     </View>
   );
 }
@@ -120,12 +126,13 @@ export function SectionHeader({
   actionLabel?: string;
   onAction?: () => void;
 }) {
+  const colors = useColors();
   return (
     <View style={styles.sectionHeader}>
-      <Text style={styles.sectionTitle}>{title}</Text>
+      <Text style={[styles.sectionTitle, { color: colors.text }]}>{title}</Text>
       {actionLabel && onAction ? (
         <Pressable onPress={onAction} hitSlop={8}>
-          <Text style={styles.sectionAction}>{actionLabel}</Text>
+          <Text style={[styles.sectionAction, { color: colors.accent }]}>{actionLabel}</Text>
         </Pressable>
       ) : null}
     </View>
@@ -141,8 +148,20 @@ export function Card({
   style?: StyleProp<ViewStyle>;
   elevated?: boolean;
 }) {
+  const colors = useColors();
   return (
-    <View style={[styles.card, elevated && styles.cardElevated, style]}>{children}</View>
+    <View
+      style={[
+        styles.card,
+        {
+          backgroundColor: elevated ? colors.surfaceAlt : colors.surface,
+          borderColor: elevated ? "transparent" : colors.border,
+        },
+        style,
+      ]}
+    >
+      {children}
+    </View>
   );
 }
 
@@ -155,10 +174,18 @@ export function Metric({
   value: string;
   compact?: boolean;
 }) {
+  const colors = useColors();
   return (
     <View style={[styles.metric, compact && styles.metricCompact]}>
-      <Text style={styles.metricLabel}>{label}</Text>
-      <Text style={[styles.metricValue, compact && styles.metricValueCompact]} numberOfLines={1}>
+      <Text style={[styles.metricLabel, { color: colors.muted }]}>{label}</Text>
+      <Text
+        style={[
+          styles.metricValue,
+          { color: colors.text },
+          compact && styles.metricValueCompact,
+        ]}
+        numberOfLines={1}
+      >
         {value}
       </Text>
     </View>
@@ -171,6 +198,7 @@ export function MetricRow({
 }: {
   items: { label: string; value: string; color?: string }[];
 }) {
+  const colors = useColors();
   const { width } = useWindowDimensions();
   const wrap = width < 360 && items.length > 2;
   return (
@@ -180,9 +208,12 @@ export function MetricRow({
           key={it.label}
           style={[styles.metricRowItem, wrap && styles.metricRowItemHalf]}
         >
-          <Text style={styles.metricLabel}>{it.label}</Text>
+          <Text style={[styles.metricLabel, { color: colors.muted }]}>{it.label}</Text>
           <Text
-            style={[styles.metricValueCompact, it.color ? { color: it.color } : null]}
+            style={[
+              styles.metricValueCompact,
+              { color: it.color ?? colors.text },
+            ]}
             numberOfLines={2}
           >
             {it.value}
@@ -202,11 +233,17 @@ export function HeroMetric({
   value: string;
   hint?: string;
 }) {
+  const colors = useColors();
   return (
-    <View style={styles.hero}>
-      <Text style={styles.heroLabel}>{label}</Text>
-      <Text style={styles.heroValue}>{value}</Text>
-      {hint ? <Text style={styles.heroHint}>{hint}</Text> : null}
+    <View
+      style={[
+        styles.hero,
+        { backgroundColor: colors.surface, borderColor: colors.border },
+      ]}
+    >
+      <Text style={[styles.heroLabel, { color: colors.accent }]}>{label}</Text>
+      <Text style={[styles.heroValue, { color: colors.text }]}>{value}</Text>
+      {hint ? <Text style={[styles.heroHint, { color: colors.muted }]}>{hint}</Text> : null}
     </View>
   );
 }
@@ -222,10 +259,11 @@ export function EmptyState({
   actionLabel?: string;
   onAction?: () => void;
 }) {
+  const colors = useColors();
   return (
     <View style={styles.emptyBox}>
-      <Text style={styles.emptyTitle}>{title}</Text>
-      {body ? <Text style={styles.emptyBody}>{body}</Text> : null}
+      <Text style={[styles.emptyTitle, { color: colors.text }]}>{title}</Text>
+      {body ? <Text style={[styles.emptyBody, { color: colors.muted }]}>{body}</Text> : null}
       {actionLabel && onAction ? (
         <View style={{ marginTop: spacing.md }}>
           <PrimaryButton label={actionLabel} onPress={onAction} />
@@ -248,19 +286,28 @@ export function PrimaryButton({
   compact?: boolean;
   style?: StyleProp<ViewStyle>;
 }) {
+  const colors = useColors();
   return (
     <Pressable
       onPress={onPress}
       disabled={disabled}
       style={({ pressed }) => [
         styles.button,
+        { backgroundColor: colors.accent },
         compact && styles.buttonCompact,
         pressed && styles.pressed,
         disabled && styles.buttonDisabled,
         style,
       ]}
     >
-      <Text style={[styles.buttonText, compact && styles.buttonTextCompact]} numberOfLines={1}>
+      <Text
+        style={[
+          styles.buttonText,
+          { color: colors.onAccent },
+          compact && styles.buttonTextCompact,
+        ]}
+        numberOfLines={1}
+      >
         {label}
       </Text>
     </Pressable>
@@ -282,14 +329,15 @@ export function SecondaryButton({
   compact?: boolean;
   style?: StyleProp<ViewStyle>;
 }) {
+  const colors = useColors();
   return (
     <Pressable
       onPress={onPress}
       disabled={disabled}
       style={({ pressed }) => [
         styles.secondary,
+        { borderColor: destructive ? colors.danger : colors.border },
         compact && styles.buttonCompact,
-        destructive && styles.secondaryDestructive,
         pressed && styles.pressed,
         disabled && styles.buttonDisabled,
         style,
@@ -298,8 +346,8 @@ export function SecondaryButton({
       <Text
         style={[
           styles.secondaryText,
+          { color: destructive ? colors.danger : colors.text },
           compact && styles.buttonTextCompact,
-          destructive && styles.secondaryDestructiveText,
         ]}
         numberOfLines={1}
       >
@@ -336,7 +384,8 @@ export function DangerButton({
 }
 
 export function FieldLabel({ children }: { children: React.ReactNode }) {
-  return <Text style={styles.fieldLabel}>{children}</Text>;
+  const colors = useColors();
+  return <Text style={[styles.fieldLabel, { color: colors.muted }]}>{children}</Text>;
 }
 
 export function Field({
@@ -348,11 +397,12 @@ export function Field({
   hint?: string;
   children: React.ReactNode;
 }) {
+  const colors = useColors();
   return (
     <View style={styles.field}>
       <FieldLabel>{label}</FieldLabel>
       {children}
-      {hint ? <Text style={styles.fieldHint}>{hint}</Text> : null}
+      {hint ? <Text style={[styles.fieldHint, { color: colors.muted }]}>{hint}</Text> : null}
     </View>
   );
 }
@@ -368,16 +418,28 @@ export function Chip({
   onPress?: () => void;
   color?: string;
 }) {
+  const colors = useColors();
   return (
     <Pressable
       onPress={onPress}
       style={[
         styles.chip,
-        color ? { borderColor: color } : null,
-        active && styles.chipActive,
+        {
+          borderColor: color ?? colors.border,
+          backgroundColor: active ? colors.accentSoft : colors.surface,
+        },
+        active && !color ? { borderColor: colors.accent } : null,
+        color && active ? { borderColor: color } : null,
       ]}
     >
-      <Text style={[styles.chipText, active && styles.chipTextActive]}>{label}</Text>
+      <Text
+        style={[
+          styles.chipText,
+          { color: active ? colors.accent : colors.text },
+        ]}
+      >
+        {label}
+      </Text>
     </Pressable>
   );
 }
@@ -391,17 +453,33 @@ export function SegmentedControl<T extends string>({
   value: T;
   onChange: (id: T) => void;
 }) {
+  const colors = useColors();
   return (
-    <View style={styles.segment}>
+    <View
+      style={[
+        styles.segment,
+        { backgroundColor: colors.surface, borderColor: colors.border },
+      ]}
+    >
       {options.map((o) => {
         const on = o.id === value;
         return (
           <Pressable
             key={o.id}
             onPress={() => onChange(o.id)}
-            style={[styles.segmentItem, on && styles.segmentItemOn]}
+            style={[
+              styles.segmentItem,
+              on && { backgroundColor: colors.accentSoft },
+            ]}
           >
-            <Text style={[styles.segmentText, on && styles.segmentTextOn]}>{o.label}</Text>
+            <Text
+              style={[
+                styles.segmentText,
+                { color: on ? colors.accent : colors.muted },
+              ]}
+            >
+              {o.label}
+            </Text>
           </Pressable>
         );
       })}
@@ -410,45 +488,48 @@ export function SegmentedControl<T extends string>({
 }
 
 export function Hairline() {
-  return <View style={styles.hairline} />;
+  const colors = useColors();
+  return <View style={[styles.hairline, { backgroundColor: colors.border }]} />;
 }
 
-/** Shared label style for pills/chips so text sits vertically centered (esp. Android). */
+/** Shared label style for pills/chips so text sits vertically centered (esp. Android). Layout only. */
 export const chipLabelStyle: TextStyle = {
   fontFamily: typography.caption.fontFamily,
   fontSize: 12,
   fontWeight: "600",
   lineHeight: 16,
-  color: colors.text,
   textAlign: "center",
   ...(Platform.OS === "android"
     ? { includeFontPadding: false, textAlignVertical: "center" }
     : null),
 };
 
-/** Shared container style for compact filter/action chips. */
+/** Shared container style for compact filter/action chips. Layout only. */
 export const chipContainerStyle: ViewStyle = {
   paddingHorizontal: 12,
   minHeight: 44,
   borderRadius: radii.pill,
   borderWidth: StyleSheet.hairlineWidth,
-  borderColor: colors.border,
-  backgroundColor: colors.surface,
   justifyContent: "center",
   alignItems: "center",
 };
 
 /** Determinate (0–1) or empty track when progress is undefined. */
 export function ProgressBar({ progress }: { progress?: number }) {
+  const colors = useColors();
   const pct =
     progress == null || !Number.isFinite(progress)
       ? undefined
       : Math.max(0, Math.min(1, progress));
   return (
-    <View style={styles.progressTrack} accessibilityRole="progressbar">
+    <View
+      style={[styles.progressTrack, { backgroundColor: colors.surfaceAlt }]}
+      accessibilityRole="progressbar"
+    >
       <View
         style={[
           styles.progressFill,
+          { backgroundColor: colors.accent },
           pct == null ? styles.progressIndeterminate : { width: `${Math.round(pct * 100)}%` },
         ]}
       />
@@ -500,7 +581,7 @@ function FormSheetBody({
   footer?: React.ReactNode;
 }) {
   const insets = useSafeAreaInsets();
-  const themeColors = useColors();
+  const colors = useColors();
   const { height: windowHeight } = useWindowDimensions();
   const [keyboardHeight, setKeyboardHeight] = useState(0);
 
@@ -542,20 +623,20 @@ function FormSheetBody({
         style={[
           styles.sheetCard,
           {
-            backgroundColor: themeColors.surface,
-            borderColor: themeColors.border,
+            backgroundColor: colors.surface,
+            borderColor: colors.border,
           },
         ]}
       >
         <View style={styles.sheetHandleWrap} accessible={false}>
-          <View style={styles.sheetHandle} />
+          <View style={[styles.sheetHandle, { backgroundColor: colors.border }]} />
         </View>
         <View style={styles.sheetHeader}>
-          <Text style={styles.sheetTitle} numberOfLines={1}>
+          <Text style={[styles.sheetTitle, { color: colors.text }]} numberOfLines={1}>
             {title}
           </Text>
           <Pressable onPress={onClose} hitSlop={12} accessibilityRole="button">
-            <Text style={styles.sheetClose}>Close</Text>
+            <Text style={[styles.sheetClose, { color: colors.accent }]}>Close</Text>
           </Pressable>
         </View>
         <ScrollView
@@ -569,7 +650,12 @@ function FormSheetBody({
           {children}
         </ScrollView>
         {footer ? (
-          <View style={[styles.sheetFooter, { paddingBottom: footerPadBottom }]}>
+          <View
+            style={[
+              styles.sheetFooter,
+              { paddingBottom: footerPadBottom, borderTopColor: colors.border },
+            ]}
+          >
             {footer}
           </View>
         ) : null}
@@ -595,17 +681,25 @@ export function BusyOverlay({
   onCancel?: () => void;
   cancelLabel?: string;
 }) {
+  const colors = useColors();
   return (
     <Modal visible={visible} transparent animationType="fade" statusBarTranslucent>
       <View style={styles.busyRoot}>
-        <View style={styles.busyCard}>
+        <View
+          style={[
+            styles.busyCard,
+            { backgroundColor: colors.surface, borderColor: colors.border },
+          ]}
+        >
           <ActivityIndicator color={colors.accent} size="large" />
-          <Text style={styles.busyTitle}>{title}</Text>
-          {subtitle ? <Text style={styles.busySubtitle}>{subtitle}</Text> : null}
+          <Text style={[styles.busyTitle, { color: colors.text }]}>{title}</Text>
+          {subtitle ? (
+            <Text style={[styles.busySubtitle, { color: colors.muted }]}>{subtitle}</Text>
+          ) : null}
           <ProgressBar progress={progress} />
           {onCancel ? (
             <Pressable onPress={onCancel} style={styles.busyCancel} hitSlop={8}>
-              <Text style={styles.busyCancelText}>{cancelLabel}</Text>
+              <Text style={[styles.busyCancelText, { color: colors.danger }]}>{cancelLabel}</Text>
             </Pressable>
           ) : null}
         </View>
@@ -616,7 +710,7 @@ export function BusyOverlay({
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  screenRoot: { flex: 1, backgroundColor: colors.bg },
+  screenRoot: { flex: 1 },
   screenPad: { paddingBottom: spacing.md },
   glow: {
     position: "absolute",
@@ -625,13 +719,12 @@ const styles = StyleSheet.create({
     width: 280,
     height: 280,
     borderRadius: 140,
-    backgroundColor: colors.heroGlow,
     opacity: 0.9,
   },
   header: { marginBottom: spacing.lg },
-  brand: { ...typography.display, color: colors.accent },
-  title: { ...typography.title, color: colors.text },
-  subtitle: { ...typography.caption, color: colors.muted, marginTop: 6 },
+  brand: { ...typography.display },
+  title: { ...typography.title },
+  subtitle: { ...typography.caption, marginTop: 6 },
   sectionHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -639,27 +732,20 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
     marginTop: spacing.md,
   },
-  sectionTitle: { ...typography.headline, color: colors.text, fontSize: 16 },
-  sectionAction: { ...typography.caption, color: colors.accent, fontWeight: "600" },
+  sectionTitle: { ...typography.headline, fontSize: 16 },
+  sectionAction: { ...typography.caption, fontWeight: "600" },
   card: {
-    backgroundColor: colors.surface,
     borderRadius: radii.lg,
     padding: spacing.md,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
     marginBottom: spacing.sm,
-  },
-  cardElevated: {
-    borderColor: "transparent",
-    backgroundColor: colors.surfaceAlt,
   },
   metric: { marginBottom: spacing.sm },
   metricCompact: { marginBottom: 0, flex: 1 },
-  metricLabel: { ...typography.label, color: colors.muted, textTransform: "none", letterSpacing: 0 },
-  metricValue: { ...typography.metric, color: colors.text, marginTop: 2 },
+  metricLabel: { ...typography.label, textTransform: "none", letterSpacing: 0 },
+  metricValue: { ...typography.metric, marginTop: 2 },
   metricValueCompact: {
     ...typography.bodyMedium,
-    color: colors.text,
     marginTop: 2,
     fontSize: 14,
   },
@@ -679,9 +765,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     marginBottom: spacing.md,
     borderRadius: radii.xl,
-    backgroundColor: colors.surface,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
     overflow: "hidden",
   },
   busyRoot: {
@@ -694,23 +778,19 @@ const styles = StyleSheet.create({
   busyCard: {
     width: "100%",
     maxWidth: 340,
-    backgroundColor: colors.surface,
     borderRadius: radii.xl,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
     padding: spacing.lg,
     gap: spacing.sm,
     alignItems: "center",
   },
   busyTitle: {
     ...typography.headline,
-    color: colors.text,
     textAlign: "center",
     marginTop: spacing.sm,
   },
   busySubtitle: {
     ...typography.caption,
-    color: colors.muted,
     textAlign: "center",
   },
   busyCancel: {
@@ -720,37 +800,33 @@ const styles = StyleSheet.create({
   },
   busyCancelText: {
     ...typography.bodyMedium,
-    color: colors.danger,
     textAlign: "center",
   },
   progressTrack: {
     width: "100%",
     height: 8,
     borderRadius: 4,
-    backgroundColor: colors.surfaceAlt,
     overflow: "hidden",
     marginTop: spacing.sm,
   },
   progressFill: {
     height: "100%",
     borderRadius: 4,
-    backgroundColor: colors.accent,
   },
   progressIndeterminate: {
     width: "35%",
   },
-  heroLabel: { ...typography.label, color: colors.accent },
-  heroValue: { ...typography.heroValue, color: colors.text, marginTop: spacing.xs },
-  heroHint: { ...typography.caption, color: colors.muted, marginTop: spacing.sm },
+  heroLabel: { ...typography.label },
+  heroValue: { ...typography.heroValue, marginTop: spacing.xs },
+  heroHint: { ...typography.caption, marginTop: spacing.sm },
   emptyBox: {
     paddingVertical: spacing.lg,
     paddingHorizontal: spacing.md,
     marginBottom: spacing.sm,
   },
-  emptyTitle: { ...typography.headline, color: colors.text },
-  emptyBody: { ...typography.caption, color: colors.muted, marginTop: 8, lineHeight: 20 },
+  emptyTitle: { ...typography.headline },
+  emptyBody: { ...typography.caption, marginTop: 8, lineHeight: 20 },
   button: {
-    backgroundColor: colors.accent,
     paddingVertical: 14,
     paddingHorizontal: spacing.md,
     borderRadius: radii.md,
@@ -764,7 +840,6 @@ const styles = StyleSheet.create({
   pressed: { opacity: 0.85, transform: [{ scale: 0.985 }] },
   buttonText: {
     ...typography.bodyMedium,
-    color: colors.onAccent,
   },
   buttonTextCompact: {
     fontSize: 13,
@@ -776,45 +851,33 @@ const styles = StyleSheet.create({
     borderRadius: radii.md,
     alignItems: "center",
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
   },
-  secondaryDestructive: { borderColor: colors.danger },
-  secondaryText: { ...typography.bodyMedium, color: colors.text },
-  secondaryDestructiveText: { color: colors.danger },
+  secondaryText: { ...typography.bodyMedium },
   chip: {
     ...chipContainerStyle,
     marginRight: 8,
     marginBottom: 8,
   },
-  chipActive: {
-    backgroundColor: colors.accentSoft,
-    borderColor: colors.accent,
-  },
   chipText: {
     ...chipLabelStyle,
   },
-  chipTextActive: { color: colors.accent },
   field: { marginBottom: spacing.sm },
   fieldLabel: {
     ...typography.label,
-    color: colors.muted,
     textTransform: "none",
     letterSpacing: 0,
     marginBottom: 6,
   },
   fieldHint: {
     ...typography.caption,
-    color: colors.muted,
     marginTop: 6,
     lineHeight: 18,
   },
   segment: {
     flexDirection: "row",
-    backgroundColor: colors.surface,
     borderRadius: radii.md,
     padding: 3,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
     marginBottom: spacing.sm,
   },
   segmentItem: {
@@ -825,15 +888,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderRadius: radii.sm,
   },
-  segmentItemOn: { backgroundColor: colors.accentSoft },
   segmentText: {
     ...chipLabelStyle,
-    color: colors.muted,
   },
-  segmentTextOn: { color: colors.accent },
   hairline: {
     height: StyleSheet.hairlineWidth,
-    backgroundColor: colors.border,
     marginVertical: spacing.sm,
   },
   sheetRoot: {
@@ -846,11 +905,9 @@ const styles = StyleSheet.create({
   },
   sheetCard: {
     maxHeight: "92%",
-    backgroundColor: colors.surface,
     borderTopLeftRadius: radii.xl,
     borderTopRightRadius: radii.xl,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
     borderBottomWidth: 0,
     overflow: "hidden",
   },
@@ -859,7 +916,6 @@ const styles = StyleSheet.create({
     width: 36,
     height: 4,
     borderRadius: 2,
-    backgroundColor: colors.border,
   },
   sheetHeader: {
     flexDirection: "row",
@@ -868,8 +924,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingBottom: spacing.sm,
   },
-  sheetTitle: { ...typography.headline, color: colors.text, flex: 1, marginRight: spacing.sm },
-  sheetClose: { ...typography.caption, color: colors.accent, fontWeight: "600" },
+  sheetTitle: { ...typography.headline, flex: 1, marginRight: spacing.sm },
+  sheetClose: { ...typography.caption, fontWeight: "600" },
   /** Height comes from inline maxHeight — never flex:1 (collapses in maxHeight-only cards). */
   sheetBody: { flexGrow: 0, flexShrink: 1 },
   sheetBodyContent: {
@@ -881,7 +937,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingTop: spacing.sm,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.border,
     gap: spacing.sm,
     alignItems: "stretch",
   },

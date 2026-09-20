@@ -221,26 +221,26 @@ const en = {
       faq: "FAQ",
     },
     hero: {
-      badge: "No account. No cloud. Your money stays on your device.",
-      titleStart: "Your money,",
-      titleHighlight: "in one calm place",
+      badge: "No account. No cloud sync. No telemetry.",
+      titleStart: "Private portfolio tracking.",
+      titleHighlight: "On your device",
       subtitle:
-        "Track what you own, see where cash goes, and plan what's next. Aurelia runs on your phone or laptop and never asks who you are.",
+        "Track stocks, ETFs, crypto, cash and net worth in one place. Aurelia encrypts your data on this device, never asks who you are, and never syncs to the cloud. Free and open source.",
       ctaPrimary: "Open Aurelia",
       ctaSecondary: "See what you get",
       ctaDownload: "Download the app",
       screenshotAlt: "Aurelia dashboard with allocation chart and cashflow summary",
     },
     proof: {
-      zeroAccounts: "Your data stays local",
-      offline: "Works on any device",
+      zeroAccounts: "Data stays on your device",
+      offline: "Web, Linux and Android today",
       multiCurrency: "Every currency you use",
-      openSource: "Open source you can audit",
+      openSource: "AGPL — audit the source",
     },
     features: {
       heading: "Everything you need to feel in control",
       subheading:
-        "Track what you own, watch where it flows, and plan ahead. No spreadsheet required.",
+        "Portfolio, cashflow and planning in one private app. No spreadsheet required.",
       items: {
         assets: {
           title: "All your wealth, one view",
@@ -260,11 +260,11 @@ const en = {
         },
         private: {
           title: "Private by default",
-          body: "Encrypted on your device. No account, no cloud, no analytics on what you own.",
+          body: "AES-GCM encryption on your device. No account, no cloud sync, no analytics on what you own. Quotes and FX may use the network — your portfolio never leaves.",
         },
         elegant: {
           title: "Made for your phone first",
-          body: "Calm, thumb-friendly screens on mobile, with native apps and six languages including Valencià.",
+          body: "Thumb-friendly screens on mobile, a full desktop layout on larger screens, and six languages including Valencià.",
         },
       },
     },
@@ -274,7 +274,7 @@ const en = {
       steps: {
         one: {
           title: "Open it",
-          body: "No signup needed. Aurelia loads in your browser or as a native app and runs entirely on your device.",
+          body: "No signup. Use the web app in your browser, or install the Linux or Android build. Everything runs on your device.",
         },
         two: {
           title: "Add what you own and what you spend",
@@ -298,7 +298,7 @@ const en = {
         free: "Free forever",
         assets: "Stocks, ETFs, crypto and metals together",
         sankey: "Cashflow Sankey diagram",
-        offline: "Works offline",
+        offline: "No cloud sync — prices need network",
       },
     },
     faq: {
@@ -306,11 +306,11 @@ const en = {
       items: {
         free: {
           q: "Is it really free?",
-          a: "Yes. Every feature is free, with no signup, no ads and no premium tier. The app runs in your browser or as a native app on your device.",
+          a: "Yes. Every feature is free, with no signup, no ads and no premium tier. Use the web app or the native Linux and Android builds.",
         },
         storage: {
           q: "Where does my data live?",
-          a: "On your device only, encrypted with AES-GCM. Nothing is uploaded or synced. Export a full backup anytime and restore it elsewhere.",
+          a: "On your device only, encrypted with AES-GCM. Nothing is uploaded or cloud-synced. Export a full backup anytime and restore it elsewhere.",
         },
         assets: {
           q: "What can I track?",
@@ -320,24 +320,33 @@ const en = {
           q: "Do I need an account?",
           a: "Never. Open the app and start tracking. No login, no email, no telemetry. Walk away with your data in one export.",
         },
+        platforms: {
+          q: "Which platforms are available?",
+          a: "The web app works in any modern browser. Native builds ship today for Linux (AppImage, .deb, .rpm) and Android. Windows, macOS and iOS are coming soon.",
+        },
+        license: {
+          q: "Is the source code available?",
+          a: "Yes. Aurelia is free software under AGPL-3.0-or-later. You can read, audit and contribute on GitHub.",
+        },
       },
     },
     cta: {
       heading: "Take back your money in 60 seconds",
       subheading: "No signup. No card. Open Aurelia and see what you already own.",
       button: "Open Aurelia",
-      footnote: "Works in any modern browser · Native apps for every platform",
+      footnote: "Works in any modern browser · Linux and Android apps available now · Windows, macOS and iOS coming soon",
     },
     downloads: {
       heading: "Take it with you",
-      subheading: "The same private app, packaged natively for the devices you use.",
+      subheading:
+        "Native packages from GitHub Releases. Same private app as the web — data stays on your device.",
       web: "Or open it in your browser",
       soon: "Coming soon",
       comingSoon: "Coming soon",
       action: "Download",
       recommended: "For this device",
       unsignedNotice:
-        "Builds are unsigned and distributed directly. Your OS may warn on first launch. That is expected.",
+        "Builds are unsigned and distributed directly from GitHub Releases. Your OS may warn on first launch. That is expected.",
       platforms: {
         windows: "Windows",
         mac: "macOS",
@@ -364,11 +373,11 @@ const en = {
       sourceCode: "Source code",
     },
     meta: {
-      title: "Aurelia · Private finance & portfolio tracker",
+      title: "Aurelia — Private portfolio & net worth tracker (no cloud)",
       description:
-        "Track stocks, ETFs, crypto, metals and cash in one private app. Allocation, cashflow, forecast and net worth on your device. No signup, no cloud, free forever.",
+        "Track stocks, ETFs, crypto and cash with encrypted, on-device storage. Sankey cashflow, budgets and net worth. Free web app plus Linux and Android. No signup, no cloud sync.",
       keywords:
-        "aurelia, portfolio tracker, net worth, private finance app, stock tracker, crypto portfolio, cashflow sankey, budget planner, offline finance",
+        "aurelia, private portfolio tracker, net worth tracker, local finance app, no cloud sync, stock tracker, crypto portfolio, cashflow sankey, budget planner, AGPL finance app",
     },
   },
   dashboard: {

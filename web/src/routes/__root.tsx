@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 
 import appCss from "../styles.css?url";
 import { StoreProvider, FxProvider } from "@/lib/store";
+import { ThemeProvider } from "@/hooks/use-theme";
 import { AppearanceSync } from "@/components/appearance-sync";
 import { AppShell } from "@/components/app-shell";
 import { ResponsiveToaster } from "@/components/responsive-toaster";
@@ -151,19 +152,21 @@ function RootComponent() {
         </>
       ) : null}
       <QueryClientProvider client={queryClient}>
-        <StoreProvider>
-          <FxProvider>
-            <AppearanceSync />
-            {isLanding ? (
-              <Outlet />
-            ) : (
-              <AppShell>
+        <ThemeProvider>
+          <StoreProvider>
+            <FxProvider>
+              <AppearanceSync />
+              {isLanding ? (
                 <Outlet />
-              </AppShell>
-            )}
-            <ResponsiveToaster />
-          </FxProvider>
-        </StoreProvider>
+              ) : (
+                <AppShell>
+                  <Outlet />
+                </AppShell>
+              )}
+              <ResponsiveToaster />
+            </FxProvider>
+          </StoreProvider>
+        </ThemeProvider>
       </QueryClientProvider>
     </>
   );

@@ -64,7 +64,7 @@ function fallbackIndexHtml() {
   const driverCss = readdirSync(assetsDir).find(
     (f) => f.startsWith("driver-") && f.endsWith(".css"),
   );
-  const themeScript = `(function(){try{var t=localStorage.getItem('ept_theme');if(t!=='light'&&t!=='dark'){t='dark';}var r=document.documentElement;r.classList.toggle('dark',t==='dark');r.style.colorScheme=t;var m=document.querySelector('meta[name="theme-color"]');if(m){m.setAttribute('content',t==='dark'?'#0B0B0C':'#FDFBF9');}}catch(e){document.documentElement.classList.add('dark');}})();`;
+  const themeScript = `(function(){try{var p=localStorage.getItem('ept_theme');if(p!=='light'&&p!=='dark'&&p!=='system'){p='dark';}var t=p==='system'?(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'):p;var r=document.documentElement;r.classList.toggle('dark',t==='dark');r.style.colorScheme=t;var m=document.querySelector('meta[name="theme-color"]');if(m){m.setAttribute('content',t==='dark'?'#0A0A0B':'#FAF9F7');}}catch(e){document.documentElement.classList.add('dark');}})();`;
 
   return `<!DOCTYPE html>
 <html lang="en" class="dark" style="color-scheme:dark">

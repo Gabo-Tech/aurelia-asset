@@ -22,11 +22,14 @@ import { CategoryBreakdown } from "@/components/CategoryBreakdown";
 import { useStore, useMoney } from "@/lib/store";
 import { amortize } from "@/lib/finance/amortization";
 import { expandCashflows, valuesByEntry } from "@/lib/cashflow-math";
-import { colors, spacing } from "@/theme/colors";
+import { spacing } from "@/theme/colors";
+import { useColors } from "@/theme/ThemeProvider";
 import { PALETTE, type SavingsGoal, type Loan, type ForecastScenario, type BudgetPlan, type BudgetPeriodType } from "@/lib/types";
 import { computePlanWindow, spentByCategoryId } from "@/lib/budget-window";
 
 export function PlanningScreen() {
+  const colors = useColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { t } = useTranslation();
   const {
     state,
@@ -1310,7 +1313,8 @@ export function PlanningScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(colors: ReturnType<typeof useColors>) {
+  return StyleSheet.create({
   section: { color: colors.text, fontWeight: "600", marginBottom: 8 },
   input: {
     borderWidth: 1,
@@ -1339,22 +1343,26 @@ const styles = StyleSheet.create({
   tabs: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: spacing.md },
   tab: {
     ...chipContainerStyle,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
     borderWidth: 1,
   },
   tabOn: { borderColor: colors.accent, backgroundColor: colors.accentSoft },
-  tabText: { ...chipLabelStyle, textTransform: "capitalize" },
+  tabText: { ...chipLabelStyle, color: colors.text, textTransform: "capitalize" },
   row: { flexDirection: "row", marginTop: 8, flexWrap: "wrap" },
   lineRow: { marginTop: 8, borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 8 },
   budgetLine: { marginTop: 8 },
   catRow: { marginBottom: 8 },
   catChip: {
     ...chipContainerStyle,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
     paddingHorizontal: 10,
     marginRight: 6,
     borderWidth: 1,
   },
   catChipOn: { backgroundColor: colors.accentSoft, borderColor: colors.accent },
-  catChipText: { ...chipLabelStyle },
+  catChipText: { ...chipLabelStyle, color: colors.text },
   barTrack: {
     height: 8,
     backgroundColor: colors.surfaceAlt,
@@ -1365,3 +1373,4 @@ const styles = StyleSheet.create({
   },
   barFill: { height: "100%", backgroundColor: colors.accent },
 });
+}

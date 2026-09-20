@@ -10,7 +10,8 @@ import {
 import { SafeAreaProvider, initialWindowMetrics, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import Svg, { Circle, Path, Rect } from "react-native-svg";
-import { colors, spacing, radii } from "@/theme/colors";
+import { spacing, radii } from "@/theme/colors";
+import { useColors } from "@/theme/ThemeProvider";
 import { type as typography } from "@/theme/typography";
 import type { RootTabParamList } from "@/navigation/RootNavigator";
 
@@ -26,6 +27,7 @@ type MoreRow = {
 };
 
 function RowIcon({ id }: { id: MoreRow["id"] }) {
+  const colors = useColors();
   const c = colors.accent;
   const size = 22;
   if (id === "Planning") {
@@ -144,17 +146,25 @@ function MoreSheetBody({
   onTakeTour: () => void;
 }) {
   const { t } = useTranslation();
+  const colors = useColors();
   const insets = useSafeAreaInsets();
   const bottomPad = Math.max(insets.bottom, spacing.md) + spacing.md;
 
   return (
     <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel="Close">
       <Pressable
-        style={[styles.sheet, { paddingBottom: bottomPad }]}
+        style={[
+          styles.sheet,
+          {
+            paddingBottom: bottomPad,
+            backgroundColor: colors.surface,
+            borderColor: colors.border,
+          },
+        ]}
         onPress={(e) => e.stopPropagation()}
       >
-        <View style={styles.handle} />
-        <Text style={styles.heading}>{t("nav.more")}</Text>
+        <View style={[styles.handle, { backgroundColor: colors.border }]} />
+        <Text style={[styles.heading, { color: colors.text }]}>{t("nav.more")}</Text>
         <ScrollView bounces={false}>
           {rows.map((row) => {
             const active = row.id !== "tour" && activeRoute === row.id;
@@ -166,17 +176,25 @@ function MoreSheetBody({
                   if (row.id === "tour") onTakeTour();
                   else onNavigate(row.id);
                 }}
-                style={[styles.row, active && styles.rowActive]}
+                style={[
+                  styles.row,
+                  active && { backgroundColor: colors.accentSoft },
+                ]}
                 accessibilityRole="button"
               >
-                <View style={styles.iconWrap}>
+                <View style={[styles.iconWrap, { backgroundColor: colors.surfaceAlt }]}>
                   <RowIcon id={row.id} />
                 </View>
                 <View style={styles.rowText}>
-                  <Text style={[styles.rowTitle, active && styles.rowTitleActive]}>
+                  <Text
+                    style={[
+                      styles.rowTitle,
+                      { color: active ? colors.accent : colors.text },
+                    ]}
+                  >
                     {row.title}
                   </Text>
-                  <Text style={styles.rowBody}>{row.body}</Text>
+                  <Text style={[styles.rowBody, { color: colors.muted }]}>{row.body}</Text>
                 </View>
               </Pressable>
             );
@@ -194,26 +212,22 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
   },
   sheet: {
-    backgroundColor: colors.surface,
     borderTopLeftRadius: radii.xl,
     borderTopRightRadius: radii.xl,
     paddingTop: spacing.sm,
     paddingHorizontal: spacing.md,
     maxHeight: "72%",
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
   },
   handle: {
     alignSelf: "center",
     width: 36,
     height: 4,
     borderRadius: 2,
-    backgroundColor: colors.border,
     marginBottom: spacing.md,
   },
   heading: {
     ...typography.headline,
-    color: colors.text,
     marginBottom: spacing.sm,
   },
   row: {
@@ -225,19 +239,14 @@ const styles = StyleSheet.create({
     borderRadius: radii.md,
     marginBottom: spacing.xs,
   },
-  rowActive: {
-    backgroundColor: colors.accentSoft,
-  },
   iconWrap: {
     width: 40,
     height: 40,
     borderRadius: radii.md,
-    backgroundColor: colors.surfaceAlt,
     alignItems: "center",
     justifyContent: "center",
   },
   rowText: { flex: 1, minWidth: 0 },
-  rowTitle: { ...typography.bodyMedium, color: colors.text },
-  rowTitleActive: { color: colors.accent },
-  rowBody: { ...typography.caption, color: colors.muted, marginTop: 2 },
+  rowTitle: { ...typography.bodyMedium },
+  rowBody: { ...typography.caption, marginTop: 2 },
 });

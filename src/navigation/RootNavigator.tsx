@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { Text, View, StyleSheet, Pressable } from "react-native";
 import {
   createBottomTabNavigator,
@@ -7,6 +7,7 @@ import {
 import {
   NavigationContainer,
   DarkTheme,
+  DefaultTheme,
   createNavigationContainerRef,
 } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -22,7 +23,7 @@ import { SettingsScreen } from "@/screens/SettingsScreen";
 import { MoreSheet, type MoreDestination } from "@/components/MoreSheet";
 import { OnboardingChecklist } from "@/components/OnboardingChecklist";
 import { useAppStore } from "@/lib/store";
-import { colors } from "@/theme/colors";
+import { useColors, useResolvedMode } from "@/theme/ThemeProvider";
 import { type as typography } from "@/theme/typography";
 
 export type RootTabParamList = {
@@ -51,26 +52,18 @@ const SECONDARY: (keyof RootTabParamList)[] = [
   "Settings",
 ];
 
-const navTheme = {
-  ...DarkTheme,
-  colors: {
-    ...DarkTheme.colors,
-    background: colors.bg,
-    card: colors.surface,
-    text: colors.text,
-    border: colors.border,
-    primary: colors.accent,
-  },
-};
-
 function TabIcon({
   name,
   focused,
+  accent,
+  muted,
 }: {
   name: keyof RootTabParamList | "More";
   focused: boolean;
+  accent: string;
+  muted: string;
 }) {
-  const c = focused ? colors.accent : colors.muted;
+  const c = focused ? accent : muted;
   const stroke = focused ? 2.2 : 1.6;
   const size = 22;
   switch (name) {
@@ -153,6 +146,7 @@ export const TAB_BAR_CONTENT_HEIGHT = 52;
 
 function CustomTabBar({ state, navigation }: BottomTabBarProps) {
   const { t } = useTranslation();
+  const colors = useColors();
   const insets = useSafeAreaInsets();
   const [moreOpen, setMoreOpen] = useState(false);
   const assistantEnabled = useAppStore((s) => s.state.settings.aiAssistantEnabled !== false);
@@ -166,7 +160,12 @@ function CustomTabBar({ state, navigation }: BottomTabBarProps) {
       <View
         style={[
           styles.tabBar,
-          { paddingBottom: bottomPad, height: TAB_BAR_CONTENT_HEIGHT + bottomPad },
+          {
+            paddingBottom: bottomPad,
+            height: TAB_BAR_CONTENT_HEIGHT + bottomPad,
+            backgroundColor: colors.surface,
+            borderTopColor: colors.border,
+          },
         ]}
       >
         {PRIMARY.map((name) => {
@@ -191,9 +190,21 @@ function CustomTabBar({ state, navigation }: BottomTabBarProps) {
               style={styles.tabItem}
             >
               <View style={styles.iconWrap}>
-                <TabIcon name={name} focused={focused} />
+                <TabIcon
+                  name={name}
+                  focused={focused}
+                  accent={colors.accent}
+                  muted={colors.muted}
+                />
               </View>
-              <Text style={[styles.tabLabel, focused && styles.tabLabelOn]} numberOfLines={1}>
+              <Text
+                style={[
+                  styles.tabLabel,
+                  { color: focused ? colors.accent : colors.muted },
+                  focused && styles.tabLabelOn,
+                ]}
+                numberOfLines={1}
+              >
                 {shortLabel(t, name)}
               </Text>
             </Pressable>
@@ -206,10 +217,21 @@ function CustomTabBar({ state, navigation }: BottomTabBarProps) {
           style={styles.tabItem}
         >
           <View style={styles.iconWrap}>
-            <TabIcon name="More" focused={moreActive || moreOpen} />
+            <TabIcon
+              name="More"
+              focused={moreActive || moreOpen}
+              accent={colors.accent}
+              muted={colors.muted}
+            />
           </View>
           <Text
-            style={[styles.tabLabel, (moreActive || moreOpen) && styles.tabLabelOn]}
+            style={[
+              styles.tabLabel,
+              {
+                color: moreActive || moreOpen ? colors.accent : colors.muted,
+              },
+              (moreActive || moreOpen) && styles.tabLabelOn,
+            ]}
             numberOfLines={1}
           >
             {t("nav.more", { defaultValue: "More" })}
@@ -234,6 +256,22 @@ function CustomTabBar({ state, navigation }: BottomTabBarProps) {
 
 export function RootNavigator() {
   const assistantEnabled = useAppStore((s) => s.state.settings.aiAssistantEnabled !== false);
+  const colors = useColors();
+  const mode = useResolvedMode();
+  const navTheme = useMemo(
+    () => ({
+      ...(mode === "light" ? DefaultTheme : DarkTheme),
+      colors: {
+        ...(mode === "light" ? DefaultTheme.colors : DarkTheme.colors),
+        background: colors.bg,
+        card: colors.surface,
+        text: colors.text,
+        border: colors.border,
+        primary: colors.accent,
+      },
+    }),
+    [colors, mode],
+  );
 
   return (
     <>
@@ -292,8 +330,6 @@ export function RootNavigator() {
 const styles = StyleSheet.create({
   tabBar: {
     flexDirection: "row",
-    backgroundColor: colors.surface,
-    borderTopColor: colors.border,
     borderTopWidth: StyleSheet.hairlineWidth,
     paddingTop: 6,
   },
@@ -304,6 +340,6 @@ const styles = StyleSheet.create({
     paddingTop: 2,
   },
   iconWrap: { alignItems: "center", justifyContent: "center", height: 24 },
-  tabLabel: { ...typography.tab, color: colors.muted, marginBottom: 2, fontWeight: "500" },
-  tabLabelOn: { color: colors.accent, fontWeight: "700" },
+  tabLabel: { ...typography.tab, marginBottom: 2, fontWeight: "500" },
+  tabLabelOn: { fontWeight: "700" },
 });

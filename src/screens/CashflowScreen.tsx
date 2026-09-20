@@ -46,7 +46,8 @@ import { datedFilename, rowsToCsv, saveExportFile, exportMethodDescription } fro
 import { exportCashflowPdf } from "@/lib/cashflow-pdf";
 import { formatMoney } from "@/lib/format";
 import { CURRENCIES } from "@/lib/currency";
-import { colors, spacing } from "@/theme/colors";
+import { spacing } from "@/theme/colors";
+import { useColors } from "@/theme/ThemeProvider";
 
 type Period = "this-month" | "last-month" | "ytd" | "all";
 
@@ -70,6 +71,8 @@ const DEFAULT_PREFS: SankeyBuildPrefs = {
 };
 
 export function CashflowScreen() {
+  const colors = useColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { t } = useTranslation();
   const { state, addCashflow, updateCashflow, removeCashflow } = useStore();
   const { mask, toDisplay, currency, fmt } = useMoney();
@@ -1248,7 +1251,8 @@ export function CashflowScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(colors: ReturnType<typeof useColors>) {
+  return StyleSheet.create({
   buttonStack: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -1265,6 +1269,8 @@ const styles = StyleSheet.create({
   pill: {
     ...chipContainerStyle,
     borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
   },
   pillActive: { backgroundColor: colors.accentSoft, borderColor: colors.accent },
   pillText: { ...chipLabelStyle, color: colors.muted },
@@ -1299,15 +1305,17 @@ const styles = StyleSheet.create({
   kindBtnActiveExpense: { borderColor: colors.expense, backgroundColor: "#ef444422" },
   kindBtnActiveIncome: { borderColor: colors.income, backgroundColor: "#22c55e22" },
   kindBtnActiveTransfer: { borderColor: colors.accent, backgroundColor: "#3d9a8b22" },
-  kindText: { ...chipLabelStyle },
+  kindText: { ...chipLabelStyle, color: colors.text },
   catRow: { marginBottom: 8 },
   catChip: {
     ...chipContainerStyle,
     paddingHorizontal: 10,
     marginRight: 6,
     borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
   },
-  catChipText: { ...chipLabelStyle },
+  catChipText: { ...chipLabelStyle, color: colors.text },
   input: {
     borderWidth: 1,
     borderColor: colors.border,
@@ -1334,3 +1342,4 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
 });
+}

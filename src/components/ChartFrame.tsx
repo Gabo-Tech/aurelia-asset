@@ -3,7 +3,8 @@ import { View, Text, Pressable, StyleSheet, ActivityIndicator } from "react-nati
 import ViewShot from "react-native-view-shot";
 import ReactNativeBlobUtil from "react-native-blob-util";
 import { saveExportFile } from "@/lib/export";
-import { colors, spacing, radii } from "@/theme/colors";
+import { spacing, radii } from "@/theme/colors";
+import { useColors } from "@/theme/ThemeProvider";
 import { type as typography } from "@/theme/typography";
 
 type Props = {
@@ -13,6 +14,7 @@ type Props = {
 };
 
 export function ChartFrame({ children, filename = "chart", title }: Props) {
+  const colors = useColors();
   const ref = useRef<ViewShot>(null);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
@@ -43,18 +45,29 @@ export function ChartFrame({ children, filename = "chart", title }: Props) {
   return (
     <View style={styles.wrap}>
       <View style={styles.toolbar}>
-        {title ? <Text style={styles.title}>{title}</Text> : <View />}
+        {title ? (
+          <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
+        ) : (
+          <View />
+        )}
         <Pressable onPress={capture} disabled={busy} hitSlop={8}>
           {busy ? (
             <ActivityIndicator color={colors.accent} size="small" />
           ) : (
-            <Text style={styles.action}>Export</Text>
+            <Text style={[styles.action, { color: colors.accent }]}>Export</Text>
           )}
         </Pressable>
       </View>
-      {msg ? <Text style={styles.msg}>{msg}</Text> : null}
+      {msg ? <Text style={[styles.msg, { color: colors.muted }]}>{msg}</Text> : null}
       <ViewShot ref={ref} options={{ format: "png", quality: 1, result: "tmpfile" }}>
-        <View style={styles.chart}>{children}</View>
+        <View
+          style={[
+            styles.chart,
+            { backgroundColor: colors.surface, borderColor: colors.border },
+          ]}
+        >
+          {children}
+        </View>
       </ViewShot>
     </View>
   );
@@ -69,14 +82,12 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
     paddingHorizontal: 2,
   },
-  title: { ...typography.headline, fontSize: 15, color: colors.text },
-  action: { ...typography.caption, color: colors.accent, fontWeight: "600" },
-  msg: { ...typography.caption, color: colors.muted, marginBottom: 6 },
+  title: { ...typography.headline, fontSize: 15 },
+  action: { ...typography.caption, fontWeight: "600" },
+  msg: { ...typography.caption, marginBottom: 6 },
   chart: {
-    backgroundColor: colors.surface,
     borderRadius: radii.lg,
     padding: spacing.md,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
   },
 });

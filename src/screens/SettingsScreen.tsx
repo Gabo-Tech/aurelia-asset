@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useMemo } from "react";
 import {
   ScrollView,
   Text,
@@ -53,8 +53,16 @@ import { bustCache } from "@/lib/finance/cache";
 import { clearPriceHistoryCache } from "@/lib/finance";
 import { CURRENCIES } from "@/lib/currency";
 import { SUPPORTED_LANGUAGES } from "@/i18n";
-import { colors, spacing } from "@/theme/colors";
+import { spacing } from "@/theme/colors";
+import { useColors } from "@/theme/ThemeProvider";
 import { PALETTE_CHIPS } from "@/theme/palettes";
+
+const DEFAULT_CUSTOM = {
+  primary: "#c5a880",
+  accent: "#8fa98a",
+  background: "#0a0a0b",
+  card: "#141416",
+} as const;
 
 const ALLOWED_CORS_PROXIES = [
   "https://corsproxy.io/?",
@@ -64,6 +72,8 @@ const ALLOWED_CORS_PROXIES = [
 const isWeb = Platform.OS === "web";
 
 export function SettingsScreen() {
+  const colors = useColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { t, i18n } = useTranslation();
   const { state, updateSettings, importState, reset } = useStore();
   const { privacy, toggle } = usePrivacy();
@@ -406,7 +416,78 @@ export function SettingsScreen() {
                 />
               );
             })}
+            <Pressable
+              onPress={() => {
+                const custom = state.settings.appearance?.custom ?? { ...DEFAULT_CUSTOM };
+                updateSettings({
+                  appearance: {
+                    ...state.settings.appearance,
+                    paletteId: "custom",
+                    custom,
+                  },
+                });
+              }}
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: 12,
+                backgroundColor:
+                  (state.settings.appearance?.custom ?? DEFAULT_CUSTOM).primary,
+                borderWidth: state.settings.appearance?.paletteId === "custom" ? 2 : 1,
+                borderColor:
+                  state.settings.appearance?.paletteId === "custom"
+                    ? colors.accent
+                    : colors.border,
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+              accessibilityLabel="Custom"
+            >
+              <Text style={{ color: colors.onAccent, fontSize: 10, fontWeight: "700" }}>
+                Cust
+              </Text>
+            </Pressable>
           </View>
+          {state.settings.appearance?.paletteId === "custom" ? (
+            <View style={{ marginTop: 12, gap: 8 }}>
+              <Text style={styles.meta}>
+                Custom colors — borders and text adapt automatically.
+              </Text>
+              {(
+                [
+                  ["primary", "Primary"],
+                  ["accent", "Accent"],
+                  ["background", "Background"],
+                  ["card", "Cards"],
+                ] as const
+              ).map(([key, label]) => {
+                const custom = state.settings.appearance?.custom ?? DEFAULT_CUSTOM;
+                const value = custom[key] ?? DEFAULT_CUSTOM[key];
+                return (
+                  <View key={key}>
+                    <Text style={[styles.meta, { marginBottom: 4 }]}>{label}</Text>
+                    <TextInput
+                      style={styles.input}
+                      value={value}
+                      onChangeText={(hex) =>
+                        updateSettings({
+                          appearance: {
+                            ...state.settings.appearance,
+                            paletteId: "custom",
+                            custom: { ...custom, [key]: hex },
+                          },
+                        })
+                      }
+                      placeholder={DEFAULT_CUSTOM[key]}
+                      placeholderTextColor={colors.muted}
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                    />
+                  </View>
+                );
+              })}
+            </View>
+          ) : null}
         </Card>
 
         <Card>
@@ -744,7 +825,8 @@ export function SettingsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(colors: ReturnType<typeof useColors>) {
+  return StyleSheet.create({
   section: { color: colors.text, fontWeight: "700", marginBottom: spacing.sm },
   row: {
     flexDirection: "row",
@@ -781,3 +863,4 @@ const styles = StyleSheet.create({
   },
   paste: { minHeight: 140, textAlignVertical: "top", fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace", fontSize: 11 },
 });
+}

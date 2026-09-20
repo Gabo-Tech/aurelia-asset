@@ -13,7 +13,8 @@ import { useTranslation } from "react-i18next";
 import { useAppStore, flushPersist } from "@/lib/store";
 import { CURRENCIES } from "@/lib/currency";
 import { PrimaryButton, SecondaryButton, Field, Chip } from "@/components/ui";
-import { colors, spacing, radii } from "@/theme/colors";
+import { spacing, radii } from "@/theme/colors";
+import { useColors } from "@/theme/ThemeProvider";
 import { type as typography } from "@/theme/typography";
 
 type Step = "welcome" | "profile" | "start" | "done";
@@ -27,6 +28,7 @@ export function OnboardingChecklist({
   onGoHoldings: () => void;
 }) {
   const { t } = useTranslation();
+  const colors = useColors();
   const insets = useSafeAreaInsets();
   const onboardingSeen = useAppStore((s) => s.state.settings.onboardingSeen);
   const updateSettings = useAppStore((s) => s.updateSettings);
@@ -89,19 +91,25 @@ export function OnboardingChecklist({
         <View
           style={[
             styles.card,
-            { paddingBottom: Math.max(insets.bottom, spacing.lg) },
+            {
+              paddingBottom: Math.max(insets.bottom, spacing.lg),
+              backgroundColor: colors.surface,
+              borderColor: colors.border,
+            },
           ]}
         >
           <ScrollView bounces={false} keyboardShouldPersistTaps="handled">
             {step === "welcome" ? (
               <>
-                <Text style={styles.brand}>Aurelia Asset</Text>
-                <Text style={styles.title}>
+                <Text style={[styles.brand, { color: colors.accent }]}>Aurelia Asset</Text>
+                <Text style={[styles.title, { color: colors.text }]}>
                   {t("tour.steps.welcome.title", {
                     defaultValue: "Welcome to Aurelia Asset",
                   })}
                 </Text>
-                <Text style={styles.body}>{t("onboarding.welcomeBody")}</Text>
+                <Text style={[styles.body, { color: colors.muted }]}>
+                  {t("onboarding.welcomeBody")}
+                </Text>
                 <PrimaryButton label={t("common.next")} onPress={() => setStep("profile")} />
                 <View style={{ height: spacing.sm }} />
                 <SecondaryButton label={t("onboarding.skip")} onPress={skip} />
@@ -110,11 +118,22 @@ export function OnboardingChecklist({
 
             {step === "profile" ? (
               <>
-                <Text style={styles.title}>{t("onboarding.profileTitle")}</Text>
-                <Text style={styles.body}>{t("onboarding.profileBody")}</Text>
+                <Text style={[styles.title, { color: colors.text }]}>
+                  {t("onboarding.profileTitle")}
+                </Text>
+                <Text style={[styles.body, { color: colors.muted }]}>
+                  {t("onboarding.profileBody")}
+                </Text>
                 <Field label={t("settings.displayName")}>
                   <TextInput
-                    style={styles.input}
+                    style={[
+                      styles.input,
+                      {
+                        borderColor: colors.border,
+                        color: colors.text,
+                        backgroundColor: colors.surfaceAlt,
+                      },
+                    ]}
                     placeholder="e.g. Alex"
                     placeholderTextColor={colors.muted}
                     value={name}
@@ -144,8 +163,12 @@ export function OnboardingChecklist({
 
             {step === "start" ? (
               <>
-                <Text style={styles.title}>{t("onboarding.startTitle")}</Text>
-                <Text style={styles.body}>{t("onboarding.startBody")}</Text>
+                <Text style={[styles.title, { color: colors.text }]}>
+                  {t("onboarding.startTitle")}
+                </Text>
+                <Text style={[styles.body, { color: colors.muted }]}>
+                  {t("onboarding.startBody")}
+                </Text>
                 <PrimaryButton
                   label={t("onboarding.trackSpending")}
                   onPress={() => {
@@ -176,15 +199,21 @@ export function OnboardingChecklist({
 
             {step === "done" ? (
               <>
-                <Text style={styles.title}>{t("onboarding.doneTitle")}</Text>
-                <Text style={styles.body}>{t("onboarding.doneBody")}</Text>
+                <Text style={[styles.title, { color: colors.text }]}>
+                  {t("onboarding.doneTitle")}
+                </Text>
+                <Text style={[styles.body, { color: colors.muted }]}>
+                  {t("onboarding.doneBody")}
+                </Text>
                 <PrimaryButton label={t("onboarding.doneCta")} onPress={finish} />
               </>
             ) : null}
           </ScrollView>
           {step !== "welcome" && step !== "done" ? (
             <Pressable onPress={skip} style={styles.skipLink} hitSlop={8}>
-              <Text style={styles.skipText}>{t("onboarding.skip")}</Text>
+              <Text style={[styles.skipText, { color: colors.muted }]}>
+                {t("onboarding.skip")}
+              </Text>
             </Pressable>
           ) : null}
         </View>
@@ -201,37 +230,29 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
   },
   card: {
-    backgroundColor: colors.surface,
     borderRadius: radii.xl,
     padding: spacing.lg,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
     maxHeight: "88%",
   },
   brand: {
     ...typography.display,
-    color: colors.accent,
     marginBottom: spacing.sm,
   },
   title: {
     ...typography.title,
-    color: colors.text,
     marginBottom: spacing.sm,
   },
   body: {
     ...typography.body,
-    color: colors.muted,
     lineHeight: 22,
     marginBottom: spacing.lg,
   },
   input: {
     borderWidth: 1,
-    borderColor: colors.border,
     borderRadius: radii.sm,
     padding: 12,
-    color: colors.text,
-    backgroundColor: colors.surfaceAlt,
   },
   skipLink: { marginTop: spacing.md, alignItems: "center" },
-  skipText: { ...typography.caption, color: colors.muted },
+  skipText: { ...typography.caption },
 });

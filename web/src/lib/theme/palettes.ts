@@ -368,13 +368,30 @@ function isDarkHex(hex: string) {
   return rgb ? luminance(...rgb) < 0.35 : true;
 }
 
+/** When stored custom surfaces disagree with resolved mode, derive matching surfaces. */
+function adaptCustomSurfaces(
+  custom: CustomPalette,
+  mode: "light" | "dark",
+): { background: string; card: string } {
+  const base = mode === "dark" ? GOLD_DARK : GOLD_LIGHT;
+  let bg = custom.background || base.background!;
+  let card = custom.card || base.card!;
+  const wantsDark = mode === "dark";
+  if (isDarkHex(bg) !== wantsDark) {
+    bg = wantsDark ? "#0a0a0b" : "#faf9f7";
+  }
+  if (isDarkHex(card) !== wantsDark) {
+    card = wantsDark ? mix(bg, "#ffffff", 0.06) : "#ffffff";
+  }
+  return { background: bg, card };
+}
+
 export function deriveCustomTokens(custom: CustomPalette, mode: "light" | "dark"): CssTokens {
   const base = mode === "dark" ? GOLD_DARK : GOLD_LIGHT;
-  const bg = custom.background || base.background;
-  const card = custom.card || base.card;
-  const primary = custom.primary || base.primary;
-  const accent = custom.accent || base.accent;
-  const darkBg = isDarkHex(bg);
+  const { background: bg, card } = adaptCustomSurfaces(custom, mode);
+  const primary = custom.primary || base.primary!;
+  const accent = custom.accent || base.accent!;
+  const darkBg = mode === "dark";
   const fg = darkBg ? "#e4e4e7" : "#1a1a1a";
   const mutedFg = darkBg ? "#a1a1aa" : "#71717a";
   const border = mix(bg, fg, darkBg ? 0.12 : 0.1);

@@ -3,7 +3,8 @@ import { View, Text, StyleSheet, Pressable } from "react-native";
 import Svg, { G, Path, Circle } from "react-native-svg";
 import { ChartFrame } from "@/components/ChartFrame";
 import { SegmentedControl } from "@/components/ui";
-import { colors, radii, spacing } from "@/theme/colors";
+import { radii, spacing } from "@/theme/colors";
+import { useColors } from "@/theme/ThemeProvider";
 import { type as typography } from "@/theme/typography";
 
 export type BreakdownSlice = {
@@ -37,6 +38,7 @@ function arcPath(cx: number, cy: number, r: number, start: number, end: number) 
 }
 
 export function CategoryBreakdown({ title, filename, slices, format, emptyLabel }: Props) {
+  const colors = useColors();
   const [mode, setMode] = useState<ViewMode>("bars");
   const [hidden, setHidden] = useState<Record<string, boolean>>({});
 
@@ -58,7 +60,9 @@ export function CategoryBreakdown({ title, filename, slices, format, emptyLabel 
   if (!ranked.length) {
     return (
       <View style={styles.emptyBox}>
-        <Text style={styles.empty}>{emptyLabel ?? "No data in this period."}</Text>
+        <Text style={[styles.empty, { color: colors.muted }]}>
+          {emptyLabel ?? "No data in this period."}
+        </Text>
       </View>
     );
   }
@@ -109,7 +113,7 @@ export function CategoryBreakdown({ title, filename, slices, format, emptyLabel 
               <Circle cx={cx} cy={cy} r={36} fill={colors.surface} />
             </G>
           </Svg>
-          <Text style={styles.pieTotal}>{format(total)}</Text>
+          <Text style={[styles.pieTotal, { color: colors.muted }]}>{format(total)}</Text>
         </View>
       ) : null}
       <View style={styles.stack}>
@@ -126,14 +130,30 @@ export function CategoryBreakdown({ title, filename, slices, format, emptyLabel 
               />
               <View style={styles.labelCol}>
                 <Text
-                  style={[styles.label, dim && styles.labelDim]}
+                  style={[
+                    styles.label,
+                    { color: colors.text },
+                    dim && {
+                      color: colors.muted,
+                      textDecorationLine: "line-through",
+                      opacity: 0.55,
+                    },
+                  ]}
                   numberOfLines={1}
                 >
                   {s.label}
                 </Text>
                 {s.detail ? (
                   <Text
-                    style={[styles.detail, dim && styles.labelDim]}
+                    style={[
+                      styles.detail,
+                      { color: colors.muted },
+                      dim && {
+                        color: colors.muted,
+                        textDecorationLine: "line-through",
+                        opacity: 0.55,
+                      },
+                    ]}
                     numberOfLines={1}
                   >
                     {s.detail}
@@ -142,7 +162,7 @@ export function CategoryBreakdown({ title, filename, slices, format, emptyLabel 
               </View>
               {mode === "bars" ? (
                 <View style={[styles.trackWrap, dim && { opacity: 0.25 }]}>
-                  <View style={styles.track}>
+                  <View style={[styles.track, { backgroundColor: colors.surfaceAlt }]}>
                     <View
                       style={[
                         styles.fill,
@@ -154,12 +174,24 @@ export function CategoryBreakdown({ title, filename, slices, format, emptyLabel 
               ) : (
                 <View style={{ flex: 1 }} />
               )}
-              <Text style={[styles.value, dim && styles.labelDim]}>{format(s.value)}</Text>
+              <Text
+                style={[
+                  styles.value,
+                  { color: colors.muted },
+                  dim && {
+                    color: colors.muted,
+                    textDecorationLine: "line-through",
+                    opacity: 0.55,
+                  },
+                ]}
+              >
+                {format(s.value)}
+              </Text>
             </Pressable>
           );
         })}
       </View>
-      <Text style={styles.total}>
+      <Text style={[styles.total, { color: colors.muted }]}>
         Total {format(total)}
         {Object.values(hidden).some(Boolean) ? " · tap to toggle" : ""}
       </Text>
@@ -169,11 +201,10 @@ export function CategoryBreakdown({ title, filename, slices, format, emptyLabel 
 
 const styles = StyleSheet.create({
   emptyBox: { paddingVertical: spacing.sm },
-  empty: { ...typography.caption, color: colors.muted },
+  empty: { ...typography.caption },
   pieWrap: { alignItems: "center", justifyContent: "center", marginBottom: spacing.sm },
   pieTotal: {
     ...typography.caption,
-    color: colors.muted,
     position: "absolute",
     fontWeight: "700",
   },
@@ -183,33 +214,28 @@ const styles = StyleSheet.create({
   labelCol: { flex: 1, minWidth: 0, flexShrink: 1 },
   label: {
     ...typography.caption,
-    color: colors.text,
     fontWeight: "600",
   },
   detail: {
     ...typography.caption,
-    color: colors.muted,
     fontSize: 11,
     marginTop: 1,
     fontVariant: ["tabular-nums"],
   },
-  labelDim: { color: colors.muted, textDecorationLine: "line-through", opacity: 0.55 },
   trackWrap: { flex: 1.2, justifyContent: "center", minHeight: 18, paddingTop: 4, minWidth: 48 },
   track: {
     height: 6,
-    backgroundColor: colors.surfaceAlt,
     borderRadius: radii.sm,
     overflow: "hidden",
   },
   fill: { height: "100%", borderRadius: radii.sm },
   value: {
     ...typography.caption,
-    color: colors.muted,
     flexShrink: 0,
     maxWidth: "34%",
     minWidth: 56,
     textAlign: "right",
     marginTop: 2,
   },
-  total: { ...typography.caption, color: colors.muted, marginTop: spacing.sm },
+  total: { ...typography.caption, marginTop: spacing.sm },
 });

@@ -4,12 +4,14 @@ import { useTranslation } from "react-i18next";
 import { Card, PrimaryButton, SecondaryButton, SectionHeader, Metric, chipLabelStyle, chipContainerStyle } from "@/components/ui";
 import { useStore, useMoney } from "@/lib/store";
 import type { HoldingTransaction } from "@/lib/types";
-import { colors, spacing } from "@/theme/colors";
+import { spacing } from "@/theme/colors";
+import { useColors } from "@/theme/ThemeProvider";
 
 type KindFilter = "all" | "buy" | "sell";
 
 export function TransactionsPanel() {
   const { t } = useTranslation();
+  const colors = useColors();
   const { state, addTransaction, updateTransaction, removeTransaction } = useStore();
   const { mask, currency } = useMoney();
   const [open, setOpen] = useState(false);
@@ -109,6 +111,22 @@ export function TransactionsPanel() {
     );
   }
 
+  const chipBase = (on: boolean) => [
+    styles.chip,
+    {
+      backgroundColor: on ? colors.accentSoft : colors.surfaceAlt,
+      borderColor: on ? colors.accent : colors.border,
+    },
+  ];
+  const inputStyle = [
+    styles.input,
+    {
+      borderColor: colors.border,
+      color: colors.text,
+      backgroundColor: colors.surfaceAlt,
+    },
+  ];
+
   return (
     <Card>
       <SectionHeader
@@ -127,31 +145,33 @@ export function TransactionsPanel() {
           <Pressable
             key={k}
             onPress={() => setKindFilter(k)}
-            style={[styles.chip, kindFilter === k && styles.chipOn]}
+            style={chipBase(kindFilter === k)}
           >
-            <Text style={styles.chipText}>{k}</Text>
+            <Text style={[styles.chipText, { color: colors.text }]}>{k}</Text>
           </Pressable>
         ))}
       </View>
       <View style={styles.row}>
         <Pressable
           onPress={() => setHoldingFilter("all")}
-          style={[styles.chip, holdingFilter === "all" && styles.chipOn]}
+          style={chipBase(holdingFilter === "all")}
         >
-          <Text style={styles.chipText}>All holdings</Text>
+          <Text style={[styles.chipText, { color: colors.text }]}>All holdings</Text>
         </Pressable>
         {state.holdings.map((h) => (
           <Pressable
             key={h.id}
             onPress={() => setHoldingFilter(h.id)}
-            style={[styles.chip, holdingFilter === h.id && styles.chipOn]}
+            style={chipBase(holdingFilter === h.id)}
           >
-            <Text style={styles.chipText}>{h.symbol}</Text>
+            <Text style={[styles.chipText, { color: colors.text }]}>{h.symbol}</Text>
           </Pressable>
         ))}
       </View>
 
-      <Text style={styles.sub}>{editing ? "Edit transaction" : "Add transaction"}</Text>
+      <Text style={[styles.sub, { color: colors.text }]}>
+        {editing ? "Edit transaction" : "Add transaction"}
+      </Text>
       <View style={styles.row}>
         {state.holdings.map((h) => (
           <Pressable
@@ -160,9 +180,9 @@ export function TransactionsPanel() {
               setFormHolding(h.id);
               if (!formPrice) setFormPrice(String(h.currentPrice || ""));
             }}
-            style={[styles.chip, formHolding === h.id && styles.chipOn]}
+            style={chipBase(formHolding === h.id)}
           >
-            <Text style={styles.chipText}>{h.symbol}</Text>
+            <Text style={[styles.chipText, { color: colors.text }]}>{h.symbol}</Text>
           </Pressable>
         ))}
       </View>
@@ -171,14 +191,14 @@ export function TransactionsPanel() {
           <Pressable
             key={k}
             onPress={() => setFormKind(k)}
-            style={[styles.chip, formKind === k && styles.chipOn]}
+            style={chipBase(formKind === k)}
           >
-            <Text style={styles.chipText}>{k}</Text>
+            <Text style={[styles.chipText, { color: colors.text }]}>{k}</Text>
           </Pressable>
         ))}
       </View>
       <TextInput
-        style={styles.input}
+        style={inputStyle}
         value={formQty}
         onChangeText={setFormQty}
         placeholder="Quantity"
@@ -186,7 +206,7 @@ export function TransactionsPanel() {
         keyboardType="decimal-pad"
       />
       <TextInput
-        style={styles.input}
+        style={inputStyle}
         value={formPrice}
         onChangeText={setFormPrice}
         placeholder="Price per unit"
@@ -194,7 +214,7 @@ export function TransactionsPanel() {
         keyboardType="decimal-pad"
       />
       <TextInput
-        style={styles.input}
+        style={inputStyle}
         value={formFees}
         onChangeText={setFormFees}
         placeholder="Fees (optional)"
@@ -209,11 +229,11 @@ export function TransactionsPanel() {
         </>
       ) : null}
 
-      <Text style={[styles.sub, { marginTop: spacing.md }]}>
+      <Text style={[styles.sub, { color: colors.text, marginTop: spacing.md }]}>
         Ledger ({rows.length})
       </Text>
       {rows.length === 0 ? (
-        <Text style={styles.meta}>
+        <Text style={[styles.meta, { color: colors.muted }]}>
           {state.transactions?.length
             ? t("more.tpEmptyFiltered", {
                 defaultValue: "No transactions match this filter.",
@@ -226,12 +246,12 @@ export function TransactionsPanel() {
         rows.map((tx) => {
           const h = state.holdings.find((x) => x.id === tx.holdingId);
           return (
-            <View key={tx.id} style={styles.txRow}>
-              <Text style={styles.txTitle}>
+            <View key={tx.id} style={[styles.txRow, { borderTopColor: colors.border }]}>
+              <Text style={[styles.txTitle, { color: colors.text }]}>
                 {tx.kind.toUpperCase()} {h?.symbol ?? "?"} · {tx.quantity} @{" "}
                 {mask(tx.pricePerUnit, tx.currency)}
               </Text>
-              <Text style={styles.meta}>
+              <Text style={[styles.meta, { color: colors.muted }]}>
                 {tx.date.slice(0, 10)}
                 {tx.fees ? ` · fees ${mask(tx.fees, tx.currency)}` : ""}
               </Text>
@@ -270,26 +290,20 @@ const styles = StyleSheet.create({
     marginRight: 6,
     marginBottom: 6,
     borderWidth: 1,
-    backgroundColor: colors.surfaceAlt,
   },
-  chipOn: { borderColor: colors.accent, backgroundColor: colors.accentSoft },
   chipText: { ...chipLabelStyle, fontSize: 11, lineHeight: 14, textTransform: "capitalize" },
-  sub: { color: colors.text, fontWeight: "600", marginBottom: 6 },
+  sub: { fontWeight: "600", marginBottom: 6 },
   input: {
     borderWidth: 1,
-    borderColor: colors.border,
     borderRadius: 8,
     padding: 12,
-    color: colors.text,
     marginBottom: 8,
-    backgroundColor: colors.surfaceAlt,
   },
-  meta: { color: colors.muted, fontSize: 12 },
+  meta: { fontSize: 12 },
   txRow: {
     borderTopWidth: 1,
-    borderTopColor: colors.border,
     paddingTop: 8,
     marginTop: 8,
   },
-  txTitle: { color: colors.text, fontWeight: "600", fontSize: 13 },
+  txTitle: { fontWeight: "600", fontSize: 13 },
 });

@@ -19,7 +19,8 @@ import {
   type SankeyLink,
 } from "d3-sankey";
 import type { SankeyDatum } from "@/lib/sankey-build";
-import { colors, spacing } from "@/theme/colors";
+import { spacing } from "@/theme/colors";
+import { useColors } from "@/theme/ThemeProvider";
 import { ChartFrame } from "@/components/ChartFrame";
 
 type Props = {
@@ -112,6 +113,7 @@ function SankeySvg({
   height: number;
   fmt: (v: number) => string;
 }) {
+  const colors = useColors();
   const linkPath = sankeyLinkHorizontal();
   return (
     <Svg width={width} height={height}>
@@ -177,6 +179,8 @@ function SankeySvg({
 }
 
 export function SankeyChart({ data, height = 320, format, title }: Props) {
+  const colors = useColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { width: winW, height: winH } = useWindowDimensions();
   const width = Math.max(280, winW - 48);
   const chartH = Math.max(280, Math.min(420, 40 + data.nodes.length * 18));
@@ -257,7 +261,8 @@ export function SankeyChart({ data, height = 320, format, title }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(colors: ReturnType<typeof useColors>) {
+  return StyleSheet.create({
   empty: {
     padding: 16,
     backgroundColor: colors.surface,
@@ -288,3 +293,4 @@ const styles = StyleSheet.create({
   zoomBtnText: { color: colors.accent, fontWeight: "700", fontSize: 14 },
   zoomLabel: { color: colors.muted, fontSize: 12, marginLeft: 4 },
 });
+}

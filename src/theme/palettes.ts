@@ -90,6 +90,20 @@ const PRESETS: Record<Exclude<PaletteId, "custom">, { light: NativeColors; dark:
   },
 };
 
+function hexLuminance(hex: string): number {
+  const h = hex.replace("#", "");
+  if (h.length !== 6) return 0;
+  const rgb = [0, 2, 4].map((i) => {
+    const v = parseInt(h.slice(i, i + 2), 16) / 255;
+    return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * rgb[0]! + 0.7152 * rgb[1]! + 0.0722 * rgb[2]!;
+}
+
+function isDarkHex(hex: string) {
+  return hexLuminance(hex) < 0.35;
+}
+
 export function resolveNativeColors(
   appearance:
     | {
@@ -104,10 +118,14 @@ export function resolveNativeColors(
   if (id === "custom" && appearance?.custom) {
     const c = appearance.custom;
     const dark = resolvedMode === "dark";
+    let bg = c.background || (dark ? "#0a0a0b" : "#faf9f7");
+    let card = c.card || (dark ? "#141416" : "#ffffff");
+    if (isDarkHex(bg) !== dark) bg = dark ? "#0a0a0b" : "#faf9f7";
+    if (isDarkHex(card) !== dark) card = dark ? "#141416" : "#ffffff";
     return pack(
-      c.background,
-      c.card,
-      c.card,
+      bg,
+      card,
+      dark ? "#1a1a1d" : "#f4f1ec",
       dark ? "#222226" : "#e8e6e2",
       dark ? "#e4e4e7" : "#1a1a1a",
       dark ? "#a1a1aa" : "#71717a",

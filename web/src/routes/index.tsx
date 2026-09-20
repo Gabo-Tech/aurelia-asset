@@ -27,6 +27,8 @@ import { AppCard, AppCardContent, AppCardHeader } from "@/components/design";
 import { MouseGlow, ScrollAurora, Reveal } from "@/components/landing-ambient";
 import { cn } from "@/lib/utils";
 import i18n from "@/i18n";
+import { useLanguage } from "@/i18n/use-language";
+import type { LanguageCode } from "@/i18n";
 
 const OG_IMAGE = SITE_URL + ASSETS.ogImage;
 
@@ -44,12 +46,10 @@ export const Route = createFileRoute("/")({
   head: () => {
     const title = i18n.t("landing.meta.title");
     const desc = i18n.t("landing.meta.description");
-    const keywords = i18n.t("landing.meta.keywords", {
-      defaultValue:
-        "portfolio tracker, stock tracker, crypto tracker, ETF tracker, net worth tracker, free portfolio app, private finance tracker, sankey cashflow",
-    });
+    const keywords = i18n.t("landing.meta.keywords");
     const currentLang = (i18n.language?.slice(0, 2) ?? "en") as (typeof LOCALES)[number];
     const ogLocale = OG_LOCALE_MAP[currentLang] ?? "en_US";
+    const faqKeys = ["free", "storage", "assets", "account", "platforms", "license"] as const;
     return {
       meta: [
         { title },
@@ -60,6 +60,9 @@ export const Route = createFileRoute("/")({
         { property: "og:type", content: "website" },
         { property: "og:url", content: SITE_URL + "/" },
         { property: "og:image", content: OG_IMAGE },
+        { property: "og:image:width", content: "1200" },
+        { property: "og:image:height", content: "630" },
+        { property: "og:image:alt", content: title },
         { property: "og:locale", content: ogLocale },
         ...LOCALES.filter((l) => OG_LOCALE_MAP[l] !== ogLocale).map((l) => ({
           property: "og:locale:alternate",
@@ -87,16 +90,13 @@ export const Route = createFileRoute("/")({
             "@type": "SoftwareApplication",
             name: "Aurelia",
             applicationCategory: "FinanceApplication",
-            operatingSystem: "Web, Android, Linux, Windows, macOS, iOS",
+            operatingSystem: "Web, Android, Linux",
             description: desc,
             url: SITE_URL + "/",
             inLanguage: LOCALES as unknown as string[],
             offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
-            aggregateRating: {
-              "@type": "AggregateRating",
-              ratingValue: "4.9",
-              ratingCount: "128",
-            },
+            license: "https://www.gnu.org/licenses/agpl-3.0.html",
+            codeRepository: githubSourceUrl(),
           }),
         },
         {
@@ -104,28 +104,14 @@ export const Route = createFileRoute("/")({
           children: JSON.stringify({
             "@context": "https://schema.org",
             "@type": "FAQPage",
-            mainEntity: [
-              {
-                "@type": "Question",
-                name: i18n.t("landing.faq.items.free.q"),
-                acceptedAnswer: { "@type": "Answer", text: i18n.t("landing.faq.items.free.a") },
+            mainEntity: faqKeys.map((key) => ({
+              "@type": "Question",
+              name: i18n.t(`landing.faq.items.${key}.q`),
+              acceptedAnswer: {
+                "@type": "Answer",
+                text: i18n.t(`landing.faq.items.${key}.a`),
               },
-              {
-                "@type": "Question",
-                name: i18n.t("landing.faq.items.storage.q"),
-                acceptedAnswer: { "@type": "Answer", text: i18n.t("landing.faq.items.storage.a") },
-              },
-              {
-                "@type": "Question",
-                name: i18n.t("landing.faq.items.assets.q"),
-                acceptedAnswer: { "@type": "Answer", text: i18n.t("landing.faq.items.assets.a") },
-              },
-              {
-                "@type": "Question",
-                name: i18n.t("landing.faq.items.account.q"),
-                acceptedAnswer: { "@type": "Answer", text: i18n.t("landing.faq.items.account.a") },
-              },
-            ],
+            })),
           }),
         },
         {
@@ -181,6 +167,7 @@ function LandingPage() {
 
 function SiteHeader() {
   const { t } = useTranslation();
+  const { language, setLanguage, languages } = useLanguage();
   return (
     <header className="sticky top-0 z-40 border-b border-border/50 glass">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-2.5 sm:px-6">
@@ -212,6 +199,22 @@ function SiteHeader() {
           </a>
         </nav>
         <div className="flex items-center gap-1">
+          <label className="sr-only" htmlFor="landing-lang">
+            Language
+          </label>
+          <select
+            id="landing-lang"
+            value={language}
+            onChange={(e) => setLanguage(e.target.value as LanguageCode)}
+            className="h-11 max-w-[7.5rem] rounded-xl border border-border/60 bg-transparent px-2 text-xs text-muted-foreground hover:text-foreground"
+            aria-label="Language"
+          >
+            {languages.map((l) => (
+              <option key={l.code} value={l.code}>
+                {l.label}
+              </option>
+            ))}
+          </select>
           <ThemeToggle className="h-11 w-11" />
           <Button asChild size="sm" className="min-h-11 px-4">
             <Link to="/dashboard">
@@ -475,6 +478,8 @@ function FAQ() {
     { q: t("landing.faq.items.storage.q"), a: t("landing.faq.items.storage.a") },
     { q: t("landing.faq.items.assets.q"), a: t("landing.faq.items.assets.a") },
     { q: t("landing.faq.items.account.q"), a: t("landing.faq.items.account.a") },
+    { q: t("landing.faq.items.platforms.q"), a: t("landing.faq.items.platforms.a") },
+    { q: t("landing.faq.items.license.q"), a: t("landing.faq.items.license.a") },
   ];
   return (
     <section id="faq" className="border-b border-border/50 bg-card/20">

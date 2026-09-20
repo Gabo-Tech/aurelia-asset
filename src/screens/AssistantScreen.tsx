@@ -26,38 +26,44 @@ import {
   type VoiceCapabilities,
 } from "@/lib/ai/voice";
 import type { ChatMessage, EngineMessage } from "@/lib/ai/types";
-import { colors, spacing } from "@/theme/colors";
+import { spacing } from "@/theme/colors";
+import { useColors } from "@/theme/ThemeProvider";
 import Markdown from "react-native-markdown-display";
 
-const mdStyles = StyleSheet.create({
-  body: { color: colors.text, fontSize: 14, lineHeight: 20 },
-  paragraph: { marginTop: 0, marginBottom: 6 },
-  bullet_list: { marginBottom: 6 },
-  ordered_list: { marginBottom: 6 },
-  list_item: { marginBottom: 2 },
-  strong: { color: colors.text, fontWeight: "700" },
-  em: { color: colors.text },
-  code_inline: {
-    backgroundColor: colors.surfaceAlt,
-    color: colors.accent,
-    paddingHorizontal: 4,
-    borderRadius: 4,
-    fontSize: 13,
-  },
-  fence: {
-    backgroundColor: colors.surfaceAlt,
-    color: colors.text,
-    padding: 8,
-    borderRadius: 8,
-    fontSize: 12,
-  },
-  link: { color: colors.accent },
-  heading1: { color: colors.text, fontSize: 18, fontWeight: "700", marginBottom: 6 },
-  heading2: { color: colors.text, fontSize: 16, fontWeight: "700", marginBottom: 4 },
-  heading3: { color: colors.text, fontSize: 15, fontWeight: "700", marginBottom: 4 },
-});
+function createMdStyles(colors: ReturnType<typeof useColors>) {
+  return StyleSheet.create({
+    body: { color: colors.text, fontSize: 14, lineHeight: 20 },
+    paragraph: { marginTop: 0, marginBottom: 6 },
+    bullet_list: { marginBottom: 6 },
+    ordered_list: { marginBottom: 6 },
+    list_item: { marginBottom: 2 },
+    strong: { color: colors.text, fontWeight: "700" },
+    em: { color: colors.text },
+    code_inline: {
+      backgroundColor: colors.surfaceAlt,
+      color: colors.accent,
+      paddingHorizontal: 4,
+      borderRadius: 4,
+      fontSize: 13,
+    },
+    fence: {
+      backgroundColor: colors.surfaceAlt,
+      color: colors.text,
+      padding: 8,
+      borderRadius: 8,
+      fontSize: 12,
+    },
+    link: { color: colors.accent },
+    heading1: { color: colors.text, fontSize: 18, fontWeight: "700", marginBottom: 6 },
+    heading2: { color: colors.text, fontSize: 16, fontWeight: "700", marginBottom: 4 },
+    heading3: { color: colors.text, fontSize: 15, fontWeight: "700", marginBottom: 4 },
+  });
+}
 
 export function AssistantScreen() {
+  const colors = useColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+  const mdStyles = useMemo(() => createMdStyles(colors), [colors]);
   const { t, i18n } = useTranslation();
   const store = useStore();
   const { state, addCashflow, updateSettings } = store;
@@ -504,7 +510,8 @@ export function AssistantScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(colors: ReturnType<typeof useColors>) {
+  return StyleSheet.create({
   flex: { flex: 1 },
   chat: { flex: 1 },
   bubble: {
@@ -532,8 +539,10 @@ const styles = StyleSheet.create({
   chip: {
     ...chipContainerStyle,
     borderRadius: 16,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
   },
-  chipText: { ...chipLabelStyle },
+  chipText: { ...chipLabelStyle, color: colors.text },
   composer: { flexDirection: "row", gap: 8, paddingTop: spacing.sm, alignItems: "center" },
   input: {
     flex: 1,
@@ -580,3 +589,4 @@ const styles = StyleSheet.create({
     lineHeight: 16,
   },
 });
+}

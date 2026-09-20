@@ -1,4 +1,12 @@
-import { useEffect, useState, useCallback } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 
 export type ThemePreference = "light" | "dark" | "system";
 export type ResolvedTheme = "light" | "dark";
@@ -24,25 +32,33 @@ function resolve(preference: ThemePreference): ResolvedTheme {
   return preference === "system" ? getSystemTheme() : preference;
 }
 
-function apply(resolved: ResolvedTheme) {
+function applyMode(resolved: ResolvedTheme) {
   if (typeof document === "undefined") return;
   const root = document.documentElement;
   root.classList.toggle("dark", resolved === "dark");
   root.style.colorScheme = resolved;
-  const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) {
-    meta.setAttribute("content", resolved === "dark" ? "#0A0A0B" : "#FAF9F7");
-  }
 }
 
-export function useTheme() {
+type ThemeContextValue = {
+  theme: ThemePreference;
+  preference: ThemePreference;
+  resolved: ResolvedTheme;
+  setTheme: (t: ThemePreference) => void;
+  toggle: () => void;
+  /** @deprecated use resolved — kept for callers that check theme === "dark" */
+  isDark: boolean;
+};
+
+const ThemeContext = createContext<ThemeContextValue | null>(null);
+
+export function ThemeProvider({ children }: { children: ReactNode }) {
   const [preference, setPreferenceState] = useState<ThemePreference>(() => readStored());
   const [resolved, setResolved] = useState<ResolvedTheme>(() => resolve(readStored()));
 
   useEffect(() => {
     const next = resolve(preference);
     setResolved(next);
-    apply(next);
+    applyMode(next);
     try {
       window.localStorage.setItem(STORAGE_KEY, preference);
     } catch {
@@ -56,7 +72,7 @@ export function useTheme() {
     const onChange = () => {
       const next = getSystemTheme();
       setResolved(next);
-      apply(next);
+      applyMode(next);
     };
     mql.addEventListener("change", onChange);
     return () => mql.removeEventListener("change", onChange);
@@ -64,18 +80,29 @@ export function useTheme() {
 
   const setTheme = useCallback((t: ThemePreference) => setPreferenceState(t), []);
 
-  /** Cycles light → dark → system → light */
   const toggle = useCallback(() => {
     setPreferenceState((t) => (t === "light" ? "dark" : t === "dark" ? "system" : "light"));
   }, []);
 
-  return {
-    theme: preference,
-    preference,
-    resolved,
-    setTheme,
-    toggle,
-    /** @deprecated use resolved — kept for callers that check theme === "dark" */
-    isDark: resolved === "dark",
-  };
+  const value = useMemo<ThemeContextValue>(
+    () => ({
+      theme: preference,
+      preference,
+      resolved,
+      setTheme,
+      toggle,
+      isDark: resolved === "dark",
+    }),
+    [preference, resolved, setTheme, toggle],
+  );
+
+  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
+}
+
+export function useTheme(): ThemeContextValue {
+  const ctx = useContext(ThemeContext);
+  if (!ctx) {
+    throw new Error("useTheme must be used within ThemeProvider");
+  }
+  return ctx;
 }

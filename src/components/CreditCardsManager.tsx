@@ -14,7 +14,8 @@ import { useStore, useMoney } from "@/lib/store";
 import { expandCashflows, cardDebtImpact, valuesByEntry } from "@/lib/cashflow-math";
 import type { CreditCard } from "@/lib/types";
 import { PALETTE } from "@/lib/types";
-import { colors, spacing } from "@/theme/colors";
+import { spacing } from "@/theme/colors";
+import { useColors } from "@/theme/ThemeProvider";
 
 type FormState = {
   name: string;
@@ -25,10 +26,10 @@ type FormState = {
   creditLimit: string;
 };
 
-function emptyForm(currency: string): FormState {
+function emptyForm(currency: string, accentFallback: string): FormState {
   return {
     name: "",
-    color: PALETTE[Math.floor(Math.random() * PALETTE.length)] ?? colors.accent,
+    color: PALETTE[Math.floor(Math.random() * PALETTE.length)] ?? accentFallback,
     currency,
     statementDay: "",
     dueDay: "",
@@ -61,6 +62,8 @@ function toPatch(f: FormState): Omit<CreditCard, "id"> {
 }
 
 export function CreditCardsManager() {
+  const colors = useColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { t } = useTranslation();
   const { state, addCreditCard, updateCreditCard, removeCreditCard, addCashflow } = useStore();
   const { currency, toDisplay, mask } = useMoney();
@@ -82,13 +85,13 @@ export function CreditCardsManager() {
 
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<CreditCard | null>(null);
-  const [form, setForm] = useState<FormState>(() => emptyForm(currency));
+  const [form, setForm] = useState<FormState>(() => emptyForm(currency, colors.accent));
   const [payCard, setPayCard] = useState<CreditCard | null>(null);
   const [payAmount, setPayAmount] = useState("");
 
   function openAdd() {
     setEditing(null);
-    setForm(emptyForm(currency));
+    setForm(emptyForm(currency, colors.accent));
     setFormOpen(true);
   }
 
@@ -361,7 +364,8 @@ export function CreditCardsManager() {
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(colors: ReturnType<typeof useColors>) {
+  return StyleSheet.create({
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -419,3 +423,4 @@ const styles = StyleSheet.create({
   },
   swatchOn: { borderColor: colors.text },
 });
+}

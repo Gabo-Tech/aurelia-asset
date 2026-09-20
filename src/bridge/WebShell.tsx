@@ -16,7 +16,7 @@ import {
 import { WebView, type WebViewMessageEvent } from "react-native-webview";
 import { TAURI_SHIM_JS } from "@/bridge/tauriShim";
 import { dispatchCommand } from "@/bridge/commands";
-import { colors } from "@/theme/colors";
+import { useColors } from "@/theme/ThemeProvider";
 
 // RN 0.86 + react-native-webview typings currently resolve props to `never`.
 const RNWebView = WebView as unknown as React.ComponentType<Record<string, unknown>>;
@@ -44,6 +44,7 @@ async function requestMicPermission() {
 }
 
 export function WebShell() {
+  const colors = useColors();
   const webRef = useRef<{ injectJavaScript: (js: string) => void } | null>(null);
   const [origin, setOrigin] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -120,28 +121,30 @@ export function WebShell() {
 
   if (booting) {
     return (
-      <View style={styles.boot}>
+      <View style={[styles.boot, { backgroundColor: colors.bg }]}>
         <ActivityIndicator size="large" color={colors.accent} />
-        <Text style={styles.bootText}>Starting Aurelia…</Text>
+        <Text style={[styles.bootText, { color: colors.muted }]}>Starting Aurelia…</Text>
       </View>
     );
   }
 
   if (error || !origin) {
     return (
-      <View style={styles.boot}>
-        <Text style={styles.errorTitle}>Could not start the app</Text>
-        <Text style={styles.errorBody}>{error || "Unknown error"}</Text>
+      <View style={[styles.boot, { backgroundColor: colors.bg }]}>
+        <Text style={[styles.errorTitle, { color: colors.text }]}>Could not start the app</Text>
+        <Text style={[styles.errorBody, { color: colors.muted }]}>
+          {error || "Unknown error"}
+        </Text>
       </View>
     );
   }
 
   return (
-    <View style={styles.root}>
+    <View style={[styles.root, { backgroundColor: colors.bg }]}>
       <RNWebView
         ref={webRef}
         source={{ uri: `${origin}/` }}
-        style={styles.webview}
+        style={[styles.webview, { backgroundColor: colors.bg }]}
         originWhitelist={["*"]}
         javaScriptEnabled
         domStorageEnabled
@@ -161,17 +164,16 @@ export function WebShell() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.bg },
-  webview: { flex: 1, backgroundColor: colors.bg },
+  root: { flex: 1 },
+  webview: { flex: 1 },
   boot: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: colors.bg,
     padding: 24,
     gap: 12,
   },
-  bootText: { color: colors.muted, fontSize: 14 },
-  errorTitle: { color: colors.text, fontSize: 16, fontWeight: "600", textAlign: "center" },
-  errorBody: { color: colors.muted, fontSize: 13, textAlign: "center" },
+  bootText: { fontSize: 14 },
+  errorTitle: { fontSize: 16, fontWeight: "600", textAlign: "center" },
+  errorBody: { fontSize: 13, textAlign: "center" },
 });

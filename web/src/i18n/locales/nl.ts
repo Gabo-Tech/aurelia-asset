@@ -216,129 +216,143 @@ const nl: Translation = {
     sourceCode: "Broncode",
   },
   landing: {
-    headerTagline: "Van jou · Privé · Gratis",
+    headerTagline: "Privé · Op je apparaat · Gratis",
     openApp: "Aurelia openen",
     logoAlt: "Aurelia-logo",
-    nav: { features: "Functies", how: "Hoe het werkt", downloads: "Download", faq: "FAQ" },
+    nav: {
+      features: "Functies",
+      how: "Hoe het werkt",
+      downloads: "Download",
+      faq: "FAQ",
+    },
     hero: {
-      badge: "Geen account. Geen tracking. Je gegevens blijven bij jou.",
-      titleStart: "Jouw geld,",
-      titleHighlight: "eindelijk op één rustige plek",
+      badge: "Geen account. Geen cloud-synchronisatie. Geen telemetrie.",
+      titleStart: "Privé portefeuille volgen.",
+      titleHighlight: "Op je apparaat",
       subtitle:
-        "Zie alles wat je bezit, begrijp waar je geld echt heengaat en plan wat komt - in één elegante tracker die nooit vraagt wie je bent.",
-      ctaPrimary: "Open je tracker",
+        "Volg aandelen, ETF's, crypto, cash en vermogen op één plek. Aurelia versleutelt je gegevens op dit apparaat, vraagt nooit wie je bent en synchroniseert nooit met de cloud. Gratis en open source.",
+      ctaPrimary: "Aurelia openen",
       ctaSecondary: "Zie wat je krijgt",
       ctaDownload: "App downloaden",
-      screenshotAlt: "Aurelia dashboard met allocatie en kasstroom",
+      screenshotAlt: "Aurelia-dashboard met allocatiediagram en kasstroomsamenvatting",
     },
     proof: {
-      zeroAccounts: "Je gegevens blijven bij jou",
-      offline: "Werkt op elk apparaat",
+      zeroAccounts: "Gegevens blijven op je apparaat",
+      offline: "Web, Linux en Android vandaag",
       multiCurrency: "Elke valuta die je gebruikt",
-      openSource: "Open source, te controleren",
+      openSource: "AGPL — controleer de broncode",
     },
     features: {
-      heading: "Alles wat je nodig hebt om je geld in de hand te hebben",
+      heading: "Alles wat je nodig hebt om de controle te voelen",
       subheading:
-        "Volg wat je bezit, zie waar het naartoe stroomt en plan wat komt - zonder een spreadsheet in zicht.",
+        "Portefeuille, kasstroom en planning in één privé-app. Geen spreadsheet nodig.",
       items: {
         assets: {
           title: "Al je vermogen, één weergave",
-          body: "Aandelen, ETF's, crypto, metalen, cash en eigen posities naast elkaar, omgerekend naar de valuta waarin je echt denkt.",
+          body: "Aandelen, ETF's, crypto, metalen, cash en eigen posities op één plek, omgerekend naar de valuta waarin je echt denkt.",
         },
         performance: {
           title: "Weet hoe je er echt voor staat",
-          body: "Live koersen, historische grafieken en tijdgewogen rendementen tonen of je portefeuille groeit - niet alleen beweegt.",
+          body: "Live koersen, historische grafieken en tijdgewogen rendementen tonen of je portefeuille groeit — niet alleen beweegt.",
         },
         sankey: {
           title: "Zie waar je geld heenstroomt",
-          body: "Je inkomsten, uitgaven, spaargeld en beleggingen bewegen door een Sankey-diagram dat je naar wens kunt herschikken.",
+          body: "Inkomsten, uitgaven, spaargeld en beleggingen in een Sankey-diagram dat je kunt herschikken en vormgeven.",
         },
         categories: {
           title: "Plan de komende maanden",
-          body: "Budgetten, spaardoelen, aflossingsschema's en een prognose van 24 maanden maken van vandaag de toekomst die je bouwt.",
+          body: "Budgetten, spaardoelen, leenschema's en een prognose van 24 maanden maken van de cijfers van vandaag het plan van morgen.",
         },
         private: {
-          title: "Echt privé, standaard",
-          body: "Alles wordt versleuteld op je apparaat opgeslagen. Geen account, geen cloud, geen analytics op wat je bezit.",
+          title: "Privé standaard",
+          body: "AES-GCM-versleuteling op je apparaat. Geen account, geen cloud-synchronisatie, geen analytics op wat je bezit. Koersen en FX kunnen het netwerk gebruiken — je portefeuille verlaat het apparaat nooit.",
         },
         elegant: {
           title: "Eerst voor je telefoon",
-          body: "Rustige, duimvriendelijke schermen, native apps en zes talen.",
+          body: "Duimvriendelijke schermen op mobiel, een volledige desktop-layout op grotere schermen en zes talen inclusief Valencià.",
         },
       },
     },
     how: {
       heading: "Van nul naar helderheid in 60 seconden",
-      cta: "Probeer het nu - gratis",
+      cta: "Probeer gratis",
       steps: {
         one: {
           title: "Open het",
-          body: "Geen registratie of download nodig. De tracker laadt direct en draait volledig op je apparaat.",
+          body: "Geen registratie. Gebruik de webapp in je browser of installeer de Linux- of Android-build. Alles draait op je apparaat.",
         },
         two: {
           title: "Voeg toe wat je bezit en uitgeeft",
-          body: "Zoek een ticker, boek een salaris, voeg een creditcard of een termijnplan toe - in je eigen categorieën en valuta.",
+          body: "Zoek een ticker, boek een salaris, voeg een kaart of een termijnplan toe in je eigen categorieën en valuta.",
         },
         three: {
-          title: "Zie je hele plaatje tot leven komen",
-          body: "Allocatie, vermogen, kasstroom en prognose werken in realtime bij terwijl koersen en het leven veranderen.",
+          title: "Zie het hele plaatje tot leven komen",
+          body: "Allocatie, vermogen, kasstroom en prognose werken bij terwijl koersen en het leven veranderen.",
         },
       },
     },
     comparison: {
       heading: "Waarom mensen cloudtrackers achter zich laten",
-      subheading: "Een eerlijke blik op wat je hier krijgt en wat grote apps stilletjes wegnemen.",
+      subheading: "Wat je hier krijgt en wat grote apps stilletjes wegnemen.",
       feature: "Wat je krijgt",
-      us: "Deze tracker",
+      us: "Aurelia",
       them: "Typische cloud-app",
       rows: {
         signup: "Je slaat de registratie over",
-        servers: "Je gegevens blijven op je apparaat",
-        free: "Je betaalt nooit",
-        assets: "Je volgt aandelen, ETF's, crypto en metalen samen",
-        sankey: "Je ziet elke euro door een Sankey stromen",
-        offline: "Je blijft offline werken",
+        servers: "Gegevens blijven op je apparaat",
+        free: "Voor altijd gratis",
+        assets: "Aandelen, ETF's, crypto en metalen samen",
+        sankey: "Kasstroom-Sankey-diagram",
+        offline: "Geen cloud-synchronisatie — koersen hebben netwerk nodig",
       },
     },
     faq: {
-      heading: "Jouw vragen, beantwoord",
+      heading: "Veelgestelde vragen",
       items: {
         free: {
           q: "Is het echt gratis?",
-          a: "Ja. Elke functie is voor altijd gratis, zonder registratie, advertenties of premium-laag. De app draait in je browser of als native app op je apparaat.",
+          a: "Ja. Elke functie is gratis, zonder registratie, advertenties of premium-laag. Gebruik de webapp of de native Linux- en Android-builds.",
         },
         storage: {
           q: "Waar staan mijn gegevens?",
-          a: "Alleen op je apparaat, versleuteld met AES-GCM. Niets wordt geüpload, gesynchroniseerd of gedeeld. Je kunt op elk moment een volledige back-up exporteren en op een ander apparaat herstellen.",
+          a: "Alleen op je apparaat, versleuteld met AES-GCM. Niets wordt geüpload of met de cloud gesynchroniseerd. Exporteer op elk moment een volledige back-up en herstel die elders.",
         },
         assets: {
           q: "Wat kan ik volgen?",
-          a: "Aandelen, ETF's, crypto, edelmetalen, cashrekeningen en elke eigen positie - met live koersen van een publieke bron of je eigen Finnhub-sleutel.",
+          a: "Aandelen, ETF's, crypto, edelmetalen, cashrekeningen en eigen posities, met live koersen van publieke bronnen of je eigen Finnhub-sleutel.",
         },
         account: {
           q: "Heb ik een account nodig?",
-          a: "Nooit. Open de app en begin. Geen login, geen e-mail, geen telemetrie - en je neemt je gegevens met één klik mee.",
+          a: "Nooit. Open de app en begin te volgen. Geen login, geen e-mail, geen telemetrie. Neem je gegevens mee in één export.",
+        },
+        platforms: {
+          q: "Welke platforms zijn beschikbaar?",
+          a: "De webapp werkt in elke moderne browser. Native builds zijn er vandaag voor Linux (AppImage, .deb, .rpm) en Android. Windows, macOS en iOS komen binnenkort.",
+        },
+        license: {
+          q: "Is de broncode beschikbaar?",
+          a: "Ja. Aurelia is vrije software onder AGPL-3.0-or-later. Je kunt de code op GitHub lezen, controleren en bijdragen.",
         },
       },
     },
     cta: {
-      heading: "Neem je geld in 60 seconden terug.",
-      subheading: "Geen registratie. Geen kaart. Open de tracker en begin te zien wat je al bezit.",
-      button: "Open je tracker",
-      footnote: "Werkt in elke moderne browser · Native apps voor elk platform",
+      heading: "Neem je geld in 60 seconden terug",
+      subheading: "Geen registratie. Geen kaart. Open Aurelia en zie wat je al bezit.",
+      button: "Aurelia openen",
+      footnote:
+        "Werkt in elke moderne browser · Linux- en Android-apps beschikbaar · Windows, macOS en iOS binnenkort",
     },
     downloads: {
-      heading: "Neem hem overal mee",
+      heading: "Neem hem mee",
       subheading:
-        "Dezelfde privé-tracker, verpakt als native app voor elk apparaat dat je gebruikt.",
-      web: "Of open hem direct in de browser",
+        "Native pakketten van GitHub Releases. Dezelfde privé-app als de web — gegevens blijven op je apparaat.",
+      web: "Of open hem in de browser",
       soon: "Binnenkort",
       comingSoon: "Binnenkort",
       action: "Downloaden",
       recommended: "Voor dit apparaat",
       unsignedNotice:
-        "Alle builds zijn niet ondertekend en worden direct verspreid. Je systeem kan de eerste keer een waarschuwing tonen - dat is normaal.",
+        "Builds zijn niet ondertekend en komen rechtstreeks van GitHub Releases. Je systeem kan bij de eerste start waarschuwen. Dat is normaal.",
       platforms: {
         windows: "Windows",
         mac: "macOS",
@@ -358,13 +372,18 @@ const nl: Translation = {
         ios: "Vereist AltStore of Sideloadly",
       },
     },
-    footer: { brand: "Aurelia", madeBy: "Gemaakt door", sourceCode: "Broncode" },
+
+    footer: {
+      brand: "Aurelia",
+      madeBy: "Gemaakt door",
+      sourceCode: "Broncode",
+    },
     meta: {
-      title: "Privé Aurelia - Aandelen, Crypto & ETFs",
+      title: "Aurelia — Privé portefeuille- & vermogens-tracker (geen cloud)",
       description:
-        "Volg elk aandeel, elke ETF, crypto, metaal en euro die je bezit in één privé-tracker. Zie allocatie, kasstroom, prognose en vermogen - zonder registratie, zonder cloud, voor altijd gratis.",
+        "Volg aandelen, ETF's, crypto en cash met versleutelde opslag op het apparaat. Sankey-kasstroom, budgetten en vermogen. Gratis webapp plus Linux en Android. Geen registratie, geen cloud-synchronisatie.",
       keywords:
-        "portfolio tracker, vermogenstracker, privé financiële app, aandelen tracker, crypto portfolio, ETF tracker, sankey kasstroom, budgetplanner, spaardoelen, offline portefeuille",
+        "aurelia, privé portefeuille tracker, vermogenstracker, lokale financiële app, geen cloud-synchronisatie, aandelen tracker, crypto portefeuille, sankey kasstroom, budgetplanner, AGPL financiële app",
     },
   },
   dashboard: {

@@ -24,9 +24,12 @@ import {
 } from "@/lib/cashflow-math";
 import { formatHoldingQuantity } from "@/lib/format";
 import type { RootTabParamList } from "@/navigation/RootNavigator";
-import { colors, spacing, radii } from "@/theme/colors";
+import { spacing, radii } from "@/theme/colors";
+import { useColors } from "@/theme/ThemeProvider";
 
 export function DashboardScreen() {
+  const colors = useColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { t } = useTranslation();
   const navigation = useNavigation<BottomTabNavigationProp<RootTabParamList>>();
   const { state } = useStore();
@@ -123,7 +126,7 @@ export function DashboardScreen() {
       });
     }
     return slices;
-  }, [state.holdings, stats.liquidity, stats.cardDebt, toDisplay, privacy]);
+  }, [state.holdings, stats.liquidity, stats.cardDebt, toDisplay, privacy, colors]);
 
   return (
     <Screen>
@@ -228,7 +231,8 @@ export function DashboardScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(colors: ReturnType<typeof useColors>) {
+  return StyleSheet.create({
   tileRow: { flexDirection: "row", gap: spacing.sm, marginBottom: spacing.sm },
   tile: {
     flex: 1,
@@ -246,3 +250,4 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
 });
+}

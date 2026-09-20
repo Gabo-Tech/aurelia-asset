@@ -217,131 +217,143 @@ const es: Translation = {
     sourceCode: "Código fuente",
   },
   landing: {
-    headerTagline: "Tuyo · Privado · Gratis",
+    headerTagline: "Privado · En tu dispositivo · Gratis",
     openApp: "Abrir Aurelia",
     logoAlt: "Logo de Aurelia",
-    nav: { features: "Funciones", how: "Cómo funciona", downloads: "Descargar", faq: "Preguntas" },
+    nav: {
+      features: "Funciones",
+      how: "Cómo funciona",
+      downloads: "Descargar",
+      faq: "Preguntas",
+    },
     hero: {
-      badge: "Sin cuenta. Sin rastreo. Tus datos se quedan contigo.",
-      titleStart: "Tu dinero,",
-      titleHighlight: "por fin en un solo lugar tranquilo",
+      badge: "Sin cuenta. Sin sincronización en la nube. Sin telemetría.",
+      titleStart: "Seguimiento privado de cartera.",
+      titleHighlight: "En tu dispositivo",
       subtitle:
-        "Ve todo lo que tienes, entiende a dónde va cada euro y planifica lo que viene - en un gestor elegante que nunca te pide quién eres.",
-      ctaPrimary: "Abrir tu gestor",
+        "Sigue acciones, ETFs, cripto, efectivo y patrimonio neto en un solo lugar. Aurelia cifra tus datos en este dispositivo, nunca te pide quién eres y nunca sincroniza con la nube. Gratis y de código abierto.",
+      ctaPrimary: "Abrir Aurelia",
       ctaSecondary: "Ver qué obtienes",
       ctaDownload: "Descargar la app",
-      screenshotAlt: "Panel del gestor con asignación y flujo de caja",
+      screenshotAlt: "Panel de Aurelia con gráfico de asignación y resumen de flujo de caja",
     },
     proof: {
-      zeroAccounts: "Tus datos se quedan contigo",
-      offline: "Funciona en cualquier dispositivo",
+      zeroAccounts: "Los datos se quedan en tu dispositivo",
+      offline: "Web, Linux y Android hoy",
       multiCurrency: "Todas las divisas que uses",
-      openSource: "Open source auditable",
+      openSource: "AGPL — audita el código",
     },
     features: {
-      heading: "Todo lo que necesitas para sentir el control de tu dinero",
+      heading: "Todo lo que necesitas para sentir el control",
       subheading:
-        "Sigue lo que tienes, descubre a dónde fluye y planifica lo que viene - sin una sola hoja de cálculo.",
+        "Cartera, flujo de caja y planificación en una app privada. Sin hojas de cálculo.",
       items: {
         assets: {
           title: "Todo tu patrimonio, una vista",
-          body: "Acciones, ETFs, cripto, metales, efectivo y activos personalizados, uno junto a otro y en la moneda con la que realmente piensas.",
+          body: "Acciones, ETFs, cripto, metales, efectivo y activos personalizados en un solo lugar, convertidos a la moneda con la que realmente piensas.",
         },
         performance: {
           title: "Sabe cómo te va de verdad",
-          body: "Precios en vivo, gráficos históricos y retornos ponderados por tiempo te dicen si tu cartera crece, no solo si se mueve.",
+          body: "Precios en vivo, gráficos históricos y retornos ponderados por tiempo muestran si tu cartera crece, no solo si se mueve.",
         },
         sankey: {
           title: "Ve por dónde fluye tu dinero",
-          body: "Tus ingresos, gastos, ahorros e inversiones animan un diagrama Sankey que puedes reordenar y personalizar a tu gusto.",
+          body: "Ingresos, gastos, ahorros e inversiones en un diagrama Sankey que puedes reordenar y personalizar.",
         },
         categories: {
           title: "Planifica los próximos meses",
-          body: "Presupuestos, objetivos de ahorro, cuadros de amortización y una previsión a 24 meses convierten tus números de hoy en el futuro que construyes.",
+          body: "Presupuestos, objetivos de ahorro, planes de préstamos y una previsión a 24 meses convierten los números de hoy en el plan de mañana.",
         },
         private: {
-          title: "Realmente privado, por defecto",
-          body: "Todo se cifra y se guarda en tu dispositivo. Sin cuenta, sin nube y sin analítica sobre lo que posees.",
+          title: "Privado por defecto",
+          body: "Cifrado AES-GCM en tu dispositivo. Sin cuenta, sin sincronización en la nube, sin analítica sobre lo que posees. Cotizaciones y FX pueden usar la red — tu cartera nunca sale.",
         },
         elegant: {
           title: "Hecho primero para el móvil",
-          body: "Pantallas tranquilas y cómodas con el pulgar, con apps nativas y seis idiomas.",
+          body: "Pantallas cómodas con el pulgar en el móvil, layout completo en pantallas grandes y seis idiomas, incluido el valenciano.",
         },
       },
     },
     how: {
       heading: "De cero a claridad en 60 segundos",
-      cta: "Pruébalo ya - gratis",
+      cta: "Pruébalo gratis",
       steps: {
         one: {
           title: "Ábrelo",
-          body: "Sin registro y sin descargas. El gestor carga al instante y corre íntegramente en tu dispositivo.",
+          body: "Sin registro. Usa la app web en el navegador o instala la versión para Linux o Android. Todo corre en tu dispositivo.",
         },
         two: {
           title: "Añade lo que tienes y lo que gastas",
-          body: "Busca un ticker, registra una nómina, añade una tarjeta de crédito o un plan a plazos, en tus propias categorías y divisas.",
+          body: "Busca un ticker, registra una nómina, añade una tarjeta o un plan a plazos en tus propias categorías y divisas.",
         },
         three: {
-          title: "Mira cómo cobra vida tu panorama completo",
-          body: "Asignación, patrimonio, flujo de caja y previsión se actualizan en tiempo real mientras los precios y la vida cambian.",
+          title: "Mira cómo cobra vida el panorama completo",
+          body: "Asignación, patrimonio neto, flujo de caja y previsión se actualizan mientras los precios y la vida cambian.",
         },
       },
     },
     comparison: {
       heading: "Por qué la gente deja atrás los gestores en la nube",
-      subheading:
-        "Una mirada honesta a lo que aquí obtienes y que las grandes apps te quitan en silencio.",
+      subheading: "Lo que aquí obtienes y que las apps grandes te quitan en silencio.",
       feature: "Lo que obtienes",
       us: "Aurelia",
       them: "App típica en la nube",
       rows: {
         signup: "Te saltas el registro",
-        servers: "Tus datos se quedan en tu dispositivo",
-        free: "No pagas nunca",
-        assets: "Acciones, ETFs, cripto y metales en un solo sitio",
-        sankey: "Cada euro fluye por un Sankey",
-        offline: "Sigues trabajando sin conexión",
+        servers: "Los datos se quedan en tu dispositivo",
+        free: "Gratis para siempre",
+        assets: "Acciones, ETFs, cripto y metales juntos",
+        sankey: "Diagrama Sankey de flujo de caja",
+        offline: "Sin sincronización en la nube — los precios necesitan red",
       },
     },
     faq: {
-      heading: "Tus preguntas, respondidas",
+      heading: "Preguntas frecuentes",
       items: {
         free: {
           q: "¿Es realmente gratis?",
-          a: "Sí. Todas las funciones son gratis para siempre, sin registro, sin anuncios y sin plan premium. La app corre en tu navegador o como app nativa en tu dispositivo.",
+          a: "Sí. Todas las funciones son gratis, sin registro, sin anuncios y sin plan premium. Usa la app web o las versiones nativas para Linux y Android.",
         },
         storage: {
           q: "¿Dónde viven mis datos?",
-          a: "Solo en tu dispositivo, cifrados con AES-GCM. Nada se sube, sincroniza ni comparte. Exportas una copia completa cuando quieras y la restauras en otro dispositivo.",
+          a: "Solo en tu dispositivo, cifrados con AES-GCM. Nada se sube ni se sincroniza con la nube. Exporta una copia completa cuando quieras y restáurala en otro sitio.",
         },
         assets: {
           q: "¿Qué puedo seguir?",
-          a: "Acciones, ETFs, cripto, metales preciosos, cuentas de efectivo y cualquier activo personalizado, con precios en vivo desde una fuente pública o tu propia clave de Finnhub.",
+          a: "Acciones, ETFs, cripto, metales preciosos, cuentas de efectivo y activos personalizados, con precios en vivo desde fuentes públicas o tu propia clave de Finnhub.",
         },
         account: {
           q: "¿Necesito una cuenta?",
-          a: "Nunca. Abre la app y empieza. Sin login, sin email y sin telemetría, y te llevas tus datos con un clic cuando quieras.",
+          a: "Nunca. Abre la app y empieza a seguir. Sin login, sin email, sin telemetría. Llévate tus datos en una sola exportación.",
+        },
+        platforms: {
+          q: "¿Qué plataformas están disponibles?",
+          a: "La app web funciona en cualquier navegador moderno. Hoy hay builds nativos para Linux (AppImage, .deb, .rpm) y Android. Windows, macOS e iOS llegarán pronto.",
+        },
+        license: {
+          q: "¿Está disponible el código fuente?",
+          a: "Sí. Aurelia es software libre bajo AGPL-3.0-or-later. Puedes leerlo, auditarlo y contribuir en GitHub.",
         },
       },
     },
     cta: {
-      heading: "Recupera tu dinero en 60 segundos.",
-      subheading:
-        "Sin registro. Sin tarjeta. Solo abre el gestor y empieza a ver lo que ya tienes.",
-      button: "Abrir tu gestor",
-      footnote: "Funciona en cualquier navegador moderno · Apps nativas para todas las plataformas",
+      heading: "Recupera tu dinero en 60 segundos",
+      subheading: "Sin registro. Sin tarjeta. Abre Aurelia y ve lo que ya tienes.",
+      button: "Abrir Aurelia",
+      footnote:
+        "Funciona en cualquier navegador moderno · Apps para Linux y Android disponibles · Windows, macOS e iOS próximamente",
     },
     downloads: {
-      heading: "Llévatelo contigo, a todas partes",
+      heading: "Llévatelo contigo",
       subheading:
-        "El mismo gestor privado, empaquetado como app nativa para cada dispositivo que usas.",
-      web: "O ábrelo directamente en el navegador",
+        "Paquetes nativos desde GitHub Releases. La misma app privada que en la web — los datos se quedan en tu dispositivo.",
+      web: "O ábrelo en el navegador",
       soon: "Próximamente",
       comingSoon: "Próximamente",
       action: "Descargar",
       recommended: "Para este dispositivo",
       unsignedNotice:
-        "Todas las compilaciones son sin firmar y se distribuyen directamente. Tu sistema puede mostrar un aviso la primera vez - es normal.",
+        "Las builds no están firmadas y se distribuyen directamente desde GitHub Releases. Tu sistema puede avisar en el primer arranque. Es normal.",
       platforms: {
         windows: "Windows",
         mac: "macOS",
@@ -361,17 +373,18 @@ const es: Translation = {
         ios: "Requiere AltStore o Sideloadly",
       },
     },
+
     footer: {
       brand: "Aurelia",
       madeBy: "Hecho por",
       sourceCode: "Código fuente",
     },
     meta: {
-      title: "Aurelia · Finanzas privadas y cartera",
+      title: "Aurelia — Seguimiento privado de cartera y patrimonio (sin nube)",
       description:
-        "Acciones, ETFs, cripto, metales y efectivo en una app privada. Asignación, flujo de caja, previsión y patrimonio en tu dispositivo. Sin registro, sin nube, gratis.",
+        "Sigue acciones, ETFs, cripto y efectivo con almacenamiento cifrado en el dispositivo. Flujo de caja Sankey, presupuestos y patrimonio neto. App web gratis más Linux y Android. Sin registro, sin sincronización en la nube.",
       keywords:
-        "aurelia, gestor de cartera, patrimonio neto, app privada de finanzas, cripto, sankey, presupuestos, offline",
+        "aurelia, seguimiento privado de cartera, patrimonio neto, app de finanzas local, sin sincronización en la nube, seguimiento de acciones, cartera cripto, sankey de flujo de caja, planificador de presupuestos, finanzas AGPL",
     },
   },
   dashboard: {

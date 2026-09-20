@@ -1,7 +1,8 @@
 import React, { useRef, useState } from "react";
 import { View, Text, Pressable, StyleSheet, ActivityIndicator } from "react-native";
 import { saveExportFile } from "@/lib/export";
-import { colors, radii, spacing } from "@/theme/colors";
+import { radii, spacing } from "@/theme/colors";
+import { useColors } from "@/theme/ThemeProvider";
 import { type as typography } from "@/theme/typography";
 
 type Props = {
@@ -12,6 +13,7 @@ type Props = {
 
 /** Browser chart frame - text-note export fallback. */
 export function ChartFrame({ children, filename = "chart", title }: Props) {
+  const colors = useColors();
   const ref = useRef<View>(null);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
@@ -35,19 +37,30 @@ export function ChartFrame({ children, filename = "chart", title }: Props) {
   return (
     <View style={styles.wrap}>
       <View style={styles.toolbar}>
-        {title ? <Text style={styles.title}>{title}</Text> : <View />}
+        {title ? (
+          <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
+        ) : (
+          <View />
+        )}
         <Pressable onPress={() => void capture()} disabled={busy} hitSlop={8}>
           {busy ? (
             <ActivityIndicator color={colors.accent} size="small" />
           ) : (
-            <Text style={styles.action}>Export</Text>
+            <Text style={[styles.action, { color: colors.accent }]}>Export</Text>
           )}
         </Pressable>
       </View>
-      <View ref={ref} style={styles.chart} collapsable={false}>
+      <View
+        ref={ref}
+        style={[
+          styles.chart,
+          { backgroundColor: colors.surface, borderColor: colors.border },
+        ]}
+        collapsable={false}
+      >
         {children}
       </View>
-      {msg ? <Text style={styles.msg}>{msg}</Text> : null}
+      {msg ? <Text style={[styles.msg, { color: colors.muted }]}>{msg}</Text> : null}
     </View>
   );
 }
@@ -60,15 +73,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: spacing.sm,
   },
-  title: { ...typography.headline, fontSize: 15, color: colors.text },
-  action: { ...typography.caption, color: colors.accent, fontWeight: "600" },
+  title: { ...typography.headline, fontSize: 15 },
+  action: { ...typography.caption, fontWeight: "600" },
   chart: {
-    backgroundColor: colors.surface,
     borderRadius: radii.lg,
     overflow: "hidden",
     padding: spacing.md,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
   },
-  msg: { ...typography.caption, color: colors.muted, marginTop: 4 },
+  msg: { ...typography.caption, marginTop: 4 },
 });

@@ -6,8 +6,7 @@ import "@/i18n";
 import { RootNavigator, TAB_BAR_CONTENT_HEIGHT } from "@/navigation/RootNavigator";
 import { useHydrateStore, useAppStore } from "@/lib/store";
 import { hydrateQuoteCache } from "@/lib/finance/cache";
-import { ThemeProvider, useColors } from "@/theme/ThemeProvider";
-import { colors } from "@/theme/colors";
+import { ThemeProvider, useColors, useResolvedMode } from "@/theme/ThemeProvider";
 
 function ThemedChrome({
   ready,
@@ -19,12 +18,13 @@ function ThemedChrome({
   dismiss: () => void;
 }) {
   const colors = useColors();
+  const mode = useResolvedMode();
   const insets = useSafeAreaInsets();
   const bannerBottom = TAB_BAR_CONTENT_HEIGHT + Math.max(insets.bottom, 8) + 12;
   return (
     <>
       <StatusBar
-        barStyle={colors.bg.startsWith("#f") || colors.bg.startsWith("#e") ? "dark-content" : "light-content"}
+        barStyle={mode === "light" ? "dark-content" : "light-content"}
         backgroundColor={colors.bg}
       />
       {ready ? (
@@ -83,19 +83,17 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.bg },
-  boot: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: colors.bg },
+  root: { flex: 1 },
+  boot: { flex: 1, alignItems: "center", justifyContent: "center" },
   errorBanner: {
     position: "absolute",
     left: 12,
     right: 12,
-    backgroundColor: colors.surface,
-    borderColor: colors.danger,
     borderWidth: 1,
     borderRadius: 12,
     padding: 12,
     gap: 8,
   },
-  errorText: { color: colors.text, fontSize: 13, lineHeight: 18 },
-  errorDismiss: { color: colors.accent, fontWeight: "700", fontSize: 13 },
+  errorText: { fontSize: 13, lineHeight: 18 },
+  errorDismiss: { fontWeight: "700", fontSize: 13 },
 });

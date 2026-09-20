@@ -1,6 +1,6 @@
 # Aurelia
 
-> A private, local-first personal finance and portfolio tracker. Track stocks, ETFs, crypto, precious metals, cash, custom assets, income, expenses, budgets, savings goals, credit-card debt and loans, all encrypted on your own device. No account, no cloud, no telemetry. Free and open source (AGPL-3.0). Web app plus native builds for Windows, macOS, Linux, Android and iOS.
+> A private, local-first personal finance and portfolio tracker. Track stocks, ETFs, crypto, precious metals, cash, custom assets, income, expenses, budgets, savings goals, credit-card debt and loans, all encrypted on your own device. No account, no cloud sync, no telemetry. Free and open source (AGPL-3.0). Web app plus native builds for Linux and Android today; Windows, macOS and iOS coming soon.
 
 ## What makes it different
 

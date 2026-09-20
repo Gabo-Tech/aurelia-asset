@@ -217,130 +217,143 @@ const ca: Translation = {
     sourceCode: "Codi font",
   },
   landing: {
-    headerTagline: "Teu · Privat · Gratuït",
+    headerTagline: "Privat · Al teu dispositiu · Gratuït",
     openApp: "Obrir Aurelia",
     logoAlt: "Logotip d'Aurelia",
-    nav: { features: "Funcions", how: "Com funciona", downloads: "Descarregar", faq: "Preguntes" },
+    nav: {
+      features: "Funcions",
+      how: "Com funciona",
+      downloads: "Descarregar",
+      faq: "Preguntes",
+    },
     hero: {
-      badge: "Sense compte. Sense rastreig. Les teues dades es queden amb tu.",
-      titleStart: "Els teus diners,",
-      titleHighlight: "per fi en un lloc tranquil",
+      badge: "Sense compte. Sense sincronització al núvol. Sense telemetria.",
+      titleStart: "Seguiment privat de cartera.",
+      titleHighlight: "Al teu dispositiu",
       subtitle:
-        "Veges tot el que tens, entén on va cada euro i planifica el que ve - en un gestor elegant que mai no et pregunta qui eres.",
-      ctaPrimary: "Obrir el teu gestor",
+        "Segueix accions, ETFs, cripto, efectiu i patrimoni net en un sol lloc. Aurelia xifra les teues dades en este dispositiu, mai no et pregunta qui eres i mai no sincronitza amb el núvol. Gratuït i de codi obert.",
+      ctaPrimary: "Obrir Aurelia",
       ctaSecondary: "Veure què obtens",
       ctaDownload: "Descarregar l'app",
-      screenshotAlt: "Panell del gestor elegant amb assignació i flux de caixa",
+      screenshotAlt: "Panell d'Aurelia amb gràfic d'assignació i resum de flux de caixa",
     },
     proof: {
-      zeroAccounts: "Les teues dades es queden amb tu",
-      offline: "Funciona en qualsevol dispositiu",
+      zeroAccounts: "Les dades es queden al teu dispositiu",
+      offline: "Web, Linux i Android hui",
       multiCurrency: "Totes les divises que uses",
-      openSource: "Open source auditable",
+      openSource: "AGPL — audita el codi",
     },
     features: {
-      heading: "Tot el que necessites per tindre el control dels teus diners",
+      heading: "Tot el que necessites per sentir el control",
       subheading:
-        "Segueix el que tens, mira on flueix i planifica el que ve - sense cap full de càlcul.",
+        "Cartera, flux de caixa i planificació en una app privada. Sense full de càlcul.",
       items: {
         assets: {
           title: "Tot el teu patrimoni, una vista",
-          body: "Accions, ETFs, cripto, metalls, efectiu i actius personalitzats l'un al costat de l'altre, convertits a la moneda amb què penses de veritat.",
+          body: "Accions, ETFs, cripto, metalls, efectiu i actius personalitzats en un sol lloc, convertits a la moneda amb què penses de veritat.",
         },
         performance: {
           title: "Sàpigues com et va de veritat",
-          body: "Preus en directe, gràfics històrics i rendiments ponderats pel temps et diuen si la teua cartera creix, no només si es mou.",
+          body: "Preus en directe, gràfics històrics i rendiments ponderats pel temps mostren si la teua cartera creix, no només si es mou.",
         },
         sankey: {
           title: "Veges on flueixen els teus diners",
-          body: "Els teus ingressos, despeses, estalvis i inversions animen un diagrama Sankey que pots reordenar i personalitzar com vulgues.",
+          body: "Ingressos, despeses, estalvis i inversions en un diagrama Sankey que pots reordenar i personalitzar.",
         },
         categories: {
           title: "Planifica els mesos vinents",
-          body: "Pressupostos, objectius d'estalvi, quadres d'amortització i una previsió a 24 mesos converteixen els números d'avui en el futur que construeixes.",
+          body: "Pressupostos, objectius d'estalvi, plans de préstec i una previsió a 24 mesos converteixen els números d'avui en el pla de demà.",
         },
         private: {
-          title: "Realment privat, per defecte",
-          body: "Tot es xifra i es guarda al teu dispositiu. Sense compte, sense núvol i sense analítica sobre el que tens.",
+          title: "Privat per defecte",
+          body: "Xifratge AES-GCM al teu dispositiu. Sense compte, sense sincronització al núvol, sense analítica sobre el que tens. Les cotitzacions i el FX poden usar la xarxa — la teua cartera no en ix mai.",
         },
         elegant: {
           title: "Fet primer per al mòbil",
-          body: "Pantalles tranquil·les i còmodes amb el dit, amb apps natives i sis idiomes.",
+          body: "Pantalles còmodes amb el dit al mòbil, layout complet en pantalles grans i sis idiomes, inclòs el valencià.",
         },
       },
     },
     how: {
       heading: "De zero a claredat en 60 segons",
-      cta: "Prova-ho ja - gratis",
+      cta: "Prova-ho gratis",
       steps: {
         one: {
           title: "Obri'l",
-          body: "Sense registre ni descàrrega. El gestor carrega a l'instant i funciona íntegrament al teu dispositiu.",
+          body: "Sense registre. Usa l'app web al navegador o instal·la la versió per a Linux o Android. Tot funciona al teu dispositiu.",
         },
         two: {
           title: "Afig el que tens i el que gastes",
-          body: "Busca un ticker, apunta una nòmina, afig una targeta de crèdit o un pla a terminis - en les teues categories i divises.",
+          body: "Busca un ticker, apunta una nòmina, afig una targeta o un pla a terminis en les teues categories i divises.",
         },
         three: {
           title: "Mira com cobra vida tot el panorama",
-          body: "Assignació, patrimoni, flux de caixa i previsió s'actualitzen en temps real mentre els preus i la vida canvien.",
+          body: "Assignació, patrimoni net, flux de caixa i previsió s'actualitzen mentre els preus i la vida canvien.",
         },
       },
     },
     comparison: {
       heading: "Per què la gent deixa arrere els gestors al núvol",
-      subheading: "Una mirada honesta al que ací obtens i que les grans apps et lleven en silenci.",
+      subheading: "El que ací obtens i que les grans apps et lleven en silenci.",
       feature: "El que obtens",
-      us: "Este gestor",
+      us: "Aurelia",
       them: "App típica al núvol",
       rows: {
         signup: "T'estalvies el registre",
-        servers: "Les teues dades es queden al teu dispositiu",
-        free: "No pagues mai",
+        servers: "Les dades es queden al teu dispositiu",
+        free: "Gratis per sempre",
         assets: "Accions, ETFs, cripto i metalls junts",
-        sankey: "Cada euro flueix per un Sankey",
-        offline: "Continues treballant sense connexió",
+        sankey: "Diagrama Sankey de flux de caixa",
+        offline: "Sense sincronització al núvol — els preus necessiten xarxa",
       },
     },
     faq: {
-      heading: "Les teues preguntes, respostes",
+      heading: "Preguntes freqüents",
       items: {
         free: {
           q: "És realment gratis?",
-          a: "Sí. Totes les funcions són gratis per sempre, sense registre, sense anuncis i sense pla premium. L'app funciona al navegador o com a app nativa al teu dispositiu.",
+          a: "Sí. Totes les funcions són gratis, sense registre, sense anuncis i sense pla premium. Usa l'app web o les versions natives per a Linux i Android.",
         },
         storage: {
           q: "On viuen les meues dades?",
-          a: "Només al teu dispositiu, xifrades amb AES-GCM. Res no es puja, sincronitza ni comparteix. Pots exportar una còpia completa quan vulgues i restaurar-la en un altre dispositiu.",
+          a: "Només al teu dispositiu, xifrades amb AES-GCM. Res no es puja ni es sincronitza amb el núvol. Exporta una còpia completa quan vulgues i restaura-la en un altre lloc.",
         },
         assets: {
           q: "Què puc seguir?",
-          a: "Accions, ETFs, cripto, metalls preciosos, comptes d'efectiu i qualsevol actiu personalitzat, amb preus en directe d'una font pública o la teua pròpia clau de Finnhub.",
+          a: "Accions, ETFs, cripto, metalls preciosos, comptes d'efectiu i actius personalitzats, amb preus en directe de fonts públiques o la teua pròpia clau de Finnhub.",
         },
         account: {
           q: "Cal un compte?",
-          a: "Mai. Obri l'app i comença. Sense login, sense correu, sense telemetria - i t'endús les teues dades amb un clic quan vulgues.",
+          a: "Mai. Obri l'app i comença a seguir. Sense login, sense correu, sense telemetria. Emporta't les teues dades en una sola exportació.",
+        },
+        platforms: {
+          q: "Quines plataformes estan disponibles?",
+          a: "L'app web funciona en qualsevol navegador modern. Hui hi ha builds natives per a Linux (AppImage, .deb, .rpm) i Android. Windows, macOS i iOS arribaran prompte.",
+        },
+        license: {
+          q: "Està disponible el codi font?",
+          a: "Sí. Aurelia és programari lliure sota AGPL-3.0-or-later. Pots llegir-lo, auditar-lo i contribuir a GitHub.",
         },
       },
     },
     cta: {
-      heading: "Recupera els teus diners en 60 segons.",
-      subheading:
-        "Sense registre. Sense targeta. Només obri el gestor i comença a veure el que ja tens.",
-      button: "Obrir el teu gestor",
-      footnote: "Funciona en qualsevol navegador modern · Apps natives per a totes les plataformes",
+      heading: "Recupera els teus diners en 60 segons",
+      subheading: "Sense registre. Sense targeta. Obri Aurelia i veges el que ja tens.",
+      button: "Obrir Aurelia",
+      footnote:
+        "Funciona en qualsevol navegador modern · Apps per a Linux i Android disponibles · Windows, macOS i iOS properament",
     },
     downloads: {
-      heading: "Emporta-te'l amb tu, arreu",
+      heading: "Emporta-te'l amb tu",
       subheading:
-        "El mateix gestor privat, empaquetat com a app nativa per a cada dispositiu que uses.",
-      web: "O obre-la directament al navegador",
+        "Paquets natius des de GitHub Releases. La mateixa app privada que al web — les dades es queden al teu dispositiu.",
+      web: "O obri-la al navegador",
       soon: "Properament",
-      comingSoon: "Pròximament",
+      comingSoon: "Properament",
       action: "Descarregar",
-      recommended: "Per a aquest dispositiu",
+      recommended: "Per a este dispositiu",
       unsignedNotice:
-        "Totes les compilacions són sense signar i es distribueixen directament. El teu sistema pot mostrar un avís la primera vegada - és normal.",
+        "Les builds no estan signades i es distribueixen directament des de GitHub Releases. El teu sistema pot avisar en el primer arranc. És normal.",
       platforms: {
         windows: "Windows",
         mac: "macOS",
@@ -360,13 +373,18 @@ const ca: Translation = {
         ios: "Requereix AltStore o Sideloadly",
       },
     },
-    footer: { brand: "Gestor de cartera elegant", madeBy: "Fet per", sourceCode: "Codi font" },
+
+    footer: {
+      brand: "Aurelia",
+      madeBy: "Fet per",
+      sourceCode: "Codi font",
+    },
     meta: {
-      title: "Gestor de cartera privat - Accions, Cripto i ETFs",
+      title: "Aurelia — Seguiment privat de cartera i patrimoni (sense núvol)",
       description:
-        "Segueix cada acció, ETF, cripto, metall i euro que tens en un gestor privat. Veges assignació, flux de caixa, previsió i patrimoni - sense registre, sense núvol, gratis per sempre.",
+        "Segueix accions, ETFs, cripto i efectiu amb emmagatzematge xifrat al dispositiu. Flux de caixa Sankey, pressupostos i patrimoni net. App web gratuïta més Linux i Android. Sense registre, sense sincronització al núvol.",
       keywords:
-        "gestor de cartera, patrimoni net, app privada de finances, seguiment d'accions, cartera cripto, seguiment ETF, sankey de flux de caixa, pressupostos, objectius d'estalvi, cartera offline",
+        "aurelia, seguiment privat de cartera, patrimoni net, app de finances local, sense sincronització al núvol, seguiment d'accions, cartera cripto, sankey de flux de caixa, planificador de pressupostos, finances AGPL",
     },
   },
   dashboard: {

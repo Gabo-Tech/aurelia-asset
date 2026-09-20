@@ -10,7 +10,23 @@ export function useLanguage() {
     i18n.changeLanguage(code);
     try {
       window.localStorage.setItem(LANG_STORAGE_KEY, code);
-    } catch {}
+    } catch {
+      /* ignore */
+    }
+    if (typeof document !== "undefined") {
+      document.documentElement.lang = code.startsWith("ca") ? "ca" : code.slice(0, 2);
+    }
+    // Keep ?lang= in sync on the landing page so hreflang URLs stay shareable.
+    if (typeof window !== "undefined" && window.location.pathname === "/") {
+      try {
+        const url = new URL(window.location.href);
+        const short = code.startsWith("ca") ? "ca" : code;
+        url.searchParams.set("lang", short);
+        window.history.replaceState({}, "", url.toString());
+      } catch {
+        /* ignore */
+      }
+    }
   }
 
   return { language: current, setLanguage, languages: SUPPORTED_LANGUAGES };

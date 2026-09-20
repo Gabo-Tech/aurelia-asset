@@ -9,10 +9,12 @@ import {
   type Category,
   type CategoryGroup,
 } from "@/lib/types";
-import { colors, spacing } from "@/theme/colors";
+import { spacing } from "@/theme/colors";
+import { useColors } from "@/theme/ThemeProvider";
 
 export function CategoriesManager() {
   const { t } = useTranslation();
+  const colors = useColors();
   const { state, addCategory, updateCategory, removeCategory } = useStore();
   const [open, setOpen] = useState(false);
   const [newName, setNewName] = useState("");
@@ -73,6 +75,15 @@ export function CategoriesManager() {
     );
   }
 
+  const inputStyle = [
+    styles.input,
+    {
+      borderColor: colors.border,
+      color: colors.text,
+      backgroundColor: colors.surfaceAlt,
+    },
+  ];
+
   return (
     <Card>
       <SectionHeader
@@ -83,13 +94,13 @@ export function CategoriesManager() {
           setEditing(null);
         }}
       />
-      <Text style={styles.hint}>
+      <Text style={[styles.hint, { color: colors.muted }]}>
         {t("more.mcDesc", { defaultValue: "Add or rename income and expense categories." })}
       </Text>
 
-      <Text style={styles.sub}>Add new</Text>
+      <Text style={[styles.sub, { color: colors.text }]}>Add new</Text>
       <TextInput
-        style={styles.input}
+        style={inputStyle}
         value={newName}
         onChangeText={setNewName}
         placeholder={t("more.mcNamePlaceholder", { defaultValue: "Category name" })}
@@ -105,9 +116,17 @@ export function CategoriesManager() {
               setNewGroup(g);
               setNewColor(GROUP_COLORS[g]);
             }}
-            style={[styles.chip, newKind === k && styles.chipOn]}
+            style={[
+              styles.chip,
+              {
+                backgroundColor: newKind === k ? colors.accentSoft : colors.surfaceAlt,
+                borderColor: newKind === k ? colors.accent : colors.border,
+              },
+            ]}
           >
-            <Text style={styles.chipText}>{k === "income" ? "Income" : "Expense"}</Text>
+            <Text style={[styles.chipText, { color: colors.text }]}>
+              {k === "income" ? "Income" : "Expense"}
+            </Text>
           </Pressable>
         ))}
       </View>
@@ -116,7 +135,11 @@ export function CategoriesManager() {
           <Pressable
             key={c}
             onPress={() => setNewColor(c)}
-            style={[styles.swatch, { backgroundColor: c }, newColor === c && styles.swatchOn]}
+            style={[
+              styles.swatch,
+              { backgroundColor: c },
+              newColor === c && { borderColor: colors.text },
+            ]}
           />
         ))}
       </ScrollView>
@@ -124,11 +147,13 @@ export function CategoriesManager() {
 
       {(["expense", "income"] as const).map((kind) => (
         <View key={kind} style={{ marginTop: spacing.md }}>
-          <Text style={styles.sub}>{kind === "income" ? "Income" : "Expense"}</Text>
+          <Text style={[styles.sub, { color: colors.text }]}>
+            {kind === "income" ? "Income" : "Expense"}
+          </Text>
           {grouped[kind].map((c) => (
             <View key={c.id} style={styles.catRow}>
               <View style={[styles.dot, { backgroundColor: c.color }]} />
-              <Text style={styles.catName}>{c.name}</Text>
+              <Text style={[styles.catName, { color: colors.text }]}>{c.name}</Text>
               <SecondaryButton label="Edit" onPress={() => openEdit(c)} />
               <View style={{ width: 6 }} />
               <SecondaryButton
@@ -147,10 +172,10 @@ export function CategoriesManager() {
       ))}
 
       {editing ? (
-        <View style={styles.editBox}>
-          <Text style={styles.sub}>Edit</Text>
+        <View style={[styles.editBox, { borderTopColor: colors.border }]}>
+          <Text style={[styles.sub, { color: colors.text }]}>Edit</Text>
           <TextInput
-            style={styles.input}
+            style={inputStyle}
             value={editName}
             onChangeText={setEditName}
             placeholderTextColor={colors.muted}
@@ -160,7 +185,11 @@ export function CategoriesManager() {
               <Pressable
                 key={c}
                 onPress={() => setEditColor(c)}
-                style={[styles.swatch, { backgroundColor: c }, editColor === c && styles.swatchOn]}
+                style={[
+                  styles.swatch,
+                  { backgroundColor: c },
+                  editColor === c && { borderColor: colors.text },
+                ]}
               />
             ))}
           </ScrollView>
@@ -174,25 +203,20 @@ export function CategoriesManager() {
 }
 
 const styles = StyleSheet.create({
-  hint: { color: colors.muted, fontSize: 12, marginBottom: 10 },
-  sub: { color: colors.text, fontWeight: "600", marginBottom: 6, marginTop: 4 },
+  hint: { fontSize: 12, marginBottom: 10 },
+  sub: { fontWeight: "600", marginBottom: 6, marginTop: 4 },
   input: {
     borderWidth: 1,
-    borderColor: colors.border,
     borderRadius: 8,
     padding: 12,
-    color: colors.text,
     marginBottom: 8,
-    backgroundColor: colors.surfaceAlt,
   },
   row: { flexDirection: "row", flexWrap: "wrap", marginBottom: 8 },
   chip: {
     ...chipContainerStyle,
     marginRight: 8,
     borderWidth: 1,
-    backgroundColor: colors.surfaceAlt,
   },
-  chipOn: { borderColor: colors.accent, backgroundColor: colors.accentSoft },
   chipText: { ...chipLabelStyle, textTransform: "capitalize" },
   swatches: { marginBottom: 10 },
   swatch: {
@@ -203,14 +227,12 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: "transparent",
   },
-  swatchOn: { borderColor: colors.text },
   catRow: { flexDirection: "row", alignItems: "center", marginBottom: 8, gap: 6 },
   dot: { width: 10, height: 10, borderRadius: 5 },
-  catName: { color: colors.text, flex: 1, fontSize: 13 },
+  catName: { flex: 1, fontSize: 13 },
   editBox: {
     marginTop: 12,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: colors.border,
   },
 });

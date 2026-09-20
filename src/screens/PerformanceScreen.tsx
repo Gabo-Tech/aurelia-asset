@@ -21,12 +21,14 @@ import {
   type PeriodId,
   type PortfolioHistoryPoint,
 } from "@/lib/finance/portfolio-history";
-import { colors } from "@/theme/colors";
+import { useColors } from "@/theme/ThemeProvider";
 
 const PERIODS: PeriodId[] = ["1D", "7D", "1M", "3M", "6M", "YTD", "1Y", "Max"];
 const TOTAL_KEY = "Total";
 
 export function PerformanceScreen() {
+  const colors = useColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { t } = useTranslation();
   const navigation = useNavigation<BottomTabNavigationProp<RootTabParamList>>();
   const { state, updateHolding } = useStore();
@@ -462,7 +464,8 @@ export function PerformanceScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(colors: ReturnType<typeof useColors>) {
+  return StyleSheet.create({
   symbol: { color: colors.text, fontWeight: "700", marginBottom: 8 },
   empty: { color: colors.muted },
   assetRow: {
@@ -481,9 +484,11 @@ const styles = StyleSheet.create({
   sortChip: {
     ...chipContainerStyle,
     borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
   },
   sortChipOn: { borderColor: colors.accent, backgroundColor: colors.accentSoft },
-  sortText: { ...chipLabelStyle, textTransform: "uppercase" },
+  sortText: { ...chipLabelStyle, color: colors.text, textTransform: "uppercase" },
   filterRow: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -498,12 +503,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     borderRadius: 8,
     borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
   },
   filterChipOff: {
     opacity: 0.55,
     backgroundColor: colors.surfaceAlt,
   },
-  filterText: { ...chipLabelStyle },
+  filterText: { ...chipLabelStyle, color: colors.text },
   filterTextOff: { color: colors.muted },
   filterActions: { flexDirection: "row", alignItems: "center", gap: 12, marginLeft: "auto" },
   filterAction: { color: colors.muted, fontSize: 12 },
@@ -521,3 +528,4 @@ const styles = StyleSheet.create({
   barValue: { color: colors.muted, width: 88, fontSize: 11, textAlign: "right" },
   sparkMeta: { color: colors.muted, fontSize: 11, marginTop: 8, paddingHorizontal: 4 },
 });
+}

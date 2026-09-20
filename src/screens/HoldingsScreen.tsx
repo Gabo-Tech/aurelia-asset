@@ -27,7 +27,8 @@ import { CategoryBreakdown } from "@/components/CategoryBreakdown";
 import { TransactionsPanel } from "@/components/TransactionsPanel";
 import { useStore, useMoney } from "@/lib/store";
 import { fetchCurrentQuote, searchAssets } from "@/lib/finance";
-import { colors, spacing } from "@/theme/colors";
+import { spacing } from "@/theme/colors";
+import { useColors } from "@/theme/ThemeProvider";
 import { PALETTE, type Holding, type HoldingHorizon, type AssetType } from "@/lib/types";
 import { datedFilename, rowsToCsv, saveExportFile, exportMethodDescription } from "@/lib/export";
 import { parseCsvHistory, formatCsvHistory } from "@/lib/price-history-csv";
@@ -40,6 +41,8 @@ type SortKey = "value" | "symbol" | "type";
 type TypeFilter = "all" | AssetType;
 
 export function HoldingsScreen() {
+  const colors = useColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { t } = useTranslation();
   const navigation = useNavigation<BottomTabNavigationProp<RootTabParamList>>();
   const { state, addHolding, updateHolding, removeHolding, addTransaction } = useStore();
@@ -734,7 +737,8 @@ export function HoldingsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(colors: ReturnType<typeof useColors>) {
+  return StyleSheet.create({
   input: {
     borderWidth: 1,
     borderColor: colors.border,
@@ -774,13 +778,14 @@ const styles = StyleSheet.create({
   },
   chip: {
     ...chipContainerStyle,
+    borderColor: colors.border,
     marginRight: 8,
     marginBottom: 8,
     borderWidth: 1,
     backgroundColor: colors.surfaceAlt,
   },
   chipOn: { borderColor: colors.accent, backgroundColor: colors.accentSoft },
-  chipText: { ...chipLabelStyle },
+  chipText: { ...chipLabelStyle, color: colors.text },
   tx: { color: colors.muted, fontSize: 12, marginTop: 4 },
   cardTop: { flexDirection: "row", alignItems: "center", gap: 8 },
   dot: { width: 10, height: 10, borderRadius: 5 },
@@ -794,3 +799,4 @@ const styles = StyleSheet.create({
   },
   swatchOn: { borderColor: colors.text },
 });
+}

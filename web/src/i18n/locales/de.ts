@@ -217,130 +217,143 @@ const de: Translation = {
     sourceCode: "Quellcode",
   },
   landing: {
-    headerTagline: "Deins · Privat · Kostenlos",
-    openApp: "App öffnen",
+    headerTagline: "Privat · Auf deinem Gerät · Kostenlos",
+    openApp: "Aurelia öffnen",
     logoAlt: "Aurelia-Logo",
-    nav: { features: "Funktionen", how: "Wie es funktioniert", downloads: "Download", faq: "FAQ" },
+    nav: {
+      features: "Funktionen",
+      how: "Wie es funktioniert",
+      downloads: "Download",
+      faq: "FAQ",
+    },
     hero: {
-      badge: "Kein Konto. Kein Tracking. Deine Daten bleiben bei dir.",
-      titleStart: "Dein Geld,",
-      titleHighlight: "endlich an einem ruhigen Ort",
+      badge: "Kein Konto. Keine Cloud-Synchronisation. Keine Telemetrie.",
+      titleStart: "Privates Portfolio-Tracking.",
+      titleHighlight: "Auf deinem Gerät",
       subtitle:
-        "Sieh alles, was du besitzt, verstehe, wohin dein Geld wirklich fließt, und plane, was als Nächstes kommt - in einem eleganten Tracker, der nie fragt, wer du bist.",
-      ctaPrimary: "Deinen Tracker öffnen",
+        "Verfolge Aktien, ETFs, Krypto, Bargeld und Vermögen an einem Ort. Aurelia verschlüsselt deine Daten auf diesem Gerät, fragt nie, wer du bist, und synchronisiert nie mit der Cloud. Kostenlos und Open Source.",
+      ctaPrimary: "Aurelia öffnen",
       ctaSecondary: "Sieh, was du bekommst",
       ctaDownload: "App herunterladen",
-      screenshotAlt: "Aurelia-Dashboard mit Allokation und Cashflow",
+      screenshotAlt: "Aurelia-Dashboard mit Allokationsdiagramm und Cashflow-Übersicht",
     },
     proof: {
-      zeroAccounts: "Deine Daten bleiben bei dir",
-      offline: "Läuft auf jedem Gerät",
+      zeroAccounts: "Daten bleiben auf deinem Gerät",
+      offline: "Web, Linux und Android heute",
       multiCurrency: "Jede Währung, die du nutzt",
-      openSource: "Open Source, prüfbar",
+      openSource: "AGPL — Quellcode prüfen",
     },
     features: {
-      heading: "Alles, was du brauchst, um dein Geld im Griff zu haben",
+      heading: "Alles, was du brauchst, um die Kontrolle zu behalten",
       subheading:
-        "Sieh, was du besitzt, wohin es fließt und was als Nächstes kommt - ganz ohne Tabelle.",
+        "Portfolio, Cashflow und Planung in einer privaten App. Keine Tabelle nötig.",
       items: {
         assets: {
           title: "Dein ganzes Vermögen, eine Ansicht",
-          body: "Aktien, ETFs, Krypto, Metalle, Bargeld und eigene Positionen nebeneinander, in der Währung, in der du wirklich denkst.",
+          body: "Aktien, ETFs, Krypto, Metalle, Bargeld und eigene Positionen an einem Ort, umgerechnet in die Währung, in der du wirklich denkst.",
         },
         performance: {
           title: "Wissen, wie du wirklich stehst",
-          body: "Live-Kurse, historische Charts und zeitgewichtete Renditen zeigen, ob dein Portfolio wächst - nicht nur schwankt.",
+          body: "Live-Kurse, historische Charts und zeitgewichtete Renditen zeigen, ob dein Portfolio wächst — nicht nur schwankt.",
         },
         sankey: {
           title: "Sieh, wohin dein Geld fließt",
-          body: "Einnahmen, Ausgaben, Ersparnisse und Investitionen bewegen ein Sankey-Diagramm, das du beliebig umordnen kannst.",
+          body: "Einnahmen, Ausgaben, Ersparnisse und Investitionen in einem Sankey-Diagramm, das du umordnen und anpassen kannst.",
         },
         categories: {
           title: "Plane die nächsten Monate",
-          body: "Budgets, Sparziele, Tilgungspläne und eine 24-Monats-Prognose verwandeln heutige Zahlen in die Zukunft, die du baust.",
+          body: "Budgets, Sparziele, Kreditpläne und eine 24-Monats-Prognose machen aus heutigen Zahlen den Plan für morgen.",
         },
         private: {
-          title: "Wirklich privat, von Haus aus",
-          body: "Alles wird verschlüsselt auf deinem Gerät gespeichert. Kein Konto, keine Cloud, keine Analytics auf dem, was du besitzt.",
+          title: "Privat von Haus aus",
+          body: "AES-GCM-Verschlüsselung auf deinem Gerät. Kein Konto, keine Cloud-Synchronisation, keine Analytics auf dem, was du besitzt. Kurse und FX können das Netz nutzen — dein Portfolio verlässt das Gerät nie.",
         },
         elegant: {
           title: "Zuerst für dein Handy",
-          body: "Ruhige, daumenfreundliche Oberfläche, native Apps und sechs Sprachen.",
+          body: "Daumenfreundliche Screens auf dem Handy, volles Desktop-Layout auf größeren Bildschirmen und sechs Sprachen inklusive Valencià.",
         },
       },
     },
     how: {
       heading: "Von Null zu Klarheit in 60 Sekunden",
-      cta: "Jetzt ausprobieren - kostenlos",
+      cta: "Kostenlos ausprobieren",
       steps: {
         one: {
           title: "Öffne es",
-          body: "Keine Anmeldung, kein Download nötig. Der Tracker lädt sofort und läuft komplett auf deinem Gerät.",
+          body: "Keine Anmeldung. Nutze die Web-App im Browser oder installiere den Linux- oder Android-Build. Alles läuft auf deinem Gerät.",
         },
         two: {
           title: "Trag ein, was du hast und ausgibst",
-          body: "Suche ein Ticker, erfasse dein Gehalt, füge eine Kreditkarte oder einen Ratenplan hinzu - in deinen Kategorien und Währungen.",
+          body: "Suche ein Ticker, erfasse dein Gehalt, füge eine Karte oder einen Ratenplan hinzu — in deinen Kategorien und Währungen.",
         },
         three: {
-          title: "Sieh dein volles Bild lebendig werden",
-          body: "Allokation, Vermögen, Cashflow und Prognose aktualisieren sich in Echtzeit, wenn Kurse und Leben sich ändern.",
+          title: "Sieh das volle Bild lebendig werden",
+          body: "Allokation, Vermögen, Cashflow und Prognose aktualisieren sich, wenn Kurse und Leben sich ändern.",
         },
       },
     },
     comparison: {
       heading: "Warum Menschen Cloud-Tracker verlassen",
-      subheading:
-        "Ein ehrlicher Blick auf das, was du hier bekommst und was große Apps dir still nehmen.",
+      subheading: "Was du hier bekommst und was große Apps dir still nehmen.",
       feature: "Was du bekommst",
-      us: "Dieser Tracker",
+      us: "Aurelia",
       them: "Typische Cloud-App",
       rows: {
         signup: "Du überspringst die Anmeldung",
-        servers: "Deine Daten bleiben auf deinem Gerät",
-        free: "Du zahlst nie",
-        assets: "Du verfolgst Aktien, ETFs, Krypto und Metalle zusammen",
-        sankey: "Du siehst jeden Euro durch ein Sankey fließen",
-        offline: "Du arbeitest offline weiter",
+        servers: "Daten bleiben auf deinem Gerät",
+        free: "Für immer kostenlos",
+        assets: "Aktien, ETFs, Krypto und Metalle zusammen",
+        sankey: "Cashflow-Sankey-Diagramm",
+        offline: "Keine Cloud-Synchronisation — Kurse brauchen Netz",
       },
     },
     faq: {
-      heading: "Deine Fragen, beantwortet",
+      heading: "Häufige Fragen",
       items: {
         free: {
           q: "Ist es wirklich kostenlos?",
-          a: "Ja. Jede Funktion ist für immer kostenlos - ohne Anmeldung, ohne Werbung, ohne Premium. Die ganze App läuft im Browser oder als native App auf deinem Gerät.",
+          a: "Ja. Jede Funktion ist kostenlos — ohne Anmeldung, ohne Werbung, ohne Premium. Nutze die Web-App oder die nativen Linux- und Android-Builds.",
         },
         storage: {
           q: "Wo liegen meine Daten?",
-          a: "Ausschließlich auf deinem Gerät, verschlüsselt mit AES-GCM. Nichts wird hochgeladen, synchronisiert oder geteilt. Du kannst jederzeit ein vollständiges Backup exportieren und woanders wiederherstellen.",
+          a: "Nur auf deinem Gerät, verschlüsselt mit AES-GCM. Nichts wird hochgeladen oder in die Cloud synchronisiert. Exportiere jederzeit ein vollständiges Backup und stelle es woanders wieder her.",
         },
         assets: {
           q: "Was kann ich verfolgen?",
-          a: "Aktien, ETFs, Krypto, Edelmetalle, Bargeldkonten und jede eigene Position - mit Live-Kursen aus öffentlichen Quellen oder deinem eigenen Finnhub-Key.",
+          a: "Aktien, ETFs, Krypto, Edelmetalle, Bargeldkonten und eigene Positionen — mit Live-Kursen aus öffentlichen Quellen oder deinem eigenen Finnhub-Key.",
         },
         account: {
           q: "Brauche ich ein Konto?",
-          a: "Niemals. Öffne die App und leg los. Kein Login, keine E-Mail, keine Telemetrie - und du nimmst deine Daten mit einem Klick mit.",
+          a: "Niemals. Öffne die App und leg los. Kein Login, keine E-Mail, keine Telemetrie. Nimm deine Daten in einem Export mit.",
+        },
+        platforms: {
+          q: "Welche Plattformen sind verfügbar?",
+          a: "Die Web-App läuft in jedem modernen Browser. Native Builds gibt es heute für Linux (AppImage, .deb, .rpm) und Android. Windows, macOS und iOS kommen bald.",
+        },
+        license: {
+          q: "Ist der Quellcode verfügbar?",
+          a: "Ja. Aurelia ist freie Software unter AGPL-3.0-or-later. Du kannst den Code auf GitHub lesen, prüfen und beitragen.",
         },
       },
     },
     cta: {
-      heading: "Hol dir dein Geld in 60 Sekunden zurück.",
-      subheading:
-        "Keine Anmeldung. Keine Karte. Öffne den Tracker und sieh, was du bereits besitzt.",
-      button: "Deinen Tracker öffnen",
-      footnote: "Läuft in jedem modernen Browser · Native Apps für jede Plattform",
+      heading: "Hol dir dein Geld in 60 Sekunden zurück",
+      subheading: "Keine Anmeldung. Keine Karte. Öffne Aurelia und sieh, was du bereits besitzt.",
+      button: "Aurelia öffnen",
+      footnote:
+        "Läuft in jedem modernen Browser · Linux- und Android-Apps verfügbar · Windows, macOS und iOS demnächst",
     },
     downloads: {
-      heading: "Nimm ihn überall mit",
-      subheading: "Derselbe private Tracker, als native App für jedes Gerät verpackt.",
-      web: "Oder einfach im Browser öffnen",
+      heading: "Nimm ihn mit",
+      subheading:
+        "Native Pakete von GitHub Releases. Dieselbe private App wie im Web — Daten bleiben auf deinem Gerät.",
+      web: "Oder im Browser öffnen",
       soon: "Demnächst",
       comingSoon: "Demnächst",
       action: "Herunterladen",
       recommended: "Für dieses Gerät",
       unsignedNotice:
-        "Alle Builds sind unsigniert und werden direkt verteilt. Dein System zeigt evtl. eine Warnung beim ersten Start - das ist normal.",
+        "Builds sind unsigniert und kommen direkt von GitHub Releases. Dein System warnt evtl. beim ersten Start. Das ist normal.",
       platforms: {
         windows: "Windows",
         mac: "macOS",
@@ -360,17 +373,18 @@ const de: Translation = {
         ios: "Benötigt AltStore oder Sideloadly",
       },
     },
+
     footer: {
       brand: "Aurelia",
       madeBy: "Gemacht von",
       sourceCode: "Quellcode",
     },
     meta: {
-      title: "Privater Portfolio-Tracker - Aktien, Krypto & ETFs",
+      title: "Aurelia — Privates Portfolio- & Vermögens-Tracking (ohne Cloud)",
       description:
-        "Verfolge jede Aktie, ETF, Krypto, jedes Metall und jeden Euro, den du besitzt, in einem privaten Tracker. Sieh Allokation, Cashflow, Prognose und Vermögen - ohne Anmeldung, ohne Cloud, für immer kostenlos.",
+        "Verfolge Aktien, ETFs, Krypto und Bargeld mit verschlüsselter Speicherung auf dem Gerät. Sankey-Cashflow, Budgets und Vermögen. Kostenlose Web-App plus Linux und Android. Keine Anmeldung, keine Cloud-Synchronisation.",
       keywords:
-        "Aurelia, Vermögens-Tracker, private Finanz-App, Aktien-Tracker, Krypto-Portfolio, ETF-Tracker, Sankey Cashflow, Budgetplaner, Sparziele, Offline-Portfolio",
+        "aurelia, privates portfolio-tracking, vermögenstracker, lokale finanz-app, keine cloud-synchronisation, aktien-tracker, krypto-portfolio, sankey-cashflow, budgetplaner, AGPL-finanz-app",
     },
   },
   dashboard: {
