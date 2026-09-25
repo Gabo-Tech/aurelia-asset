@@ -1237,6 +1237,8 @@ const es: Translation = {
       addHint: "Define un objetivo y sigue cuánto has ahorrado.",
       added: "Objetivo añadido",
       empty: "Aún no hay objetivos.",
+      manualHint:
+        "El progreso es manual. Las aportaciones actualizan el objetivo aquí y no crean un movimiento de caja.",
       by: "para el {{date}}",
       saveHint: "Ahorra ~{{amount}}/mes para alcanzar tu objetivo.",
       addContribution: "Añadir aportación ({{currency}})",

@@ -232,7 +232,7 @@ function SummaryChip({
 
 const styles = StyleSheet.create({
   wrap: { gap: spacing.md },
-  sub: { fontSize: 13, marginBottom: 4 },
+  sub: { fontSize: 13, lineHeight: 18 },
   totalsRow: { flexDirection: "row", gap: 8 },
   chip: { flex: 1, alignItems: "center" },
   chipLabel: {

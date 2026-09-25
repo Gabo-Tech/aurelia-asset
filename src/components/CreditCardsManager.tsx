@@ -9,12 +9,12 @@ import {
   ScrollView,
 } from "react-native";
 import { useTranslation } from "react-i18next";
-import { Card, PrimaryButton, SecondaryButton, Metric, EmptyState, Field } from "@/components/ui";
+import { Card, CardTitle, CardHelperText, CardActions, PrimaryButton, SecondaryButton, Metric, EmptyState, Field } from "@/components/ui";
 import { useStore, useMoney } from "@/lib/store";
 import { expandCashflows, cardDebtImpact, valuesByEntry } from "@/lib/cashflow-math";
 import type { CreditCard } from "@/lib/types";
 import { PALETTE } from "@/lib/types";
-import { spacing } from "@/theme/colors";
+import { rhythm, spacing } from "@/theme/colors";
 import { useColors } from "@/theme/ThemeProvider";
 
 type FormState = {
@@ -188,11 +188,11 @@ export function CreditCardsManager() {
                 <View style={[styles.dot, { backgroundColor: c.color }]} />
                 <View style={{ flex: 1 }}>
                   <Text style={styles.cardName}>{c.name}</Text>
-                  <Text style={styles.meta}>
+                  <CardHelperText>
                     {c.currency}
                     {c.statementDay ? ` · stmt ${c.statementDay}` : ""}
                     {c.dueDay ? ` · due ${c.dueDay}` : ""}
-                  </Text>
+                  </CardHelperText>
                 </View>
               </View>
               <Metric
@@ -202,13 +202,13 @@ export function CreditCardsManager() {
               {limit > 0 ? (
                 <>
                   <View style={styles.limitRow}>
-                    <Text style={styles.meta}>
+                    <CardHelperText>
                       {t("cards.limit", { defaultValue: "Limit" })}: {mask(limit)}
                       {available != null
                         ? ` · ${t("cards.available", { defaultValue: "Avail" })}: ${mask(available)}`
                         : ""}
                       {overLimit ? " · over limit" : ""}
-                    </Text>
+                    </CardHelperText>
                   </View>
                   <View style={styles.barTrack}>
                     <View
@@ -318,27 +318,29 @@ export function CreditCardsManager() {
               />
             ))}
           </ScrollView>
-          <PrimaryButton label="Save" onPress={submitForm} />
-          <View style={{ height: 8 }} />
+          <CardActions>
+          <PrimaryButton fullWidth label="Save" onPress={submitForm} />
           <SecondaryButton
+            fullWidth
             label="Cancel"
             onPress={() => {
               setFormOpen(false);
               setEditing(null);
             }}
           />
+          </CardActions>
         </View>
       ) : null}
 
       {payCard ? (
         <View style={styles.form}>
-          <Text style={styles.title}>
+          <CardTitle>
             {t("cards.pay", { defaultValue: "Pay" })} · {payCard.name}
-          </Text>
-          <Text style={styles.meta}>
+          </CardTitle>
+          <CardHelperText>
             {t("cards.balanceOwed", { defaultValue: "Balance owed" })}:{" "}
             {mask(debtByCard.get(payCard.id) ?? 0)}
-          </Text>
+          </CardHelperText>
           <Field label={t("common.amount", { defaultValue: "Amount" })}>
             <TextInput
               style={styles.input}
@@ -349,9 +351,9 @@ export function CreditCardsManager() {
               onChangeText={setPayAmount}
             />
           </Field>
-          <PrimaryButton label="Record payment" onPress={submitPay} />
-          <View style={{ height: 8 }} />
+          <PrimaryButton fullWidth label="Record payment" onPress={submitPay} />
           <PrimaryButton
+            fullWidth
             label="Cancel"
             onPress={() => {
               setPayCard(null);
@@ -372,19 +374,18 @@ function createStyles(colors: ReturnType<typeof useColors>) {
     alignItems: "center",
     marginBottom: spacing.sm,
   },
-  title: { color: colors.text, fontWeight: "700", marginBottom: 8 },
+  title: { color: colors.text, fontWeight: "700" },
   link: { color: colors.accent, fontWeight: "600" },
   empty: { color: colors.muted, fontSize: 13 },
   cardRow: {
-    borderTopWidth: 1,
+    gap: rhythm.card,
+    borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: colors.border,
-    paddingTop: 12,
-    marginTop: 8,
+    paddingTop: spacing.sm,
   },
-  cardTop: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 8 },
+  cardTop: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
   dot: { width: 10, height: 10, borderRadius: 5 },
   cardName: { color: colors.text, fontWeight: "600" },
-  meta: { color: colors.muted, fontSize: 11, marginTop: 2 },
   limitRow: { marginBottom: 6 },
   barTrack: {
     height: 6,
@@ -396,9 +397,9 @@ function createStyles(colors: ReturnType<typeof useColors>) {
   barFill: { height: "100%", borderRadius: 3 },
   actions: { flexDirection: "row", gap: 8, alignItems: "stretch" },
   form: {
-    marginTop: 12,
-    paddingTop: 12,
-    borderTopWidth: 1,
+    gap: rhythm.card,
+    paddingTop: spacing.sm,
+    borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: colors.border,
   },
   input: {

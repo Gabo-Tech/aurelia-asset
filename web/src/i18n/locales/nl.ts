@@ -1230,6 +1230,8 @@ const nl: Translation = {
       addHint: "Stel een doel in en volg hoeveel je hebt gespaard.",
       added: "Doel toegevoegd",
       empty: "Nog geen doelen.",
+      manualHint:
+        "Voortgang is handmatig. Bijdragen werken het doel hier bij en maken geen kasstroompost.",
       by: "tegen {{date}}",
       saveHint: "Spaar ~{{amount}}/mnd om je doel te halen.",
       addContribution: "Bijdrage toevoegen ({{currency}})",

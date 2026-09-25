@@ -69,6 +69,7 @@
   --app-tabbar-h: 4rem;
   --app-bottom-clearance: calc(var(--app-tabbar-h) + 2.25rem + env(safe-area-inset-bottom, 0px));
   --app-fab-offset: calc(var(--app-tabbar-h) + 2.5rem + env(safe-area-inset-bottom, 0px));
+  --keyboard-inset: 0px;
   --background: #faf9f7;
   --foreground: #1a1a1a;
   --card: #ffffff;
@@ -112,6 +113,11 @@
   --shadow-lg-value: 0 8px 24px rgba(0, 0, 0, 0.1);
   --glass: rgba(255, 255, 255, 0.94);
   --theme-color: #faf9f7;
+  /* Vertical rhythm — keep in sync with src/theme/colors.ts `rhythm`. */
+  --stack-tight: 6px;
+  --stack-card: 12px;
+  --stack-page: 16px;
+  --stack-section: 24px;
 }
 
 /* Dark Luxury — refined charcoal + gold */

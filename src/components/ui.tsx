@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { createContext, useCallback, useContext, useRef } from "react";
 import {
   View,
   Text,
@@ -8,19 +8,22 @@ import {
   Modal,
   ActivityIndicator,
   KeyboardAvoidingView,
-  Keyboard,
   Platform,
   useWindowDimensions,
+  TextInput,
   type ViewStyle,
   type StyleProp,
   type TextStyle,
+  type NativeSyntheticEvent,
+  type TextInputFocusEventData,
 } from "react-native";
+import { useKeyboardInset } from "@/hooks/useKeyboardInset";
 import {
   SafeAreaProvider,
   initialWindowMetrics,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { spacing, radii } from "@/theme/colors";
+import { spacing, radii, rhythm } from "@/theme/colors";
 import { useColors } from "@/theme/ThemeProvider";
 import { type as typography } from "@/theme/typography";
 
@@ -165,6 +168,74 @@ export function Card({
   );
 }
 
+/** Space between major blocks on a scroll screen. Replaces per-card bottom margins. */
+export function ScreenStack({
+  children,
+  style,
+}: {
+  children: React.ReactNode;
+  style?: StyleProp<ViewStyle>;
+}) {
+  return <View style={[styles.screenStack, style]}>{children}</View>;
+}
+
+/** Vertical rhythm inside a card (title group, body, actions). */
+export function CardStack({
+  children,
+  style,
+}: {
+  children: React.ReactNode;
+  style?: StyleProp<ViewStyle>;
+}) {
+  return <View style={[styles.cardStack, style]}>{children}</View>;
+}
+
+/** Tight title + helper pair. Gap is owned here so the texts don't use their own margins. */
+export function CardCopy({
+  children,
+  style,
+}: {
+  children: React.ReactNode;
+  style?: StyleProp<ViewStyle>;
+}) {
+  return <View style={[styles.cardCopy, style]}>{children}</View>;
+}
+
+export function CardTitle({
+  children,
+  style,
+}: {
+  children: React.ReactNode;
+  style?: StyleProp<TextStyle>;
+}) {
+  const colors = useColors();
+  return <Text style={[styles.cardTitle, { color: colors.text }, style]}>{children}</Text>;
+}
+
+export function CardHelperText({
+  children,
+  style,
+}: {
+  children: React.ReactNode;
+  style?: StyleProp<TextStyle>;
+}) {
+  const colors = useColors();
+  return (
+    <Text style={[styles.cardHelper, { color: colors.muted }, style]}>{children}</Text>
+  );
+}
+
+/** Actions under card copy. Full-width buttons should set `fullWidth`. */
+export function CardActions({
+  children,
+  style,
+}: {
+  children: React.ReactNode;
+  style?: StyleProp<ViewStyle>;
+}) {
+  return <View style={[styles.cardActions, style]}>{children}</View>;
+}
+
 export function Metric({
   label,
   value,
@@ -278,12 +349,14 @@ export function PrimaryButton({
   onPress,
   disabled,
   compact,
+  fullWidth,
   style,
 }: {
   label: string;
   onPress: () => void;
   disabled?: boolean;
   compact?: boolean;
+  fullWidth?: boolean;
   style?: StyleProp<ViewStyle>;
 }) {
   const colors = useColors();
@@ -295,6 +368,7 @@ export function PrimaryButton({
         styles.button,
         { backgroundColor: colors.accent },
         compact && styles.buttonCompact,
+        fullWidth && styles.buttonFull,
         pressed && styles.pressed,
         disabled && styles.buttonDisabled,
         style,
@@ -320,6 +394,7 @@ export function SecondaryButton({
   disabled,
   destructive,
   compact,
+  fullWidth,
   style,
 }: {
   label: string;
@@ -327,6 +402,7 @@ export function SecondaryButton({
   disabled?: boolean;
   destructive?: boolean;
   compact?: boolean;
+  fullWidth?: boolean;
   style?: StyleProp<ViewStyle>;
 }) {
   const colors = useColors();
@@ -338,6 +414,7 @@ export function SecondaryButton({
         styles.secondary,
         { borderColor: destructive ? colors.danger : colors.border },
         compact && styles.buttonCompact,
+        fullWidth && styles.buttonFull,
         pressed && styles.pressed,
         disabled && styles.buttonDisabled,
         style,
@@ -363,12 +440,14 @@ export function DangerButton({
   onPress,
   disabled,
   compact,
+  fullWidth,
   style,
 }: {
   label: string;
   onPress: () => void;
   disabled?: boolean;
   compact?: boolean;
+  fullWidth?: boolean;
   style?: StyleProp<ViewStyle>;
 }) {
   return (
@@ -377,6 +456,7 @@ export function DangerButton({
       onPress={onPress}
       disabled={disabled}
       compact={compact}
+      fullWidth={fullWidth}
       style={style}
       destructive
     />
@@ -386,6 +466,34 @@ export function DangerButton({
 export function FieldLabel({ children }: { children: React.ReactNode }) {
   const colors = useColors();
   return <Text style={[styles.fieldLabel, { color: colors.muted }]}>{children}</Text>;
+}
+
+type FormSheetScrollContextValue = {
+  scrollInputIntoView: (pageY: number, height: number) => void;
+};
+
+const FormSheetScrollContext = createContext<FormSheetScrollContextValue | null>(null);
+
+function mergeFormSheetInputFocus(
+  child: React.ReactNode,
+  ctx: FormSheetScrollContextValue,
+): React.ReactNode {
+  if (!React.isValidElement(child) || child.type !== TextInput) {
+    return child;
+  }
+  const props = child.props as {
+    onFocus?: (e: NativeSyntheticEvent<TextInputFocusEventData>) => void;
+  };
+  return React.cloneElement(child as React.ReactElement<{ onFocus?: (e: NativeSyntheticEvent<TextInputFocusEventData>) => void }>, {
+    onFocus: (e: NativeSyntheticEvent<TextInputFocusEventData>) => {
+      props.onFocus?.(e);
+      const node = e.currentTarget;
+      if (!node || typeof node.measureInWindow !== "function") return;
+      node.measureInWindow((_x, y, _w, h) => {
+        ctx.scrollInputIntoView(y, h);
+      });
+    },
+  });
 }
 
 export function Field({
@@ -398,10 +506,12 @@ export function Field({
   children: React.ReactNode;
 }) {
   const colors = useColors();
+  const sheetScroll = useContext(FormSheetScrollContext);
+  const fieldChildren = sheetScroll ? mergeFormSheetInputFocus(children, sheetScroll) : children;
   return (
     <View style={styles.field}>
       <FieldLabel>{label}</FieldLabel>
-      {children}
+      {fieldChildren}
       {hint ? <Text style={[styles.fieldHint, { color: colors.muted }]}>{hint}</Text> : null}
     </View>
   );
@@ -561,7 +671,7 @@ export function FormSheet({
       statusBarTranslucent
     >
       <SafeAreaProvider initialMetrics={initialWindowMetrics ?? undefined}>
-        <FormSheetBody title={title} onClose={onClose} footer={footer}>
+        <FormSheetBody visible={visible} title={title} onClose={onClose} footer={footer}>
           {children}
         </FormSheetBody>
       </SafeAreaProvider>
@@ -570,11 +680,13 @@ export function FormSheet({
 }
 
 function FormSheetBody({
+  visible,
   title,
   onClose,
   children,
   footer,
 }: {
+  visible: boolean;
   title: string;
   onClose: () => void;
   children: React.ReactNode;
@@ -583,20 +695,25 @@ function FormSheetBody({
   const insets = useSafeAreaInsets();
   const colors = useColors();
   const { height: windowHeight } = useWindowDimensions();
-  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const { keyboardHeight } = useKeyboardInset(visible);
+  const bodyScrollRef = useRef<ScrollView>(null);
+  const bodyScrollY = useRef(0);
 
-  useEffect(() => {
-    const showEvt = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
-    const hideEvt = Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
-    const onShow = Keyboard.addListener(showEvt, (e) => {
-      setKeyboardHeight(e.endCoordinates?.height ?? 0);
-    });
-    const onHide = Keyboard.addListener(hideEvt, () => setKeyboardHeight(0));
-    return () => {
-      onShow.remove();
-      onHide.remove();
-    };
-  }, []);
+  const scrollInputIntoView = useCallback(
+    (pageY: number, inputHeight: number) => {
+      const visibleBottom =
+        windowHeight - keyboardHeight - (footer ? 120 : 72) - spacing.md;
+      const inputBottom = pageY + inputHeight;
+      if (inputBottom > visibleBottom) {
+        const delta = inputBottom - visibleBottom + spacing.sm;
+        bodyScrollRef.current?.scrollTo({
+          y: bodyScrollY.current + delta,
+          animated: true,
+        });
+      }
+    },
+    [footer, keyboardHeight, windowHeight],
+  );
 
   // Extra gap above the home indicator so actions stay tappable.
   const footerPadBottom =
@@ -604,27 +721,25 @@ function FormSheetBody({
       ? spacing.md
       : Math.max(insets.bottom, spacing.md) + spacing.md;
 
-  // Bound the scroller with a real pixel height. flex:1 inside maxHeight-only
-  // parents collapses to 0 on RN (header+footer visible, form gone).
-  const chromeReserve = 140 + footerPadBottom;
+  const headerChrome = 88;
+  const footerChrome = footer ? 72 + footerPadBottom : 0;
+  const visibleAboveKeyboard = windowHeight - keyboardHeight;
   const bodyMaxHeight = Math.max(
     160,
-    Math.min(
-      windowHeight * 0.6,
-      windowHeight * 0.92 - chromeReserve - keyboardHeight,
-    ),
+    Math.min(visibleAboveKeyboard * 0.6, visibleAboveKeyboard - headerChrome - footerChrome),
   );
 
   return (
     <View style={styles.sheetRoot}>
       <Pressable style={styles.sheetScrim} onPress={onClose} accessibilityLabel="Close" />
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior="padding"
         style={[
           styles.sheetCard,
           {
             backgroundColor: colors.surface,
             borderColor: colors.border,
+            marginBottom: keyboardHeight,
           },
         ]}
       >
@@ -639,16 +754,24 @@ function FormSheetBody({
             <Text style={[styles.sheetClose, { color: colors.accent }]}>Close</Text>
           </Pressable>
         </View>
-        <ScrollView
-          style={[styles.sheetBody, { maxHeight: bodyMaxHeight }]}
-          contentContainerStyle={styles.sheetBodyContent}
-          keyboardShouldPersistTaps="handled"
-          keyboardDismissMode="on-drag"
-          showsVerticalScrollIndicator={false}
-          bounces={false}
-        >
-          {children}
-        </ScrollView>
+        <FormSheetScrollContext.Provider value={{ scrollInputIntoView }}>
+          <ScrollView
+            ref={bodyScrollRef}
+            style={[styles.sheetBody, { maxHeight: bodyMaxHeight }]}
+            contentContainerStyle={styles.sheetBodyContent}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
+            showsVerticalScrollIndicator={false}
+            bounces={false}
+            automaticallyAdjustKeyboardInsets
+            onScroll={(e) => {
+              bodyScrollY.current = e.nativeEvent.contentOffset.y;
+            }}
+            scrollEventThrottle={16}
+          >
+            {children}
+          </ScrollView>
+        </FormSheetScrollContext.Provider>
         {footer ? (
           <View
             style={[
@@ -729,8 +852,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: spacing.sm,
-    marginTop: spacing.md,
   },
   sectionTitle: { ...typography.headline, fontSize: 16 },
   sectionAction: { ...typography.caption, fontWeight: "600" },
@@ -738,9 +859,16 @@ const styles = StyleSheet.create({
     borderRadius: radii.lg,
     padding: spacing.md,
     borderWidth: StyleSheet.hairlineWidth,
-    marginBottom: spacing.sm,
+    gap: rhythm.card,
   },
-  metric: { marginBottom: spacing.sm },
+  screenStack: { gap: rhythm.block },
+  cardStack: { gap: rhythm.card },
+  cardCopy: { gap: rhythm.tight },
+  cardTitle: { ...typography.headline, fontSize: 16 },
+  cardHelper: { ...typography.caption, lineHeight: 18 },
+  cardActions: { gap: rhythm.card, alignItems: "stretch" },
+  buttonFull: { alignSelf: "stretch", width: "100%" },
+  metric: {},
   metricCompact: { marginBottom: 0, flex: 1 },
   metricLabel: { ...typography.label, textTransform: "none", letterSpacing: 0 },
   metricValue: { ...typography.metric, marginTop: 2 },
@@ -753,7 +881,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-start",
     gap: spacing.sm,
-    marginBottom: spacing.sm,
   },
   metricRowWrap: {
     flexWrap: "wrap",
@@ -763,7 +890,6 @@ const styles = StyleSheet.create({
   hero: {
     paddingVertical: spacing.lg,
     paddingHorizontal: spacing.md,
-    marginBottom: spacing.md,
     borderRadius: radii.xl,
     borderWidth: StyleSheet.hairlineWidth,
     overflow: "hidden",
@@ -822,7 +948,6 @@ const styles = StyleSheet.create({
   emptyBox: {
     paddingVertical: spacing.lg,
     paddingHorizontal: spacing.md,
-    marginBottom: spacing.sm,
   },
   emptyTitle: { ...typography.headline },
   emptyBody: { ...typography.caption, marginTop: 8, lineHeight: 20 },

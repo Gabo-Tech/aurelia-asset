@@ -11,8 +11,12 @@ import {
 import { useTranslation } from "react-i18next";
 import {
   Screen,
+  ScreenStack,
   Header,
   Card,
+  CardTitle,
+  CardHelperText,
+  CardActions,
   PrimaryButton,
   SecondaryButton,
   DangerButton,
@@ -27,7 +31,7 @@ import { CategoryBreakdown } from "@/components/CategoryBreakdown";
 import { TransactionsPanel } from "@/components/TransactionsPanel";
 import { useStore, useMoney } from "@/lib/store";
 import { fetchCurrentQuote, searchAssets } from "@/lib/finance";
-import { spacing } from "@/theme/colors";
+import { rhythm, spacing } from "@/theme/colors";
 import { useColors } from "@/theme/ThemeProvider";
 import { PALETTE, type Holding, type HoldingHorizon, type AssetType } from "@/lib/types";
 import { datedFilename, rowsToCsv, saveExportFile, exportMethodDescription } from "@/lib/export";
@@ -322,7 +326,7 @@ export function HoldingsScreen() {
   }
 
   return (
-    <Screen>
+    <Screen avoidKeyboard={false}>
       <ScrollView
         style={{ flex: 1 }}
         keyboardShouldPersistTaps="handled"
@@ -330,6 +334,7 @@ export function HoldingsScreen() {
         automaticallyAdjustKeyboardInsets
       >
         <Header title={t("nav.holdings", { defaultValue: "Holdings" })} />
+        <ScreenStack>
         <Card>
           <MetricRow
             items={[
@@ -338,11 +343,13 @@ export function HoldingsScreen() {
               { label: "Short / cash-like", value: mask(totals.short) },
             ]}
           />
-          <View style={{ height: 8 }} />
-          <SecondaryButton
-            label={t("holdings.viewHistory", { defaultValue: "View performance history" })}
-            onPress={() => navigation.navigate("Performance")}
-          />
+          <CardActions>
+            <SecondaryButton
+              fullWidth
+              label={t("holdings.viewHistory", { defaultValue: "View performance history" })}
+              onPress={() => navigation.navigate("Performance")}
+            />
+          </CardActions>
         </Card>
 
         {allocation.some((a) => a.value > 0) ? (
@@ -357,8 +364,8 @@ export function HoldingsScreen() {
         <TransactionsPanel />
 
         <Card>
-          <PrimaryButton label="Add holding" onPress={() => setAddOpen(true)} />
-          <View style={{ height: 8 }} />
+          <CardActions>
+          <PrimaryButton fullWidth label="Add holding" onPress={() => setAddOpen(true)} />
           <View style={styles.row}>
             <PrimaryButton compact style={{ flex: 1 }} label="Refresh" onPress={refreshPrices} disabled={busy} />
             <PrimaryButton
@@ -368,6 +375,7 @@ export function HoldingsScreen() {
               onPress={() => void exportCsv()}
             />
           </View>
+          </CardActions>
         </Card>
 
         <FormSheet
@@ -431,7 +439,7 @@ export function HoldingsScreen() {
                 value={customPrice}
                 onChangeText={setCustomPrice}
               />
-              <Text style={styles.meta}>Price history (date,price per line)</Text>
+              <CardHelperText>Price history (date,price per line)</CardHelperText>
               <TextInput
                 style={[styles.input, styles.notes]}
                 placeholder={"2024-01-01,100\n2024-06-01,110"}
@@ -455,7 +463,7 @@ export function HoldingsScreen() {
         </FormSheet>
 
         <Card>
-          <Text style={styles.title}>Filter</Text>
+          <CardTitle>Filter</CardTitle>
           <TextInput
             style={styles.input}
             placeholder="Search symbol, name, notes…"
@@ -505,9 +513,9 @@ export function HoldingsScreen() {
               </Pressable>
             ))}
           </View>
-          <Text style={styles.meta}>
+          <CardHelperText>
             Showing {filtered.length} / {state.holdings.length}
-          </Text>
+          </CardHelperText>
         </Card>
 
         {filtered.map((h) => {
@@ -516,7 +524,11 @@ export function HoldingsScreen() {
           const txs = state.transactions.filter((tx) => tx.holdingId === h.id).slice(-3);
           return (
             <Card key={h.id}>
-              <Pressable onPress={() => openEdit(h)} onLongPress={() => onDelete(h)}>
+              <Pressable
+                onPress={() => openEdit(h)}
+                onLongPress={() => onDelete(h)}
+                style={styles.cardBody}
+              >
                 <View style={styles.cardTop}>
                   <View style={[styles.dot, { backgroundColor: h.color || colors.accent }]} />
                   <View style={styles.cardHead}>
@@ -527,14 +539,14 @@ export function HoldingsScreen() {
                   </View>
                 </View>
                 <Text style={styles.qtyLine}>{qtyLabel}</Text>
-                <Text style={styles.meta}>
+                <CardHelperText>
                   {h.type} · {h.horizon ?? "long"} ·{" "}
                   {h.manualPrice != null
                     ? t("holdings.manualPrice", { defaultValue: "Manual price" })
                     : t("holdings.price", { defaultValue: "Price" })}{" "}
                   {mask(h.currentPrice, h.priceCurrency)}
                   {h.notes ? ` · ${h.notes}` : ""}
-                </Text>
+                </CardHelperText>
                 <MetricRow
                   items={[
                     {
@@ -615,9 +627,9 @@ export function HoldingsScreen() {
             onChangeText={setEditNotes}
             multiline
           />
-          <Text style={styles.meta}>
+          <CardHelperText>
             Custom price history (date,price): {parseCsvHistory(editHistoryText).length} points
-          </Text>
+          </CardHelperText>
           <TextInput
             style={[styles.input, styles.notes]}
             placeholder={"2024-01-01,100\n2024-06-01,110"}
@@ -730,8 +742,11 @@ export function HoldingsScreen() {
         ) : filtered.length === 0 ? (
           <EmptyState title="No matches" body="Try a different search or filter." />
         ) : (
-          <Text style={styles.hint}>Tap to edit · Long-press to delete.</Text>
+          <CardHelperText style={styles.centerHint}>
+            Tap to edit · Long-press to delete.
+          </CardHelperText>
         )}
+        </ScreenStack>
       </ScrollView>
     </Screen>
   );
@@ -749,21 +764,19 @@ function createStyles(colors: ReturnType<typeof useColors>) {
     backgroundColor: colors.surfaceAlt,
   },
   notes: { minHeight: 72, textAlignVertical: "top" },
-  row: { flexDirection: "row", marginBottom: spacing.sm, flexWrap: "wrap", gap: 8 },
+  row: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm },
   actionsCenter: { justifyContent: "center", alignItems: "stretch", flexWrap: "nowrap" },
   title: { color: colors.text, fontWeight: "700", flex: 1, marginBottom: 0 },
   empty: { color: colors.muted },
-  hint: { color: colors.muted, fontSize: 12, textAlign: "center", marginBottom: 24 },
-  meta: { color: colors.muted, fontSize: 12, marginBottom: 8 },
+  centerHint: { textAlign: "center" },
   qtyLine: {
     color: colors.text,
     fontSize: 20,
     fontWeight: "700",
     letterSpacing: 0.2,
-    marginTop: 6,
-    marginBottom: 4,
     fontVariant: ["tabular-nums"],
   },
+  cardBody: { gap: rhythm.card },
   cardHead: {
     flex: 1,
     flexDirection: "row",

@@ -523,17 +523,17 @@ const DOWNLOAD_PLATFORMS: Array<{
   {
     key: "linuxAppImage",
     icon: Download,
-    releaseAsset: "Aurelia_0.1.2_amd64.AppImage",
+    releaseAsset: "Aurelia_0.2.0_amd64.AppImage",
   },
   {
     key: "linuxDeb",
     icon: Package,
-    releaseAsset: "Aurelia_0.1.2_amd64.deb",
+    releaseAsset: "Aurelia_0.2.0_amd64.deb",
   },
   {
     key: "linuxRpm",
     icon: Package,
-    releaseAsset: "Aurelia-0.1.2-1.x86_64.rpm",
+    releaseAsset: "Aurelia-0.2.0-1.x86_64.rpm",
   },
   {
     key: "android",

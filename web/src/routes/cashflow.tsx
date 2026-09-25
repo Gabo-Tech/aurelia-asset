@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { PageHeader } from "@/components/app-shell";
+import { PageStack } from "@/components/design/page-stack";
 import { useTranslation } from "react-i18next";
 import i18n from "@/i18n";
 import { ChartFrame } from "@/components/chart-frame";
@@ -122,10 +123,7 @@ import { CashAccountsManager } from "@/components/cash-accounts-manager";
 import { CashflowCsvImportButton } from "@/components/cashflow-csv-import";
 import { BillCalendar } from "@/components/bill-calendar";
 import { UpcomingPanel, UpcomingPreviewCard } from "@/components/cashflow-upcoming";
-import {
-  expandCashflows,
-  valuesByEntry,
-} from "@/lib/cashflow-math";
+import { expandCashflows, valuesByEntry } from "@/lib/cashflow-math";
 
 export {
   expandCashflows,
@@ -442,11 +440,7 @@ function CashflowPage() {
         actions={
           <>
             <CashflowCsvImportButton />
-            <Button
-              variant="outline"
-              onClick={openManageCategories}
-              className="gap-1.5"
-            >
+            <Button variant="outline" onClick={openManageCategories} className="gap-1.5">
               <SettingsIcon className="h-4 w-4" />
               {t("cashflow.categories")}
             </Button>
@@ -458,258 +452,279 @@ function CashflowPage() {
         }
       />
 
-      <Tabs value={pageTab} onValueChange={(v) => setPageTab(v as typeof pageTab)} className="mt-2 pb-[calc(var(--app-fab-offset))] lg:pb-0">
-        <TabsList>
-          <TabsTrigger value="overview">{t("cashflow.upcoming.tabOverview")}</TabsTrigger>
-          <TabsTrigger value="upcoming">{t("cashflow.upcoming.tabUpcoming")}</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="overview" className="mt-4 space-y-0">
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 sm:gap-5" data-tour="cf-summary">
-        <StatCard
-          label={t("cashflow.income")}
-          value={privacy ? MASK : formatMoney(totals.income, currency)}
-          tone="success"
-        />
-        <StatCard
-          label={t("cashflow.expenses")}
-          value={privacy ? MASK : formatMoney(totals.expense, currency)}
-          tone="destructive"
-        />
-        <StatCard
-          label={t("cashflow.net")}
-          value={
-            privacy
-              ? MASK
-              : `${totals.net >= 0 ? "+" : "-"}${formatMoney(Math.abs(totals.net), currency)}`
-          }
-          tone={totals.net >= 0 ? "success" : "destructive"}
-        />
-      </div>
-
-      <div className="mt-5">
-        <UpcomingPreviewCard
-          cashflows={cashflows}
-          currency={currency}
-          privacy={privacy}
-          mask={MASK}
-          toDisplay={toDisplay}
-          onViewAll={() => setPageTab("upcoming")}
-          onEdit={openUpcomingEdit}
-        />
-      </div>
-
-      <Collapsible open={breakdownOpen} onOpenChange={setBreakdownOpen}>
-        <CollapsibleTrigger asChild>
-          <Button
-            variant="outline"
-            className="w-full justify-between"
-            data-tour="cf-breakdown-trigger"
-          >
-            <span>{t("cashflow.breakdown.title", { defaultValue: "Breakdown by category" })}</span>
-            <ChevronDown
-              className={`h-4 w-4 transition-transform ${breakdownOpen ? "rotate-180" : ""}`}
-            />
-          </Button>
-        </CollapsibleTrigger>
-        <CollapsibleContent className="mt-3" data-tour="cf-breakdown">
-          <div className="grid gap-3 md:grid-cols-3">
-            <CategoryPieCard
-              title={t("cashflow.breakdown.incomes", { defaultValue: "Incomes" })}
-              entries={breakdownData.incomes}
-              format={pieFormat}
-            />
-            <CategoryPieCard
-              title={t("cashflow.breakdown.expenses", { defaultValue: "Expenses" })}
-              entries={breakdownData.expenses}
-              format={pieFormat}
-            />
-            <CategoryPieCard
-              title={t("cashflow.breakdown.investments", { defaultValue: "Investments & Savings" })}
-              entries={breakdownData.investments}
-              format={pieFormat}
-            />
-          </div>
-        </CollapsibleContent>
-      </Collapsible>
-
-      <div className="mt-5">
-        <EntriesPanel
-          cashflows={cashflows}
-          categories={categories}
-          subscribeOptions={subscribeOptions}
-          currency={currency}
-          privacy={privacy}
-          MASK={MASK}
-          mask={mask}
-          toDisplay={toDisplay}
-          onRemove={removeCashflow}
-          onUpdate={updateCashflow}
-          onManageCategories={openManageCategories}
-        />
-      </div>
-
-      <Card className="border-border/60 min-w-0 mt-6 sm:mt-8">
-        <CardHeader
-          className="px-3 sm:px-6 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 space-y-0"
-          data-tour="cf-sankey"
+      <PageStack>
+        <Tabs
+          value={pageTab}
+          onValueChange={(v) => setPageTab(v as typeof pageTab)}
+          className="pb-[calc(var(--app-fab-offset))] lg:pb-0"
         >
-          <div className="min-w-0">
-            <CardTitle>{t("cashflow.flow")}</CardTitle>
-            <div className="mt-1 text-xs text-muted-foreground truncate">{sankeyPeriodLabel}</div>
-          </div>
-          <div className="flex flex-wrap items-center gap-2 sm:flex-col sm:items-end sm:shrink-0">
-            <Select value={sankeyPeriod} onValueChange={(v) => setSankeyPeriod(v as SankeyPeriod)}>
-              <SelectTrigger className="h-8 w-[140px] text-xs">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="week">{t("more.entriesThisWeek")}</SelectItem>
-                <SelectItem value="month">{t("more.entriesThisMonth")}</SelectItem>
-                <SelectItem value="year">{t("more.entriesThisYear")}</SelectItem>
-                <SelectItem value="all">{t("more.entriesAllTime")}</SelectItem>
-                <SelectItem value="custom">{t("more.entriesCustomRange")}</SelectItem>
-              </SelectContent>
-            </Select>
-            {sankeyPeriod === "custom" && (
-              <div className="flex gap-1">
-                <Input
-                  type="date"
-                  className="h-8 w-[130px] text-xs"
-                  value={sankeyFrom}
-                  onChange={(e) => setSankeyFrom(e.target.value)}
-                />
-                <Input
-                  type="date"
-                  className="h-8 w-[130px] text-xs"
-                  value={sankeyTo}
-                  onChange={(e) => setSankeyTo(e.target.value)}
-                />
-              </div>
-            )}
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5">
-                  <RotateCcw className="h-3.5 w-3.5" />
-                  {t("cashflow.resetLastMonth", { defaultValue: "Reset last month" })}
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>
-                    {t("cashflow.resetLastMonthTitle", {
-                      defaultValue: "Delete last month's entries?",
-                    })}
-                  </AlertDialogTitle>
-                  <AlertDialogDescription>
-                    {t("cashflow.resetLastMonthDesc", {
-                      defaultValue:
-                        "This permanently removes every cashflow entry dated in {{range}}. Recurring rules are kept.",
-                      range: `${format(startOfMonth(subMonths(new Date(), 1)), "MMM d, yyyy")} – ${format(endOfMonth(subMonths(new Date(), 1)), "MMM d, yyyy")}`,
-                    })}
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={() => {
-                      const lastMonthStart = startOfMonth(subMonths(new Date(), 1));
-                      const lastMonthEnd = endOfMonth(subMonths(new Date(), 1));
-                      const ids = cashflows
-                        .filter((c) => {
-                          const d = new Date(c.date);
-                          return isWithinInterval(d, { start: lastMonthStart, end: lastMonthEnd });
-                        })
-                        .map((c) => c.id);
-                      ids.forEach((id) => removeCashflow(id));
-                      toast.success(
-                        t("cashflow.resetLastMonthDone", {
-                          defaultValue: "Removed {{count}} entries",
-                          count: ids.length,
-                        }),
-                      );
-                    }}
-                  >
-                    {t("common.delete")}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </div>
-        </CardHeader>
-        <CardContent className="px-2 sm:px-6">
-          <ChartFrame
-            filename="cashflow"
-            title={t("cashflow.title")}
-            extras={
-              <SankeyControls
-                prefs={prefs}
-                setPrefs={setPrefs}
-                nodes={colorableNodes}
-                resetColors={resetColors}
-              />
-            }
+          <TabsList>
+            <TabsTrigger value="overview">{t("cashflow.upcoming.tabOverview")}</TabsTrigger>
+            <TabsTrigger value="upcoming">{t("cashflow.upcoming.tabUpcoming")}</TabsTrigger>
+          </TabsList>
+
+          <TabsContent
+            value="overview"
+            className="flex flex-col gap-[var(--stack-page)] sm:gap-[var(--stack-section)]"
           >
-            <div className="w-full min-w-0">
-              {sankey ? (
-                <SankeyChart
-                  data={sankey}
-                  align={prefs.layoutMode === "staged" ? "left" : "justify"}
-                  labelMode={prefs.labelMode}
-                  format={(v: number) => (privacy ? MASK : formatMoney(v, currency))}
-                  onReorder={(side, names) =>
-                    setPrefs((p) => {
-                      const key =
-                        side === "income"
-                          ? "incomeOrder"
-                          : side === "account"
-                            ? "accountOrder"
-                            : "expenseOrder";
-                      const prev = p[key];
-                      // Merge so reordering one set doesn't wipe another (e.g. cats vs leaves).
-                      const set = new Set(names);
-                      const queue = [...names];
-                      const merged =
-                        prev.length === 0
-                          ? names
-                          : [...prev.map((n) => (set.has(n) ? queue.shift()! : n)), ...queue];
-                      return { ...p, [key]: merged };
-                    })
-                  }
-                />
-              ) : (
-                <div className="grid h-80 place-items-center text-sm text-muted-foreground">
-                  {t("cashflow.emptyFlow")}
-                </div>
-              )}
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 sm:gap-5" data-tour="cf-summary">
+              <StatCard
+                label={t("cashflow.income")}
+                value={privacy ? MASK : formatMoney(totals.income, currency)}
+                tone="success"
+              />
+              <StatCard
+                label={t("cashflow.expenses")}
+                value={privacy ? MASK : formatMoney(totals.expense, currency)}
+                tone="destructive"
+              />
+              <StatCard
+                label={t("cashflow.net")}
+                value={
+                  privacy
+                    ? MASK
+                    : `${totals.net >= 0 ? "+" : "-"}${formatMoney(Math.abs(totals.net), currency)}`
+                }
+                tone={totals.net >= 0 ? "success" : "destructive"}
+              />
             </div>
-          </ChartFrame>
-        </CardContent>
-      </Card>
 
-      <div className="mt-6 space-y-6">
-        <BillCalendar
-          onEdit={(parentId) => {
-            const parent = cashflows.find((c) => c.id === parentId);
-            if (parent) setUpcomingEditEntry(parent);
-          }}
-        />
-        <CashAccountsManager />
-        <CreditCardsManager />
-      </div>
-        </TabsContent>
+            <div>
+              <UpcomingPreviewCard
+                cashflows={cashflows}
+                currency={currency}
+                privacy={privacy}
+                mask={MASK}
+                toDisplay={toDisplay}
+                onViewAll={() => setPageTab("upcoming")}
+                onEdit={openUpcomingEdit}
+              />
+            </div>
 
-        <TabsContent value="upcoming" className="mt-4">
-          <UpcomingPanel
-            cashflows={cashflows}
-            currency={currency}
-            privacy={privacy}
-            mask={MASK}
-            toDisplay={toDisplay}
-            onEdit={openUpcomingEdit}
-          />
-        </TabsContent>
-      </Tabs>
+            <Collapsible open={breakdownOpen} onOpenChange={setBreakdownOpen}>
+              <CollapsibleTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="w-full justify-between"
+                  data-tour="cf-breakdown-trigger"
+                >
+                  <span>
+                    {t("cashflow.breakdown.title", { defaultValue: "Breakdown by category" })}
+                  </span>
+                  <ChevronDown
+                    className={`h-4 w-4 transition-transform ${breakdownOpen ? "rotate-180" : ""}`}
+                  />
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="mt-3" data-tour="cf-breakdown">
+                <div className="grid gap-3 md:grid-cols-3">
+                  <CategoryPieCard
+                    title={t("cashflow.breakdown.incomes", { defaultValue: "Incomes" })}
+                    entries={breakdownData.incomes}
+                    format={pieFormat}
+                  />
+                  <CategoryPieCard
+                    title={t("cashflow.breakdown.expenses", { defaultValue: "Expenses" })}
+                    entries={breakdownData.expenses}
+                    format={pieFormat}
+                  />
+                  <CategoryPieCard
+                    title={t("cashflow.breakdown.investments", {
+                      defaultValue: "Investments & Savings",
+                    })}
+                    entries={breakdownData.investments}
+                    format={pieFormat}
+                  />
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+
+            <div>
+              <EntriesPanel
+                cashflows={cashflows}
+                categories={categories}
+                subscribeOptions={subscribeOptions}
+                currency={currency}
+                privacy={privacy}
+                MASK={MASK}
+                mask={mask}
+                toDisplay={toDisplay}
+                onRemove={removeCashflow}
+                onUpdate={updateCashflow}
+                onManageCategories={openManageCategories}
+              />
+            </div>
+
+            <Card className="border-border/60 min-w-0">
+              <CardHeader
+                className="px-3 sm:px-6 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 space-y-0"
+                data-tour="cf-sankey"
+              >
+                <div className="min-w-0">
+                  <CardTitle>{t("cashflow.flow")}</CardTitle>
+                  <div className="mt-1 text-xs text-muted-foreground truncate">
+                    {sankeyPeriodLabel}
+                  </div>
+                </div>
+                <div className="flex flex-wrap items-center gap-2 sm:flex-col sm:items-end sm:shrink-0">
+                  <Select
+                    value={sankeyPeriod}
+                    onValueChange={(v) => setSankeyPeriod(v as SankeyPeriod)}
+                  >
+                    <SelectTrigger className="h-8 w-[140px] text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="week">{t("more.entriesThisWeek")}</SelectItem>
+                      <SelectItem value="month">{t("more.entriesThisMonth")}</SelectItem>
+                      <SelectItem value="year">{t("more.entriesThisYear")}</SelectItem>
+                      <SelectItem value="all">{t("more.entriesAllTime")}</SelectItem>
+                      <SelectItem value="custom">{t("more.entriesCustomRange")}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {sankeyPeriod === "custom" && (
+                    <div className="flex gap-1">
+                      <Input
+                        type="date"
+                        className="h-8 w-[130px] text-xs"
+                        value={sankeyFrom}
+                        onChange={(e) => setSankeyFrom(e.target.value)}
+                      />
+                      <Input
+                        type="date"
+                        className="h-8 w-[130px] text-xs"
+                        value={sankeyTo}
+                        onChange={(e) => setSankeyTo(e.target.value)}
+                      />
+                    </div>
+                  )}
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5">
+                        <RotateCcw className="h-3.5 w-3.5" />
+                        {t("cashflow.resetLastMonth", { defaultValue: "Reset last month" })}
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>
+                          {t("cashflow.resetLastMonthTitle", {
+                            defaultValue: "Delete last month's entries?",
+                          })}
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                          {t("cashflow.resetLastMonthDesc", {
+                            defaultValue:
+                              "This permanently removes every cashflow entry dated in {{range}}. Recurring rules are kept.",
+                            range: `${format(startOfMonth(subMonths(new Date(), 1)), "MMM d, yyyy")} – ${format(endOfMonth(subMonths(new Date(), 1)), "MMM d, yyyy")}`,
+                          })}
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => {
+                            const lastMonthStart = startOfMonth(subMonths(new Date(), 1));
+                            const lastMonthEnd = endOfMonth(subMonths(new Date(), 1));
+                            const ids = cashflows
+                              .filter((c) => {
+                                const d = new Date(c.date);
+                                return isWithinInterval(d, {
+                                  start: lastMonthStart,
+                                  end: lastMonthEnd,
+                                });
+                              })
+                              .map((c) => c.id);
+                            ids.forEach((id) => removeCashflow(id));
+                            toast.success(
+                              t("cashflow.resetLastMonthDone", {
+                                defaultValue: "Removed {{count}} entries",
+                                count: ids.length,
+                              }),
+                            );
+                          }}
+                        >
+                          {t("common.delete")}
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+              </CardHeader>
+              <CardContent className="px-2 sm:px-6">
+                <ChartFrame
+                  filename="cashflow"
+                  title={t("cashflow.title")}
+                  extras={
+                    <SankeyControls
+                      prefs={prefs}
+                      setPrefs={setPrefs}
+                      nodes={colorableNodes}
+                      resetColors={resetColors}
+                    />
+                  }
+                >
+                  <div className="w-full min-w-0">
+                    {sankey ? (
+                      <SankeyChart
+                        data={sankey}
+                        align={prefs.layoutMode === "staged" ? "left" : "justify"}
+                        labelMode={prefs.labelMode}
+                        format={(v: number) => (privacy ? MASK : formatMoney(v, currency))}
+                        onReorder={(side, names) =>
+                          setPrefs((p) => {
+                            const key =
+                              side === "income"
+                                ? "incomeOrder"
+                                : side === "account"
+                                  ? "accountOrder"
+                                  : "expenseOrder";
+                            const prev = p[key];
+                            // Merge so reordering one set doesn't wipe another (e.g. cats vs leaves).
+                            const set = new Set(names);
+                            const queue = [...names];
+                            const merged =
+                              prev.length === 0
+                                ? names
+                                : [...prev.map((n) => (set.has(n) ? queue.shift()! : n)), ...queue];
+                            return { ...p, [key]: merged };
+                          })
+                        }
+                      />
+                    ) : (
+                      <div className="grid h-80 place-items-center text-sm text-muted-foreground">
+                        {t("cashflow.emptyFlow")}
+                      </div>
+                    )}
+                  </div>
+                </ChartFrame>
+              </CardContent>
+            </Card>
+
+            <div className="flex flex-col gap-[var(--stack-section)]">
+              <BillCalendar
+                onEdit={(parentId) => {
+                  const parent = cashflows.find((c) => c.id === parentId);
+                  if (parent) setUpcomingEditEntry(parent);
+                }}
+              />
+              <CashAccountsManager />
+              <CreditCardsManager />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="upcoming" className="mt-4">
+            <UpcomingPanel
+              cashflows={cashflows}
+              currency={currency}
+              privacy={privacy}
+              mask={MASK}
+              toDisplay={toDisplay}
+              onEdit={openUpcomingEdit}
+            />
+          </TabsContent>
+        </Tabs>
+      </PageStack>
 
       <Fab
         label={t("cashflow.addData", { defaultValue: "Add data" })}
@@ -1506,10 +1521,7 @@ function EntriesPanel({
               {sortedEntries.map((c) => {
                 const parent = cashflows.find((p) => p.id === c.parentId) ?? null;
                 return (
-                  <div
-                    key={c.id}
-                    className="rounded-lg border border-border/60 p-3 space-y-2"
-                  >
+                  <div key={c.id} className="rounded-lg border border-border/60 p-3 space-y-2">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0 space-y-1">
                         <div className="text-xs text-muted-foreground">
@@ -1988,307 +2000,307 @@ function AddForm({
 
   const formBody = (
     <>
-        <Tabs
-          value={kind}
-          onValueChange={(v) => {
-            setKind(v as typeof kind);
-            setFormError(null);
-          }}
-        >
-          <TabsList className="grid grid-cols-3">
-            <TabsTrigger value="income">{t("cashflow.income")}</TabsTrigger>
-            <TabsTrigger value="expense">{t("cashflow.expense")}</TabsTrigger>
-            <TabsTrigger value="transfer">{t("cashflow.transferTab")}</TabsTrigger>
-          </TabsList>
-          {kind !== "transfer" ? (
-            <TabsContent value={kind} className="mt-4 space-y-3">
-              <Field label={kind === "income" ? t("cashflow.source") : t("common.category")}>
-                <CategoryPicker
-                  kind={kind}
-                  value={categoryName}
-                  onChange={setCategoryName}
-                  categories={visibleCategories}
-                  onCreate={(c) => {
-                    const created = onAddCategory(c);
-                    setCategoryName(created.name);
-                  }}
-                />
-              </Field>
-              {sharedFields()}
-              <Field htmlFor="cf-description" label={t("cashflow.descriptionLabel")}>
-                <Input
-                  id="cf-description"
-                  type="text"
-                  maxLength={200}
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder={t("cashflow.descriptionPlaceholder")}
-                />
-              </Field>
-              {kind === "expense" && (
-                <Field label={t("cashflow.paidWith")}>
-                  <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {accountOptions
-                        .filter((o) => o.value === "liquidity" || o.value.startsWith("credit:"))
-                        .map((o) => (
-                          <SelectItem key={o.value} value={o.value}>
-                            {o.label}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                </Field>
-              )}
-              {kind === "expense" && !isPercent && (
-                <div className="rounded-md border border-border/60 p-3 space-y-3">
-                  <Field label={t("cashflow.upcoming.whenLabel")}>
-                    <div className="flex flex-wrap gap-1">
-                      {(
-                        [
-                          ["one-time", t("cashflow.none")],
-                          ["recurring", t("cashflow.recurrence")],
-                          ...(kind === "expense"
-                            ? [["installments", t("cashflow.splitInstallments")]]
-                            : []),
-                        ] as const
-                      ).map(([mode, label]) => (
-                        <Button
-                          key={mode}
-                          type="button"
-                          variant={whenMode === mode ? "secondary" : "outline"}
-                          size="sm"
-                          className="h-8 text-xs"
-                          onClick={() => setWhenMode(mode as typeof whenMode)}
-                        >
-                          {label}
-                        </Button>
+      <Tabs
+        value={kind}
+        onValueChange={(v) => {
+          setKind(v as typeof kind);
+          setFormError(null);
+        }}
+      >
+        <TabsList className="grid grid-cols-3">
+          <TabsTrigger value="income">{t("cashflow.income")}</TabsTrigger>
+          <TabsTrigger value="expense">{t("cashflow.expense")}</TabsTrigger>
+          <TabsTrigger value="transfer">{t("cashflow.transferTab")}</TabsTrigger>
+        </TabsList>
+        {kind !== "transfer" ? (
+          <TabsContent value={kind} className="mt-4 space-y-3">
+            <Field label={kind === "income" ? t("cashflow.source") : t("common.category")}>
+              <CategoryPicker
+                kind={kind}
+                value={categoryName}
+                onChange={setCategoryName}
+                categories={visibleCategories}
+                onCreate={(c) => {
+                  const created = onAddCategory(c);
+                  setCategoryName(created.name);
+                }}
+              />
+            </Field>
+            {sharedFields()}
+            <Field htmlFor="cf-description" label={t("cashflow.descriptionLabel")}>
+              <Input
+                id="cf-description"
+                type="text"
+                maxLength={200}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder={t("cashflow.descriptionPlaceholder")}
+              />
+            </Field>
+            {kind === "expense" && (
+              <Field label={t("cashflow.paidWith")}>
+                <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {accountOptions
+                      .filter((o) => o.value === "liquidity" || o.value.startsWith("credit:"))
+                      .map((o) => (
+                        <SelectItem key={o.value} value={o.value}>
+                          {o.label}
+                        </SelectItem>
                       ))}
-                    </div>
-                  </Field>
-                  {whenMode === "installments" && (
-                    <div className="grid grid-cols-3 gap-3">
-                      <Field htmlFor="cf-inst-count" label={t("cashflow.payments")}>
-                        <Input
-                          id="cf-inst-count"
-                          type="number"
-                          min={1}
-                          max={120}
-                          value={instCount}
-                          onChange={(e) => setInstCount(e.target.value)}
-                        />
-                      </Field>
-                      <Field label={t("cashflow.every")}>
+                  </SelectContent>
+                </Select>
+              </Field>
+            )}
+            {kind === "expense" && !isPercent && (
+              <div className="rounded-md border border-border/60 p-3 space-y-3">
+                <Field label={t("cashflow.upcoming.whenLabel")}>
+                  <div className="flex flex-wrap gap-1">
+                    {(
+                      [
+                        ["one-time", t("cashflow.none")],
+                        ["recurring", t("cashflow.recurrence")],
+                        ...(kind === "expense"
+                          ? [["installments", t("cashflow.splitInstallments")]]
+                          : []),
+                      ] as const
+                    ).map(([mode, label]) => (
+                      <Button
+                        key={mode}
+                        type="button"
+                        variant={whenMode === mode ? "secondary" : "outline"}
+                        size="sm"
+                        className="h-8 text-xs"
+                        onClick={() => setWhenMode(mode as typeof whenMode)}
+                      >
+                        {label}
+                      </Button>
+                    ))}
+                  </div>
+                </Field>
+                {whenMode === "installments" && (
+                  <div className="grid grid-cols-3 gap-3">
+                    <Field htmlFor="cf-inst-count" label={t("cashflow.payments")}>
+                      <Input
+                        id="cf-inst-count"
+                        type="number"
+                        min={1}
+                        max={120}
+                        value={instCount}
+                        onChange={(e) => setInstCount(e.target.value)}
+                      />
+                    </Field>
+                    <Field label={t("cashflow.every")}>
+                      <Select
+                        value={instFreq}
+                        onValueChange={(v) => setInstFreq(v as "weekly" | "monthly")}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="weekly">{t("cashflow.weekOpt")}</SelectItem>
+                          <SelectItem value="monthly">{t("cashflow.monthOpt")}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </Field>
+                    <Field htmlFor="cf-inst-start" label={t("cashflow.firstDue")}>
+                      <Input
+                        id="cf-inst-start"
+                        type="date"
+                        value={instStart}
+                        onChange={(e) => setInstStart(e.target.value)}
+                      />
+                    </Field>
+                  </div>
+                )}
+                {whenMode === "recurring" && (
+                  <>
+                    <div className="grid grid-cols-2 gap-3">
+                      <Field label={t("cashflow.frequency")}>
                         <Select
-                          value={instFreq}
-                          onValueChange={(v) => setInstFreq(v as "weekly" | "monthly")}
+                          value={frequency}
+                          onValueChange={(v) => setFrequency(v as RecurrenceFrequency)}
                         >
                           <SelectTrigger>
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="weekly">{t("cashflow.weekOpt")}</SelectItem>
-                            <SelectItem value="monthly">{t("cashflow.monthOpt")}</SelectItem>
+                            <SelectItem value="weekly">{t("cashflow.weekly")}</SelectItem>
+                            <SelectItem value="monthly">{t("cashflow.monthly")}</SelectItem>
+                            <SelectItem value="yearly">{t("cashflow.yearly")}</SelectItem>
                           </SelectContent>
                         </Select>
                       </Field>
-                      <Field htmlFor="cf-inst-start" label={t("cashflow.firstDue")}>
+                      <Field htmlFor="cf-until" label={t("cashflow.untilOptional")}>
                         <Input
-                          id="cf-inst-start"
+                          id="cf-until"
                           type="date"
-                          value={instStart}
-                          onChange={(e) => setInstStart(e.target.value)}
+                          value={until}
+                          onChange={(e) => setUntil(e.target.value)}
                         />
                       </Field>
                     </div>
-                  )}
-                  {whenMode === "recurring" && (
-                    <>
-                      <div className="grid grid-cols-2 gap-3">
-                        <Field label={t("cashflow.frequency")}>
-                          <Select
-                            value={frequency}
-                            onValueChange={(v) => setFrequency(v as RecurrenceFrequency)}
-                          >
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="weekly">{t("cashflow.weekly")}</SelectItem>
-                              <SelectItem value="monthly">{t("cashflow.monthly")}</SelectItem>
-                              <SelectItem value="yearly">{t("cashflow.yearly")}</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </Field>
-                        <Field htmlFor="cf-until" label={t("cashflow.untilOptional")}>
-                          <Input
-                            id="cf-until"
-                            type="date"
-                            value={until}
-                            onChange={(e) => setUntil(e.target.value)}
-                          />
-                        </Field>
-                      </div>
-                      {recurrencePreview && (
-                        <p className="text-xs text-muted-foreground">{recurrencePreview}</p>
-                      )}
-                    </>
-                  )}
-                </div>
-              )}
-              {kind === "income" && !isPercent && (
-                <div className="rounded-md border border-border/60 p-3 space-y-3">
-                  <Field label={t("cashflow.upcoming.whenLabel")}>
-                    <div className="flex flex-wrap gap-1">
-                      {(
-                        [
-                          ["one-time", t("cashflow.none")],
-                          ["recurring", t("cashflow.recurrence")],
-                        ] as const
-                      ).map(([mode, label]) => (
-                        <Button
-                          key={mode}
-                          type="button"
-                          variant={whenMode === mode ? "secondary" : "outline"}
-                          size="sm"
-                          className="h-8 text-xs"
-                          onClick={() => setWhenMode(mode as typeof whenMode)}
+                    {recurrencePreview && (
+                      <p className="text-xs text-muted-foreground">{recurrencePreview}</p>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
+            {kind === "income" && !isPercent && (
+              <div className="rounded-md border border-border/60 p-3 space-y-3">
+                <Field label={t("cashflow.upcoming.whenLabel")}>
+                  <div className="flex flex-wrap gap-1">
+                    {(
+                      [
+                        ["one-time", t("cashflow.none")],
+                        ["recurring", t("cashflow.recurrence")],
+                      ] as const
+                    ).map(([mode, label]) => (
+                      <Button
+                        key={mode}
+                        type="button"
+                        variant={whenMode === mode ? "secondary" : "outline"}
+                        size="sm"
+                        className="h-8 text-xs"
+                        onClick={() => setWhenMode(mode as typeof whenMode)}
+                      >
+                        {label}
+                      </Button>
+                    ))}
+                  </div>
+                </Field>
+                {whenMode === "recurring" && (
+                  <>
+                    <div className="grid grid-cols-2 gap-3">
+                      <Field label={t("cashflow.frequency")}>
+                        <Select
+                          value={frequency}
+                          onValueChange={(v) => setFrequency(v as RecurrenceFrequency)}
                         >
-                          {label}
-                        </Button>
-                      ))}
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="weekly">{t("cashflow.weekly")}</SelectItem>
+                            <SelectItem value="monthly">{t("cashflow.monthly")}</SelectItem>
+                            <SelectItem value="yearly">{t("cashflow.yearly")}</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </Field>
+                      <Field htmlFor="cf-until" label={t("cashflow.untilOptional")}>
+                        <Input
+                          id="cf-until"
+                          type="date"
+                          value={until}
+                          onChange={(e) => setUntil(e.target.value)}
+                        />
+                      </Field>
                     </div>
-                  </Field>
-                  {whenMode === "recurring" && (
-                    <>
-                      <div className="grid grid-cols-2 gap-3">
-                        <Field label={t("cashflow.frequency")}>
-                          <Select
-                            value={frequency}
-                            onValueChange={(v) => setFrequency(v as RecurrenceFrequency)}
-                          >
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="weekly">{t("cashflow.weekly")}</SelectItem>
-                              <SelectItem value="monthly">{t("cashflow.monthly")}</SelectItem>
-                              <SelectItem value="yearly">{t("cashflow.yearly")}</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </Field>
-                        <Field htmlFor="cf-until" label={t("cashflow.untilOptional")}>
-                          <Input
-                            id="cf-until"
-                            type="date"
-                            value={until}
-                            onChange={(e) => setUntil(e.target.value)}
-                          />
-                        </Field>
-                      </div>
-                      {recurrencePreview && (
-                        <p className="text-xs text-muted-foreground">{recurrencePreview}</p>
-                      )}
-                    </>
-                  )}
-                </div>
-              )}
-            </TabsContent>
-          ) : (
-            <TabsContent value="transfer" className="mt-4 space-y-3">
-              <p className="text-xs text-muted-foreground">{t("cashflow.transferIntro")}</p>
-              <div className="grid grid-cols-2 gap-3">
-                <Field label={t("cashflow.from")}>
-                  <Select value={fromAccount} onValueChange={setFromAccount}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {accountOptions.map((o) => (
-                        <SelectItem key={o.value} value={o.value}>
-                          {o.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </Field>
-                <Field label={t("cashflow.to")}>
-                  <Select value={toAccount} onValueChange={setToAccount}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {accountOptions.map((o) => (
-                        <SelectItem key={o.value} value={o.value}>
-                          {o.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </Field>
+                    {recurrencePreview && (
+                      <p className="text-xs text-muted-foreground">{recurrencePreview}</p>
+                    )}
+                  </>
+                )}
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                <Field htmlFor="cf-transfer-amount" label={t("common.amount")}>
-                  <Input
-                    id="cf-transfer-amount"
-                    type="number"
-                    step="any"
-                    value={amount}
-                    onChange={(e) => {
-                      setAmount(e.target.value);
-                      if (formError?.field === "amount") setFormError(null);
-                    }}
-                    placeholder="0.00"
-                    aria-invalid={formError?.field === "amount"}
-                  />
-                </Field>
-                <Field label={t("common.currency")}>
-                  <Select value={entryCurrency} onValueChange={setEntryCurrency}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="max-h-72">
-                      {CURRENCIES.map((c) => (
-                        <SelectItem key={c.code} value={c.code}>
-                          {c.code} · {c.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </Field>
-                <Field htmlFor="cf-transfer-date" label={t("common.date")}>
-                  <Input
-                    id="cf-transfer-date"
-                    type="date"
-                    value={date}
-                    onChange={(e) => setDate(e.target.value)}
-                  />
-                </Field>
-              </div>
-              <Field htmlFor="cf-transfer-description" label={t("cashflow.descriptionLabel")}>
+            )}
+          </TabsContent>
+        ) : (
+          <TabsContent value="transfer" className="mt-4 space-y-3">
+            <p className="text-xs text-muted-foreground">{t("cashflow.transferIntro")}</p>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label={t("cashflow.from")}>
+                <Select value={fromAccount} onValueChange={setFromAccount}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {accountOptions.map((o) => (
+                      <SelectItem key={o.value} value={o.value}>
+                        {o.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Field>
+              <Field label={t("cashflow.to")}>
+                <Select value={toAccount} onValueChange={setToAccount}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {accountOptions.map((o) => (
+                      <SelectItem key={o.value} value={o.value}>
+                        {o.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Field>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              <Field htmlFor="cf-transfer-amount" label={t("common.amount")}>
                 <Input
-                  id="cf-transfer-description"
-                  type="text"
-                  maxLength={200}
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder={t("cashflow.transferDescPlaceholder")}
+                  id="cf-transfer-amount"
+                  type="number"
+                  step="any"
+                  value={amount}
+                  onChange={(e) => {
+                    setAmount(e.target.value);
+                    if (formError?.field === "amount") setFormError(null);
+                  }}
+                  placeholder="0.00"
+                  aria-invalid={formError?.field === "amount"}
                 />
               </Field>
-            </TabsContent>
-          )}
-        </Tabs>
-        {formError ? (
-          <p className="mt-3 text-sm text-destructive" role="alert">
-            {formError.message}
-          </p>
-        ) : null}
-        <Button className="mt-4 w-full" onClick={submit}>
-          {!editing && <Plus className="mr-2 h-4 w-4" />} {submitLabel}
-        </Button>
+              <Field label={t("common.currency")}>
+                <Select value={entryCurrency} onValueChange={setEntryCurrency}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-72">
+                    {CURRENCIES.map((c) => (
+                      <SelectItem key={c.code} value={c.code}>
+                        {c.code} · {c.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Field>
+              <Field htmlFor="cf-transfer-date" label={t("common.date")}>
+                <Input
+                  id="cf-transfer-date"
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                />
+              </Field>
+            </div>
+            <Field htmlFor="cf-transfer-description" label={t("cashflow.descriptionLabel")}>
+              <Input
+                id="cf-transfer-description"
+                type="text"
+                maxLength={200}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder={t("cashflow.transferDescPlaceholder")}
+              />
+            </Field>
+          </TabsContent>
+        )}
+      </Tabs>
+      {formError ? (
+        <p className="mt-3 text-sm text-destructive" role="alert">
+          {formError.message}
+        </p>
+      ) : null}
+      <Button className="mt-4 w-full" onClick={submit}>
+        {!editing && <Plus className="mr-2 h-4 w-4" />} {submitLabel}
+      </Button>
     </>
   );
 
@@ -2378,11 +2390,7 @@ function AddForm({
           <div className={isPercent ? "col-span-1" : "col-span-2 sm:col-span-1"}>
             <Field
               htmlFor="cf-date"
-              label={
-                whenMode === "recurring"
-                  ? t("cashflow.upcoming.startDate")
-                  : t("common.date")
-              }
+              label={whenMode === "recurring" ? t("cashflow.upcoming.startDate") : t("common.date")}
             >
               <Input
                 id="cf-date"
@@ -2550,7 +2558,9 @@ function CategoryPicker({
         }}
       >
         <SelectTrigger>
-          <SelectValue placeholder={t("cashflow.selectCategory", { defaultValue: "Select a category" })} />
+          <SelectValue
+            placeholder={t("cashflow.selectCategory", { defaultValue: "Select a category" })}
+          />
         </SelectTrigger>
         <SelectContent>
           {categories.map((c) => (

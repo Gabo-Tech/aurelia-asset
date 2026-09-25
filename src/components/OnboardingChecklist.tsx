@@ -13,6 +13,7 @@ import { useTranslation } from "react-i18next";
 import { useAppStore, flushPersist } from "@/lib/store";
 import { CURRENCIES } from "@/lib/currency";
 import { PrimaryButton, SecondaryButton, Field, Chip } from "@/components/ui";
+import { useKeyboardInset } from "@/hooks/useKeyboardInset";
 import { spacing, radii } from "@/theme/colors";
 import { useColors } from "@/theme/ThemeProvider";
 import { type as typography } from "@/theme/typography";
@@ -43,6 +44,7 @@ export function OnboardingChecklist({
 
   // Explicit false only (new installs / restart tour). Missing flag = existing users.
   const visible = onboardingSeen === false;
+  const { keyboardHeight } = useKeyboardInset(visible);
 
   // Reset the flow only when the tour is opened — not on every profile/settings tweak mid-flow.
   useEffect(() => {
@@ -85,6 +87,11 @@ export function OnboardingChecklist({
 
   if (!visible) return null;
 
+  const cardPadBottom =
+    keyboardHeight > 0
+      ? keyboardHeight + spacing.md
+      : Math.max(insets.bottom, spacing.lg);
+
   return (
     <Modal visible animationType="fade" transparent statusBarTranslucent>
       <View style={[styles.backdrop, { paddingTop: insets.top + spacing.lg }]}>
@@ -92,13 +99,18 @@ export function OnboardingChecklist({
           style={[
             styles.card,
             {
-              paddingBottom: Math.max(insets.bottom, spacing.lg),
+              paddingBottom: cardPadBottom,
               backgroundColor: colors.surface,
               borderColor: colors.border,
             },
           ]}
         >
-          <ScrollView bounces={false} keyboardShouldPersistTaps="handled">
+          <ScrollView
+            bounces={false}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
+            automaticallyAdjustKeyboardInsets
+          >
             {step === "welcome" ? (
               <>
                 <Text style={[styles.brand, { color: colors.accent }]}>Aurelia Asset</Text>

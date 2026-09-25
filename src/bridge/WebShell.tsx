@@ -6,6 +6,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  KeyboardAvoidingView,
   NativeModules,
   Platform,
   StyleSheet,
@@ -140,7 +141,11 @@ export function WebShell() {
   }
 
   return (
-    <View style={[styles.root, { backgroundColor: colors.bg }]}>
+    <KeyboardAvoidingView
+      style={[styles.root, { backgroundColor: colors.bg }]}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      keyboardVerticalOffset={0}
+    >
       <RNWebView
         ref={webRef}
         source={{ uri: `${origin}/` }}
@@ -159,7 +164,7 @@ export function WebShell() {
         onMessage={onMessage}
         geolocationEnabled={false}
       />
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 

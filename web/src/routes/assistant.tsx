@@ -17,6 +17,7 @@ import {
   User as UserIcon,
 } from "lucide-react";
 import { PageHeader } from "@/components/app-shell";
+import { PageStack } from "@/components/design/page-stack";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
@@ -327,9 +328,7 @@ function AssistantPage() {
           }),
         );
         return prev.map((m) =>
-          m.id === messageId
-            ? { ...m, pendingChange: undefined, content: m.content + " ✓" }
-            : m,
+          m.id === messageId ? { ...m, pendingChange: undefined, content: m.content + " ✓" } : m,
         );
       });
     },
@@ -402,130 +401,135 @@ function AssistantPage() {
           </div>
         }
       />
-
-      {/* Message list */}
-      <div
-        ref={scrollRef}
-        className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain rounded-2xl border border-border/60 bg-card/40 p-3 shadow-sm sm:p-4"
-        role="log"
-        aria-live="polite"
-        aria-relevant="additions"
-      >
-        {messages.length === 0 ? (
-          <EmptyState onSuggest={(text) => setInput(text)} />
-        ) : (
-          <div data-tour="assistant-chat" className="space-y-4">
-            {messages.map((m) => (
-              <MessageBubble
-                key={m.id}
-                message={m}
-                onConfirm={() => confirmChange(m.id)}
-                onDismiss={() => dismissChange(m.id)}
-                onRetry={() => {
-                  // Retry: resend the previous user message.
-                  const idx = messages.findIndex((x) => x.id === m.id);
-                  const prevUser = [...messages.slice(0, idx)]
-                    .reverse()
-                    .find((x) => x.role === "user");
-                  if (prevUser) void send(prevUser.content);
-                }}
-                confirmLabel={t("assistant.confirmAdd")}
-                cancelLabel={t("assistant.cancel")}
-                retryLabel={t("assistant.retry")}
-              />
-            ))}
-          </div>
-        )}
-        {pipeline === "thinking" && (
-          <StatusRow
-            icon={<Loader2 className="h-3.5 w-3.5 animate-spin" />}
-            label={t("assistant.thinking", { defaultValue: "Thinking…" })}
-          />
-        )}
-        {pipeline === "transcribing" && (
-          <StatusRow
-            icon={<Loader2 className="h-3.5 w-3.5 animate-spin" />}
-            label={t("assistant.transcribing", { defaultValue: "Transcribing…" })}
-          />
-        )}
-        {pipeline === "speaking" && (
-          <StatusRow
-            icon={<Volume2 className="h-3.5 w-3.5" />}
-            label={t("assistant.speaking", { defaultValue: "Speaking…" })}
-          />
-        )}
-      </div>
-
-      {/* Input bar — sticky on mobile so keyboard doesn't hide controls */}
-      <div
-        className="sticky bottom-[calc(var(--app-tabbar-h)+env(safe-area-inset-bottom,0px))] z-10 mt-3 flex items-end gap-2 border-t border-border/40 glass rounded-t-2xl px-1 pb-2 pt-3 lg:static lg:bottom-auto lg:rounded-none lg:border-t-0 lg:bg-transparent lg:p-0 lg:backdrop-blur-none"
-        data-tour="assistant-input"
-      >
-        <div className="relative flex-1">
-          <Textarea
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                void send(input);
-              }
-            }}
-            placeholder={
-              pipeline === "listening"
-                ? t("assistant.listeningPlaceholder")
-                : t("assistant.inputPlaceholder")
-            }
-            rows={1}
-            className="max-h-32 min-h-[44px] resize-none pr-2 text-base sm:text-sm"
-            disabled={pipeline === "listening"}
-          />
+      <PageStack className="min-h-0 flex-1">
+        {/* Message list */}
+        <div
+          ref={scrollRef}
+          className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain rounded-2xl border border-border/60 bg-card/40 p-3 shadow-sm sm:p-4"
+          role="log"
+          aria-live="polite"
+          aria-relevant="additions"
+        >
+          {messages.length === 0 ? (
+            <EmptyState onSuggest={(text) => setInput(text)} />
+          ) : (
+            <div data-tour="assistant-chat" className="space-y-4">
+              {messages.map((m) => (
+                <MessageBubble
+                  key={m.id}
+                  message={m}
+                  onConfirm={() => confirmChange(m.id)}
+                  onDismiss={() => dismissChange(m.id)}
+                  onRetry={() => {
+                    // Retry: resend the previous user message.
+                    const idx = messages.findIndex((x) => x.id === m.id);
+                    const prevUser = [...messages.slice(0, idx)]
+                      .reverse()
+                      .find((x) => x.role === "user");
+                    if (prevUser) void send(prevUser.content);
+                  }}
+                  confirmLabel={t("assistant.confirmAdd")}
+                  cancelLabel={t("assistant.cancel")}
+                  retryLabel={t("assistant.retry")}
+                />
+              ))}
+            </div>
+          )}
+          {pipeline === "thinking" && (
+            <StatusRow
+              icon={<Loader2 className="h-3.5 w-3.5 animate-spin" />}
+              label={t("assistant.thinking", { defaultValue: "Thinking…" })}
+            />
+          )}
+          {pipeline === "transcribing" && (
+            <StatusRow
+              icon={<Loader2 className="h-3.5 w-3.5 animate-spin" />}
+              label={t("assistant.transcribing", { defaultValue: "Transcribing…" })}
+            />
+          )}
+          {pipeline === "speaking" && (
+            <StatusRow
+              icon={<Volume2 className="h-3.5 w-3.5" />}
+              label={t("assistant.speaking", { defaultValue: "Speaking…" })}
+            />
+          )}
         </div>
 
-        <Button
-          type="button"
-          size="icon"
-          variant={pipeline === "listening" ? "destructive" : "secondary"}
-          onClick={toggleMic}
-          className={cn(
-            "h-14 w-14 shrink-0 rounded-full sm:h-11 sm:w-11",
-            pipeline === "listening" && "animate-pulse",
-          )}
-          title={
-            pipeline === "listening" ? t("assistant.stopRecording") : t("assistant.startRecording")
-          }
-          aria-label={
-            pipeline === "listening" ? t("assistant.stopRecording") : t("assistant.startRecording")
-          }
+        {/* Input bar — sticky on mobile so keyboard doesn't hide controls */}
+        <div
+          className="sticky bottom-[calc(var(--app-tabbar-h)+env(safe-area-inset-bottom,0px)+var(--keyboard-inset,0px))] z-10 mt-3 flex items-end gap-2 border-t border-border/40 glass rounded-t-2xl px-1 pb-2 pt-3 lg:static lg:bottom-auto lg:rounded-none lg:border-t-0 lg:bg-transparent lg:p-0 lg:backdrop-blur-none"
+          data-tour="assistant-input"
         >
-          {pipeline === "listening" ? (
-            <Square className="h-4 w-4 fill-current" />
-          ) : (
-            <Mic className="h-5 w-5" />
-          )}
-        </Button>
+          <div className="relative flex-1">
+            <Textarea
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  void send(input);
+                }
+              }}
+              placeholder={
+                pipeline === "listening"
+                  ? t("assistant.listeningPlaceholder")
+                  : t("assistant.inputPlaceholder")
+              }
+              rows={1}
+              className="max-h-32 min-h-[44px] resize-none pr-2 text-base sm:text-sm"
+              disabled={pipeline === "listening"}
+            />
+          </div>
 
-        <Button
-          type="button"
-          size="icon"
-          onClick={() => send(input)}
-          disabled={!input.trim() || busy}
-          className="h-11 w-11 shrink-0 rounded-full"
-          title={t("assistant.sendBtn")}
-          aria-label={t("assistant.sendBtn")}
-        >
-          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-        </Button>
-      </div>
+          <Button
+            type="button"
+            size="icon"
+            variant={pipeline === "listening" ? "destructive" : "secondary"}
+            onClick={toggleMic}
+            className={cn(
+              "h-14 w-14 shrink-0 rounded-full sm:h-11 sm:w-11",
+              pipeline === "listening" && "animate-pulse",
+            )}
+            title={
+              pipeline === "listening"
+                ? t("assistant.stopRecording")
+                : t("assistant.startRecording")
+            }
+            aria-label={
+              pipeline === "listening"
+                ? t("assistant.stopRecording")
+                : t("assistant.startRecording")
+            }
+          >
+            {pipeline === "listening" ? (
+              <Square className="h-4 w-4 fill-current" />
+            ) : (
+              <Mic className="h-5 w-5" />
+            )}
+          </Button>
 
-      {voiceCaps.stt === "none" && (
-        <p className="mt-2 text-center text-[11px] text-muted-foreground/70">
-          {t("assistant.voiceHint", {
-            defaultValue:
-              "Voice input requires the native app or a supported browser. Text works everywhere.",
-          })}
-        </p>
-      )}
+          <Button
+            type="button"
+            size="icon"
+            onClick={() => send(input)}
+            disabled={!input.trim() || busy}
+            className="h-11 w-11 shrink-0 rounded-full"
+            title={t("assistant.sendBtn")}
+            aria-label={t("assistant.sendBtn")}
+          >
+            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+          </Button>
+        </div>
+
+        {voiceCaps.stt === "none" && (
+          <p className="text-center text-[11px] leading-relaxed text-muted-foreground/70">
+            {t("assistant.voiceHint", {
+              defaultValue:
+                "Voice input requires the native app or a supported browser. Text works everywhere.",
+            })}
+          </p>
+        )}
+      </PageStack>
     </div>
   );
 }
@@ -628,9 +632,7 @@ function MessageBubble({
 
         {change ? (
           <div className="mt-2 rounded-xl border border-primary/30 bg-primary/5 p-3 space-y-2">
-            {change.summary ? (
-              <div className="text-sm font-medium">{change.summary}</div>
-            ) : null}
+            {change.summary ? <div className="text-sm font-medium">{change.summary}</div> : null}
             <div className="space-y-1">
               {change.preview.slice(0, 6).map((row) => (
                 <div

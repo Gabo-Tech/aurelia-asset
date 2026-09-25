@@ -7,11 +7,10 @@ import {
   View,
   Pressable,
   Switch,
-  Keyboard,
-  type KeyboardEvent,
 } from "react-native";
+import { useKeyboardInset } from "@/hooks/useKeyboardInset";
 import { useTranslation } from "react-i18next";
-import { Screen, Header, PrimaryButton, SecondaryButton, EmptyState, chipLabelStyle, chipContainerStyle } from "@/components/ui";
+import { Screen, ScreenStack, Header, PrimaryButton, SecondaryButton, EmptyState, CardHelperText, chipLabelStyle, chipContainerStyle } from "@/components/ui";
 import { useStore, useMoney } from "@/lib/store";
 import { runAssistant, getAiCapabilities } from "@/lib/ai/provider";
 import { aiConfigFromSettings } from "@/lib/ai/config";
@@ -87,23 +86,10 @@ export function AssistantScreen() {
   const listenerRef = useRef<VoiceListener | null>(null);
   const scrollRef = useRef<ScrollView>(null);
   const runAbortRef = useRef<AbortController | null>(null);
-  const [keyboardPad, setKeyboardPad] = useState(0);
+  const { keyboardHeight: keyboardPad } = useKeyboardInset();
 
   const aiConfig = aiConfigFromSettings(state.settings);
   const ttsEnabled = state.settings.aiTtsEnabled !== false;
-
-  useEffect(() => {
-    const onShow = (e: KeyboardEvent) => {
-      setKeyboardPad(Math.max(0, e.endCoordinates?.height ?? 0));
-    };
-    const onHide = () => setKeyboardPad(0);
-    const showSub = Keyboard.addListener("keyboardDidShow", onShow);
-    const hideSub = Keyboard.addListener("keyboardDidHide", onHide);
-    return () => {
-      showSub.remove();
-      hideSub.remove();
-    };
-  }, []);
 
   useEffect(() => {
     void loadChatHistory().then(setMessages);
@@ -361,6 +347,7 @@ export function AssistantScreen() {
         title={t("nav.assistant", { defaultValue: "Assistant" })}
         subtitle={t("assistant.subtitle")}
       />
+      <ScreenStack style={styles.flex}>
       <View style={styles.ttsRow}>
         <Text style={styles.ttsLabel}>
           {t("assistant.speakReplies", { defaultValue: "Speak replies (TTS)" })}
@@ -378,29 +365,29 @@ export function AssistantScreen() {
         />
       ) : null}
       {voiceCaps.stt === "none" ? (
-        <Text style={styles.banner}>
+        <CardHelperText>
           {caps.speechReason ||
             caps.sttDetail ||
             t("assistant.sttUnavailable", {
               defaultValue: "Download STT in Settings to use voice input.",
             })}
-        </Text>
+        </CardHelperText>
       ) : voiceCaps.stt === "webspeech" ? (
-        <Text style={styles.banner}>
+        <CardHelperText>
           {t("assistant.sttWebspeech", {
             defaultValue: "Using browser Web Speech for voice (Linux / RN Web).",
           })}
-        </Text>
+        </CardHelperText>
       ) : null}
       {voiceCaps.tts === "none" && ttsEnabled ? (
-        <Text style={styles.banner}>
+        <CardHelperText>
           {caps.ttsDetail ||
             t("assistant.ttsUnavailable", {
               defaultValue: "Download TTS in Settings to speak replies.",
             })}
-        </Text>
+        </CardHelperText>
       ) : null}
-      {voiceError ? <Text style={styles.banner}>{voiceError}</Text> : null}
+      {voiceError ? <CardHelperText style={{ color: colors.danger }}>{voiceError}</CardHelperText> : null}
       <ScrollView
         ref={scrollRef}
         style={styles.chat}
@@ -506,6 +493,7 @@ export function AssistantScreen() {
           )}
         </Pressable>
       </View>
+      </ScreenStack>
     </Screen>
   );
 }
@@ -535,7 +523,7 @@ function createStyles(colors: ReturnType<typeof useColors>) {
   },
   content: { color: colors.text, fontSize: 15, lineHeight: 22 },
   errorText: { color: colors.danger },
-  chips: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 12 },
+  chips: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm },
   chip: {
     ...chipContainerStyle,
     borderRadius: 16,
@@ -579,14 +567,8 @@ function createStyles(colors: ReturnType<typeof useColors>) {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 8,
+    gap: spacing.sm,
   },
   ttsLabel: { color: colors.muted, fontSize: 13 },
-  banner: {
-    color: colors.muted,
-    fontSize: 12,
-    marginBottom: 8,
-    lineHeight: 16,
-  },
 });
 }

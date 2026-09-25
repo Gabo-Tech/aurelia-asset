@@ -1214,6 +1214,8 @@ const en = {
       addHint: "Set a target and track how much you have saved.",
       added: "Goal added",
       empty: "No goals yet.",
+      manualHint:
+        "Progress is manual. Contributions update the goal here and do not create a cashflow entry.",
       by: "by {{date}}",
       saveHint: "Save ~{{amount}}/mo to hit your goal.",
       addContribution: "Add contribution ({{currency}})",

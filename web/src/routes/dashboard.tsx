@@ -17,6 +17,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { PageHeader } from "@/components/app-shell";
+import { PageStack } from "@/components/design/page-stack";
 import { ChartFrame } from "@/components/chart-frame";
 import { NetWorthTimeline } from "@/components/net-worth-timeline";
 import { useTranslation } from "react-i18next";
@@ -132,13 +133,15 @@ function Dashboard() {
     return (
       <>
         <PageHeader title={greeting} description={t("dashboard.description")} />
-        <EmptyState
-          icon={<Wallet className="h-8 w-8" />}
-          title={t("dashboard.emptyTitle")}
-          description={t("dashboard.emptyDescription")}
-          actionLabel={t("dashboard.emptyAction")}
-          actionTo="/holdings"
-        />
+        <PageStack>
+          <EmptyState
+            icon={<Wallet className="h-8 w-8" />}
+            title={t("dashboard.emptyTitle")}
+            description={t("dashboard.emptyDescription")}
+            actionLabel={t("dashboard.emptyAction")}
+            actionTo="/holdings"
+          />
+        </PageStack>
         <Fab
           label={t("dashboard.fabLog")}
           icon={<ArrowLeftRight className="h-5 w-5" />}
@@ -160,257 +163,267 @@ function Dashboard() {
         }
       />
 
-      <div className="grid gap-4 sm:gap-5 sm:grid-cols-2 xl:grid-cols-4" data-tour="dash-stats">
-        <MetricHeroCard
-          label={t("dashboard.netWorth")}
-          value={mask(netWorth, currency)}
-          className="order-first col-span-full sm:col-span-2"
-          sub={
-            <>
-              <LocalFirstBadge label={t("dashboard.localFirstHint")} className="mb-2" />
-              {t("dashboard.netWorthSub")}
-              {" · "}
-              {t("dashboard.netWorthLiquidity", {
-                sign: cashflowBalance >= 0 ? "+" : "−",
-                value: mask(Math.abs(cashflowBalance), currency),
-              })}
-            </>
-          }
-        />
+      <PageStack>
+        <div className="grid gap-4 sm:gap-5 sm:grid-cols-2 xl:grid-cols-4" data-tour="dash-stats">
+          <MetricHeroCard
+            label={t("dashboard.netWorth")}
+            value={mask(netWorth, currency)}
+            className="order-first col-span-full sm:col-span-2"
+            sub={
+              <>
+                <LocalFirstBadge label={t("dashboard.localFirstHint")} className="mb-2" />
+                {t("dashboard.netWorthSub")}
+                {" · "}
+                {t("dashboard.netWorthLiquidity", {
+                  sign: cashflowBalance >= 0 ? "+" : "−",
+                  value: mask(Math.abs(cashflowBalance), currency),
+                })}
+              </>
+            }
+          />
 
-        <MetricTile
-          label={t("dashboard.portfolioValue")}
-          value={mask(portfolioTotal, currency)}
-          sub={
-            <>
-              {holdings.length === 1
-                ? t("dashboard.holdingsCountOne")
-                : t("dashboard.holdingsCount", { count: holdings.length })}
-              {topAlloc ? (
-                <>
-                  {" · "}
-                  {t("dashboard.topHolding", {
-                    name: topAlloc.name,
-                    pct: formatPct((topAlloc.value / portfolioTotal) * 100, 1).replace("+", ""),
-                  })}
-                </>
-              ) : null}
-            </>
-          }
-        />
+          <MetricTile
+            label={t("dashboard.portfolioValue")}
+            value={mask(portfolioTotal, currency)}
+            sub={
+              <>
+                {holdings.length === 1
+                  ? t("dashboard.holdingsCountOne")
+                  : t("dashboard.holdingsCount", { count: holdings.length })}
+                {topAlloc ? (
+                  <>
+                    {" · "}
+                    {t("dashboard.topHolding", {
+                      name: topAlloc.name,
+                      pct: formatPct((topAlloc.value / portfolioTotal) * 100, 1).replace("+", ""),
+                    })}
+                  </>
+                ) : null}
+              </>
+            }
+          />
 
-        <MetricTile
-          label={t("dashboard.net30")}
-          value={`${net30 >= 0 ? "+" : "-"}${mask(Math.abs(net30), currency)}`}
-          tone={net30 >= 0 ? "success" : "destructive"}
-          sub={t("dashboard.net30Sub")}
-          icon={
-            net30 >= 0 ? (
-              <TrendingUp className="h-4 w-4 text-success" />
-            ) : (
-              <TrendingDown className="h-4 w-4 text-destructive" />
-            )
-          }
-        />
-      </div>
+          <MetricTile
+            label={t("dashboard.net30")}
+            value={`${net30 >= 0 ? "+" : "-"}${mask(Math.abs(net30), currency)}`}
+            tone={net30 >= 0 ? "success" : "destructive"}
+            sub={t("dashboard.net30Sub")}
+            icon={
+              net30 >= 0 ? (
+                <TrendingUp className="h-4 w-4 text-success" />
+              ) : (
+                <TrendingDown className="h-4 w-4 text-destructive" />
+              )
+            }
+          />
+        </div>
 
-      {/* Quick actions */}
-      <div
-        className="mt-4 flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-        data-tour="dash-quick-actions"
-      >
-        <QuickAction to="/holdings" icon={<Plus className="h-4 w-4" />} label={t("dashboard.addAsset")} />
-        <QuickAction
-          to="/cashflow"
-          icon={<ArrowLeftRight className="h-4 w-4" />}
-          label={t("dashboard.addEntry")}
-        />
-        <QuickAction
-          to="/holdings"
-          icon={<Wallet className="h-4 w-4" />}
-          label={t("nav.holdings")}
-        />
-        <QuickAction
-          to="/performance"
-          icon={<TrendingUp className="h-4 w-4" />}
-          label={t("nav.short.performance")}
-        />
-      </div>
+        {/* Quick actions */}
+        <div
+          className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          data-tour="dash-quick-actions"
+        >
+          <QuickAction
+            to="/holdings"
+            icon={<Plus className="h-4 w-4" />}
+            label={t("dashboard.addAsset")}
+          />
+          <QuickAction
+            to="/cashflow"
+            icon={<ArrowLeftRight className="h-4 w-4" />}
+            label={t("dashboard.addEntry")}
+          />
+          <QuickAction
+            to="/holdings"
+            icon={<Wallet className="h-4 w-4" />}
+            label={t("nav.holdings")}
+          />
+          <QuickAction
+            to="/performance"
+            icon={<TrendingUp className="h-4 w-4" />}
+            label={t("nav.short.performance")}
+          />
+        </div>
 
-      <div className="mt-5" data-tour="dash-networth-timeline">
-        <NetWorthTimeline />
-      </div>
+        <div data-tour="dash-networth-timeline">
+          <NetWorthTimeline />
+        </div>
 
-      <div className="mt-5 grid gap-4 sm:gap-5 lg:grid-cols-5">
-        <AppCard className="order-2 lg:order-none lg:col-span-3" elevated data-tour="dash-allocation">
-          <AppCardHeader className="flex flex-col gap-4">
-            <div className="flex flex-row items-center justify-between gap-4 flex-wrap">
-              <AppCardTitle className="text-base font-semibold text-foreground">
-                {t("dashboard.allocation")}
-              </AppCardTitle>
-              <div className="flex items-center gap-2">
-                <Label htmlFor="all-labels" className="text-xs text-muted-foreground">
-                  {t("dashboard.showAllLabels")}
-                </Label>
-                <Switch
-                  id="all-labels"
-                  checked={showAllLabels}
-                  onCheckedChange={setShowAllLabels}
-                />
-              </div>
-            </div>
-            {allocation.length > 1 && (
-              <FilterPillGroup
-                pills={allocation.map((a) => ({
-                  id: a.id,
-                  label: a.name,
-                  color: a.color,
-                  active: !hidden.has(a.id),
-                }))}
-                onToggle={toggleAsset}
-                onShowAll={showAll}
-                onHideAll={hideAll}
-                showAllLabel={t("more.pcShowAll")}
-                hideAllLabel={t("more.pcHideAll")}
-              />
-            )}
-          </AppCardHeader>
-          <AppCardContent>
-            {visibleAllocation.length === 0 ? (
-              <div className="flex h-72 flex-col items-center justify-center text-center text-sm text-muted-foreground sm:h-80">
-                <p>{t("dashboard.allAssetsHidden")}</p>
-                <button
-                  type="button"
-                  onClick={showAll}
-                  className="mt-2 min-h-11 text-primary hover:underline"
-                >
-                  {t("dashboard.showAllAssets")}
-                </button>
-              </div>
-            ) : (
-              <ChartFrame filename="allocation" title="Allocation">
-                <div
-                  className="relative flex h-72 items-center justify-center sm:h-80 [&_svg]:overflow-visible"
-                  onMouseLeave={() => setActiveIdx(null)}
-                >
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart margin={{ top: 20, right: 48, bottom: 20, left: 48 }}>
-                      <Pie
-                        data={visibleAllocation}
-                        dataKey="value"
-                        nameKey="name"
-                        innerRadius="52%"
-                        outerRadius="78%"
-                        paddingAngle={1.5}
-                        stroke="var(--card)"
-                        strokeWidth={2}
-                        isAnimationActive
-                        animationDuration={300}
-                        activeIndex={labelledIndexes}
-                        activeShape={
-                          labelledIndexes.length > 0
-                            ? (props: unknown) => (
-                                <LabelledSector
-                                  {...(props as AllocShapeProps)}
-                                  privacy={privacy}
-                                  total={visibleTotal}
-                                  compact={showAllLabels}
-                                />
-                              )
-                            : undefined
-                        }
-                        onMouseEnter={(_, i) => setActiveIdx(i)}
-                        onMouseLeave={() => setActiveIdx(null)}
-                        onClick={(_, i) => {
-                          setActiveIdx(i);
-                          const item = visibleAllocation[i];
-                          if (item) setDetailId(item.id);
-                        }}
-                      >
-                        {visibleAllocation.map((a) => (
-                          <Cell key={a.id} fill={a.color} />
-                        ))}
-                      </Pie>
-                    </PieChart>
-                  </ResponsiveContainer>
-                  <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-                    <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                      Total
-                    </div>
-                    <div className="font-display text-lg tabular-nums tracking-tight sm:text-xl">
-                      {mask(visibleTotal, currency)}
-                    </div>
-                  </div>
-                </div>
-              </ChartFrame>
-            )}
-          </AppCardContent>
-        </AppCard>
-
-        <AppCard className="order-1 lg:order-none lg:col-span-2" data-tour="dash-breakdown">
-          <AppCardHeader>
-            <AppCardTitle className="text-base font-semibold text-foreground">
-              {t("more.dashBreakdown")}
-            </AppCardTitle>
-          </AppCardHeader>
-          <AppCardContent className="space-y-1">
-            {visibleAllocation.slice(0, 8).map((a) => {
-              const pct = visibleTotal ? (a.value / visibleTotal) * 100 : 0;
-              return (
-                <button
-                  key={a.id}
-                  type="button"
-                  onClick={() => setDetailId(a.id)}
-                  className="flex w-full items-center gap-3 rounded-xl px-2 py-2.5 text-left transition-colors hover:bg-muted/60 active-press min-h-11"
-                >
-                  <div
-                    className="h-2.5 w-2.5 shrink-0 rounded-full"
-                    style={{ backgroundColor: a.color }}
+        <div className="grid gap-4 sm:gap-5 lg:grid-cols-5">
+          <AppCard
+            className="order-2 lg:order-none lg:col-span-3"
+            elevated
+            data-tour="dash-allocation"
+          >
+            <AppCardHeader className="flex flex-col gap-4">
+              <div className="flex flex-row items-center justify-between gap-4 flex-wrap">
+                <AppCardTitle className="text-base font-semibold text-foreground">
+                  {t("dashboard.allocation")}
+                </AppCardTitle>
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="all-labels" className="text-xs text-muted-foreground">
+                    {t("dashboard.showAllLabels")}
+                  </Label>
+                  <Switch
+                    id="all-labels"
+                    checked={showAllLabels}
+                    onCheckedChange={setShowAllLabels}
                   />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-baseline justify-between gap-2">
-                      <div className="truncate text-sm font-medium">{a.name}</div>
-                      <div className="text-xs tabular-nums text-muted-foreground">
-                        {pct.toFixed(1)}%
+                </div>
+              </div>
+              {allocation.length > 1 && (
+                <FilterPillGroup
+                  pills={allocation.map((a) => ({
+                    id: a.id,
+                    label: a.name,
+                    color: a.color,
+                    active: !hidden.has(a.id),
+                  }))}
+                  onToggle={toggleAsset}
+                  onShowAll={showAll}
+                  onHideAll={hideAll}
+                  showAllLabel={t("more.pcShowAll")}
+                  hideAllLabel={t("more.pcHideAll")}
+                />
+              )}
+            </AppCardHeader>
+            <AppCardContent>
+              {visibleAllocation.length === 0 ? (
+                <div className="flex h-72 flex-col items-center justify-center text-center text-sm text-muted-foreground sm:h-80">
+                  <p>{t("dashboard.allAssetsHidden")}</p>
+                  <button
+                    type="button"
+                    onClick={showAll}
+                    className="mt-2 min-h-11 text-primary hover:underline"
+                  >
+                    {t("dashboard.showAllAssets")}
+                  </button>
+                </div>
+              ) : (
+                <ChartFrame filename="allocation" title="Allocation">
+                  <div
+                    className="relative flex h-72 items-center justify-center sm:h-80 [&_svg]:overflow-visible"
+                    onMouseLeave={() => setActiveIdx(null)}
+                  >
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart margin={{ top: 20, right: 48, bottom: 20, left: 48 }}>
+                        <Pie
+                          data={visibleAllocation}
+                          dataKey="value"
+                          nameKey="name"
+                          innerRadius="52%"
+                          outerRadius="78%"
+                          paddingAngle={1.5}
+                          stroke="var(--card)"
+                          strokeWidth={2}
+                          isAnimationActive
+                          animationDuration={300}
+                          activeIndex={labelledIndexes}
+                          activeShape={
+                            labelledIndexes.length > 0
+                              ? (props: unknown) => (
+                                  <LabelledSector
+                                    {...(props as AllocShapeProps)}
+                                    privacy={privacy}
+                                    total={visibleTotal}
+                                    compact={showAllLabels}
+                                  />
+                                )
+                              : undefined
+                          }
+                          onMouseEnter={(_, i) => setActiveIdx(i)}
+                          onMouseLeave={() => setActiveIdx(null)}
+                          onClick={(_, i) => {
+                            setActiveIdx(i);
+                            const item = visibleAllocation[i];
+                            if (item) setDetailId(item.id);
+                          }}
+                        >
+                          {visibleAllocation.map((a) => (
+                            <Cell key={a.id} fill={a.color} />
+                          ))}
+                        </Pie>
+                      </PieChart>
+                    </ResponsiveContainer>
+                    <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+                      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                        Total
+                      </div>
+                      <div className="font-display text-lg tabular-nums tracking-tight sm:text-xl">
+                        {mask(visibleTotal, currency)}
                       </div>
                     </div>
-                    <div className="text-xs text-muted-foreground tabular-nums">
-                      {mask(a.value, currency)}
-                    </div>
                   </div>
-                  <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/60" />
-                </button>
-              );
-            })}
-          </AppCardContent>
-        </AppCard>
-      </div>
+                </ChartFrame>
+              )}
+            </AppCardContent>
+          </AppCard>
 
-      {/* Desktop secondary stats */}
-      <div className="mt-5 hidden gap-5 md:grid md:grid-cols-3">
-        <StatTile
-          icon={<Wallet className="h-4 w-4" />}
-          label={t("more.dashHoldings")}
-          value={String(holdings.length)}
-        />
-        <StatTile
-          icon={<TrendingUp className="h-4 w-4 text-success" />}
-          label={t("dashboard.topAsset")}
-          value={topAlloc ? topAlloc.name : "-"}
-          sub={topAlloc ? mask(topAlloc.value, currency) : undefined}
-        />
-        <StatTile
-          icon={
-            net30 >= 0 ? (
-              <PiggyBank className="h-4 w-4 text-success" />
-            ) : (
-              <TrendingDown className="h-4 w-4 text-destructive" />
-            )
-          }
-          label={t("dashboard.net30")}
-          value={`${net30 >= 0 ? "+" : "-"}${mask(Math.abs(net30), currency)}`}
-        />
-      </div>
+          <AppCard className="order-1 lg:order-none lg:col-span-2" data-tour="dash-breakdown">
+            <AppCardHeader>
+              <AppCardTitle className="text-base font-semibold text-foreground">
+                {t("more.dashBreakdown")}
+              </AppCardTitle>
+            </AppCardHeader>
+            <AppCardContent className="space-y-1">
+              {visibleAllocation.slice(0, 8).map((a) => {
+                const pct = visibleTotal ? (a.value / visibleTotal) * 100 : 0;
+                return (
+                  <button
+                    key={a.id}
+                    type="button"
+                    onClick={() => setDetailId(a.id)}
+                    className="flex w-full items-center gap-3 rounded-xl px-2 py-2.5 text-left transition-colors hover:bg-muted/60 active-press min-h-11"
+                  >
+                    <div
+                      className="h-2.5 w-2.5 shrink-0 rounded-full"
+                      style={{ backgroundColor: a.color }}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-baseline justify-between gap-2">
+                        <div className="truncate text-sm font-medium">{a.name}</div>
+                        <div className="text-xs tabular-nums text-muted-foreground">
+                          {pct.toFixed(1)}%
+                        </div>
+                      </div>
+                      <div className="text-xs text-muted-foreground tabular-nums">
+                        {mask(a.value, currency)}
+                      </div>
+                    </div>
+                    <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/60" />
+                  </button>
+                );
+              })}
+            </AppCardContent>
+          </AppCard>
+        </div>
+
+        {/* Desktop secondary stats */}
+        <div className="hidden gap-5 md:grid md:grid-cols-3">
+          <StatTile
+            icon={<Wallet className="h-4 w-4" />}
+            label={t("more.dashHoldings")}
+            value={String(holdings.length)}
+          />
+          <StatTile
+            icon={<TrendingUp className="h-4 w-4 text-success" />}
+            label={t("dashboard.topAsset")}
+            value={topAlloc ? topAlloc.name : "-"}
+            sub={topAlloc ? mask(topAlloc.value, currency) : undefined}
+          />
+          <StatTile
+            icon={
+              net30 >= 0 ? (
+                <PiggyBank className="h-4 w-4 text-success" />
+              ) : (
+                <TrendingDown className="h-4 w-4 text-destructive" />
+              )
+            }
+            label={t("dashboard.net30")}
+            value={`${net30 >= 0 ? "+" : "-"}${mask(Math.abs(net30), currency)}`}
+          />
+        </div>
+      </PageStack>
 
       <ResponsiveDialog
         open={!!detail}

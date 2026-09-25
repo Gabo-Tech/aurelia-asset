@@ -1235,7 +1235,7 @@ const en = {
       empty: "No goals yet.",
       emptyBody: "Set a savings target to track progress.",
       manualHint:
-        "Progress is manual. Contribute updates the goal here and does not create a cashflow entry.",
+        "Progress is manual. Contributions update the goal here and do not create a cashflow entry.",
       needNameTarget: "Enter a name and target amount.",
       deleteTitle: "Delete goal?",
       deleteBody: "Remove “{{name}}”?",

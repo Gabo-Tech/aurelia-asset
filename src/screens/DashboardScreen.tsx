@@ -6,6 +6,7 @@ import type { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
 import { subDays } from "date-fns";
 import {
   Screen,
+  ScreenStack,
   BrandMark,
   Card,
   Metric,
@@ -24,7 +25,7 @@ import {
 } from "@/lib/cashflow-math";
 import { formatHoldingQuantity } from "@/lib/format";
 import type { RootTabParamList } from "@/navigation/RootNavigator";
-import { spacing, radii } from "@/theme/colors";
+import { rhythm, spacing, radii } from "@/theme/colors";
 import { useColors } from "@/theme/ThemeProvider";
 
 export function DashboardScreen() {
@@ -144,6 +145,7 @@ export function DashboardScreen() {
         }
       >
         <BrandMark title={greeting} subtitle={t("dashboard.brandSubtitle")} />
+        <ScreenStack>
 
         {state.holdings.length === 0 && state.cashflows.length === 0 ? (
           <Card elevated>
@@ -226,6 +228,7 @@ export function DashboardScreen() {
             onAction={() => navigation.navigate("Holdings")}
           />
         )}
+        </ScreenStack>
       </ScrollView>
     </Screen>
   );
@@ -233,21 +236,21 @@ export function DashboardScreen() {
 
 function createStyles(colors: ReturnType<typeof useColors>) {
   return StyleSheet.create({
-  tileRow: { flexDirection: "row", gap: spacing.sm, marginBottom: spacing.sm },
+  tileRow: { flexDirection: "row", gap: spacing.sm },
   tile: {
     flex: 1,
+    gap: rhythm.tight,
     backgroundColor: colors.surface,
     borderRadius: radii.lg,
     padding: spacing.md,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border,
   },
-  chips: { flexDirection: "row", flexWrap: "wrap", marginBottom: spacing.md },
+  chips: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm },
   tileHint: {
     color: colors.muted,
-    fontSize: 11,
-    lineHeight: 15,
-    marginTop: 4,
+    fontSize: 12,
+    lineHeight: 16,
   },
 });
 }

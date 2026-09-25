@@ -9,7 +9,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { useTranslation } from "react-i18next";
-import { Screen, Header, Card, Metric, MetricRow, PrimaryButton, EmptyState, chipLabelStyle, chipContainerStyle } from "@/components/ui";
+import { Screen, ScreenStack, Header, Card, Metric, MetricRow, PrimaryButton, EmptyState, chipLabelStyle, chipContainerStyle } from "@/components/ui";
 import { useNavigation } from "@react-navigation/native";
 import type { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
 import type { RootTabParamList } from "@/navigation/RootNavigator";
@@ -22,6 +22,7 @@ import {
   type PortfolioHistoryPoint,
 } from "@/lib/finance/portfolio-history";
 import { useColors } from "@/theme/ThemeProvider";
+import { spacing } from "@/theme/colors";
 
 const PERIODS: PeriodId[] = ["1D", "7D", "1M", "3M", "6M", "YTD", "1Y", "Max"];
 const TOTAL_KEY = "Total";
@@ -261,6 +262,7 @@ export function PerformanceScreen() {
             defaultValue: "Value, cost basis, and returns over time",
           })}
         />
+        <ScreenStack>
         <Card>
           <MetricRow
             items={[
@@ -459,6 +461,7 @@ export function PerformanceScreen() {
             onAction={() => navigation.navigate("Holdings")}
           />
         ) : null}
+        </ScreenStack>
       </ScrollView>
     </Screen>
   );
@@ -466,7 +469,7 @@ export function PerformanceScreen() {
 
 function createStyles(colors: ReturnType<typeof useColors>) {
   return StyleSheet.create({
-  symbol: { color: colors.text, fontWeight: "700", marginBottom: 8 },
+  symbol: { color: colors.text, fontWeight: "700" },
   empty: { color: colors.muted },
   assetRow: {
     flexDirection: "row",
@@ -480,7 +483,7 @@ function createStyles(colors: ReturnType<typeof useColors>) {
   assetSym: { width: 56, fontWeight: "700", fontSize: 12 },
   assetMeta: { flex: 1, color: colors.muted, fontSize: 11 },
   assetChg: { fontSize: 12, fontWeight: "600", textAlign: "right", minWidth: 100 },
-  sortRow: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 12 },
+  sortRow: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm },
   sortChip: {
     ...chipContainerStyle,
     borderWidth: 1,
@@ -493,8 +496,7 @@ function createStyles(colors: ReturnType<typeof useColors>) {
     flexDirection: "row",
     flexWrap: "wrap",
     alignItems: "center",
-    gap: 8,
-    marginBottom: 12,
+    gap: spacing.sm,
   },
   filterChip: {
     ...chipContainerStyle,

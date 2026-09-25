@@ -17,6 +17,7 @@ import {
 } from "date-fns";
 import { useStore, useMoney } from "@/lib/store";
 import { PageHeader } from "@/components/app-shell";
+import { PageStack } from "@/components/design/page-stack";
 import { ResponsiveDialog } from "@/components/design/responsive-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -95,56 +96,66 @@ export const Route = createFileRoute("/planning")({
 function PlanningPage() {
   const { t } = useTranslation();
   return (
-    <div>
+    <>
       <PageHeader title={t("planning.title")} description={t("planning.description")} />
-      <Tabs defaultValue="forecast" className="w-full">
-        <TabsList
-          className="flex h-auto w-full flex-nowrap justify-start gap-1 overflow-x-auto rounded-2xl bg-muted/80 p-1.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-          data-tour="plan-tabs"
-        >
-          <TabsTrigger
+      <PageStack>
+        <Tabs defaultValue="forecast" className="w-full">
+          <TabsList
+            className="flex h-auto w-full flex-nowrap justify-start gap-1 overflow-x-auto rounded-2xl bg-muted/80 p-1.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            data-tour="plan-tabs"
+          >
+            <TabsTrigger
+              value="forecast"
+              className="min-h-10 shrink-0 rounded-xl px-4 data-[state=active]:shadow-sm"
+              data-tour-tab="forecast"
+            >
+              {t("planning.tabs.forecast")}
+            </TabsTrigger>
+            <TabsTrigger
+              value="budgets"
+              className="min-h-10 shrink-0 rounded-xl px-4 data-[state=active]:shadow-sm"
+              data-tour-tab="budgets"
+            >
+              {t("planning.tabs.budgets")}
+            </TabsTrigger>
+            <TabsTrigger
+              value="goals"
+              className="min-h-10 shrink-0 rounded-xl px-4 data-[state=active]:shadow-sm"
+              data-tour-tab="goals"
+            >
+              {t("planning.tabs.goals")}
+            </TabsTrigger>
+            <TabsTrigger
+              value="loans"
+              className="min-h-10 shrink-0 rounded-xl px-4 data-[state=active]:shadow-sm"
+              data-tour-tab="loans"
+            >
+              {t("planning.tabs.loans")}
+            </TabsTrigger>
+          </TabsList>
+          <TabsContent
             value="forecast"
-            className="min-h-10 shrink-0 rounded-xl px-4 data-[state=active]:shadow-sm"
-            data-tour-tab="forecast"
+            className="mt-[var(--stack-section)]"
+            data-tour="plan-forecast"
           >
-            {t("planning.tabs.forecast")}
-          </TabsTrigger>
-          <TabsTrigger
+            <ForecastPanel />
+          </TabsContent>
+          <TabsContent
             value="budgets"
-            className="min-h-10 shrink-0 rounded-xl px-4 data-[state=active]:shadow-sm"
-            data-tour-tab="budgets"
+            className="mt-[var(--stack-section)]"
+            data-tour="plan-budgets"
           >
-            {t("planning.tabs.budgets")}
-          </TabsTrigger>
-          <TabsTrigger
-            value="goals"
-            className="min-h-10 shrink-0 rounded-xl px-4 data-[state=active]:shadow-sm"
-            data-tour-tab="goals"
-          >
-            {t("planning.tabs.goals")}
-          </TabsTrigger>
-          <TabsTrigger
-            value="loans"
-            className="min-h-10 shrink-0 rounded-xl px-4 data-[state=active]:shadow-sm"
-            data-tour-tab="loans"
-          >
-            {t("planning.tabs.loans")}
-          </TabsTrigger>
-        </TabsList>
-        <TabsContent value="forecast" className="mt-6" data-tour="plan-forecast">
-          <ForecastPanel />
-        </TabsContent>
-        <TabsContent value="budgets" className="mt-6" data-tour="plan-budgets">
-          <BudgetsPanel />
-        </TabsContent>
-        <TabsContent value="goals" className="mt-6" data-tour="plan-goals">
-          <GoalsPanel />
-        </TabsContent>
-        <TabsContent value="loans" className="mt-6" data-tour="plan-loans">
-          <LoansPanel />
-        </TabsContent>
-      </Tabs>
-    </div>
+            <BudgetsPanel />
+          </TabsContent>
+          <TabsContent value="goals" className="mt-[var(--stack-section)]" data-tour="plan-goals">
+            <GoalsPanel />
+          </TabsContent>
+          <TabsContent value="loans" className="mt-[var(--stack-section)]" data-tour="plan-loans">
+            <LoansPanel />
+          </TabsContent>
+        </Tabs>
+      </PageStack>
+    </>
   );
 }
 
@@ -872,7 +883,9 @@ function PlanDialog({
       >
         <div className="space-y-3">
           <div>
-            <Label htmlFor="plan-name">{t("planning.budgets.planName", { defaultValue: "Name" })}</Label>
+            <Label htmlFor="plan-name">
+              {t("planning.budgets.planName", { defaultValue: "Name" })}
+            </Label>
             <Input
               id="plan-name"
               value={name}
@@ -1085,9 +1098,7 @@ function GoalsPanel() {
     const current = Number(form.current) || 0;
     if (!form.name.trim() || !Number.isFinite(target) || target <= 0) return;
     const color =
-      form.color ||
-      editing?.color ||
-      GOAL_COLORS[state.goals.length % GOAL_COLORS.length];
+      form.color || editing?.color || GOAL_COLORS[state.goals.length % GOAL_COLORS.length];
     const payload = {
       name: form.name.trim(),
       targetAmount: target,
@@ -1108,8 +1119,11 @@ function GoalsPanel() {
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-end">
+    <div className="flex flex-col gap-[var(--stack-card)]">
+      <div className="flex flex-col gap-[var(--stack-card)] sm:flex-row sm:items-end sm:justify-between">
+        <p className="max-w-prose text-sm leading-relaxed text-muted-foreground">
+          {t("planning.goals.manualHint")}
+        </p>
         <Button
           onClick={() => {
             setEditing(null);
@@ -1117,7 +1131,7 @@ function GoalsPanel() {
             setAddOpen(true);
           }}
           data-tour="plan-add-goal"
-          className="gap-1.5"
+          className="gap-1.5 shrink-0 self-start sm:self-auto"
         >
           <Plus className="h-4 w-4" />
           {t("planning.goals.addGoal")}
@@ -1127,7 +1141,7 @@ function GoalsPanel() {
       <div className="grid sm:grid-cols-2 gap-4">
         {state.goals.length === 0 ? (
           <Card className="sm:col-span-2">
-            <CardContent className="py-10 text-center text-sm text-muted-foreground">
+            <CardContent className="py-10 text-center text-sm leading-relaxed text-muted-foreground">
               {t("planning.goals.empty")}
             </CardContent>
           </Card>
@@ -1191,7 +1205,7 @@ function GoalsPanel() {
                   </Button>
                 </div>
               </CardHeader>
-              <CardContent className="space-y-2">
+              <CardContent className="flex flex-col gap-[var(--stack-card)]">
                 <Progress value={pct} />
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">
@@ -1571,7 +1585,7 @@ function ForecastPanel() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="flex flex-col gap-[var(--stack-section)]">
       {/* Scenario chip strip */}
       <div className="flex items-stretch gap-2 overflow-x-auto pb-1 -mx-1 px-1">
         <ScenarioDialog
@@ -2504,9 +2518,7 @@ function LoanCard({
             aria-label={t("planning.loans.deleteAria", { defaultValue: "Delete loan" })}
             onClick={() => {
               if (
-                confirm(
-                  t("planning.loans.deleteConfirm", { defaultValue: "Delete this loan?" }),
-                )
+                confirm(t("planning.loans.deleteConfirm", { defaultValue: "Delete this loan?" }))
               ) {
                 onRemove();
               }

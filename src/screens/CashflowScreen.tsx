@@ -12,8 +12,12 @@ import { useTranslation } from "react-i18next";
 import { startOfMonth, endOfMonth, subMonths, startOfYear } from "date-fns";
 import {
   Screen,
+  ScreenStack,
   Header,
   Card,
+  CardTitle,
+  CardHelperText,
+  CardCopy,
   PrimaryButton,
   SecondaryButton,
   MetricRow,
@@ -563,7 +567,7 @@ export function CashflowScreen() {
   };
 
   return (
-    <Screen>
+    <Screen avoidKeyboard={false}>
       <ScrollView
         style={{ flex: 1 }}
         keyboardShouldPersistTaps="handled"
@@ -571,6 +575,7 @@ export function CashflowScreen() {
         automaticallyAdjustKeyboardInsets
       >
         <Header title={t("nav.cashflow")} subtitle={t("cashflow.subtitle")} />
+        <ScreenStack>
 
         <SegmentedControl
           options={[
@@ -652,7 +657,7 @@ export function CashflowScreen() {
             </Card>
 
             <Card>
-              <Text style={styles.section}>{t("cashflow.upcoming.previewTitle")}</Text>
+              <CardTitle>{t("cashflow.upcoming.previewTitle")}</CardTitle>
               <CashflowUpcoming
                 cashflows={state.cashflows}
                 mask={mask}
@@ -743,7 +748,7 @@ export function CashflowScreen() {
                   </ScrollView>
                 ) : null}
                 {kind === "transfer" ? (
-                  <Text style={styles.hintInline}>{t("cashflow.transferHint")}</Text>
+                  <CardHelperText>{t("cashflow.transferHint")}</CardHelperText>
                 ) : null}
                 <Field
                   label={
@@ -1064,7 +1069,7 @@ export function CashflowScreen() {
                 ) : null}
             </FormSheet>
 
-            <Text style={styles.section}>Entries ({rows.length})</Text>
+            <CardTitle>Entries ({rows.length})</CardTitle>
             {rows.length === 0 ? (
               <EmptyState
                 title={t("cashflow.emptyTitle", { defaultValue: "No entries yet" })}
@@ -1111,13 +1116,13 @@ export function CashflowScreen() {
                     </Card>
                   </Pressable>
                 ))}
-                <Text style={styles.hint}>
+                <CardHelperText style={styles.centerHint}>
                   Tap to edit · Long-press to delete
                   {rows.some((r) => r.isOccurrence)
                     ? " · recurring rows edit the parent entry"
                     : ""}
                   .
-                </Text>
+                </CardHelperText>
               </>
             )}
           </>
@@ -1125,8 +1130,10 @@ export function CashflowScreen() {
 
         {mode === "upcoming" ? (
           <>
-            <Text style={styles.section}>{t("cashflow.upcoming.title")}</Text>
-            <Text style={styles.hintInline}>{t("cashflow.upcoming.description")}</Text>
+            <CardCopy>
+              <CardTitle>{t("cashflow.upcoming.title")}</CardTitle>
+              <CardHelperText>{t("cashflow.upcoming.description")}</CardHelperText>
+            </CardCopy>
             <CashflowUpcoming
               cashflows={state.cashflows}
               mask={mask}
@@ -1156,7 +1163,7 @@ export function CashflowScreen() {
               />
             </Card>
             <View style={styles.rowBetween}>
-              <Text style={styles.section}>By category</Text>
+              <CardTitle>By category</CardTitle>
               <Pressable onPress={() => setShowBreakdown((v) => !v)}>
                 <Text style={styles.link}>{showBreakdown ? "Hide" : "Show"}</Text>
               </Pressable>
@@ -1181,7 +1188,7 @@ export function CashflowScreen() {
             ) : null}
 
             <View style={styles.rowBetween}>
-              <Text style={styles.section}>Sankey</Text>
+              <CardTitle>Sankey</CardTitle>
               <Pressable onPress={() => setShowSankey((v) => !v)}>
                 <Text style={styles.link}>{showSankey ? "Hide" : "Show"}</Text>
               </Pressable>
@@ -1240,12 +1247,13 @@ export function CashflowScreen() {
         {mode === "accounts" ? (
           <>
             <Card>
-              <Text style={styles.accountsExplainer}>{t("cashflow.accountsExplainer")}</Text>
+              <CardHelperText>{t("cashflow.accountsExplainer")}</CardHelperText>
             </Card>
             <CreditCardsManager />
             <CategoriesManager />
           </>
         ) : null}
+        </ScreenStack>
       </ScrollView>
     </Screen>
   );
@@ -1257,7 +1265,6 @@ function createStyles(colors: ReturnType<typeof useColors>) {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: spacing.sm,
-    marginTop: spacing.xs,
     alignItems: "stretch",
   },
   buttonStackItem: {
@@ -1265,7 +1272,7 @@ function createStyles(colors: ReturnType<typeof useColors>) {
     flexBasis: "46%",
     minWidth: 140,
   },
-  pills: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: spacing.md },
+  pills: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm },
   pill: {
     ...chipContainerStyle,
     borderWidth: 1,
@@ -1275,20 +1282,13 @@ function createStyles(colors: ReturnType<typeof useColors>) {
   pillActive: { backgroundColor: colors.accentSoft, borderColor: colors.accent },
   pillText: { ...chipLabelStyle, color: colors.muted },
   pillTextActive: { color: colors.text, fontWeight: "600" },
-  section: {
-    color: colors.text,
-    fontWeight: "700",
-    marginBottom: 8,
-    marginTop: 4,
-    fontSize: 15,
-  },
-  label: { color: colors.muted, marginBottom: 8 },
+  label: { color: colors.muted, marginBottom: spacing.sm },
   row: { flexDirection: "row", marginBottom: spacing.sm, gap: 8 },
   rowBetween: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 8,
+    gap: spacing.sm,
   },
   link: { color: colors.accent, fontSize: 13 },
   kindBtn: {
@@ -1329,17 +1329,6 @@ function createStyles(colors: ReturnType<typeof useColors>) {
   rowValue: { color: colors.text, fontWeight: "700" },
   rowMeta: { color: colors.muted, marginTop: 4, fontSize: 12 },
   empty: { color: colors.muted },
-  hint: { color: colors.muted, fontSize: 12, marginBottom: 24, textAlign: "center" },
-  hintInline: {
-    color: colors.muted,
-    fontSize: 12,
-    lineHeight: 18,
-    marginBottom: spacing.sm,
-  },
-  accountsExplainer: {
-    color: colors.muted,
-    fontSize: 13,
-    lineHeight: 20,
-  },
+  centerHint: { textAlign: "center" },
 });
 }

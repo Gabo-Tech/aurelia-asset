@@ -74,7 +74,7 @@ export function ChartFrame({ children, filename = "chart", title }: Props) {
 }
 
 const styles = StyleSheet.create({
-  wrap: { marginVertical: spacing.sm },
+  wrap: {},
   toolbar: {
     flexDirection: "row",
     justifyContent: "space-between",

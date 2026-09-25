@@ -22,6 +22,17 @@ export const colors = {
 
 export const spacing = { xs: 4, sm: 8, md: 16, lg: 24, xl: 32, xxl: 40 };
 
+/**
+ * Vertical rhythm shared with web `--stack-*` tokens.
+ * tight: title → helper (6). card: inside a card (12). block: between screen blocks (16). section: between page sections (24).
+ */
+export const rhythm = {
+  tight: 6,
+  card: 12,
+  block: spacing.md,
+  section: spacing.lg,
+};
+
 export const radii = {
   sm: 8,
   md: 12,

@@ -37,6 +37,7 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { PageHeader } from "@/components/app-shell";
+import { PageStack } from "@/components/design/page-stack";
 import { LocalFirstBadge } from "@/components/design";
 import { SettingsSectionNav } from "@/components/settings-section-nav";
 import { AppearancePanel } from "@/components/appearance-panel";
@@ -514,447 +515,493 @@ function SettingsPage() {
         </div>
       ) : null}
       <PageHeader title={t("settings.title")} description={t("settings.description")} />
-
-      <SettingsSectionNav
-        items={[
-          { id: "settings-profile", label: t("settings.sections.profile", { defaultValue: "Profile" }) },
-          { id: "settings-appearance", label: t("settings.sections.appearance", { defaultValue: "Look" }) },
-          { id: "settings-categories", label: t("settings.sections.categories", { defaultValue: "Categories" }) },
-          { id: "settings-api", label: t("settings.sections.currency", { defaultValue: "Currency" }) },
-          { id: "settings-language", label: t("settings.language.title", { defaultValue: "Language" }) },
-          { id: "settings-data", label: t("settings.sections.data", { defaultValue: "Data" }) },
-          { id: "settings-ai", label: t("settings.sections.ai", { defaultValue: "AI" }) },
-        ]}
-      />
-
-      <div className="mb-5 flex flex-wrap items-center gap-2">
-        <LocalFirstBadge
-          label={t("settings.localFirst", { defaultValue: "On-device & encrypted" })}
+      <PageStack>
+        <SettingsSectionNav
+          items={[
+            {
+              id: "settings-profile",
+              label: t("settings.sections.profile", { defaultValue: "Profile" }),
+            },
+            {
+              id: "settings-appearance",
+              label: t("settings.sections.appearance", { defaultValue: "Look" }),
+            },
+            {
+              id: "settings-categories",
+              label: t("settings.sections.categories", { defaultValue: "Categories" }),
+            },
+            {
+              id: "settings-api",
+              label: t("settings.sections.currency", { defaultValue: "Currency" }),
+            },
+            {
+              id: "settings-language",
+              label: t("settings.language.title", { defaultValue: "Language" }),
+            },
+            { id: "settings-data", label: t("settings.sections.data", { defaultValue: "Data" }) },
+            { id: "settings-ai", label: t("settings.sections.ai", { defaultValue: "AI" }) },
+          ]}
         />
-        <span className="text-xs text-muted-foreground">
-          {t("settings.localFirstHint", {
-            defaultValue: "Your portfolio never leaves this device.",
-          })}
-        </span>
-      </div>
 
-      <Card id="settings-profile" className="scroll-mt-settings border-border/60 rounded-2xl shadow-sm mb-5" data-tour="settings-profile">
-        <CardHeader>
-          <CardTitle>{t("settings.profile.title", { defaultValue: "Profile" })}</CardTitle>
-          <CardDescription>
-            {t("settings.profile.description", {
-              defaultValue: "Name used in the dashboard greeting.",
-            })}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div>
-            <Label className="text-sm" htmlFor="display-name">
-              {t("settings.profile.displayName", { defaultValue: "Your name" })}
-            </Label>
-            <Input
-              id="display-name"
-              className="mt-1.5"
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              onBlur={() => {
-                const trimmed = displayName.trim();
-                updateSettings({ displayName: trimmed || undefined });
-                setDisplayName(trimmed);
-              }}
-              placeholder="e.g. Gabriel"
-              autoComplete="given-name"
-            />
-            <p className="mt-1.5 text-xs text-muted-foreground">
-              {t("settings.profile.autoSave", { defaultValue: "Saved when you leave this field." })}
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card id="settings-appearance" className="scroll-mt-settings border-border/60 rounded-2xl shadow-sm mb-5">
-        <CardHeader>
-          <CardTitle>{t("settings.appearance.title", { defaultValue: "Look & feel" })}</CardTitle>
-          <CardDescription>
-            {t("settings.appearance.description", {
-              defaultValue: "Light or dark, a color palette, and the guided tour.",
-            })}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <AppearancePanel />
-        </CardContent>
-      </Card>
-
-      <Card id="settings-categories" className="scroll-mt-settings border-border/60 rounded-2xl shadow-sm mb-5">
-        <CardHeader>
-          <CardTitle>
-            {t("settings.categories.title", { defaultValue: "Cashflow categories" })}
-          </CardTitle>
-          <CardDescription>
-            {t("settings.categories.description", {
-              defaultValue: "Income sources and expense groups used when you add entries.",
-            })}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button variant="outline" onClick={() => setCategoriesOpen(true)}>
-            {t("settings.categories.manage", { defaultValue: "Manage categories" })}
-          </Button>
-          <CategoriesManager
-            categories={state.categories}
-            onAdd={addCategory}
-            onUpdate={updateCategory}
-            onRemove={removeCategory}
-            open={categoriesOpen}
-            onOpenChange={setCategoriesOpen}
-            showTrigger={false}
+        <div className="flex flex-wrap items-center gap-2">
+          <LocalFirstBadge
+            label={t("settings.localFirst", { defaultValue: "On-device & encrypted" })}
           />
-        </CardContent>
-      </Card>
+          <span className="text-xs text-muted-foreground">
+            {t("settings.localFirstHint", {
+              defaultValue: "Your portfolio never leaves this device.",
+            })}
+          </span>
+        </div>
 
-      <div className="grid gap-5 lg:grid-cols-2">
-        <Card id="settings-api" className="scroll-mt-settings border-border/60 rounded-2xl shadow-sm" data-tour="settings-api">
+        <Card
+          id="settings-profile"
+          className="scroll-mt-settings border-border/60 rounded-2xl shadow-sm"
+          data-tour="settings-profile"
+        >
           <CardHeader>
-            <CardTitle>{t("settings.api.title")}</CardTitle>
-            <CardDescription>{t("settings.api.description")}</CardDescription>
+            <CardTitle>{t("settings.profile.title", { defaultValue: "Profile" })}</CardTitle>
+            <CardDescription>
+              {t("settings.profile.description", {
+                defaultValue: "Name used in the dashboard greeting.",
+              })}
+            </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-5">
+          <CardContent className="space-y-3">
             <div>
-              <Label className="text-sm">{t("settings.api.displayCurrency")}</Label>
-              <p className="text-xs text-muted-foreground mt-0.5 mb-2">
-                {t("settings.api.displayCurrencyHelp")}
-              </p>
-              <Select
-                value={state.settings.displayCurrency || "USD"}
-                onValueChange={(v) => updateSettings({ displayCurrency: v })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="max-h-80">
-                  {CURRENCIES.map((c) => (
-                    <SelectItem key={c.code} value={c.code}>
-                      {c.code} · {c.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <Label className="text-sm">{t("settings.api.privacyMode")}</Label>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  {t("settings.api.privacyModeHelp")}
-                </p>
-              </div>
-              <Switch
-                checked={!!state.settings.privacyMode}
-                onCheckedChange={(v) => updateSettings({ privacyMode: v })}
-              />
-            </div>
-
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <Label className="text-sm">{t("settings.api.useCorsProxy")}</Label>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  {t("settings.api.useCorsProxyHelp")}
-                </p>
-              </div>
-              <Switch
-                checked={state.settings.useCorsProxy}
-                onCheckedChange={(v) => updateSettings({ useCorsProxy: v })}
-              />
-            </div>
-
-            <div>
-              <Label className="text-sm">{t("settings.api.corsProxyUrl")}</Label>
-              <Select
-                value={state.settings.corsProxy}
-                onValueChange={(v) => updateSettings({ corsProxy: v })}
-              >
-                <SelectTrigger className="mt-1.5">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="https://corsproxy.io/?">corsproxy.io</SelectItem>
-                  <SelectItem value="https://api.allorigins.win/raw?url=">
-                    allorigins.win
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label className="text-sm">{t("settings.api.finnhubKey")}</Label>
-              <div className="mt-1.5 flex gap-2">
-                <Input
-                  type="password"
-                  value={finnhub}
-                  onChange={(e) => setFinnhub(e.target.value)}
-                  placeholder={t("settings.api.finnhubPlaceholder")}
-                />
-                <Button
-                  onClick={() => {
-                    updateSettings({ finnhubKey: finnhub.trim() || undefined });
-                    toast.success(t("settings.api.saved"));
-                  }}
-                >
-                  {t("common.save")}
-                </Button>
-              </div>
-              <p className="text-xs text-muted-foreground mt-2">
-                {t("settings.api.finnhubFootnote")}
-              </p>
-            </div>
-
-            <div className="flex items-start justify-between gap-4 pt-2 border-t border-border/40">
-              <div>
-                <Label className="text-sm">
-                  {t("settings.api.clearPriceCache", { defaultValue: "Refresh price history" })}
-                </Label>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  {t("settings.api.clearPriceCacheHelp", {
-                    defaultValue:
-                      "Drop cached price data so the next chart load re-fetches from the providers.",
-                  })}
-                </p>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  clearPriceHistoryCache();
-                  invalidatePortfolioPriceQueries(queryClient);
-                  toast.success(
-                    t("settings.api.priceCacheCleared", { defaultValue: "Price cache cleared" }),
-                  );
+              <Label className="text-sm" htmlFor="display-name">
+                {t("settings.profile.displayName", { defaultValue: "Your name" })}
+              </Label>
+              <Input
+                id="display-name"
+                className="mt-1.5"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                onBlur={() => {
+                  const trimmed = displayName.trim();
+                  updateSettings({ displayName: trimmed || undefined });
+                  setDisplayName(trimmed);
                 }}
-              >
-                <RefreshCw className="mr-2 h-4 w-4" />
-                {t("common.refresh", { defaultValue: "Refresh" })}
-              </Button>
+                placeholder="e.g. Gabriel"
+                autoComplete="given-name"
+              />
+              <p className="mt-1.5 text-xs text-muted-foreground">
+                {t("settings.profile.autoSave", {
+                  defaultValue: "Saved when you leave this field.",
+                })}
+              </p>
             </div>
           </CardContent>
         </Card>
 
-        <div className="space-y-5">
-          <Card id="settings-language" className="scroll-mt-settings border-border/60" data-tour="settings-language">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Languages className="h-4 w-4" />
-                {t("settings.language.title")}
-              </CardTitle>
-              <CardDescription>{t("settings.language.description")}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Label className="text-sm">{t("settings.language.label")}</Label>
-              <Select value={language} onValueChange={(v) => setLanguage(v as LanguageCode)}>
-                <SelectTrigger className="mt-1.5">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {languages.map((l) => (
-                    <SelectItem key={l.code} value={l.code}>
-                      {l.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </CardContent>
-          </Card>
+        <Card
+          id="settings-appearance"
+          className="scroll-mt-settings border-border/60 rounded-2xl shadow-sm"
+        >
+          <CardHeader>
+            <CardTitle>{t("settings.appearance.title", { defaultValue: "Look & feel" })}</CardTitle>
+            <CardDescription>
+              {t("settings.appearance.description", {
+                defaultValue: "Light or dark, a color palette, and the guided tour.",
+              })}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <AppearancePanel />
+          </CardContent>
+        </Card>
 
-          <AiSettingsCard />
+        <Card
+          id="settings-categories"
+          className="scroll-mt-settings border-border/60 rounded-2xl shadow-sm"
+        >
+          <CardHeader>
+            <CardTitle>
+              {t("settings.categories.title", { defaultValue: "Cashflow categories" })}
+            </CardTitle>
+            <CardDescription>
+              {t("settings.categories.description", {
+                defaultValue: "Income sources and expense groups used when you add entries.",
+              })}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button variant="outline" onClick={() => setCategoriesOpen(true)}>
+              {t("settings.categories.manage", { defaultValue: "Manage categories" })}
+            </Button>
+            <CategoriesManager
+              categories={state.categories}
+              onAdd={addCategory}
+              onUpdate={updateCategory}
+              onRemove={removeCategory}
+              open={categoriesOpen}
+              onOpenChange={setCategoriesOpen}
+              showTrigger={false}
+            />
+          </CardContent>
+        </Card>
 
-          <Card id="settings-data" className="scroll-mt-settings border-border/60" data-tour="settings-data">
-            <CardHeader>
-              <CardTitle>{t("settings.data.title")}</CardTitle>
-              <CardDescription>{t("settings.data.description")}</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <Button variant="outline" className="w-full justify-start" onClick={exportJson}>
-                <FileJson className="mr-2 h-4 w-4" /> {t("settings.data.exportJson")}
-              </Button>
-              <Button
-                variant="outline"
-                className="w-full justify-start"
-                onClick={copyJsonToClipboard}
-              >
-                <Copy className="mr-2 h-4 w-4" />{" "}
-                {t("settings.data.copyJson", { defaultValue: "Copy JSON to clipboard" })}
-              </Button>
-              <Button variant="outline" className="w-full justify-start" onClick={exportCsv}>
-                <FileSpreadsheet className="mr-2 h-4 w-4" /> {t("settings.data.exportCsv")}
-              </Button>
-              <Button variant="outline" className="w-full justify-start" onClick={() => void exportTaxCsv()}>
-                <FileSpreadsheet className="mr-2 h-4 w-4" />{" "}
-                {t("settings.data.exportTaxCsv", {
-                  defaultValue: "Export tax lots CSV (FIFO, this year)",
-                })}
-              </Button>
-              <Button
-                variant="outline"
-                className="w-full justify-start"
-                onClick={() => void handleImportClick()}
-                disabled={importing}
-              >
-                <Upload className="mr-2 h-4 w-4" />{" "}
-                {importing
-                  ? t("settings.data.importing", { defaultValue: "Importing…" })
-                  : t("settings.data.importJson")}
-              </Button>
-              <Button
-                variant="outline"
-                className="w-full justify-start"
-                onClick={() => {
-                  setPasteValue("");
-                  setPasteOpen(true);
-                }}
-              >
-                <ClipboardPaste className="mr-2 h-4 w-4" />{" "}
-                {t("settings.data.pasteJson", { defaultValue: "Paste JSON to import" })}
-              </Button>
-              <input
-                ref={fileRef}
-                type="file"
-                accept="application/json"
-                hidden
-                onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  if (f) handleImport(f);
-                  e.target.value = "";
-                }}
-              />
-
-              <Dialog open={pasteOpen} onOpenChange={setPasteOpen}>
-                <DialogContent className="max-w-2xl">
-                  <DialogHeader>
-                    <DialogTitle>
-                      {t("settings.data.pasteJson", { defaultValue: "Paste JSON to import" })}
-                    </DialogTitle>
-                    <DialogDescription>
-                      {t("settings.data.pasteJsonDesc", {
-                        defaultValue:
-                          "Paste a previously exported JSON below. This will replace your current data.",
-                      })}
-                    </DialogDescription>
-                  </DialogHeader>
-                  <Textarea
-                    value={pasteValue}
-                    onChange={(e) => setPasteValue(e.target.value)}
-                    placeholder='{ "version": 1, "state": { ... } }'
-                    className="font-mono text-xs min-h-[240px]"
-                  />
-                  <DialogFooter className="gap-2 sm:gap-2">
-                    <Button
-                      variant="outline"
-                      onClick={async () => {
-                        try {
-                          const txt = await navigator.clipboard?.readText?.();
-                          if (txt) setPasteValue(txt);
-                        } catch {
-                          toast.error(
-                            t("settings.data.clipboardReadFailed", {
-                              defaultValue: "Could not read clipboard",
-                            }),
-                          );
-                        }
-                      }}
-                    >
-                      <ClipboardPaste className="mr-2 h-4 w-4" />
-                      {t("settings.data.pasteFromClipboard", {
-                        defaultValue: "Paste from clipboard",
-                      })}
-                    </Button>
-                    <Button variant="ghost" onClick={() => setPasteOpen(false)}>
-                      {t("common.cancel")}
-                    </Button>
-                    <Button
-                      disabled={!pasteValue.trim()}
-                      onClick={async () => {
-                        const ok = await importFromText(pasteValue.trim());
-                        if (ok) {
-                          setPasteOpen(false);
-                          setPasteValue("");
-                        }
-                      }}
-                    >
-                      {t("settings.data.importJson")}
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="destructive" className="w-full justify-start">
-                    <RotateCcw className="mr-2 h-4 w-4" /> {t("settings.data.reset")}
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>{t("settings.data.resetTitle")}</AlertDialogTitle>
-                    <AlertDialogDescription>{t("settings.data.resetDesc")}</AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={() => {
-                        void reset()
-                          .then(() => toast.success(t("settings.data.cleared")))
-                          .catch((e) =>
-                            toast.error(
-                              `${t("settings.data.resetFailed", { defaultValue: "Reset failed" })}: ${(e as Error).message}`,
-                            ),
-                          );
-                      }}
-                    >
-                      {t("settings.data.resetConfirm")}
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-
-      <Card className="border-border/60 mt-5">
-        <CardHeader>
-          <CardTitle>{t("tour.restartTitle", { defaultValue: "Onboarding tour" })}</CardTitle>
-          <CardDescription>
-            {t("tour.restartDesc", {
-              defaultValue: "Replay the guided tour at any time to refresh your memory.",
-            })}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button
-            variant="outline"
-            onClick={() => {
-              import("@/lib/tour/driver").then(({ resetTourCompletion }) => {
-                resetTourCompletion();
-                window.dispatchEvent(new CustomEvent("tour:start"));
-              });
-            }}
+        <div className="grid gap-5 lg:grid-cols-2">
+          <Card
+            id="settings-api"
+            className="scroll-mt-settings border-border/60 rounded-2xl shadow-sm"
+            data-tour="settings-api"
           >
-            {t("tour.restartButton", { defaultValue: "Start tour" })}
-          </Button>
-        </CardContent>
-      </Card>
+            <CardHeader>
+              <CardTitle>{t("settings.api.title")}</CardTitle>
+              <CardDescription>{t("settings.api.description")}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              <div>
+                <Label className="text-sm">{t("settings.api.displayCurrency")}</Label>
+                <p className="text-xs text-muted-foreground mt-0.5 mb-2">
+                  {t("settings.api.displayCurrencyHelp")}
+                </p>
+                <Select
+                  value={state.settings.displayCurrency || "USD"}
+                  onValueChange={(v) => updateSettings({ displayCurrency: v })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-80">
+                    {CURRENCIES.map((c) => (
+                      <SelectItem key={c.code} value={c.code}>
+                        {c.code} · {c.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-      <Card className="border-border/60 mt-5">
-        <CardHeader>
-          <CardTitle>{t("settings.about.title")}</CardTitle>
-        </CardHeader>
-        <CardContent className="text-sm text-muted-foreground space-y-2">
-          <p>{t("settings.about.body")}</p>
-          <p>{t("settings.about.metalsHint")}</p>
-        </CardContent>
-      </Card>
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <Label className="text-sm">{t("settings.api.privacyMode")}</Label>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {t("settings.api.privacyModeHelp")}
+                  </p>
+                </div>
+                <Switch
+                  checked={!!state.settings.privacyMode}
+                  onCheckedChange={(v) => updateSettings({ privacyMode: v })}
+                />
+              </div>
 
-      <Download className="hidden" />
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <Label className="text-sm">{t("settings.api.useCorsProxy")}</Label>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {t("settings.api.useCorsProxyHelp")}
+                  </p>
+                </div>
+                <Switch
+                  checked={state.settings.useCorsProxy}
+                  onCheckedChange={(v) => updateSettings({ useCorsProxy: v })}
+                />
+              </div>
+
+              <div>
+                <Label className="text-sm">{t("settings.api.corsProxyUrl")}</Label>
+                <Select
+                  value={state.settings.corsProxy}
+                  onValueChange={(v) => updateSettings({ corsProxy: v })}
+                >
+                  <SelectTrigger className="mt-1.5">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="https://corsproxy.io/?">corsproxy.io</SelectItem>
+                    <SelectItem value="https://api.allorigins.win/raw?url=">
+                      allorigins.win
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label className="text-sm">{t("settings.api.finnhubKey")}</Label>
+                <div className="mt-1.5 flex gap-2">
+                  <Input
+                    type="password"
+                    value={finnhub}
+                    onChange={(e) => setFinnhub(e.target.value)}
+                    placeholder={t("settings.api.finnhubPlaceholder")}
+                  />
+                  <Button
+                    onClick={() => {
+                      updateSettings({ finnhubKey: finnhub.trim() || undefined });
+                      toast.success(t("settings.api.saved"));
+                    }}
+                  >
+                    {t("common.save")}
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  {t("settings.api.finnhubFootnote")}
+                </p>
+              </div>
+
+              <div className="flex items-start justify-between gap-4 pt-2 border-t border-border/40">
+                <div>
+                  <Label className="text-sm">
+                    {t("settings.api.clearPriceCache", { defaultValue: "Refresh price history" })}
+                  </Label>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {t("settings.api.clearPriceCacheHelp", {
+                      defaultValue:
+                        "Drop cached price data so the next chart load re-fetches from the providers.",
+                    })}
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    clearPriceHistoryCache();
+                    invalidatePortfolioPriceQueries(queryClient);
+                    toast.success(
+                      t("settings.api.priceCacheCleared", { defaultValue: "Price cache cleared" }),
+                    );
+                  }}
+                >
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                  {t("common.refresh", { defaultValue: "Refresh" })}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          <div className="space-y-5">
+            <Card
+              id="settings-language"
+              className="scroll-mt-settings border-border/60"
+              data-tour="settings-language"
+            >
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Languages className="h-4 w-4" />
+                  {t("settings.language.title")}
+                </CardTitle>
+                <CardDescription>{t("settings.language.description")}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Label className="text-sm">{t("settings.language.label")}</Label>
+                <Select value={language} onValueChange={(v) => setLanguage(v as LanguageCode)}>
+                  <SelectTrigger className="mt-1.5">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {languages.map((l) => (
+                      <SelectItem key={l.code} value={l.code}>
+                        {l.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </CardContent>
+            </Card>
+
+            <AiSettingsCard />
+
+            <Card
+              id="settings-data"
+              className="scroll-mt-settings border-border/60"
+              data-tour="settings-data"
+            >
+              <CardHeader>
+                <CardTitle>{t("settings.data.title")}</CardTitle>
+                <CardDescription>{t("settings.data.description")}</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Button variant="outline" className="w-full justify-start" onClick={exportJson}>
+                  <FileJson className="mr-2 h-4 w-4" /> {t("settings.data.exportJson")}
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  onClick={copyJsonToClipboard}
+                >
+                  <Copy className="mr-2 h-4 w-4" />{" "}
+                  {t("settings.data.copyJson", { defaultValue: "Copy JSON to clipboard" })}
+                </Button>
+                <Button variant="outline" className="w-full justify-start" onClick={exportCsv}>
+                  <FileSpreadsheet className="mr-2 h-4 w-4" /> {t("settings.data.exportCsv")}
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  onClick={() => void exportTaxCsv()}
+                >
+                  <FileSpreadsheet className="mr-2 h-4 w-4" />{" "}
+                  {t("settings.data.exportTaxCsv", {
+                    defaultValue: "Export tax lots CSV (FIFO, this year)",
+                  })}
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  onClick={() => void handleImportClick()}
+                  disabled={importing}
+                >
+                  <Upload className="mr-2 h-4 w-4" />{" "}
+                  {importing
+                    ? t("settings.data.importing", { defaultValue: "Importing…" })
+                    : t("settings.data.importJson")}
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  onClick={() => {
+                    setPasteValue("");
+                    setPasteOpen(true);
+                  }}
+                >
+                  <ClipboardPaste className="mr-2 h-4 w-4" />{" "}
+                  {t("settings.data.pasteJson", { defaultValue: "Paste JSON to import" })}
+                </Button>
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept="application/json"
+                  hidden
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) handleImport(f);
+                    e.target.value = "";
+                  }}
+                />
+
+                <Dialog open={pasteOpen} onOpenChange={setPasteOpen}>
+                  <DialogContent className="max-w-2xl">
+                    <DialogHeader>
+                      <DialogTitle>
+                        {t("settings.data.pasteJson", { defaultValue: "Paste JSON to import" })}
+                      </DialogTitle>
+                      <DialogDescription>
+                        {t("settings.data.pasteJsonDesc", {
+                          defaultValue:
+                            "Paste a previously exported JSON below. This will replace your current data.",
+                        })}
+                      </DialogDescription>
+                    </DialogHeader>
+                    <Textarea
+                      value={pasteValue}
+                      onChange={(e) => setPasteValue(e.target.value)}
+                      placeholder='{ "version": 1, "state": { ... } }'
+                      className="font-mono text-xs min-h-[240px]"
+                    />
+                    <DialogFooter className="gap-2 sm:gap-2">
+                      <Button
+                        variant="outline"
+                        onClick={async () => {
+                          try {
+                            const txt = await navigator.clipboard?.readText?.();
+                            if (txt) setPasteValue(txt);
+                          } catch {
+                            toast.error(
+                              t("settings.data.clipboardReadFailed", {
+                                defaultValue: "Could not read clipboard",
+                              }),
+                            );
+                          }
+                        }}
+                      >
+                        <ClipboardPaste className="mr-2 h-4 w-4" />
+                        {t("settings.data.pasteFromClipboard", {
+                          defaultValue: "Paste from clipboard",
+                        })}
+                      </Button>
+                      <Button variant="ghost" onClick={() => setPasteOpen(false)}>
+                        {t("common.cancel")}
+                      </Button>
+                      <Button
+                        disabled={!pasteValue.trim()}
+                        onClick={async () => {
+                          const ok = await importFromText(pasteValue.trim());
+                          if (ok) {
+                            setPasteOpen(false);
+                            setPasteValue("");
+                          }
+                        }}
+                      >
+                        {t("settings.data.importJson")}
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive" className="w-full justify-start">
+                      <RotateCcw className="mr-2 h-4 w-4" /> {t("settings.data.reset")}
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>{t("settings.data.resetTitle")}</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        {t("settings.data.resetDesc")}
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => {
+                          void reset()
+                            .then(() => toast.success(t("settings.data.cleared")))
+                            .catch((e) =>
+                              toast.error(
+                                `${t("settings.data.resetFailed", { defaultValue: "Reset failed" })}: ${(e as Error).message}`,
+                              ),
+                            );
+                        }}
+                      >
+                        {t("settings.data.resetConfirm")}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        <Card className="border-border/60">
+          <CardHeader>
+            <CardTitle>{t("tour.restartTitle", { defaultValue: "Onboarding tour" })}</CardTitle>
+            <CardDescription>
+              {t("tour.restartDesc", {
+                defaultValue: "Replay the guided tour at any time to refresh your memory.",
+              })}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button
+              variant="outline"
+              onClick={() => {
+                import("@/lib/tour/driver").then(({ resetTourCompletion }) => {
+                  resetTourCompletion();
+                  window.dispatchEvent(new CustomEvent("tour:start"));
+                });
+              }}
+            >
+              {t("tour.restartButton", { defaultValue: "Start tour" })}
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card className="border-border/60">
+          <CardHeader>
+            <CardTitle>{t("settings.about.title")}</CardTitle>
+          </CardHeader>
+          <CardContent className="text-sm text-muted-foreground space-y-2">
+            <p>{t("settings.about.body")}</p>
+            <p>{t("settings.about.metalsHint")}</p>
+          </CardContent>
+        </Card>
+
+        <Download className="hidden" />
+      </PageStack>
     </>
   );
 }

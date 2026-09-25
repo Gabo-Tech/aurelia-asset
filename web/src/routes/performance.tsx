@@ -21,6 +21,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PageHeader } from "@/components/app-shell";
+import { PageStack } from "@/components/design/page-stack";
 import { useTranslation } from "react-i18next";
 import i18n from "@/i18n";
 import { ChartFrame } from "@/components/chart-frame";
@@ -205,11 +206,13 @@ function PerformancePage() {
     return (
       <>
         <PageHeader title={t("performance.title")} />
-        <Card className="border-dashed border-border/70">
-          <CardContent className="p-10 text-center text-sm text-muted-foreground">
-            {t("performance.emptyState")}
-          </CardContent>
-        </Card>
+        <PageStack>
+          <Card className="border-dashed border-border/70">
+            <CardContent className="p-10 text-center text-sm text-muted-foreground">
+              {t("performance.emptyState")}
+            </CardContent>
+          </Card>
+        </PageStack>
       </>
     );
   }
@@ -231,366 +234,379 @@ function PerformancePage() {
       )}
       <PageHeader title={t("performance.title")} description={t("performance.description")} />
 
-      <div className="mb-4 grid grid-cols-1 gap-2 sm:grid-cols-3 sm:gap-3" data-tour="perf-cost-basis">
-        <Card className="border-border/60 rounded-2xl shadow-sm">
-          <CardContent className="p-4">
-            <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
-              {t("performance.costBasis", { defaultValue: "Cost basis" })}
-            </div>
-            <div className="mt-1 text-lg font-semibold tabular-nums">
-              {privacy ? MASK : formatMoney(costBasis.costBasis, currency)}
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-border/60 rounded-2xl shadow-sm">
-          <CardContent className="p-4">
-            <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
-              {t("performance.unrealized", { defaultValue: "Unrealized P&L" })}
-            </div>
-            <div
-              className={`mt-1 text-lg font-semibold tabular-nums ${
-                costBasis.unrealizedGain >= 0 ? "text-success" : "text-destructive"
-              }`}
-            >
-              {privacy
-                ? MASK
-                : `${costBasis.unrealizedGain >= 0 ? "+" : "−"}${formatMoney(Math.abs(costBasis.unrealizedGain), currency)}`}
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-border/60 rounded-2xl shadow-sm">
-          <CardContent className="p-4">
-            <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
-              {t("performance.realizedYtd", { defaultValue: "Realized YTD" })}
-            </div>
-            <div
-              className={`mt-1 text-lg font-semibold tabular-nums ${
-                realizedYtd >= 0 ? "text-success" : "text-destructive"
-              }`}
-            >
-              {privacy
-                ? MASK
-                : `${realizedYtd >= 0 ? "+" : "−"}${formatMoney(Math.abs(realizedYtd), currency)}`}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div
-        className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-1.5"
-        data-tour="perf-period"
-      >
-        <div className="flex gap-1.5 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {PERIODS.map((p) => (
-            <Button
-              key={p.id}
-              size="sm"
-              variant={period === p.id ? "default" : "outline"}
-              onClick={() => setPeriod(p.id)}
-              className={cn("h-11 shrink-0 rounded-full px-4", period === p.id && "shadow-sm")}
-            >
-              {p.label}
-            </Button>
-          ))}
+      <PageStack>
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 sm:gap-3" data-tour="perf-cost-basis">
+          <Card className="border-border/60 rounded-2xl shadow-sm">
+            <CardContent className="p-4">
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
+                {t("performance.costBasis", { defaultValue: "Cost basis" })}
+              </div>
+              <div className="mt-1 text-lg font-semibold tabular-nums">
+                {privacy ? MASK : formatMoney(costBasis.costBasis, currency)}
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="border-border/60 rounded-2xl shadow-sm">
+            <CardContent className="p-4">
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
+                {t("performance.unrealized", { defaultValue: "Unrealized P&L" })}
+              </div>
+              <div
+                className={`mt-1 text-lg font-semibold tabular-nums ${
+                  costBasis.unrealizedGain >= 0 ? "text-success" : "text-destructive"
+                }`}
+              >
+                {privacy
+                  ? MASK
+                  : `${costBasis.unrealizedGain >= 0 ? "+" : "−"}${formatMoney(Math.abs(costBasis.unrealizedGain), currency)}`}
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="border-border/60 rounded-2xl shadow-sm">
+            <CardContent className="p-4">
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
+                {t("performance.realizedYtd", { defaultValue: "Realized YTD" })}
+              </div>
+              <div
+                className={`mt-1 text-lg font-semibold tabular-nums ${
+                  realizedYtd >= 0 ? "text-success" : "text-destructive"
+                }`}
+              >
+                {privacy
+                  ? MASK
+                  : `${realizedYtd >= 0 ? "+" : "−"}${formatMoney(Math.abs(realizedYtd), currency)}`}
+              </div>
+            </CardContent>
+          </Card>
         </div>
-        <div className="flex items-center gap-1 sm:ml-auto shrink-0">
-          <Button
-            size="sm"
-            variant={scaleMode === "value" ? "default" : "outline"}
-            onClick={() => setScaleMode("value")}
-            title="Absolute value"
-            className="h-11 rounded-full px-3"
-          >
-            {currency}
-          </Button>
-          <Button
-            size="sm"
-            variant={scaleMode === "indexed" ? "default" : "outline"}
-            onClick={() => setScaleMode("indexed")}
-            title="Percent change from start of period"
-            className="h-11 rounded-full px-3"
-          >
-            %
-          </Button>
-        </div>
-      </div>
 
-      <div className="mb-4 flex flex-wrap items-center gap-2" data-tour="perf-assets">
-        <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-          {t("more.perfAssets")}
-        </span>
-        <button
-          onClick={() => setHideTotal((v) => !v)}
-          className={cn(
-            "inline-flex min-h-11 items-center gap-1.5 rounded-full border px-3 py-2 text-xs font-medium transition-colors",
-            hideTotal
-              ? "border-border/60 bg-muted text-muted-foreground opacity-60"
-              : "border-border bg-card text-foreground hover:bg-accent",
-          )}
+        <div
+          className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-1.5"
+          data-tour="perf-period"
         >
-          <span
-            className="h-1.5 w-1.5 rounded-full ring-1 ring-black/10"
-            style={{ backgroundColor: "var(--primary)" }}
-          />
-          {t("more.perfTotalLabel")}
-        </button>
-        {state.holdings.map((h) => (
+          <div className="flex gap-1.5 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {PERIODS.map((p) => (
+              <Button
+                key={p.id}
+                size="sm"
+                variant={period === p.id ? "default" : "outline"}
+                onClick={() => setPeriod(p.id)}
+                className={cn("h-11 shrink-0 rounded-full px-4", period === p.id && "shadow-sm")}
+              >
+                {p.label}
+              </Button>
+            ))}
+          </div>
+          <div className="flex items-center gap-1 sm:ml-auto shrink-0">
+            <Button
+              size="sm"
+              variant={scaleMode === "value" ? "default" : "outline"}
+              onClick={() => setScaleMode("value")}
+              title="Absolute value"
+              className="h-11 rounded-full px-3"
+            >
+              {currency}
+            </Button>
+            <Button
+              size="sm"
+              variant={scaleMode === "indexed" ? "default" : "outline"}
+              onClick={() => setScaleMode("indexed")}
+              title="Percent change from start of period"
+              className="h-11 rounded-full px-3"
+            >
+              %
+            </Button>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2" data-tour="perf-assets">
+          <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            {t("more.perfAssets")}
+          </span>
           <button
-            key={h.id}
-            onClick={() => {
-              setHidden((prev) => {
-                const next = new Set(prev);
-                if (next.has(h.symbol)) next.delete(h.symbol);
-                else next.add(h.symbol);
-                return next;
-              });
-            }}
+            onClick={() => setHideTotal((v) => !v)}
             className={cn(
               "inline-flex min-h-11 items-center gap-1.5 rounded-full border px-3 py-2 text-xs font-medium transition-colors",
-              hidden.has(h.symbol)
+              hideTotal
                 ? "border-border/60 bg-muted text-muted-foreground opacity-60"
                 : "border-border bg-card text-foreground hover:bg-accent",
             )}
           >
             <span
               className="h-1.5 w-1.5 rounded-full ring-1 ring-black/10"
-              style={{ backgroundColor: h.color }}
+              style={{ backgroundColor: "var(--primary)" }}
             />
-            {h.symbol}
+            {t("more.perfTotalLabel")}
           </button>
-        ))}
-        {state.holdings.length > 1 && (
-          <div className="ml-auto flex items-center gap-1.5">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 px-2 text-xs"
-              onClick={() => setHidden(new Set())}
+          {state.holdings.map((h) => (
+            <button
+              key={h.id}
+              onClick={() => {
+                setHidden((prev) => {
+                  const next = new Set(prev);
+                  if (next.has(h.symbol)) next.delete(h.symbol);
+                  else next.add(h.symbol);
+                  return next;
+                });
+              }}
+              className={cn(
+                "inline-flex min-h-11 items-center gap-1.5 rounded-full border px-3 py-2 text-xs font-medium transition-colors",
+                hidden.has(h.symbol)
+                  ? "border-border/60 bg-muted text-muted-foreground opacity-60"
+                  : "border-border bg-card text-foreground hover:bg-accent",
+              )}
             >
-              {t("more.pcShowAll")}
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 px-2 text-xs"
-              onClick={() => setHidden(new Set(state.holdings.map((h) => h.symbol)))}
-            >
-              {t("more.pcHideAll")}
-            </Button>
-          </div>
-        )}
-      </div>
-
-      <Card className="border-border/60 rounded-2xl shadow-sm" data-tour="perf-chart">
-        <CardHeader className="flex flex-row items-baseline justify-between flex-wrap gap-2">
-          <CardTitle>{t("more.perfPortfolioValue")}</CardTitle>
-          {metrics && (
-            <div className="text-right">
-              <div className="font-display text-2xl tracking-tight tabular-nums">
-                {mask(metrics.last.total)}
-              </div>
-              <div
-                className={cn(
-                  "text-sm font-medium",
-                  metrics.totalPct >= 0 ? "text-success" : "text-destructive",
-                )}
+              <span
+                className="h-1.5 w-1.5 rounded-full ring-1 ring-black/10"
+                style={{ backgroundColor: h.color }}
+              />
+              {h.symbol}
+            </button>
+          ))}
+          {state.holdings.length > 1 && (
+            <div className="ml-auto flex items-center gap-1.5">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-xs"
+                onClick={() => setHidden(new Set())}
               >
-                {formatPct(metrics.totalPct)} · {period}
-              </div>
+                {t("more.pcShowAll")}
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-xs"
+                onClick={() => setHidden(new Set(state.holdings.map((h) => h.symbol)))}
+              >
+                {t("more.pcHideAll")}
+              </Button>
             </div>
           )}
-        </CardHeader>
-        <CardContent>
-          <ChartFrame filename="performance" title={`${t("more.perfPortfolioValue")} · ${period}`}>
-            <div className="flex h-72 items-center justify-center sm:h-80">
-              {isLoading ? (
-                <Skeleton className="h-full w-full rounded-xl skeleton-shimmer" />
-              ) : isError ? (
-                <div className="grid h-full place-items-center text-sm text-destructive">
-                  {t("more.perfCouldntLoad")}
+        </div>
+
+        <Card className="border-border/60 rounded-2xl shadow-sm" data-tour="perf-chart">
+          <CardHeader className="flex flex-row items-baseline justify-between flex-wrap gap-2">
+            <CardTitle>{t("more.perfPortfolioValue")}</CardTitle>
+            {metrics && (
+              <div className="text-right">
+                <div className="font-display text-2xl tracking-tight tabular-nums">
+                  {mask(metrics.last.total)}
                 </div>
-              ) : !chartData.length ? (
-                <div className="grid h-full place-items-center text-sm text-muted-foreground">
-                  {t("more.perfNoData")}
+                <div
+                  className={cn(
+                    "text-sm font-medium",
+                    metrics.totalPct >= 0 ? "text-success" : "text-destructive",
+                  )}
+                >
+                  {formatPct(metrics.totalPct)} · {period}
                 </div>
-              ) : (
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                    <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" vertical={false} />
-                    <XAxis
-                      dataKey="label"
-                      stroke="var(--muted-foreground)"
-                      tick={{ fontSize: 11 }}
-                      minTickGap={30}
-                    />
-                    <YAxis
-                      stroke="var(--muted-foreground)"
-                      tick={{ fontSize: 11 }}
-                      tickFormatter={(v) =>
-                        privacy
-                          ? MASK
-                          : scaleMode === "indexed"
-                            ? `${(v as number) >= 0 ? "+" : ""}${(v as number).toFixed(1)}%`
-                            : formatMoney(v as number, currency, { compact: true })
-                      }
-                      width={60}
-                      domain={yDomain}
-                      allowDataOverflow
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        background: "var(--popover)",
-                        border: "1px solid var(--border)",
-                        borderRadius: 12,
-                        fontSize: 12,
-                        boxShadow: "var(--shadow-md-value)",
-                      }}
-                      formatter={(value: number) =>
-                        scaleMode === "indexed"
-                          ? `${value >= 0 ? "+" : ""}${value.toFixed(2)}%`
-                          : mask(value)
-                      }
-                    />
-                    <Legend
-                      wrapperStyle={{ fontSize: 11 }}
-                      onClick={(e) => {
-                        const name = e.dataKey as string;
-                        if (name === "Total") {
-                          setHideTotal((v) => !v);
-                          return;
+              </div>
+            )}
+          </CardHeader>
+          <CardContent>
+            <ChartFrame
+              filename="performance"
+              title={`${t("more.perfPortfolioValue")} · ${period}`}
+            >
+              <div className="flex h-72 items-center justify-center sm:h-80">
+                {isLoading ? (
+                  <Skeleton className="h-full w-full rounded-xl skeleton-shimmer" />
+                ) : isError ? (
+                  <div className="grid h-full place-items-center text-sm text-destructive">
+                    {t("more.perfCouldntLoad")}
+                  </div>
+                ) : !chartData.length ? (
+                  <div className="grid h-full place-items-center text-sm text-muted-foreground">
+                    {t("more.perfNoData")}
+                  </div>
+                ) : (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                      <CartesianGrid
+                        stroke="var(--border)"
+                        strokeDasharray="3 3"
+                        vertical={false}
+                      />
+                      <XAxis
+                        dataKey="label"
+                        stroke="var(--muted-foreground)"
+                        tick={{ fontSize: 11 }}
+                        minTickGap={30}
+                      />
+                      <YAxis
+                        stroke="var(--muted-foreground)"
+                        tick={{ fontSize: 11 }}
+                        tickFormatter={(v) =>
+                          privacy
+                            ? MASK
+                            : scaleMode === "indexed"
+                              ? `${(v as number) >= 0 ? "+" : ""}${(v as number).toFixed(1)}%`
+                              : formatMoney(v as number, currency, { compact: true })
                         }
-                        setHidden((h) => {
-                          const s = new Set(h);
-                          if (s.has(name)) s.delete(name);
-                          else s.add(name);
-                          return s;
-                        });
-                      }}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="Total"
-                      stroke="var(--primary)"
-                      strokeWidth={2.5}
-                      dot={false}
-                      hide={hideTotal}
-                      isAnimationActive
-                      style={{
-                        filter:
-                          "drop-shadow(0 0 1.5px var(--background)) drop-shadow(0 0 0.5px var(--foreground))",
-                      }}
-                    />
-                    {state.holdings.map((h) => (
+                        width={60}
+                        domain={yDomain}
+                        allowDataOverflow
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          background: "var(--popover)",
+                          border: "1px solid var(--border)",
+                          borderRadius: 12,
+                          fontSize: 12,
+                          boxShadow: "var(--shadow-md-value)",
+                        }}
+                        formatter={(value: number) =>
+                          scaleMode === "indexed"
+                            ? `${value >= 0 ? "+" : ""}${value.toFixed(2)}%`
+                            : mask(value)
+                        }
+                      />
+                      <Legend
+                        wrapperStyle={{ fontSize: 11 }}
+                        onClick={(e) => {
+                          const name = e.dataKey as string;
+                          if (name === "Total") {
+                            setHideTotal((v) => !v);
+                            return;
+                          }
+                          setHidden((h) => {
+                            const s = new Set(h);
+                            if (s.has(name)) s.delete(name);
+                            else s.add(name);
+                            return s;
+                          });
+                        }}
+                      />
                       <Line
-                        key={h.id}
                         type="monotone"
-                        dataKey={h.symbol}
-                        stroke={h.color}
-                        strokeWidth={1.75}
+                        dataKey="Total"
+                        stroke="var(--primary)"
+                        strokeWidth={2.5}
                         dot={false}
-                        hide={hidden.has(h.symbol)}
+                        hide={hideTotal}
+                        isAnimationActive
                         style={{
                           filter:
                             "drop-shadow(0 0 1.5px var(--background)) drop-shadow(0 0 0.5px var(--foreground))",
                         }}
                       />
-                    ))}
-                  </LineChart>
-                </ResponsiveContainer>
-              )}
-            </div>
-          </ChartFrame>
-        </CardContent>
-      </Card>
-
-      {metrics && (
-        <Card className="border-border/60 mt-5" data-tour="perf-returns">
-          <CardHeader>
-            <CardTitle>
-              {t("more.perfReturnsByAsset")} · {period}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="overflow-x-auto">
-            <table className="w-full min-w-[560px] text-sm">
-              <thead>
-                <tr className="text-left text-xs uppercase tracking-wider text-muted-foreground">
-                  <th className="py-2">{t("more.perfAsset")}</th>
-                  <th className="py-2 pl-4 text-right whitespace-nowrap">{t("more.perfStart")}</th>
-                  <th className="py-2 pl-4 text-right whitespace-nowrap">{t("more.perfEnd")}</th>
-                  <th className="py-2 pl-4 text-right whitespace-nowrap">{t("more.perfChange")}</th>
-                  <th className="py-2 pl-4 text-right whitespace-nowrap">%</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border/40">
-                {metrics.perAsset.map(({ h, start, end, abs, pct }) => (
-                  <tr key={h.id}>
-                    <td className="py-2.5">
-                      <div className="flex items-center gap-2">
-                        <div
-                          className="h-2.5 w-2.5 rounded-full"
-                          style={{ backgroundColor: h.color }}
+                      {state.holdings.map((h) => (
+                        <Line
+                          key={h.id}
+                          type="monotone"
+                          dataKey={h.symbol}
+                          stroke={h.color}
+                          strokeWidth={1.75}
+                          dot={false}
+                          hide={hidden.has(h.symbol)}
+                          style={{
+                            filter:
+                              "drop-shadow(0 0 1.5px var(--background)) drop-shadow(0 0 0.5px var(--foreground))",
+                          }}
                         />
-                        <span className="font-medium">{h.symbol}</span>
-                        <span className="text-muted-foreground text-xs truncate">{h.name}</span>
-                      </div>
+                      ))}
+                    </LineChart>
+                  </ResponsiveContainer>
+                )}
+              </div>
+            </ChartFrame>
+          </CardContent>
+        </Card>
+
+        {metrics && (
+          <Card className="border-border/60 mt-5" data-tour="perf-returns">
+            <CardHeader>
+              <CardTitle>
+                {t("more.perfReturnsByAsset")} · {period}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="overflow-x-auto">
+              <table className="w-full min-w-[560px] text-sm">
+                <thead>
+                  <tr className="text-left text-xs uppercase tracking-wider text-muted-foreground">
+                    <th className="py-2">{t("more.perfAsset")}</th>
+                    <th className="py-2 pl-4 text-right whitespace-nowrap">
+                      {t("more.perfStart")}
+                    </th>
+                    <th className="py-2 pl-4 text-right whitespace-nowrap">{t("more.perfEnd")}</th>
+                    <th className="py-2 pl-4 text-right whitespace-nowrap">
+                      {t("more.perfChange")}
+                    </th>
+                    <th className="py-2 pl-4 text-right whitespace-nowrap">%</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border/40">
+                  {metrics.perAsset.map(({ h, start, end, abs, pct }) => (
+                    <tr key={h.id}>
+                      <td className="py-2.5">
+                        <div className="flex items-center gap-2">
+                          <div
+                            className="h-2.5 w-2.5 rounded-full"
+                            style={{ backgroundColor: h.color }}
+                          />
+                          <span className="font-medium">{h.symbol}</span>
+                          <span className="text-muted-foreground text-xs truncate">{h.name}</span>
+                        </div>
+                      </td>
+                      <td className="py-2.5 pl-4 text-right tabular-nums whitespace-nowrap">
+                        {mask(start)}
+                      </td>
+                      <td className="py-2.5 pl-4 text-right tabular-nums whitespace-nowrap">
+                        {mask(end)}
+                      </td>
+                      <td
+                        className={cn(
+                          "py-2.5 pl-4 text-right tabular-nums whitespace-nowrap",
+                          abs >= 0 ? "text-success" : "text-destructive",
+                        )}
+                      >
+                        {abs >= 0 ? "+" : "-"}
+                        {mask(Math.abs(abs))}
+                      </td>
+                      <td
+                        className={cn(
+                          "py-2.5 pl-4 text-right tabular-nums font-medium whitespace-nowrap",
+                          pct >= 0 ? "text-success" : "text-destructive",
+                        )}
+                      >
+                        {formatPct(pct)}
+                      </td>
+                    </tr>
+                  ))}
+                  <tr className="font-semibold">
+                    <td className="py-2.5">{t("more.perfTotal")}</td>
+                    <td className="py-2.5 pl-4 text-right tabular-nums whitespace-nowrap">
+                      {mask(metrics.first.total)}
                     </td>
                     <td className="py-2.5 pl-4 text-right tabular-nums whitespace-nowrap">
-                      {mask(start)}
-                    </td>
-                    <td className="py-2.5 pl-4 text-right tabular-nums whitespace-nowrap">
-                      {mask(end)}
+                      {mask(metrics.last.total)}
                     </td>
                     <td
                       className={cn(
                         "py-2.5 pl-4 text-right tabular-nums whitespace-nowrap",
-                        abs >= 0 ? "text-success" : "text-destructive",
+                        metrics.last.total - metrics.first.total >= 0
+                          ? "text-success"
+                          : "text-destructive",
                       )}
                     >
-                      {abs >= 0 ? "+" : "-"}
-                      {mask(Math.abs(abs))}
+                      {mask(metrics.last.total - metrics.first.total)}
                     </td>
                     <td
                       className={cn(
-                        "py-2.5 pl-4 text-right tabular-nums font-medium whitespace-nowrap",
-                        pct >= 0 ? "text-success" : "text-destructive",
+                        "py-2.5 pl-4 text-right tabular-nums whitespace-nowrap",
+                        metrics.totalPct >= 0 ? "text-success" : "text-destructive",
                       )}
                     >
-                      {formatPct(pct)}
+                      {formatPct(metrics.totalPct)}
                     </td>
                   </tr>
-                ))}
-                <tr className="font-semibold">
-                  <td className="py-2.5">{t("more.perfTotal")}</td>
-                  <td className="py-2.5 pl-4 text-right tabular-nums whitespace-nowrap">
-                    {mask(metrics.first.total)}
-                  </td>
-                  <td className="py-2.5 pl-4 text-right tabular-nums whitespace-nowrap">
-                    {mask(metrics.last.total)}
-                  </td>
-                  <td
-                    className={cn(
-                      "py-2.5 pl-4 text-right tabular-nums whitespace-nowrap",
-                      metrics.last.total - metrics.first.total >= 0
-                        ? "text-success"
-                        : "text-destructive",
-                    )}
-                  >
-                    {mask(metrics.last.total - metrics.first.total)}
-                  </td>
-                  <td
-                    className={cn(
-                      "py-2.5 pl-4 text-right tabular-nums whitespace-nowrap",
-                      metrics.totalPct >= 0 ? "text-success" : "text-destructive",
-                    )}
-                  >
-                    {formatPct(metrics.totalPct)}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </CardContent>
-        </Card>
-      )}
+                </tbody>
+              </table>
+            </CardContent>
+          </Card>
+        )}
+      </PageStack>
     </div>
   );
 }

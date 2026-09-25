@@ -13,8 +13,14 @@ import {
 import { useTranslation } from "react-i18next";
 import {
   Screen,
+  ScreenStack,
   Header,
   Card,
+  CardStack,
+  CardCopy,
+  CardTitle,
+  CardHelperText,
+  CardActions,
   PrimaryButton,
   SecondaryButton,
   DangerButton,
@@ -53,7 +59,7 @@ import { bustCache } from "@/lib/finance/cache";
 import { clearPriceHistoryCache } from "@/lib/finance";
 import { CURRENCIES } from "@/lib/currency";
 import { SUPPORTED_LANGUAGES } from "@/i18n";
-import { spacing } from "@/theme/colors";
+import { rhythm, spacing } from "@/theme/colors";
 import { useColors } from "@/theme/ThemeProvider";
 import { PALETTE_CHIPS } from "@/theme/palettes";
 
@@ -356,7 +362,7 @@ export function SettingsScreen() {
   const overlayProgress = busy ? undefined : downloadProgressRatio(dlProgress);
 
   return (
-    <Screen>
+    <Screen avoidKeyboard={false}>
       <BusyOverlay
         visible={overlayVisible}
         title={overlayTitle}
@@ -372,11 +378,15 @@ export function SettingsScreen() {
         automaticallyAdjustKeyboardInsets
       >
         <Header title={t("nav.settings")} subtitle={t("settings.subtitle")} />
+        <ScreenStack>
 
         <Card>
-          <Text style={styles.section}>Look & feel</Text>
-          <Text style={styles.meta}>Light or dark, and a color palette saved with your backup.</Text>
-          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 8 }}>
+          <CardStack>
+          <CardCopy>
+            <CardTitle>Look & feel</CardTitle>
+            <CardHelperText>Light or dark, and a color palette saved with your backup.</CardHelperText>
+          </CardCopy>
+          <View style={styles.wrap}>
             {(["light", "dark", "system"] as const).map((m) => {
               const on = (state.settings.appearance?.mode ?? "dark") === m;
               return (
@@ -393,7 +403,7 @@ export function SettingsScreen() {
               );
             })}
           </View>
-          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 12 }}>
+          <View style={styles.wrap}>
             {PALETTE_CHIPS.map((p) => {
               const on = (state.settings.appearance?.paletteId ?? "gold") === p.id;
               return (
@@ -449,10 +459,10 @@ export function SettingsScreen() {
             </Pressable>
           </View>
           {state.settings.appearance?.paletteId === "custom" ? (
-            <View style={{ marginTop: 12, gap: 8 }}>
-              <Text style={styles.meta}>
+            <View style={{ gap: rhythm.card }}>
+              <CardHelperText>
                 Custom colors — borders and text adapt automatically.
-              </Text>
+              </CardHelperText>
               {(
                 [
                   ["primary", "Primary"],
@@ -465,7 +475,7 @@ export function SettingsScreen() {
                 const value = custom[key] ?? DEFAULT_CUSTOM[key];
                 return (
                   <View key={key}>
-                    <Text style={[styles.meta, { marginBottom: 4 }]}>{label}</Text>
+                    <CardHelperText>{label}</CardHelperText>
                     <TextInput
                       style={styles.input}
                       value={value}
@@ -488,21 +498,31 @@ export function SettingsScreen() {
               })}
             </View>
           ) : null}
+          </CardStack>
         </Card>
 
         <Card>
-          <Text style={styles.section}>{t("settings.about.title")}</Text>
-          <Text style={styles.meta}>{t("settings.about.body")}</Text>
-          <View style={{ height: 8 }} />
-          <SecondaryButton
-            label={t("nav.moreDesc.tourTitle")}
-            onPress={() => updateSettings({ onboardingSeen: false })}
-          />
+          <CardStack>
+            <CardCopy>
+              <CardTitle>{t("settings.about.title")}</CardTitle>
+              <CardHelperText>{t("settings.about.body")}</CardHelperText>
+            </CardCopy>
+            <CardActions>
+              <SecondaryButton
+                fullWidth
+                label={t("nav.moreDesc.tourTitle")}
+                onPress={() => updateSettings({ onboardingSeen: false })}
+              />
+            </CardActions>
+          </CardStack>
         </Card>
 
         <Card>
-          <Text style={styles.section}>Profile</Text>
-          <Text style={styles.meta}>Name for the dashboard greeting</Text>
+          <CardStack>
+          <CardCopy>
+            <CardTitle>Profile</CardTitle>
+            <CardHelperText>Name for the dashboard greeting</CardHelperText>
+          </CardCopy>
           <TextInput
             style={styles.input}
             value={displayName}
@@ -512,7 +532,9 @@ export function SettingsScreen() {
             autoCapitalize="words"
             autoCorrect={false}
           />
+          <CardActions>
           <PrimaryButton
+            fullWidth
             label="Save name"
             onPress={() => {
               const trimmed = displayName.trim();
@@ -521,19 +543,24 @@ export function SettingsScreen() {
               Alert.alert("Profile", trimmed ? `Greeting will say Hi ${trimmed}` : "Name cleared");
             }}
           />
+          </CardActions>
+          </CardStack>
         </Card>
 
         <Card>
-          <Text style={styles.section}>Privacy</Text>
+          <CardStack>
+          <CardTitle>Privacy</CardTitle>
           <View style={styles.row}>
             <Text style={styles.label}>Privacy mode</Text>
             <Switch value={privacy} onValueChange={toggle} />
           </View>
-          <Text style={styles.meta}>{t("settings.api.privacyModeHelp")}</Text>
+          <CardHelperText>{t("settings.api.privacyModeHelp")}</CardHelperText>
+          </CardStack>
         </Card>
 
         <Card>
-          <Text style={styles.section}>{t("settings.api.title", { defaultValue: "Market data" })}</Text>
+          <CardStack>
+          <CardTitle>{t("settings.api.title", { defaultValue: "Market data" })}</CardTitle>
           <View style={styles.row}>
             <Text style={styles.label}>
               {isWeb ? "CORS proxy (browser)" : "Allow market data (online)"}
@@ -545,9 +572,9 @@ export function SettingsScreen() {
           </View>
           {isWeb && state.settings.useCorsProxy ? (
             <>
-              <Text style={styles.meta}>
+              <CardHelperText>
                 {t("settings.api.corsProxyUrl", { defaultValue: "CORS proxy URL" })}
-              </Text>
+              </CardHelperText>
               <View style={styles.wrap}>
                 {ALLOWED_CORS_PROXIES.map((url) => (
                   <Chip
@@ -560,7 +587,7 @@ export function SettingsScreen() {
               </View>
             </>
           ) : null}
-          <Text style={styles.meta}>Finnhub API key (optional)</Text>
+          <CardHelperText>Finnhub API key (optional)</CardHelperText>
           <TextInput
             style={styles.input}
             value={finnhub}
@@ -571,14 +598,16 @@ export function SettingsScreen() {
             autoCorrect={false}
             secureTextEntry
           />
+          <CardActions>
           <PrimaryButton
+            fullWidth
             label="Save Finnhub key"
             onPress={() =>
               updateSettings({ finnhubKey: finnhub.trim() || undefined })
             }
           />
-          <View style={{ height: 8 }} />
           <PrimaryButton
+            fullWidth
             label="Clear price cache"
             onPress={() => {
               bustCache("");
@@ -586,6 +615,8 @@ export function SettingsScreen() {
               Alert.alert("Cache", "Price cache cleared");
             }}
           />
+          </CardActions>
+          </CardStack>
         </Card>
 
         <SectionHeader title="Display currency" />
@@ -615,56 +646,58 @@ export function SettingsScreen() {
         </View>
 
         <Card>
-          <Text style={styles.section}>Local AI models</Text>
+          <CardStack>
+          <CardTitle>Local AI models</CardTitle>
           {!isWeb && state.settings.aiModelSetup === "pending" ? (
             <View style={styles.setupBanner}>
-              <Text style={styles.meta}>
+              <CardHelperText>
                 Optional: download on-device LLM + speech models (~1.2 GB). For mic and speak
                 replies, download STT + TTS (~170 MB). NLU works without models.
-              </Text>
+              </CardHelperText>
               <PrimaryButton
+                fullWidth
                 label="Download STT + TTS (~170 MB)"
                 onPress={() => void onDownloadSpeechOnly()}
                 disabled={!!downloading}
               />
-              <View style={{ height: 8 }} />
               <PrimaryButton
+                fullWidth
                 label={`Download all (${totalDownloadSizeLabel()})`}
                 onPress={() => void onDownloadAll()}
                 disabled={!!downloading}
               />
-              <View style={{ height: 8 }} />
               <SecondaryButton
+                fullWidth
                 label="Skip for now"
                 onPress={() => updateSettings({ aiModelSetup: "declined" })}
               />
             </View>
           ) : null}
           {isWeb ? (
-            <Text style={styles.meta}>
+            <CardHelperText>
               On Linux (RN Web), the assistant uses on-device NLU only. Download LLM/STT/TTS on
               Android, iOS, Windows, or macOS.
-            </Text>
+            </CardHelperText>
           ) : (
             <>
               {!state.settings.aiSttModelDir || !state.settings.aiTtsModelDir ? (
-                <Text style={styles.meta}>
+                <CardHelperText>
                   Download STT + TTS (~170 MB) to enable mic and speak replies on this device.
-                </Text>
+                </CardHelperText>
               ) : null}
               {sherpaNote ? (
-                <Text style={[styles.meta, { color: colors.danger }]}>{sherpaNote}</Text>
+                <CardHelperText style={{ color: colors.danger }}>{sherpaNote}</CardHelperText>
               ) : null}
-              <Text style={styles.meta}>LLM: {state.settings.aiLlmModelPath || "not set"}</Text>
-              {llmNote ? <Text style={styles.meta}>LLM runtime: {llmNote}</Text> : null}
-              <Text style={styles.meta}>STT: {sttStatus}</Text>
-              <Text style={styles.meta}>TTS: {ttsStatus}</Text>
+              <CardHelperText>LLM: {state.settings.aiLlmModelPath || "not set"}</CardHelperText>
+              {llmNote ? <CardHelperText>LLM runtime: {llmNote}</CardHelperText> : null}
+              <CardHelperText>STT: {sttStatus}</CardHelperText>
+              <CardHelperText>TTS: {ttsStatus}</CardHelperText>
               {!i18n.language.startsWith("en") &&
               ((state.settings.aiSttModelDir || "").includes(".en") ||
                 (state.settings.aiTtsModelDir || "").includes("en_US")) ? (
-                <Text style={[styles.meta, { color: colors.danger }]}>
+                <CardHelperText style={{ color: colors.danger }}>
                   Installed speech models are English-only but UI language is {i18n.language}.
-                </Text>
+                </CardHelperText>
               ) : null}
               {dlProgress ? (
                 <View style={styles.progressBox}>
@@ -673,18 +706,17 @@ export function SettingsScreen() {
                   <Text style={styles.progressText}>{formatDownloadProgress(dlProgress)}</Text>
                 </View>
               ) : null}
-              <View style={{ height: 8 }} />
               {downloading ? (
-                <>
-                  <SecondaryButton
-                    label="Cancel download"
-                    destructive
-                    onPress={cancelDownload}
-                  />
-                  <View style={{ height: 8 }} />
-                </>
+                <SecondaryButton
+                  fullWidth
+                  label="Cancel download"
+                  destructive
+                  onPress={cancelDownload}
+                />
               ) : null}
+              <CardActions>
               <PrimaryButton
+                fullWidth
                 label={
                   downloading === "all"
                     ? "Downloading…"
@@ -693,8 +725,8 @@ export function SettingsScreen() {
                 onPress={() => void onDownloadSpeechOnly()}
                 disabled={!!downloading}
               />
-              <View style={{ height: 8 }} />
               <PrimaryButton
+                fullWidth
                 label={
                   downloading === "all"
                     ? "Downloading…"
@@ -703,10 +735,10 @@ export function SettingsScreen() {
                 onPress={onDownloadAll}
                 disabled={!!downloading}
               />
-              <View style={{ height: 8 }} />
               {MODEL_MANIFEST.map((m) => (
-                <View key={m.kind} style={{ marginBottom: 8 }}>
+                <View key={m.kind} style={styles.modelActions}>
                   <PrimaryButton
+                    fullWidth
                     compact
                     label={
                       downloading === m.kind
@@ -716,8 +748,8 @@ export function SettingsScreen() {
                     onPress={() => void onDownload(m.kind)}
                     disabled={!!downloading}
                   />
-                  <View style={{ height: 6 }} />
                   <SecondaryButton
+                    fullWidth
                     compact
                     label={`Clear ${m.kind.toUpperCase()} path`}
                     onPress={() => {
@@ -727,14 +759,15 @@ export function SettingsScreen() {
                   />
                 </View>
               ))}
-              <Text style={styles.meta}>
+              </CardActions>
+              <CardHelperText>
                 Prefer Download for STT/TTS (full folders). Pick is for advanced setups only.
-              </Text>
-              <PrimaryButton label="Pick LLM (GGUF)" onPress={pickLlm} />
-              <View style={{ height: 8 }} />
-              <SecondaryButton label="Pick STT folder via file…" onPress={pickStt} />
-              <View style={{ height: 8 }} />
-              <SecondaryButton label="Pick TTS folder via file…" onPress={pickTts} />
+              </CardHelperText>
+              <CardActions>
+              <PrimaryButton fullWidth label="Pick LLM (GGUF)" onPress={pickLlm} />
+              <SecondaryButton fullWidth label="Pick STT folder via file…" onPress={pickStt} />
+              <SecondaryButton fullWidth label="Pick TTS folder via file…" onPress={pickTts} />
+              </CardActions>
             </>
           )}
           <View style={styles.row}>
@@ -744,38 +777,45 @@ export function SettingsScreen() {
               onValueChange={(v) => updateSettings({ aiAssistantEnabled: v })}
             />
           </View>
+          </CardStack>
         </Card>
 
         <Card>
-          <Text style={styles.section}>Data</Text>
-          <Text style={styles.meta}>
-            JSON backups use the web-compatible envelope so browser exports restore correctly.
-          </Text>
+          <CardStack>
+          <CardCopy>
+            <CardTitle>Data</CardTitle>
+            <CardHelperText>
+              JSON backups use the web-compatible envelope so browser exports restore correctly.
+            </CardHelperText>
+          </CardCopy>
+          <CardActions>
           <PrimaryButton
+            fullWidth
             label={busy ? "Working…" : "Export JSON backup"}
             onPress={onExport}
             disabled={busy || !!downloading}
           />
-          <View style={{ height: 8 }} />
           <PrimaryButton
+            fullWidth
             label="Export cashflow CSV"
             onPress={onExportCsv}
             disabled={busy || !!downloading}
           />
-          <View style={{ height: 8 }} />
           <PrimaryButton
+            fullWidth
             label={busy ? "Working…" : "Import JSON backup"}
             onPress={onImport}
             disabled={busy || !!downloading}
           />
-          <View style={{ height: 8 }} />
           <PrimaryButton
+            fullWidth
             label={showPaste ? "Hide paste import" : "Paste JSON backup"}
             onPress={() => setShowPaste((v) => !v)}
             disabled={busy || !!downloading}
           />
+          </CardActions>
           {showPaste ? (
-            <View style={{ marginTop: 8 }}>
+            <View style={{ gap: rhythm.card }}>
               <TextInput
                 style={[styles.input, styles.paste]}
                 value={pasteValue}
@@ -793,8 +833,8 @@ export function SettingsScreen() {
               />
             </View>
           ) : null}
-          <View style={{ height: 8 }} />
           <DangerButton
+            fullWidth
             label="Reset all data"
             onPress={() =>
               Alert.alert("Reset?", "This clears local finance data.", [
@@ -819,7 +859,9 @@ export function SettingsScreen() {
             }
             disabled={busy || !!downloading}
           />
+          </CardStack>
         </Card>
+        </ScreenStack>
       </ScrollView>
     </Screen>
   );
@@ -827,28 +869,25 @@ export function SettingsScreen() {
 
 function createStyles(colors: ReturnType<typeof useColors>) {
   return StyleSheet.create({
-  section: { color: colors.text, fontWeight: "700", marginBottom: spacing.sm },
   row: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginVertical: 8,
+    gap: spacing.sm,
   },
   label: { color: colors.text, flex: 1, paddingRight: 12 },
-  meta: { color: colors.muted, fontSize: 12, marginBottom: 4 },
-  wrap: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  wrap: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm },
+  modelActions: { gap: spacing.sm },
   progressBox: {
     flexDirection: "column",
     alignItems: "stretch",
-    gap: 6,
-    marginTop: 8,
-    marginBottom: 4,
+    gap: rhythm.tight,
   },
   progressText: { color: colors.accent, fontSize: 12 },
   setupBanner: {
-    marginBottom: 12,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
+    gap: rhythm.card,
+    paddingBottom: spacing.sm,
+    borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.border,
   },
   input: {
@@ -859,7 +898,6 @@ function createStyles(colors: ReturnType<typeof useColors>) {
     color: colors.text,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    marginBottom: 8,
   },
   paste: { minHeight: 140, textAlignVertical: "top", fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace", fontSize: 11 },
 });

@@ -37,6 +37,7 @@ import {
   ArrowDownRight,
 } from "lucide-react";
 import { PageHeader } from "@/components/app-shell";
+import { PageStack } from "@/components/design/page-stack";
 import { useTranslation } from "react-i18next";
 import i18n from "@/i18n";
 import { HoldingDialog } from "@/components/holding-dialog";
@@ -231,301 +232,300 @@ function HoldingsPage() {
         }
       />
 
-      <Card className="border-border/60 rounded-2xl shadow-sm">
-        <CardContent className="p-4 sm:p-6 space-y-4 pb-[calc(var(--app-fab-offset)+1rem)] lg:pb-6">
-          <div
-            className="sticky top-[var(--app-header-h)] z-10 -mx-1 flex flex-wrap items-center gap-2 rounded-xl bg-background/90 px-1 py-2 backdrop-blur lg:static lg:bg-transparent lg:backdrop-blur-none"
-            data-tour="holdings-filters"
-          >
-            <Input
-              placeholder={t("more.hSearch")}
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setPage(0);
-              }}
-              className="max-w-xs h-11 rounded-xl"
-            />
-            <Select
-              value={typeFilter}
-              onValueChange={(v) => {
-                setTypeFilter(v);
-                setPage(0);
-              }}
-            >
-              <SelectTrigger className="w-40 h-11 rounded-xl">
-                <SelectValue placeholder={t("more.hType")} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t("more.hAllTypes")}</SelectItem>
-                <SelectItem value="stock">{t("more.hTypeStock")}</SelectItem>
-                <SelectItem value="etf">{t("more.hTypeEtf")}</SelectItem>
-                <SelectItem value="crypto">{t("more.hTypeCrypto")}</SelectItem>
-                <SelectItem value="metal">{t("more.hTypeMetal")}</SelectItem>
-                <SelectItem value="other">{t("more.hTypeOther")}</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {state.holdings.length === 0 ? (
-            <div data-tour="holdings-table">
-              <EmptyState
-                title={t("holdings.emptyTitle", { defaultValue: "No holdings yet" })}
-                description={t("holdings.emptyBody", {
-                  defaultValue: "Add a stock, crypto, or custom asset to start tracking.",
-                })}
-                actionLabel={t("holdings.addHolding")}
-                onAction={() => {
-                  setEditing(null);
-                  setOpen(true);
-                }}
-              />
-            </div>
-          ) : rows.length === 0 ? (
+      <PageStack>
+        <Card className="border-border/60 rounded-2xl shadow-sm">
+          <CardContent className="p-4 sm:p-6 space-y-4 pb-[calc(var(--app-fab-offset)+1rem)] lg:pb-6">
             <div
-              className="py-16 text-center text-sm text-muted-foreground"
-              data-tour="holdings-table"
+              className="sticky top-[var(--app-header-h)] z-10 -mx-1 flex flex-wrap items-center gap-2 rounded-xl bg-background/90 px-1 py-2 backdrop-blur lg:static lg:bg-transparent lg:backdrop-blur-none"
+              data-tour="holdings-filters"
             >
-              {t("more.hNoMatch")}
+              <Input
+                placeholder={t("more.hSearch")}
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(0);
+                }}
+                className="max-w-xs h-11 rounded-xl"
+              />
+              <Select
+                value={typeFilter}
+                onValueChange={(v) => {
+                  setTypeFilter(v);
+                  setPage(0);
+                }}
+              >
+                <SelectTrigger className="w-40 h-11 rounded-xl">
+                  <SelectValue placeholder={t("more.hType")} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t("more.hAllTypes")}</SelectItem>
+                  <SelectItem value="stock">{t("more.hTypeStock")}</SelectItem>
+                  <SelectItem value="etf">{t("more.hTypeEtf")}</SelectItem>
+                  <SelectItem value="crypto">{t("more.hTypeCrypto")}</SelectItem>
+                  <SelectItem value="metal">{t("more.hTypeMetal")}</SelectItem>
+                  <SelectItem value="other">{t("more.hTypeOther")}</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-          ) : (
-            <div data-tour="holdings-table">
-              {/* Mobile card list */}
-              <div className="space-y-2 md:hidden">
-                {paged.map((h) => (
-                  <div
-                    key={h.id}
-                    className="flex items-center gap-3 rounded-2xl border border-border/60 bg-card p-3 active-press shadow-sm"
-                  >
+
+            {state.holdings.length === 0 ? (
+              <div data-tour="holdings-table">
+                <EmptyState
+                  title={t("holdings.emptyTitle", { defaultValue: "No holdings yet" })}
+                  description={t("holdings.emptyBody", {
+                    defaultValue: "Add a stock, crypto, or custom asset to start tracking.",
+                  })}
+                  actionLabel={t("holdings.addHolding")}
+                  onAction={() => {
+                    setEditing(null);
+                    setOpen(true);
+                  }}
+                />
+              </div>
+            ) : rows.length === 0 ? (
+              <div
+                className="py-16 text-center text-sm text-muted-foreground"
+                data-tour="holdings-table"
+              >
+                {t("more.hNoMatch")}
+              </div>
+            ) : (
+              <div data-tour="holdings-table">
+                {/* Mobile card list */}
+                <div className="space-y-2 md:hidden">
+                  {paged.map((h) => (
                     <div
-                      className="h-3 w-3 shrink-0 rounded-full"
-                      style={{ backgroundColor: h.color }}
-                    />
-                    <button
-                      type="button"
-                      className="min-w-0 flex-1 text-left"
-                      onClick={() => {
-                        setEditing(h);
-                        setOpen(true);
-                      }}
+                      key={h.id}
+                      className="flex items-center gap-3 rounded-2xl border border-border/60 bg-card p-3 active-press shadow-sm"
                     >
-                      <div className="flex items-baseline justify-between gap-2">
-                        <span className="truncate font-semibold">{h.symbol}</span>
-                        <span className="tabular-nums font-medium shrink-0">
-                          {maskMoney(h.marketValue, currency, privacy)}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
-                        <span className="truncate">{h.name}</span>
-                        <span className="tabular-nums shrink-0">{h.pct.toFixed(1)}%</span>
-                      </div>
-                    </button>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-11 w-11 shrink-0"
-                          aria-label={`Actions for ${h.name || h.symbol}`}
-                        >
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem
-                          onClick={() => openTx(h.id, "buy")}
-                        >
-                          <ArrowUpRight className="mr-2 h-4 w-4 text-success" />{" "}
-                          {t("holdings.addBuy", { defaultValue: "Add buy" })}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => openTx(h.id, "sell")}
-                        >
-                          <ArrowDownRight className="mr-2 h-4 w-4 text-destructive" />{" "}
-                          {t("holdings.addSell", { defaultValue: "Add sell" })}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => {
-                            setEditing(h);
-                            setOpen(true);
-                          }}
-                        >
-                          <Pencil className="mr-2 h-4 w-4" /> {t("common.edit")}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          className="text-destructive focus:text-destructive"
-                          onClick={() => confirmRemove(h)}
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" /> {t("common.delete")}
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                ))}
-              </div>
-
-              {/* Desktop table */}
-              <div className="hidden md:block overflow-x-auto rounded-xl border border-border/60">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-muted/30 hover:bg-muted/30">
-                      <TableHead className="w-10"></TableHead>
-                      <SortHead
-                        label={t("more.hSymbol")}
-                        k="symbol"
-                        sort={sort}
-                        onClick={toggleSort}
+                      <div
+                        className="h-3 w-3 shrink-0 rounded-full"
+                        style={{ backgroundColor: h.color }}
                       />
-                      <TableHead>{t("more.hName")}</TableHead>
-                      <SortHead label={t("more.hType")} k="type" sort={sort} onClick={toggleSort} />
-                      <SortHead
-                        label={t("more.hQuantity")}
-                        k="quantity"
-                        sort={sort}
-                        onClick={toggleSort}
-                        className="text-right"
-                      />
-                      <SortHead
-                        label={t("more.hPrice")}
-                        k="currentPrice"
-                        sort={sort}
-                        onClick={toggleSort}
-                        className="text-right"
-                      />
-                      <SortHead
-                        label={t("more.hValue")}
-                        k="marketValue"
-                        sort={sort}
-                        onClick={toggleSort}
-                        className="text-right"
-                      />
-                      <SortHead
-                        label="%"
-                        k="pct"
-                        sort={sort}
-                        onClick={toggleSort}
-                        className="text-right"
-                      />
-                      <TableHead className="w-10"></TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {paged.map((h) => (
-                      <TableRow key={h.id}>
-                        <TableCell>
-                          <div
-                            className="h-3 w-3 rounded-full"
-                            style={{ backgroundColor: h.color }}
-                          />
-                        </TableCell>
-                        <TableCell className="font-medium">{h.symbol}</TableCell>
-                        <TableCell className="text-muted-foreground max-w-[200px] truncate">
-                          {h.name}
-                        </TableCell>
-                        <TableCell>
-                          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                            {h.type}
+                      <button
+                        type="button"
+                        className="min-w-0 flex-1 text-left"
+                        onClick={() => {
+                          setEditing(h);
+                          setOpen(true);
+                        }}
+                      >
+                        <div className="flex items-baseline justify-between gap-2">
+                          <span className="truncate font-semibold">{h.symbol}</span>
+                          <span className="tabular-nums font-medium shrink-0">
+                            {maskMoney(h.marketValue, currency, privacy)}
                           </span>
-                        </TableCell>
-                        <TableCell className="text-right tabular-nums font-medium">
-                          {formatHoldingQuantity(h.quantity, h.symbol, h.type, privacy)}
-                        </TableCell>
-                        <TableCell className="text-right tabular-nums">
-                          {formatMoney(h.currentPrice, h.priceCurrency || "USD")}
-                          {h.manualPrice != null && (
-                            <span className="ml-1 text-[10px] text-muted-foreground">
-                              {t("more.hManual")}
-                            </span>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-right tabular-nums font-medium">
-                          {maskMoney(h.marketValue, currency, privacy)}
-                        </TableCell>
-                        <TableCell className="text-right tabular-nums text-muted-foreground">
-                          {h.pct.toFixed(2)}%
-                        </TableCell>
-                        <TableCell>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8"
-                                aria-label={`Actions for ${h.name || h.symbol}`}
-                              >
-                                <MoreVertical className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem
-                                onClick={() => openTx(h.id, "buy")}
-                              >
-                                <ArrowUpRight className="mr-2 h-4 w-4 text-success" />{" "}
-                                {t("holdings.addBuy", { defaultValue: "Add buy" })}
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => openTx(h.id, "sell")}
-                              >
-                                <ArrowDownRight className="mr-2 h-4 w-4 text-destructive" />{" "}
-                                {t("holdings.addSell", { defaultValue: "Add sell" })}
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => {
-                                  setEditing(h);
-                                  setOpen(true);
-                                }}
-                              >
-                                <Pencil className="mr-2 h-4 w-4" /> {t("common.edit")}
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                className="text-destructive focus:text-destructive"
-                                onClick={() => confirmRemove(h)}
-                              >
-                                <Trash2 className="mr-2 h-4 w-4" /> {t("common.delete")}
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
+                        </div>
+                        <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
+                          <span className="truncate">{h.name}</span>
+                          <span className="tabular-nums shrink-0">{h.pct.toFixed(1)}%</span>
+                        </div>
+                      </button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-11 w-11 shrink-0"
+                            aria-label={`Actions for ${h.name || h.symbol}`}
+                          >
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => openTx(h.id, "buy")}>
+                            <ArrowUpRight className="mr-2 h-4 w-4 text-success" />{" "}
+                            {t("holdings.addBuy", { defaultValue: "Add buy" })}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => openTx(h.id, "sell")}>
+                            <ArrowDownRight className="mr-2 h-4 w-4 text-destructive" />{" "}
+                            {t("holdings.addSell", { defaultValue: "Add sell" })}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setEditing(h);
+                              setOpen(true);
+                            }}
+                          >
+                            <Pencil className="mr-2 h-4 w-4" /> {t("common.edit")}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            className="text-destructive focus:text-destructive"
+                            onClick={() => confirmRemove(h)}
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" /> {t("common.delete")}
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Desktop table */}
+                <div className="hidden md:block overflow-x-auto rounded-xl border border-border/60">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-muted/30 hover:bg-muted/30">
+                        <TableHead className="w-10"></TableHead>
+                        <SortHead
+                          label={t("more.hSymbol")}
+                          k="symbol"
+                          sort={sort}
+                          onClick={toggleSort}
+                        />
+                        <TableHead>{t("more.hName")}</TableHead>
+                        <SortHead
+                          label={t("more.hType")}
+                          k="type"
+                          sort={sort}
+                          onClick={toggleSort}
+                        />
+                        <SortHead
+                          label={t("more.hQuantity")}
+                          k="quantity"
+                          sort={sort}
+                          onClick={toggleSort}
+                          className="text-right"
+                        />
+                        <SortHead
+                          label={t("more.hPrice")}
+                          k="currentPrice"
+                          sort={sort}
+                          onClick={toggleSort}
+                          className="text-right"
+                        />
+                        <SortHead
+                          label={t("more.hValue")}
+                          k="marketValue"
+                          sort={sort}
+                          onClick={toggleSort}
+                          className="text-right"
+                        />
+                        <SortHead
+                          label="%"
+                          k="pct"
+                          sort={sort}
+                          onClick={toggleSort}
+                          className="text-right"
+                        />
+                        <TableHead className="w-10"></TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {paged.map((h) => (
+                        <TableRow key={h.id}>
+                          <TableCell>
+                            <div
+                              className="h-3 w-3 rounded-full"
+                              style={{ backgroundColor: h.color }}
+                            />
+                          </TableCell>
+                          <TableCell className="font-medium">{h.symbol}</TableCell>
+                          <TableCell className="text-muted-foreground max-w-[200px] truncate">
+                            {h.name}
+                          </TableCell>
+                          <TableCell>
+                            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                              {h.type}
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-right tabular-nums font-medium">
+                            {formatHoldingQuantity(h.quantity, h.symbol, h.type, privacy)}
+                          </TableCell>
+                          <TableCell className="text-right tabular-nums">
+                            {formatMoney(h.currentPrice, h.priceCurrency || "USD")}
+                            {h.manualPrice != null && (
+                              <span className="ml-1 text-[10px] text-muted-foreground">
+                                {t("more.hManual")}
+                              </span>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right tabular-nums font-medium">
+                            {maskMoney(h.marketValue, currency, privacy)}
+                          </TableCell>
+                          <TableCell className="text-right tabular-nums text-muted-foreground">
+                            {h.pct.toFixed(2)}%
+                          </TableCell>
+                          <TableCell>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8"
+                                  aria-label={`Actions for ${h.name || h.symbol}`}
+                                >
+                                  <MoreVertical className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => openTx(h.id, "buy")}>
+                                  <ArrowUpRight className="mr-2 h-4 w-4 text-success" />{" "}
+                                  {t("holdings.addBuy", { defaultValue: "Add buy" })}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => openTx(h.id, "sell")}>
+                                  <ArrowDownRight className="mr-2 h-4 w-4 text-destructive" />{" "}
+                                  {t("holdings.addSell", { defaultValue: "Add sell" })}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => {
+                                    setEditing(h);
+                                    setOpen(true);
+                                  }}
+                                >
+                                  <Pencil className="mr-2 h-4 w-4" /> {t("common.edit")}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  className="text-destructive focus:text-destructive"
+                                  onClick={() => confirmRemove(h)}
+                                >
+                                  <Trash2 className="mr-2 h-4 w-4" /> {t("common.delete")}
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {pageCount > 1 && (
-            <div className="flex items-center justify-between text-sm">
-              <div className="text-muted-foreground">
-                Page {page + 1} of {pageCount}
+            {pageCount > 1 && (
+              <div className="flex items-center justify-between text-sm">
+                <div className="text-muted-foreground">
+                  Page {page + 1} of {pageCount}
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={page === 0}
+                    onClick={() => setPage((p) => p - 1)}
+                  >
+                    Previous
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={page >= pageCount - 1}
+                    onClick={() => setPage((p) => p + 1)}
+                  >
+                    Next
+                  </Button>
+                </div>
               </div>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={page === 0}
-                  onClick={() => setPage((p) => p - 1)}
-                >
-                  Previous
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={page >= pageCount - 1}
-                  onClick={() => setPage((p) => p + 1)}
-                >
-                  Next
-                </Button>
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+            )}
+          </CardContent>
+        </Card>
 
-      <div data-tour="holdings-charts">
-        <HoldingsCharts />
-      </div>
-      <TransactionsPanel />
+        <div data-tour="holdings-charts">
+          <HoldingsCharts />
+        </div>
+        <TransactionsPanel />
+      </PageStack>
 
       <HoldingDialog
         open={open}

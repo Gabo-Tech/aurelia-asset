@@ -1232,6 +1232,8 @@ const de: Translation = {
       addHint: "Lege ein Ziel fest und verfolge, wie viel du gespart hast.",
       added: "Ziel hinzugefügt",
       empty: "Noch keine Ziele.",
+      manualHint:
+        "Der Fortschritt ist manuell. Beiträge aktualisieren das Ziel hier und erzeugen keinen Cashflow-Eintrag.",
       by: "bis {{date}}",
       saveHint: "Spare ~{{amount}}/Monat, um dein Ziel zu erreichen.",
       addContribution: "Beitrag hinzufügen ({{currency}})",

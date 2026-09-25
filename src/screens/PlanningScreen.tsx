@@ -3,8 +3,14 @@ import { ScrollView, Text, StyleSheet, TextInput, Alert, View, Pressable } from 
 import { useTranslation } from "react-i18next";
 import {
   Screen,
+  ScreenStack,
   Header,
   Card,
+  CardStack,
+  CardCopy,
+  CardTitle,
+  CardHelperText,
+  CardActions,
   PrimaryButton,
   SecondaryButton,
   DangerButton,
@@ -22,7 +28,7 @@ import { CategoryBreakdown } from "@/components/CategoryBreakdown";
 import { useStore, useMoney } from "@/lib/store";
 import { amortize } from "@/lib/finance/amortization";
 import { expandCashflows, valuesByEntry } from "@/lib/cashflow-math";
-import { spacing } from "@/theme/colors";
+import { rhythm, spacing } from "@/theme/colors";
 import { useColors } from "@/theme/ThemeProvider";
 import { PALETTE, type SavingsGoal, type Loan, type ForecastScenario, type BudgetPlan, type BudgetPeriodType } from "@/lib/types";
 import { computePlanWindow, spentByCategoryId } from "@/lib/budget-window";
@@ -356,7 +362,7 @@ export function PlanningScreen() {
     : null;
 
   return (
-    <Screen>
+    <Screen avoidKeyboard={false}>
       <ScrollView
         style={{ flex: 1 }}
         keyboardShouldPersistTaps="handled"
@@ -369,6 +375,7 @@ export function PlanningScreen() {
             defaultValue: "Goals, budgets, loans, and forecasts",
           })}
         />
+        <ScreenStack>
         <Card>
           <MetricRow
             items={[
@@ -405,14 +412,21 @@ export function PlanningScreen() {
         {tab === "goals" ? (
           <>
             <Card>
-              <Text style={styles.section}>
-                {t("planning.goals.title", { defaultValue: "Savings goals" })}
-              </Text>
-              <Text style={styles.meta}>{t("planning.goals.manualHint")}</Text>
-              <PrimaryButton
-                label={t("planning.goals.add", { defaultValue: "Add goal" })}
-                onPress={() => setAddGoalOpen(true)}
-              />
+              <CardStack>
+                <CardCopy>
+                  <CardTitle>
+                    {t("planning.goals.title", { defaultValue: "Savings goals" })}
+                  </CardTitle>
+                  <CardHelperText>{t("planning.goals.manualHint")}</CardHelperText>
+                </CardCopy>
+                <CardActions>
+                  <PrimaryButton
+                    fullWidth
+                    label={t("planning.goals.add", { defaultValue: "Add goal" })}
+                    onPress={() => setAddGoalOpen(true)}
+                  />
+                </CardActions>
+              </CardStack>
             </Card>
             <FormSheet
               visible={addGoalOpen}
@@ -479,11 +493,14 @@ export function PlanningScreen() {
               const pct = g.targetAmount > 0 ? (g.currentAmount / g.targetAmount) * 100 : 0;
               return (
                 <Card key={g.id}>
-                  <Text style={styles.title}>{g.name}</Text>
-                  {g.targetDate ? (
-                    <Text style={styles.meta}>Target date: {g.targetDate.slice(0, 10)}</Text>
-                  ) : null}
-                  {g.notes ? <Text style={styles.meta}>{g.notes}</Text> : null}
+                  <CardStack>
+                  <CardCopy>
+                    <CardTitle>{g.name}</CardTitle>
+                    {g.targetDate ? (
+                      <CardHelperText>Target date: {g.targetDate.slice(0, 10)}</CardHelperText>
+                    ) : null}
+                    {g.notes ? <CardHelperText>{g.notes}</CardHelperText> : null}
+                  </CardCopy>
                   <Metric
                     label="Progress"
                     value={`${mask(g.currentAmount)} / ${mask(g.targetAmount)} (${pct.toFixed(0)}%)`}
@@ -532,6 +549,7 @@ export function PlanningScreen() {
                       }}
                     />
                   </View>
+                  </CardStack>
                 </Card>
               );
             })}
@@ -606,17 +624,24 @@ export function PlanningScreen() {
         {tab === "budgets" ? (
           <>
             <Card>
-              <Text style={styles.section}>Budget plans</Text>
-              <Text style={styles.meta}>
-                {t("planning.budgets.linkHint", {
-                  defaultValue:
-                    "Link budget lines to an expense category so spent amounts roll up automatically.",
-                })}
-              </Text>
-              <PrimaryButton
-                label="Create budget plan"
-                onPress={() => addBudgetPlan(`Plan ${(state.budgetPlans?.length ?? 0) + 1}`)}
-              />
+              <CardStack>
+                <CardCopy>
+                  <CardTitle>Budget plans</CardTitle>
+                  <CardHelperText>
+                    {t("planning.budgets.linkHint", {
+                      defaultValue:
+                        "Link budget lines to an expense category so spent amounts roll up automatically.",
+                    })}
+                  </CardHelperText>
+                </CardCopy>
+                <CardActions>
+                  <PrimaryButton
+                    fullWidth
+                    label="Create budget plan"
+                    onPress={() => addBudgetPlan(`Plan ${(state.budgetPlans?.length ?? 0) + 1}`)}
+                  />
+                </CardActions>
+              </CardStack>
             </Card>
             {(state.budgetPlans ?? []).length === 0 ? (
               <EmptyState
@@ -664,19 +689,22 @@ export function PlanningScreen() {
               }
               return (
                 <Card key={p.id}>
-                  <Text style={styles.title}>
-                    {p.name}
-                    {state.mainBudgetPlanId === p.id ? " · main" : ""}
-                  </Text>
-                  {p.description ? <Text style={styles.meta}>{p.description}</Text> : null}
-                  <Text style={styles.meta}>Window: {window.label}</Text>
+                  <CardStack>
+                  <CardCopy>
+                    <CardTitle>
+                      {p.name}
+                      {state.mainBudgetPlanId === p.id ? " · main" : ""}
+                    </CardTitle>
+                    {p.description ? <CardHelperText>{p.description}</CardHelperText> : null}
+                    <CardHelperText>Window: {window.label}</CardHelperText>
+                  </CardCopy>
                   <MetricRow
                     items={[
                       { label: "Budgeted", value: mask(total) },
                       { label: "Spent (linked cats)", value: mask(spentTotal) },
                     ]}
                   />
-                  <Text style={styles.meta}>{p.items.length} lines</Text>
+                  <CardHelperText>{p.items.length} lines</CardHelperText>
                   <View style={styles.row}>
                     <PrimaryButton compact style={{ flex: 1 }} label="Set main" onPress={() => setMainBudgetPlan(p.id)} />
                     <SecondaryButton compact style={{ flex: 1 }} label="Edit" onPress={() => openPlan(p)} />
@@ -722,15 +750,15 @@ export function PlanningScreen() {
                       t("planning.budgets.untitledItem", { defaultValue: "Untitled" });
                     return (
                       <View key={it.id} style={styles.budgetLine}>
-                        <Text style={styles.meta}>
+                        <CardHelperText>
                           {displayLabel} · {mask(it.amount, it.currency)}
                           {catLabel && it.label?.trim() ? ` · ${catLabel}` : ""}
-                        </Text>
+                        </CardHelperText>
                         {spent != null ? (
                           <>
-                            <Text style={styles.meta}>
+                            <CardHelperText>
                               Spent {mask(spent)} / {mask(budget)}
-                            </Text>
+                            </CardHelperText>
                             <View style={styles.barTrack}>
                               <View
                                 style={[
@@ -748,6 +776,7 @@ export function PlanningScreen() {
                       </View>
                     );
                   })}
+                  </CardStack>
                 </Card>
               );
             })}
@@ -787,7 +816,7 @@ export function PlanningScreen() {
                   placeholderTextColor={colors.muted}
                   multiline
                 />
-                <Text style={styles.meta}>Budget window</Text>
+                <CardHelperText>Budget window</CardHelperText>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.catRow}>
                   {(
                     ["daily", "weekly", "biweekly", "monthly", "yearly", "custom"] as BudgetPeriodType[]
@@ -812,9 +841,7 @@ export function PlanningScreen() {
                   />
                 ) : null}
                 <PrimaryButton label="Save plan details" onPress={savePlanMeta} />
-                <Text style={[styles.section, { marginTop: 12 }]}>
-                  {editLineId ? "Edit line" : "Add line"}
-                </Text>
+                <CardTitle>{editLineId ? "Edit line" : "Add line"}</CardTitle>
                 <TextInput
                   style={styles.input}
                   value={lineLabel}
@@ -830,7 +857,7 @@ export function PlanningScreen() {
                   placeholderTextColor={colors.muted}
                   keyboardType="decimal-pad"
                 />
-                <Text style={styles.meta}>Link expense category (for vs actual)</Text>
+                <CardHelperText>Link expense category (for vs actual)</CardHelperText>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.catRow}>
                   <Pressable
                     onPress={() => setLineCategoryId(null)}
@@ -867,7 +894,7 @@ export function PlanningScreen() {
                   const spent = it.categoryId ? (spentMap.get(it.categoryId) ?? 0) : null;
                   return (
                     <View key={it.id} style={styles.lineRow}>
-                      <Text style={styles.meta}>
+                      <CardHelperText>
                         {it.label?.trim() ||
                           (it.categoryId ? catNameById.get(it.categoryId) : undefined) ||
                           t("planning.budgets.untitledItem", { defaultValue: "Untitled" })}{" "}
@@ -876,7 +903,7 @@ export function PlanningScreen() {
                           ? ` · ${catNameById.get(it.categoryId) ?? "cat"}`
                           : ""}
                         {spent != null ? ` · spent ${mask(spent)}` : ""}
-                      </Text>
+                      </CardHelperText>
                       <View style={styles.row}>
                         <SecondaryButton
                           compact
@@ -888,7 +915,6 @@ export function PlanningScreen() {
                             setLineCategoryId(it.categoryId ?? null);
                           }}
                         />
-                        <View style={{ width: 8 }} />
                         <DangerButton
                           compact
                           label="Delete"
@@ -921,15 +947,19 @@ export function PlanningScreen() {
                 </>
               ) : null}
             </FormSheet>
-            {mainPlan ? <Text style={styles.hint}>Main plan: {mainPlan.name}</Text> : null}
+            {mainPlan ? <CardHelperText>Main plan: {mainPlan.name}</CardHelperText> : null}
           </>
         ) : null}
 
         {tab === "loans" ? (
           <>
             <Card>
-              <Text style={styles.section}>Loans</Text>
-              <PrimaryButton label="Add loan" onPress={() => setAddLoanOpen(true)} />
+              <CardStack>
+                <CardTitle>Loans</CardTitle>
+                <CardActions>
+                  <PrimaryButton fullWidth label="Add loan" onPress={() => setAddLoanOpen(true)} />
+                </CardActions>
+              </CardStack>
             </Card>
             <FormSheet
               visible={addLoanOpen}
@@ -1001,8 +1031,11 @@ export function PlanningScreen() {
               const open = showSchedule === loan.id;
               return (
                 <Card key={loan.id}>
-                  <Text style={styles.title}>{loan.name}</Text>
-                  {loan.notes ? <Text style={styles.meta}>{loan.notes}</Text> : null}
+                  <CardStack>
+                  <CardCopy>
+                    <CardTitle>{loan.name}</CardTitle>
+                    {loan.notes ? <CardHelperText>{loan.notes}</CardHelperText> : null}
+                  </CardCopy>
                   <Metric
                     label="Monthly payment"
                     value={mask(sched.monthlyPayment, loan.currency)}
@@ -1013,7 +1046,7 @@ export function PlanningScreen() {
                   />
                   <Metric label="Payoff" value={sched.payoffDate.slice(0, 10)} />
                   {loan.extraMonthly ? (
-                    <Text style={styles.meta}>Extra monthly: {mask(loan.extraMonthly, loan.currency)}</Text>
+                    <CardHelperText>Extra monthly: {mask(loan.extraMonthly, loan.currency)}</CardHelperText>
                   ) : null}
                   <View style={styles.row}>
                     <SecondaryButton compact style={{ flex: 1 }} label="Edit" onPress={() => openLoan(loan)} />
@@ -1048,15 +1081,16 @@ export function PlanningScreen() {
                   </View>
                   {open
                     ? sched.rows.slice(0, 12).map((row) => (
-                        <Text key={row.index} style={styles.meta}>
+                        <CardHelperText key={row.index}>
                           #{row.index} · pay {mask(row.payment, loan.currency)} · bal{" "}
                           {mask(row.balance, loan.currency)}
-                        </Text>
+                        </CardHelperText>
                       ))
                     : null}
                   {open && sched.rows.length > 12 ? (
-                    <Text style={styles.meta}>… {sched.rows.length - 12} more months</Text>
+                    <CardHelperText>… {sched.rows.length - 12} more months</CardHelperText>
                   ) : null}
+                  </CardStack>
                 </Card>
               );
             })}
@@ -1125,8 +1159,11 @@ export function PlanningScreen() {
         {tab === "forecast" ? (
           <>
             <Card>
-              <Text style={styles.section}>Forecast</Text>
+              <CardStack>
+              <CardTitle>Forecast</CardTitle>
+              <CardActions>
               <PrimaryButton
+                fullWidth
                 label="Add scenario"
                 onPress={() =>
                   addForecastScenario({
@@ -1138,6 +1175,7 @@ export function PlanningScreen() {
                   })
                 }
               />
+              </CardActions>
               {(state.forecastScenarios ?? []).length === 0 ? (
                 <EmptyState
                   title={t("planning.forecast.empty", {
@@ -1161,7 +1199,7 @@ export function PlanningScreen() {
               {(state.forecastScenarios ?? []).map((s) => (
                 <View key={s.id} style={styles.lineRow}>
                   <Pressable onPress={() => setMainForecastScenario(s.id)}>
-                    <Text style={styles.meta}>
+                    <CardHelperText>
                       {s.name} · {s.months} mo
                       {s.monthlyIncomeAdjust
                         ? ` · inc ${s.monthlyIncomeAdjust >= 0 ? "+" : ""}${s.monthlyIncomeAdjust}`
@@ -1170,17 +1208,15 @@ export function PlanningScreen() {
                         ? ` · exp ${s.monthlyExpenseAdjust >= 0 ? "+" : ""}${s.monthlyExpenseAdjust}`
                         : ""}
                       {state.mainForecastScenarioId === s.id ? " · main" : ""}
-                    </Text>
+                    </CardHelperText>
                   </Pressable>
                   <View style={styles.row}>
                     <SecondaryButton compact label="Edit" onPress={() => openScenario(s)} />
-                    <View style={{ width: 8 }} />
                     <SecondaryButton
                       compact
                       label="Duplicate"
                       onPress={() => duplicateForecastScenario(s.id)}
                     />
-                    <View style={{ width: 8 }} />
                     <DangerButton
                       compact
                       label="Delete"
@@ -1210,6 +1246,7 @@ export function PlanningScreen() {
                   </View>
                 </View>
               ))}
+              </CardStack>
             </Card>
             <FormSheet
               visible={!!editScenario}
@@ -1267,7 +1304,8 @@ export function PlanningScreen() {
               />
             </FormSheet>
             <Card>
-              <Text style={styles.title}>{mainScenario?.name ?? "Scenario"} projection</Text>
+              <CardStack>
+              <CardTitle>{mainScenario?.name ?? "Scenario"} projection</CardTitle>
               {forecast.length > 0 ? (
                 <ChartFrame filename="forecast-projection" title="Projected balance">
                   <View style={styles.forecastChart}>
@@ -1296,18 +1334,20 @@ export function PlanningScreen() {
                       );
                     })}
                   </View>
-                  <Text style={styles.meta}>
+                  <CardHelperText>
                     Month {forecast[0]!.m}: {mask(forecast[0]!.bal)} → Month{" "}
                     {forecast[forecast.length - 1]!.m}:{" "}
                     {mask(forecast[forecast.length - 1]!.bal)}
-                  </Text>
+                  </CardHelperText>
                 </ChartFrame>
               ) : (
-                <Text style={styles.meta}>Add a scenario to see a projection.</Text>
+                <CardHelperText>Add a scenario to see a projection.</CardHelperText>
               )}
+              </CardStack>
             </Card>
           </>
         ) : null}
+        </ScreenStack>
       </ScrollView>
     </Screen>
   );
@@ -1315,7 +1355,6 @@ export function PlanningScreen() {
 
 function createStyles(colors: ReturnType<typeof useColors>) {
   return StyleSheet.create({
-  section: { color: colors.text, fontWeight: "600", marginBottom: 8 },
   input: {
     borderWidth: 1,
     borderColor: colors.border,
@@ -1326,8 +1365,6 @@ function createStyles(colors: ReturnType<typeof useColors>) {
     backgroundColor: colors.surfaceAlt,
   },
   notes: { minHeight: 64, textAlignVertical: "top" },
-  title: { color: colors.text, fontWeight: "700", marginBottom: 8 },
-  meta: { color: colors.muted, fontSize: 12, marginTop: 4 },
   forecastChart: {
     flexDirection: "row",
     alignItems: "flex-end",
@@ -1339,7 +1376,6 @@ function createStyles(colors: ReturnType<typeof useColors>) {
   forecastBarWrap: { flex: 1, width: "100%", justifyContent: "flex-end" },
   forecastBar: { width: "100%", borderRadius: 3, minHeight: 4 },
   forecastLabel: { color: colors.muted, fontSize: 9, marginTop: 2 },
-  hint: { color: colors.muted, textAlign: "center", marginBottom: 16 },
   tabs: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: spacing.md },
   tab: {
     ...chipContainerStyle,
@@ -1349,9 +1385,14 @@ function createStyles(colors: ReturnType<typeof useColors>) {
   },
   tabOn: { borderColor: colors.accent, backgroundColor: colors.accentSoft },
   tabText: { ...chipLabelStyle, color: colors.text, textTransform: "capitalize" },
-  row: { flexDirection: "row", marginTop: 8, flexWrap: "wrap" },
-  lineRow: { marginTop: 8, borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 8 },
-  budgetLine: { marginTop: 8 },
+  row: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm },
+  lineRow: {
+    gap: rhythm.tight,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.border,
+    paddingTop: spacing.sm,
+  },
+  budgetLine: { gap: rhythm.tight },
   catRow: { marginBottom: 8 },
   catChip: {
     ...chipContainerStyle,
@@ -1368,8 +1409,6 @@ function createStyles(colors: ReturnType<typeof useColors>) {
     backgroundColor: colors.surfaceAlt,
     borderRadius: 4,
     overflow: "hidden",
-    marginTop: 4,
-    marginBottom: 4,
   },
   barFill: { height: "100%", backgroundColor: colors.accent },
 });

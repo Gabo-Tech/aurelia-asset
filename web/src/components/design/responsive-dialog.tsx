@@ -51,13 +51,21 @@ export function ResponsiveDialog({
     return (
       <Drawer open={open} onOpenChange={onOpenChange}>
         {/* Do not pass max-w-* className here — drawers are full-bleed. */}
-        <DrawerContent className="max-h-[92dvh]">
+        <DrawerContent className="max-h-[calc(92dvh-var(--keyboard-inset,0px))]">
           <DrawerHeader className="shrink-0 text-left">
             <DrawerTitle>{title}</DrawerTitle>
             {description ? <DrawerDescription>{description}</DrawerDescription> : null}
           </DrawerHeader>
           {/* Bound with max-h, not unbounded flex-1 — flex-1 inside h-auto collapses to 0. */}
-          <div className="overflow-y-auto overscroll-contain px-4 pb-2 max-h-[min(60dvh,calc(92dvh-11rem))]">
+          <div
+            className="overflow-y-auto overscroll-contain px-4 pb-2 max-h-[min(60dvh,calc(92dvh-11rem-var(--keyboard-inset,0px)))] [&_input]:scroll-mb-4 [&_textarea]:scroll-mb-4"
+            onFocusCapture={(e) => {
+              const el = e.target;
+              if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) {
+                el.scrollIntoView({ block: "nearest", behavior: "smooth" });
+              }
+            }}
+          >
             {children}
           </div>
           {(footer || showClose) && (

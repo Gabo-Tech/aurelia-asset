@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { View, Text, StyleSheet, TextInput, Pressable, ScrollView, Alert } from "react-native";
 import { useTranslation } from "react-i18next";
-import { Card, PrimaryButton, SecondaryButton, SectionHeader, chipLabelStyle, chipContainerStyle } from "@/components/ui";
+import { Card, CardHelperText, CardActions, PrimaryButton, SecondaryButton, SectionHeader, chipLabelStyle, chipContainerStyle } from "@/components/ui";
 import { useStore } from "@/lib/store";
 import {
   GROUP_COLORS,
@@ -94,9 +94,9 @@ export function CategoriesManager() {
           setEditing(null);
         }}
       />
-      <Text style={[styles.hint, { color: colors.muted }]}>
+      <CardHelperText>
         {t("more.mcDesc", { defaultValue: "Add or rename income and expense categories." })}
-      </Text>
+      </CardHelperText>
 
       <Text style={[styles.sub, { color: colors.text }]}>Add new</Text>
       <TextInput
@@ -193,9 +193,10 @@ export function CategoriesManager() {
               />
             ))}
           </ScrollView>
-          <PrimaryButton label="Save" onPress={saveEdit} />
-          <View style={{ height: 8 }} />
-          <SecondaryButton label="Cancel" onPress={() => setEditing(null)} />
+          <CardActions>
+          <PrimaryButton fullWidth label="Save" onPress={saveEdit} />
+          <SecondaryButton fullWidth label="Cancel" onPress={() => setEditing(null)} />
+          </CardActions>
         </View>
       ) : null}
     </Card>
@@ -203,22 +204,21 @@ export function CategoriesManager() {
 }
 
 const styles = StyleSheet.create({
-  hint: { fontSize: 12, marginBottom: 10 },
-  sub: { fontWeight: "600", marginBottom: 6, marginTop: 4 },
+  sub: { fontWeight: "600" },
   input: {
     borderWidth: 1,
     borderRadius: 8,
     padding: 12,
     marginBottom: 8,
   },
-  row: { flexDirection: "row", flexWrap: "wrap", marginBottom: 8 },
+  row: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm },
   chip: {
     ...chipContainerStyle,
     marginRight: 8,
     borderWidth: 1,
   },
   chipText: { ...chipLabelStyle, textTransform: "capitalize" },
-  swatches: { marginBottom: 10 },
+  swatches: {},
   swatch: {
     width: 28,
     height: 28,

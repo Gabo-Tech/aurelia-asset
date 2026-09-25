@@ -19,6 +19,7 @@ import { githubSourceUrl } from "@/lib/site-config";
 import { DesktopSidebar } from "./shell/desktop-sidebar";
 import { MobileHeader } from "./shell/mobile-header";
 import { useMobileHeader } from "@/hooks/use-mobile-header";
+import { useVisualViewportInset } from "@/hooks/use-visual-viewport-inset";
 import { BottomTabBar } from "./shell/bottom-tab-bar";
 import { type NavItemDef } from "./shell/nav-config";
 import { cn } from "@/lib/utils";
@@ -46,6 +47,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { t } = useTranslation();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
+  useVisualViewportInset();
 
   const nav = navItems
     .filter((item) => item.key !== "assistant" || assistantEnabled)

@@ -1,10 +1,10 @@
 import React, { useMemo, useState } from "react";
 import { View, Text, StyleSheet, TextInput, Pressable, Alert } from "react-native";
 import { useTranslation } from "react-i18next";
-import { Card, PrimaryButton, SecondaryButton, SectionHeader, Metric, chipLabelStyle, chipContainerStyle } from "@/components/ui";
+import { Card, CardHelperText, CardActions, PrimaryButton, SecondaryButton, SectionHeader, Metric, chipLabelStyle, chipContainerStyle } from "@/components/ui";
 import { useStore, useMoney } from "@/lib/store";
 import type { HoldingTransaction } from "@/lib/types";
-import { spacing } from "@/theme/colors";
+import { rhythm, spacing } from "@/theme/colors";
 import { useColors } from "@/theme/ThemeProvider";
 
 type KindFilter = "all" | "buy" | "sell";
@@ -221,19 +221,22 @@ export function TransactionsPanel() {
         placeholderTextColor={colors.muted}
         keyboardType="decimal-pad"
       />
-      <PrimaryButton label={editing ? "Save changes" : "Add transaction"} onPress={save} />
+      <CardActions>
+      <PrimaryButton
+        fullWidth
+        label={editing ? "Save changes" : "Add transaction"}
+        onPress={save}
+      />
       {editing ? (
-        <>
-          <View style={{ height: 8 }} />
-          <SecondaryButton label="Cancel edit" onPress={() => setEditing(null)} />
-        </>
+        <SecondaryButton fullWidth label="Cancel edit" onPress={() => setEditing(null)} />
       ) : null}
+      </CardActions>
 
-      <Text style={[styles.sub, { color: colors.text, marginTop: spacing.md }]}>
+      <Text style={[styles.sub, { color: colors.text }]}>
         Ledger ({rows.length})
       </Text>
       {rows.length === 0 ? (
-        <Text style={[styles.meta, { color: colors.muted }]}>
+        <CardHelperText>
           {state.transactions?.length
             ? t("more.tpEmptyFiltered", {
                 defaultValue: "No transactions match this filter.",
@@ -241,7 +244,7 @@ export function TransactionsPanel() {
             : t("more.tpEmpty", {
                 defaultValue: "No transactions yet. Add a buy or sell to start tracking.",
               })}
-        </Text>
+        </CardHelperText>
       ) : (
         rows.map((tx) => {
           const h = state.holdings.find((x) => x.id === tx.holdingId);
@@ -251,13 +254,12 @@ export function TransactionsPanel() {
                 {tx.kind.toUpperCase()} {h?.symbol ?? "?"} · {tx.quantity} @{" "}
                 {mask(tx.pricePerUnit, tx.currency)}
               </Text>
-              <Text style={[styles.meta, { color: colors.muted }]}>
+              <CardHelperText>
                 {tx.date.slice(0, 10)}
                 {tx.fees ? ` · fees ${mask(tx.fees, tx.currency)}` : ""}
-              </Text>
+              </CardHelperText>
               <View style={styles.row}>
                 <SecondaryButton label="Edit" onPress={() => openEdit(tx)} />
-                <View style={{ width: 8 }} />
                 <SecondaryButton
                   label="Delete"
                   destructive
@@ -282,7 +284,7 @@ export function TransactionsPanel() {
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: "row", flexWrap: "wrap", marginBottom: 8 },
+  row: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm },
   chip: {
     ...chipContainerStyle,
     paddingHorizontal: 10,
@@ -292,18 +294,17 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   chipText: { ...chipLabelStyle, fontSize: 11, lineHeight: 14, textTransform: "capitalize" },
-  sub: { fontWeight: "600", marginBottom: 6 },
+  sub: { fontWeight: "600" },
   input: {
     borderWidth: 1,
     borderRadius: 8,
     padding: 12,
     marginBottom: 8,
   },
-  meta: { fontSize: 12 },
   txRow: {
-    borderTopWidth: 1,
-    paddingTop: 8,
-    marginTop: 8,
+    gap: rhythm.tight,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    paddingTop: spacing.sm,
   },
   txTitle: { fontWeight: "600", fontSize: 13 },
 });

@@ -1233,6 +1233,8 @@ const ca: Translation = {
       addHint: "Defineix un objectiu i segueix quant has estalviat.",
       added: "Objectiu afegit",
       empty: "Encara no hi ha objectius.",
+      manualHint:
+        "El progrés és manual. Les contribucions actualitzen l'objectiu ací i no creen un moviment de caixa.",
       by: "abans de {{date}}",
       saveHint: "Estalvia ~{{amount}}/mes per assolir l'objectiu.",
       addContribution: "Afegir aportació ({{currency}})",
