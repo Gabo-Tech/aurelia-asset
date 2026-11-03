@@ -225,11 +225,13 @@ const de: Translation = {
       how: "Wie es funktioniert",
       downloads: "Download",
       faq: "FAQ",
+      guide: "Leitfaden",
+      compare: "Vergleich",
     },
     hero: {
       badge: "Kein Konto. Keine Cloud-Synchronisation. Keine Telemetrie.",
-      titleStart: "Privates Portfolio-Tracking.",
-      titleHighlight: "Auf deinem Gerät",
+      titleStart: "Privater Nettovermögens-Tracker.",
+      titleHighlight: "Ohne Anmeldung",
       subtitle:
         "Verfolge Aktien, ETFs, Krypto, Bargeld und Vermögen an einem Ort. Aurelia verschlüsselt deine Daten auf diesem Gerät, fragt nie, wer du bist, und synchronisiert nie mit der Cloud. Kostenlos und Open Source.",
       ctaPrimary: "Aurelia öffnen",
@@ -376,7 +378,10 @@ const de: Translation = {
 
     footer: {
       brand: "Aurelia",
-      madeBy: "Gemacht von",
+      madeBy: "Entwickelt von",
+      sisterTools: "Schwesterprojekte",
+      guide: "Privater Vermögens-Tracker",
+      compare: "Kubera, Empower und Ghostfolio",
       sourceCode: "Quellcode",
     },
     meta: {

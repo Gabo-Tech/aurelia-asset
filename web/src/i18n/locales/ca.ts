@@ -225,11 +225,13 @@ const ca: Translation = {
       how: "Com funciona",
       downloads: "Descarregar",
       faq: "Preguntes",
+      guide: "Guia",
+      compare: "Comparar",
     },
     hero: {
       badge: "Sense compte. Sense sincronització al núvol. Sense telemetria.",
-      titleStart: "Seguiment privat de cartera.",
-      titleHighlight: "Al teu dispositiu",
+      titleStart: "Rastrejador privat de patrimoni net.",
+      titleHighlight: "Sense registre",
       subtitle:
         "Segueix accions, ETFs, cripto, efectiu i patrimoni net en un sol lloc. Aurelia xifra les teues dades en este dispositiu, mai no et pregunta qui eres i mai no sincronitza amb el núvol. Gratuït i de codi obert.",
       ctaPrimary: "Obrir Aurelia",
@@ -377,6 +379,9 @@ const ca: Translation = {
     footer: {
       brand: "Aurelia",
       madeBy: "Fet per",
+      sisterTools: "Eines germanes",
+      guide: "Rastrejador privat de patrimoni",
+      compare: "Kubera, Empower i Ghostfolio",
       sourceCode: "Codi font",
     },
     meta: {
