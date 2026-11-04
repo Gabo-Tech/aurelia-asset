@@ -379,6 +379,8 @@ const ca: Translation = {
     footer: {
       brand: "Aurelia",
       madeBy: "Fet per",
+      madeWith: "Fet amb",
+      madeWithBy: "per",
       sisterTools: "Eines germanes",
       guide: "Rastrejador privat de patrimoni",
       compare: "Kubera, Empower i Ghostfolio",

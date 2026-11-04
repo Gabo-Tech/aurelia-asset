@@ -372,6 +372,8 @@ const en = {
     footer: {
       brand: "Aurelia",
       madeBy: "Built by",
+      madeWith: "Made with",
+      madeWithBy: "by",
       sisterTools: "Sister tools",
       guide: "Private net worth tracker",
       compare: "Kubera, Empower and Ghostfolio",

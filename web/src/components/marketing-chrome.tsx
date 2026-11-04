@@ -190,6 +190,17 @@ export function MarketingFooter() {
               </span>
             ))}
           </p>
+          <p>
+            {t("landing.footer.madeWith")} ❤️ {t("landing.footer.madeWithBy")}{" "}
+            <a
+              href="https://solutions.gabo.rocks/"
+              target="_blank"
+              rel="noopener"
+              className="font-semibold text-foreground underline-offset-4 hover:text-primary hover:underline"
+            >
+              GABO
+            </a>
+          </p>
         </div>
       </div>
     </footer>
