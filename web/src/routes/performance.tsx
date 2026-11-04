@@ -30,6 +30,7 @@ import { formatPct, formatMoney, MASK } from "@/lib/format";
 import { convert } from "@/lib/finance/fx";
 import { cn } from "@/lib/utils";
 import { SITE_URL } from "@/lib/site-config";
+import { NOINDEX_ROBOTS } from "@/lib/seo";
 import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
 import { Loader2 } from "lucide-react";
 import { computePortfolioCostBasis, realizedGainsInRange } from "@/lib/cost-basis";
@@ -46,6 +47,7 @@ export const Route = createFileRoute("/performance")({
         { property: "og:title", content: title },
         { property: "og:description", content: desc },
         { property: "og:url", content: url },
+        NOINDEX_ROBOTS,
       ],
       links: [{ rel: "canonical", href: url }],
     };

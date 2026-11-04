@@ -52,6 +52,7 @@ import { Fab } from "@/components/design/fab";
 import { EmptyState } from "@/components/design/empty-state";
 import type { Holding } from "@/lib/types";
 import { SITE_URL } from "@/lib/site-config";
+import { NOINDEX_ROBOTS } from "@/lib/seo";
 import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
 
 export const Route = createFileRoute("/holdings")({
@@ -66,6 +67,7 @@ export const Route = createFileRoute("/holdings")({
         { property: "og:title", content: title },
         { property: "og:description", content: desc },
         { property: "og:url", content: url },
+        NOINDEX_ROBOTS,
       ],
       links: [{ rel: "canonical", href: url }],
     };

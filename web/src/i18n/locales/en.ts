@@ -219,11 +219,13 @@ const en = {
       how: "How it works",
       downloads: "Download",
       faq: "FAQ",
+      guide: "Guide",
+      compare: "Compare",
     },
     hero: {
       badge: "No account. No cloud sync. No telemetry.",
-      titleStart: "Private portfolio tracking.",
-      titleHighlight: "On your device",
+      titleStart: "Private net worth tracker.",
+      titleHighlight: "No signup",
       subtitle:
         "Track stocks, ETFs, crypto, cash and net worth in one place. Aurelia encrypts your data on this device, never asks who you are, and never syncs to the cloud. Free and open source.",
       ctaPrimary: "Open Aurelia",
@@ -369,16 +371,19 @@ const en = {
 
     footer: {
       brand: "Aurelia",
-      madeBy: "Made by",
+      madeBy: "Built by",
+      sisterTools: "Sister tools",
+      guide: "Private net worth tracker",
+      compare: "Kubera, Empower and Ghostfolio",
       sourceCode: "Source code",
       featuredOn: "Featured on",
     },
     meta: {
-      title: "Aurelia — Private portfolio & net worth tracker (no cloud)",
+      title: "Aurelia — Private net worth tracker (free, no signup)",
       description:
-        "Track stocks, ETFs, crypto and cash with encrypted, on-device storage. Sankey cashflow, budgets and net worth. Free web app plus Linux and Android. No signup, no cloud sync.",
+        "Free private net worth tracker with no signup. Stocks, ETFs, crypto, cash, and budgets stay encrypted on your device. Web, Linux, and Android. Live quotes need a network.",
       keywords:
-        "aurelia, private portfolio tracker, net worth tracker, local finance app, no cloud sync, stock tracker, crypto portfolio, cashflow sankey, budget planner, AGPL finance app",
+        "aurelia, private net worth tracker, no signup, offline net worth tracker, local finance app, no cloud sync, stock tracker, crypto portfolio, cashflow sankey, budget planner, AGPL finance app",
     },
   },
   dashboard: {

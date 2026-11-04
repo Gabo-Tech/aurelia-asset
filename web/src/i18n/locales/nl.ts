@@ -224,11 +224,13 @@ const nl: Translation = {
       how: "Hoe het werkt",
       downloads: "Download",
       faq: "FAQ",
+      guide: "Gids",
+      compare: "Vergelijk",
     },
     hero: {
       badge: "Geen account. Geen cloud-synchronisatie. Geen telemetrie.",
-      titleStart: "Privé portefeuille volgen.",
-      titleHighlight: "Op je apparaat",
+      titleStart: "Privé vermogens-tracker.",
+      titleHighlight: "Geen account",
       subtitle:
         "Volg aandelen, ETF's, crypto, cash en vermogen op één plek. Aurelia versleutelt je gegevens op dit apparaat, vraagt nooit wie je bent en synchroniseert nooit met de cloud. Gratis en open source.",
       ctaPrimary: "Aurelia openen",
@@ -376,6 +378,9 @@ const nl: Translation = {
     footer: {
       brand: "Aurelia",
       madeBy: "Gemaakt door",
+      sisterTools: "Zusterprojecten",
+      guide: "Privé vermogens-tracker",
+      compare: "Kubera, Empower en Ghostfolio",
       sourceCode: "Broncode",
       featuredOn: "Uitgelicht op",
     },

@@ -71,6 +71,7 @@ import { ChevronDown } from "lucide-react";
 import { BudgetPieCard, type PieSlice } from "@/components/budget-pie-card";
 import { ColorSwatchPicker, SWATCH_PALETTE } from "@/components/color-swatch-picker";
 import { SITE_URL } from "@/lib/site-config";
+import { NOINDEX_ROBOTS } from "@/lib/seo";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/planning")({
@@ -86,6 +87,7 @@ export const Route = createFileRoute("/planning")({
         { property: "og:title", content: title },
         { property: "og:description", content: desc },
         { property: "og:url", content: url },
+        NOINDEX_ROBOTS,
       ],
       links: [{ rel: "canonical", href: url }],
     };

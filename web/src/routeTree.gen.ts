@@ -9,50 +9,22 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as SettingsRouteImport } from './routes/settings'
-import { Route as PlanningRouteImport } from './routes/planning'
-import { Route as PerformanceRouteImport } from './routes/performance'
-import { Route as HoldingsRouteImport } from './routes/holdings'
-import { Route as DashboardRouteImport } from './routes/dashboard'
-import { Route as CashflowRouteImport } from './routes/cashflow'
-import { Route as AssistantRouteImport } from './routes/assistant'
-import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminRouteImport } from './routes/admin'
+import { Route as AlternativeToKuberaEmpowerGhostfolioRouteImport } from './routes/alternative-to-kubera-empower-ghostfolio'
+import { Route as AssistantRouteImport } from './routes/assistant'
+import { Route as CashflowRouteImport } from './routes/cashflow'
+import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as HoldingsRouteImport } from './routes/holdings'
+import { Route as PerformanceRouteImport } from './routes/performance'
+import { Route as PlanningRouteImport } from './routes/planning'
+import { Route as PrivateNetWorthTrackerRouteImport } from './routes/private-net-worth-tracker'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ApiFinanceProxyRouteImport } from './routes/api/finance-proxy'
 
-const SettingsRoute = SettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PlanningRoute = PlanningRouteImport.update({
-  id: '/planning',
-  path: '/planning',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PerformanceRoute = PerformanceRouteImport.update({
-  id: '/performance',
-  path: '/performance',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const HoldingsRoute = HoldingsRouteImport.update({
-  id: '/holdings',
-  path: '/holdings',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DashboardRoute = DashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CashflowRoute = CashflowRouteImport.update({
-  id: '/cashflow',
-  path: '/cashflow',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AssistantRoute = AssistantRouteImport.update({
-  id: '/assistant',
-  path: '/assistant',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminRoute = AdminRouteImport.update({
@@ -60,9 +32,50 @@ const AdminRoute = AdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const AlternativeToKuberaEmpowerGhostfolioRoute =
+  AlternativeToKuberaEmpowerGhostfolioRouteImport.update({
+    id: '/alternative-to-kubera-empower-ghostfolio',
+    path: '/alternative-to-kubera-empower-ghostfolio',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const AssistantRoute = AssistantRouteImport.update({
+  id: '/assistant',
+  path: '/assistant',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CashflowRoute = CashflowRouteImport.update({
+  id: '/cashflow',
+  path: '/cashflow',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HoldingsRoute = HoldingsRouteImport.update({
+  id: '/holdings',
+  path: '/holdings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PerformanceRoute = PerformanceRouteImport.update({
+  id: '/performance',
+  path: '/performance',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PlanningRoute = PlanningRouteImport.update({
+  id: '/planning',
+  path: '/planning',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivateNetWorthTrackerRoute = PrivateNetWorthTrackerRouteImport.update({
+  id: '/private-net-worth-tracker',
+  path: '/private-net-worth-tracker',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiFinanceProxyRoute = ApiFinanceProxyRouteImport.update({
@@ -74,24 +87,28 @@ const ApiFinanceProxyRoute = ApiFinanceProxyRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/alternative-to-kubera-empower-ghostfolio': typeof AlternativeToKuberaEmpowerGhostfolioRoute
   '/assistant': typeof AssistantRoute
   '/cashflow': typeof CashflowRoute
   '/dashboard': typeof DashboardRoute
   '/holdings': typeof HoldingsRoute
   '/performance': typeof PerformanceRoute
   '/planning': typeof PlanningRoute
+  '/private-net-worth-tracker': typeof PrivateNetWorthTrackerRoute
   '/settings': typeof SettingsRoute
   '/api/finance-proxy': typeof ApiFinanceProxyRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/alternative-to-kubera-empower-ghostfolio': typeof AlternativeToKuberaEmpowerGhostfolioRoute
   '/assistant': typeof AssistantRoute
   '/cashflow': typeof CashflowRoute
   '/dashboard': typeof DashboardRoute
   '/holdings': typeof HoldingsRoute
   '/performance': typeof PerformanceRoute
   '/planning': typeof PlanningRoute
+  '/private-net-worth-tracker': typeof PrivateNetWorthTrackerRoute
   '/settings': typeof SettingsRoute
   '/api/finance-proxy': typeof ApiFinanceProxyRoute
 }
@@ -99,12 +116,14 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/alternative-to-kubera-empower-ghostfolio': typeof AlternativeToKuberaEmpowerGhostfolioRoute
   '/assistant': typeof AssistantRoute
   '/cashflow': typeof CashflowRoute
   '/dashboard': typeof DashboardRoute
   '/holdings': typeof HoldingsRoute
   '/performance': typeof PerformanceRoute
   '/planning': typeof PlanningRoute
+  '/private-net-worth-tracker': typeof PrivateNetWorthTrackerRoute
   '/settings': typeof SettingsRoute
   '/api/finance-proxy': typeof ApiFinanceProxyRoute
 }
@@ -113,36 +132,42 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/admin'
+    | '/alternative-to-kubera-empower-ghostfolio'
     | '/assistant'
     | '/cashflow'
     | '/dashboard'
     | '/holdings'
     | '/performance'
     | '/planning'
+    | '/private-net-worth-tracker'
     | '/settings'
     | '/api/finance-proxy'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/admin'
+    | '/alternative-to-kubera-empower-ghostfolio'
     | '/assistant'
     | '/cashflow'
     | '/dashboard'
     | '/holdings'
     | '/performance'
     | '/planning'
+    | '/private-net-worth-tracker'
     | '/settings'
     | '/api/finance-proxy'
   id:
     | '__root__'
     | '/'
     | '/admin'
+    | '/alternative-to-kubera-empower-ghostfolio'
     | '/assistant'
     | '/cashflow'
     | '/dashboard'
     | '/holdings'
     | '/performance'
     | '/planning'
+    | '/private-net-worth-tracker'
     | '/settings'
     | '/api/finance-proxy'
   fileRoutesById: FileRoutesById
@@ -150,65 +175,25 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
+  AlternativeToKuberaEmpowerGhostfolioRoute: typeof AlternativeToKuberaEmpowerGhostfolioRoute
   AssistantRoute: typeof AssistantRoute
   CashflowRoute: typeof CashflowRoute
   DashboardRoute: typeof DashboardRoute
   HoldingsRoute: typeof HoldingsRoute
   PerformanceRoute: typeof PerformanceRoute
   PlanningRoute: typeof PlanningRoute
+  PrivateNetWorthTrackerRoute: typeof PrivateNetWorthTrackerRoute
   SettingsRoute: typeof SettingsRoute
   ApiFinanceProxyRoute: typeof ApiFinanceProxyRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/settings': {
-      id: '/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof SettingsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/planning': {
-      id: '/planning'
-      path: '/planning'
-      fullPath: '/planning'
-      preLoaderRoute: typeof PlanningRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/performance': {
-      id: '/performance'
-      path: '/performance'
-      fullPath: '/performance'
-      preLoaderRoute: typeof PerformanceRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/holdings': {
-      id: '/holdings'
-      path: '/holdings'
-      fullPath: '/holdings'
-      preLoaderRoute: typeof HoldingsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/dashboard': {
-      id: '/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof DashboardRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/cashflow': {
-      id: '/cashflow'
-      path: '/cashflow'
-      fullPath: '/cashflow'
-      preLoaderRoute: typeof CashflowRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/assistant': {
-      id: '/assistant'
-      path: '/assistant'
-      fullPath: '/assistant'
-      preLoaderRoute: typeof AssistantRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin': {
@@ -218,11 +203,67 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/alternative-to-kubera-empower-ghostfolio': {
+      id: '/alternative-to-kubera-empower-ghostfolio'
+      path: '/alternative-to-kubera-empower-ghostfolio'
+      fullPath: '/alternative-to-kubera-empower-ghostfolio'
+      preLoaderRoute: typeof AlternativeToKuberaEmpowerGhostfolioRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/assistant': {
+      id: '/assistant'
+      path: '/assistant'
+      fullPath: '/assistant'
+      preLoaderRoute: typeof AssistantRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cashflow': {
+      id: '/cashflow'
+      path: '/cashflow'
+      fullPath: '/cashflow'
+      preLoaderRoute: typeof CashflowRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/holdings': {
+      id: '/holdings'
+      path: '/holdings'
+      fullPath: '/holdings'
+      preLoaderRoute: typeof HoldingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/performance': {
+      id: '/performance'
+      path: '/performance'
+      fullPath: '/performance'
+      preLoaderRoute: typeof PerformanceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/planning': {
+      id: '/planning'
+      path: '/planning'
+      fullPath: '/planning'
+      preLoaderRoute: typeof PlanningRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/private-net-worth-tracker': {
+      id: '/private-net-worth-tracker'
+      path: '/private-net-worth-tracker'
+      fullPath: '/private-net-worth-tracker'
+      preLoaderRoute: typeof PrivateNetWorthTrackerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/finance-proxy': {
@@ -238,12 +279,15 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
+  AlternativeToKuberaEmpowerGhostfolioRoute:
+    AlternativeToKuberaEmpowerGhostfolioRoute,
   AssistantRoute: AssistantRoute,
   CashflowRoute: CashflowRoute,
   DashboardRoute: DashboardRoute,
   HoldingsRoute: HoldingsRoute,
   PerformanceRoute: PerformanceRoute,
   PlanningRoute: PlanningRoute,
+  PrivateNetWorthTrackerRoute: PrivateNetWorthTrackerRoute,
   SettingsRoute: SettingsRoute,
   ApiFinanceProxyRoute: ApiFinanceProxyRoute,
 }

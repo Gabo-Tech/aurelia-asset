@@ -22,15 +22,12 @@ import {
 } from "lucide-react";
 import { ASSETS, SITE_URL, githubRepoUrl, githubSourceUrl } from "@/lib/site-config";
 import { Button } from "@/components/ui/button";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { AppCard, AppCardContent, AppCardHeader } from "@/components/design";
+import { MarketingFooter, MarketingHeader } from "@/components/marketing-chrome";
 import { MouseGlow, ScrollAurora, Reveal } from "@/components/landing-ambient";
 import { cn } from "@/lib/utils";
 import i18n from "@/i18n";
-import { useLanguage } from "@/i18n/use-language";
-import type { LanguageCode } from "@/i18n";
-
-const OG_IMAGE = SITE_URL + ASSETS.ogImage;
+import { faqJsonLd, jsonLdScript, OG_IMAGE_URL, softwareApplicationJsonLd } from "@/lib/seo";
 
 const LOCALES = ["en", "es", "pt", "de", "nl", "ca"] as const;
 const OG_LOCALE_MAP: Record<(typeof LOCALES)[number], string> = {
@@ -59,7 +56,8 @@ export const Route = createFileRoute("/")({
         { property: "og:description", content: desc },
         { property: "og:type", content: "website" },
         { property: "og:url", content: SITE_URL + "/" },
-        { property: "og:image", content: OG_IMAGE },
+        { property: "og:image", content: OG_IMAGE_URL },
+        { property: "og:image:type", content: "image/png" },
         { property: "og:image:width", content: "1200" },
         { property: "og:image:height", content: "630" },
         { property: "og:image:alt", content: title },
@@ -71,49 +69,20 @@ export const Route = createFileRoute("/")({
         { name: "twitter:card", content: "summary_large_image" },
         { name: "twitter:title", content: title },
         { name: "twitter:description", content: desc },
-        { name: "twitter:image", content: OG_IMAGE },
+        { name: "twitter:image", content: OG_IMAGE_URL },
+        { name: "twitter:image:alt", content: title },
       ],
-      links: [
-        { rel: "canonical", href: SITE_URL + "/" },
-        ...LOCALES.map((l) => ({
-          rel: "alternate",
-          hrefLang: l,
-          href: `${SITE_URL}/?lang=${l}`,
-        })),
-        { rel: "alternate", hrefLang: "x-default", href: SITE_URL + "/" },
-      ],
+      links: [{ rel: "canonical", href: SITE_URL + "/" }],
       scripts: [
-        {
-          type: "application/ld+json",
-          children: JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "SoftwareApplication",
-            name: "Aurelia",
-            applicationCategory: "FinanceApplication",
-            operatingSystem: "Web, Android, Linux",
-            description: desc,
-            url: SITE_URL + "/",
-            inLanguage: LOCALES as unknown as string[],
-            offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
-            license: "https://www.gnu.org/licenses/agpl-3.0.html",
-            codeRepository: githubSourceUrl(),
-          }),
-        },
-        {
-          type: "application/ld+json",
-          children: JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "FAQPage",
-            mainEntity: faqKeys.map((key) => ({
-              "@type": "Question",
-              name: i18n.t(`landing.faq.items.${key}.q`),
-              acceptedAnswer: {
-                "@type": "Answer",
-                text: i18n.t(`landing.faq.items.${key}.a`),
-              },
+        jsonLdScript(softwareApplicationJsonLd(desc)),
+        jsonLdScript(
+          faqJsonLd(
+            faqKeys.map((key) => ({
+              q: i18n.t(`landing.faq.items.${key}.q`),
+              a: i18n.t(`landing.faq.items.${key}.a`),
             })),
-          }),
-        },
+          ),
+        ),
         {
           type: "application/ld+json",
           children: JSON.stringify({
@@ -136,7 +105,7 @@ function LandingPage() {
       <ScrollAurora />
       <MouseGlow />
       <div className="relative z-10">
-        <SiteHeader />
+        <MarketingHeader />
         <Hero />
         <Reveal>
           <SocialProof />
@@ -159,71 +128,9 @@ function LandingPage() {
         <Reveal delay={60}>
           <FinalCTA />
         </Reveal>
-        <SiteFooter />
+        <MarketingFooter />
       </div>
     </div>
-  );
-}
-
-function SiteHeader() {
-  const { t } = useTranslation();
-  const { language, setLanguage, languages } = useLanguage();
-  return (
-    <header className="sticky top-0 z-40 border-b border-border/50 glass">
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-2.5 sm:px-6">
-        <Link to="/" className="flex min-w-0 items-center gap-2">
-          <img
-            src={ASSETS.logo}
-            alt={t("landing.logoAlt")}
-            className="h-9 w-9 rounded-xl object-contain"
-            width={36}
-            height={36}
-          />
-          <div className="min-w-0 leading-tight">
-            <div className="text-sm font-semibold tracking-tight">{t("landing.footer.brand")}</div>
-            <div className="truncate text-xs text-muted-foreground">{t("landing.headerTagline")}</div>
-          </div>
-        </Link>
-        <nav className="hidden items-center gap-6 text-sm text-muted-foreground lg:flex">
-          <a href="#features" className="hover:text-foreground">
-            {t("landing.nav.features")}
-          </a>
-          <a href="#how" className="hover:text-foreground">
-            {t("landing.nav.how")}
-          </a>
-          <a href="#downloads" className="hover:text-foreground">
-            {t("landing.nav.downloads", { defaultValue: "Download" })}
-          </a>
-          <a href="#faq" className="hover:text-foreground">
-            {t("landing.nav.faq")}
-          </a>
-        </nav>
-        <div className="flex items-center gap-1">
-          <label className="sr-only" htmlFor="landing-lang">
-            Language
-          </label>
-          <select
-            id="landing-lang"
-            value={language}
-            onChange={(e) => setLanguage(e.target.value as LanguageCode)}
-            className="h-11 max-w-[7.5rem] rounded-xl border border-border/60 bg-transparent px-2 text-xs text-muted-foreground hover:text-foreground"
-            aria-label="Language"
-          >
-            {languages.map((l) => (
-              <option key={l.code} value={l.code}>
-                {l.label}
-              </option>
-            ))}
-          </select>
-          <ThemeToggle className="h-11 w-11" />
-          <Button asChild size="sm" className="min-h-11 px-4">
-            <Link to="/dashboard">
-              {t("landing.openApp")} <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
-          </Button>
-        </div>
-      </div>
-    </header>
   );
 }
 
@@ -256,6 +163,25 @@ function Hero() {
         >
           {t("landing.hero.subtitle")}
         </p>
+        <p className="mx-auto mt-4 max-w-2xl text-sm text-muted-foreground">
+          <Link
+            to="/private-net-worth-tracker"
+            className="text-foreground underline-offset-4 hover:underline"
+          >
+            {t("landing.hero.guideLink", {
+              defaultValue: "Private net worth tracker with no signup",
+            })}
+          </Link>
+          <span className="mx-2 text-border">·</span>
+          <Link
+            to="/alternative-to-kubera-empower-ghostfolio"
+            className="text-foreground underline-offset-4 hover:underline"
+          >
+            {t("landing.hero.compareLink", {
+              defaultValue: "Alternative to Kubera, Empower, and Ghostfolio",
+            })}
+          </Link>
+        </p>
 
         <div
           className="mt-10 flex animate-fade-in flex-col items-center justify-center gap-3 sm:flex-row sm:flex-wrap"
@@ -268,7 +194,9 @@ function Hero() {
             </Link>
           </Button>
           <Button asChild size="lg" variant="outline" className="min-h-12 px-6 text-base">
-            <a href="#downloads">{t("landing.hero.ctaDownload", { defaultValue: "Download the app" })}</a>
+            <a href="#downloads">
+              {t("landing.hero.ctaDownload", { defaultValue: "Download the app" })}
+            </a>
           </Button>
           <Button asChild size="lg" variant="ghost" className="min-h-12 px-6 text-base">
             <a href="#features">{t("landing.hero.ctaSecondary")}</a>
@@ -428,8 +356,8 @@ function HowItWorks() {
 function Comparison() {
   const { t } = useTranslation();
   const rows = [
-    { label: t("landing.comparison.rows.signup"), us: false, them: true },
-    { label: t("landing.comparison.rows.servers"), us: false, them: true },
+    { label: t("landing.comparison.rows.signup"), us: true, them: false },
+    { label: t("landing.comparison.rows.servers"), us: true, them: false },
     { label: t("landing.comparison.rows.free"), us: true, them: false },
     { label: t("landing.comparison.rows.assets"), us: true, them: false },
     { label: t("landing.comparison.rows.sankey"), us: true, them: false },
@@ -466,6 +394,16 @@ function Comparison() {
             </tbody>
           </table>
         </AppCard>
+        <p className="mt-4 text-center text-sm text-muted-foreground">
+          <Link
+            to="/alternative-to-kubera-empower-ghostfolio"
+            className="text-foreground underline-offset-4 hover:underline"
+          >
+            {t("landing.comparison.sourced", {
+              defaultValue: "Sourced comparison with Kubera, Empower, and Ghostfolio",
+            })}
+          </Link>
+        </p>
       </div>
     </section>
   );
@@ -683,95 +621,5 @@ function FinalCTA() {
         </p>
       </div>
     </section>
-  );
-}
-
-function FeaturedOnBadges() {
-  const { t } = useTranslation();
-  return (
-    <div className="flex flex-col items-center gap-3">
-      <p className="text-xs tracking-wide text-muted-foreground">
-        {t("landing.footer.featuredOn")}
-      </p>
-      <div className="flex flex-wrap items-center justify-center gap-4">
-        <a href="https://tinylaunch.com" target="_blank" rel="noopener">
-          <img
-            src="https://tinylaunch.com/tinylaunch_badge_launching_soon.svg"
-            alt="TinyLaunch Badge"
-            width={202}
-            height={61}
-            style={{ width: 202, height: "auto" }}
-          />
-        </a>
-        <a href="https://fazier.com" target="_blank">
-          <img
-            src="https://fazier.com/api/v1//public/badges/launch_badges.svg?badge_type=launched&theme=light"
-            alt="Fazier badge"
-            width={120}
-            height={51}
-          />
-        </a>
-      </div>
-    </div>
-  );
-}
-
-function SiteFooter() {
-  const { t } = useTranslation();
-  return (
-    <footer className="bg-background">
-      <div className="mx-auto flex max-w-6xl flex-col items-center gap-8 px-4 py-10 sm:px-6">
-        <FeaturedOnBadges />
-        <div className="flex w-full flex-col items-center justify-between gap-4 text-sm text-muted-foreground sm:flex-row">
-          <div className="flex items-center gap-2">
-            <img
-              src={ASSETS.logo}
-              alt={t("landing.logoAlt")}
-              className="h-7 w-7 rounded-lg object-contain"
-              width={28}
-              height={28}
-            />
-
-            <span>
-              {t("landing.footer.brand")} · © {new Date().getFullYear()}
-            </span>
-          </div>
-          <div className="flex flex-wrap items-center justify-center gap-5">
-            <Link to="/dashboard" className="hover:text-foreground">
-              {t("landing.openApp")}
-            </Link>
-            <a href="#downloads" className="hover:text-foreground">
-              {t("landing.nav.downloads", { defaultValue: "Download" })}
-            </a>
-            <a href="#features" className="hover:text-foreground">
-              {t("landing.nav.features")}
-            </a>
-            <a href="#faq" className="hover:text-foreground">
-              {t("landing.nav.faq")}
-            </a>
-            <a
-              href={githubSourceUrl()}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 hover:text-foreground"
-            >
-              <Github className="h-3.5 w-3.5" />
-              {t("landing.footer.sourceCode")}
-            </a>
-          </div>
-          <div>
-            {t("landing.footer.madeBy")}{" "}
-            <a
-              href="https://solutions.gabo.rocks"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-semibold text-foreground underline-offset-4 hover:text-primary hover:underline"
-            >
-              GABO
-            </a>
-          </div>
-        </div>
-      </div>
-    </footer>
   );
 }
