@@ -371,6 +371,7 @@ const en = {
       brand: "Aurelia",
       madeBy: "Made by",
       sourceCode: "Source code",
+      featuredOn: "Featured on",
     },
     meta: {
       title: "Aurelia — Private portfolio & net worth tracker (no cloud)",

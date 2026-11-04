@@ -378,6 +378,7 @@ const de: Translation = {
       brand: "Aurelia",
       madeBy: "Gemacht von",
       sourceCode: "Quellcode",
+      featuredOn: "Vorgestellt auf",
     },
     meta: {
       title: "Aurelia — Privates Portfolio- & Vermögens-Tracking (ohne Cloud)",

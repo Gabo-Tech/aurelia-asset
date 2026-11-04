@@ -686,57 +686,90 @@ function FinalCTA() {
   );
 }
 
+function FeaturedOnBadges() {
+  const { t } = useTranslation();
+  return (
+    <div className="flex flex-col items-center gap-3">
+      <p className="text-xs tracking-wide text-muted-foreground">
+        {t("landing.footer.featuredOn")}
+      </p>
+      <div className="flex flex-wrap items-center justify-center gap-4">
+        <a href="https://tinylaunch.com" target="_blank" rel="noopener">
+          <img
+            src="https://tinylaunch.com/tinylaunch_badge_launching_soon.svg"
+            alt="TinyLaunch Badge"
+            width={202}
+            height={61}
+            style={{ width: 202, height: "auto" }}
+          />
+        </a>
+        <a href="https://fazier.com" target="_blank">
+          <img
+            src="https://fazier.com/api/v1//public/badges/launch_badges.svg?badge_type=launched&theme=light"
+            alt="Fazier badge"
+            width={120}
+            height={51}
+          />
+        </a>
+      </div>
+    </div>
+  );
+}
+
 function SiteFooter() {
   const { t } = useTranslation();
   return (
     <footer className="bg-background">
-      <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-4 py-10 text-sm text-muted-foreground sm:flex-row sm:px-6">
-        <div className="flex items-center gap-2">
-          <img
-            src={ASSETS.logo}
-            alt={t("landing.logoAlt")}
-            className="h-7 w-7 rounded-lg object-contain"
-            width={28}
-            height={28}
-          />
+      <div className="mx-auto flex max-w-6xl flex-col items-center gap-8 px-4 py-10 sm:px-6">
+        <FeaturedOnBadges />
+        <div className="flex w-full flex-col items-center justify-between gap-4 text-sm text-muted-foreground sm:flex-row">
+          <div className="flex items-center gap-2">
+            <img
+              src={ASSETS.logo}
+              alt={t("landing.logoAlt")}
+              className="h-7 w-7 rounded-lg object-contain"
+              width={28}
+              height={28}
+            />
 
-          <span>
-            {t("landing.footer.brand")} · © {new Date().getFullYear()}
-          </span>
-        </div>
-        <div className="flex flex-wrap items-center justify-center gap-5">
-          <Link to="/dashboard" className="hover:text-foreground">
-            {t("landing.openApp")}
-          </Link>
-          <a href="#downloads" className="hover:text-foreground">
-            {t("landing.nav.downloads", { defaultValue: "Download" })}
-          </a>
-          <a href="#features" className="hover:text-foreground">
-            {t("landing.nav.features")}
-          </a>
-          <a href="#faq" className="hover:text-foreground">
-            {t("landing.nav.faq")}
-          </a>
-          <a
-            href={githubSourceUrl()}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 hover:text-foreground"
-          >
-            <Github className="h-3.5 w-3.5" />
-            {t("landing.footer.sourceCode")}
-          </a>
-        </div>
-        <div>
-          {t("landing.footer.madeBy")}{" "}
-          <a
-            href="https://solutions.gabo.rocks"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="font-semibold text-foreground underline-offset-4 hover:text-primary hover:underline"
-          >
-            GABO
-          </a>
+            <span>
+              {t("landing.footer.brand")} · © {new Date().getFullYear()}
+            </span>
+          </div>
+          <div className="flex flex-wrap items-center justify-center gap-5">
+            <Link to="/dashboard" className="hover:text-foreground">
+              {t("landing.openApp")}
+            </Link>
+            <a href="#downloads" className="hover:text-foreground">
+              {t("landing.nav.downloads", { defaultValue: "Download" })}
+            </a>
+            <a href="#features" className="hover:text-foreground">
+              {t("landing.nav.features")}
+            </a>
+            <a href="#faq" className="hover:text-foreground">
+              {t("landing.nav.faq")}
+            </a>
+            <a
+              href={githubSourceUrl()}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 hover:text-foreground"
+            >
+              <Github className="h-3.5 w-3.5" />
+              {t("landing.footer.sourceCode")}
+            </a>
+          </div>
+          <div>
+            {t("landing.footer.madeBy")}{" "}
+            <a
+              href="https://solutions.gabo.rocks"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-semibold text-foreground underline-offset-4 hover:text-primary hover:underline"
+            >
+              GABO
+            </a>
+          </div>
         </div>
       </div>
     </footer>

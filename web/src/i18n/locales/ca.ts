@@ -378,6 +378,7 @@ const ca: Translation = {
       brand: "Aurelia",
       madeBy: "Fet per",
       sourceCode: "Codi font",
+      featuredOn: "Destacat a",
     },
     meta: {
       title: "Aurelia — Seguiment privat de cartera i patrimoni (sense núvol)",

@@ -377,6 +377,7 @@ const nl: Translation = {
       brand: "Aurelia",
       madeBy: "Gemaakt door",
       sourceCode: "Broncode",
+      featuredOn: "Uitgelicht op",
     },
     meta: {
       title: "Aurelia — Privé portefeuille- & vermogens-tracker (geen cloud)",

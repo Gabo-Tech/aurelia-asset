@@ -377,6 +377,7 @@ const pt: Translation = {
       brand: "Aurelia",
       madeBy: "Feito por",
       sourceCode: "Código-fonte",
+      featuredOn: "Em destaque em",
     },
     meta: {
       title: "Aurelia — Acompanhamento privado de carteira e património (sem nuvem)",
