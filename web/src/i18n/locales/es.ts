@@ -379,6 +379,8 @@ const es: Translation = {
     footer: {
       brand: "Aurelia",
       madeBy: "Hecho por",
+      madeWith: "Hecho con",
+      madeWithBy: "por",
       sisterTools: "Herramientas hermanas",
       guide: "Rastreador privado de patrimonio",
       compare: "Kubera, Empower y Ghostfolio",

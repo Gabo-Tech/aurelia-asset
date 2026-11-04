@@ -378,6 +378,8 @@ const nl: Translation = {
     footer: {
       brand: "Aurelia",
       madeBy: "Gemaakt door",
+      madeWith: "Gemaakt met",
+      madeWithBy: "door",
       sisterTools: "Zusterprojecten",
       guide: "Privé vermogens-tracker",
       compare: "Kubera, Empower en Ghostfolio",
