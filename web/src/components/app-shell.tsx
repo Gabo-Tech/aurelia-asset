@@ -37,7 +37,7 @@ const navItems: NavItemDef[] = [
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const isNavigating = useRouterState({
-    select: (s) => s.isLoading || s.isTransitioning || s.status === "pending",
+    select: (s) => s.isLoading || s.status === "pending",
   });
   const { hydrated, state } = useStore();
   usePrefetchPortfolioHistory(state.holdings, hydrated);

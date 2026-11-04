@@ -39,7 +39,7 @@ function NotFoundComponent() {
   );
 }
 
-function ErrorComponent({ error: _error, reset }: { error: Error; reset: () => void }) {
+function ErrorComponent({ error: _error, reset }: { error: unknown; reset: () => void }) {
   const { t } = useTranslation();
   const router = useRouter();
 
