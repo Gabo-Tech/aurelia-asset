@@ -2,5 +2,9 @@ User-agent: *
 Allow: /
 Disallow: /admin
 Disallow: /settings
+Disallow: /api/
+
+# App screens (/dashboard, /holdings, /performance, /cashflow, /planning, /assistant)
+# stay crawlable so their noindex tags are visible. They are omitted from the sitemap.
 
 Sitemap: https://financetracker.putopulse.org/sitemap.xml

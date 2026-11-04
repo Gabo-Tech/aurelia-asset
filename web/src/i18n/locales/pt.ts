@@ -224,11 +224,13 @@ const pt: Translation = {
       how: "Como funciona",
       downloads: "Transferir",
       faq: "FAQ",
+      guide: "Guia",
+      compare: "Comparar",
     },
     hero: {
       badge: "Sem conta. Sem sincronização na nuvem. Sem telemetria.",
-      titleStart: "Acompanhamento privado de carteira.",
-      titleHighlight: "No seu dispositivo",
+      titleStart: "Rastreador privado de património líquido.",
+      titleHighlight: "Sem registo",
       subtitle:
         "Acompanhe ações, ETFs, cripto, dinheiro e património líquido num só lugar. A Aurelia cifra os seus dados neste dispositivo, nunca pergunta quem é e nunca sincroniza com a nuvem. Grátis e de código aberto.",
       ctaPrimary: "Abrir Aurelia",
@@ -376,6 +378,9 @@ const pt: Translation = {
     footer: {
       brand: "Aurelia",
       madeBy: "Feito por",
+      sisterTools: "Ferramentas irmãs",
+      guide: "Rastreador privado de património",
+      compare: "Kubera, Empower e Ghostfolio",
       sourceCode: "Código-fonte",
     },
     meta: {

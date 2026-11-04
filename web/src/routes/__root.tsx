@@ -19,6 +19,7 @@ import { AppearanceSync } from "@/components/appearance-sync";
 import { AppShell } from "@/components/app-shell";
 import { ResponsiveToaster } from "@/components/responsive-toaster";
 import { ASSETS, SITE_URL } from "@/lib/site-config";
+import { isMarketingPath } from "@/lib/seo";
 
 function NotFoundComponent() {
   const { t } = useTranslation();
@@ -38,7 +39,7 @@ function NotFoundComponent() {
   );
 }
 
-function ErrorComponent({ error: _error, reset }: { error: Error; reset: () => void }) {
+function ErrorComponent({ error: _error, reset }: { error: unknown; reset: () => void }) {
   const { t } = useTranslation();
   const router = useRouter();
 
@@ -137,8 +138,8 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  // Landing page is standalone (no app shell).
-  const isLanding = pathname === "/";
+  // Marketing pages stay outside the app shell so their HTML is the page, not a loader.
+  const isMarketing = isMarketingPath(pathname);
   const isTauriSpa =
     typeof window !== "undefined" &&
     !!(window as Window & { __TSS_TAURI_SPA__?: boolean }).__TSS_TAURI_SPA__;
@@ -156,7 +157,7 @@ function RootComponent() {
           <StoreProvider>
             <FxProvider>
               <AppearanceSync />
-              {isLanding ? (
+              {isMarketing ? (
                 <Outlet />
               ) : (
                 <AppShell>

@@ -212,7 +212,7 @@ const saveInputSchema = z.object({
 
 /** Password-gated admin write. */
 export const saveSponsors = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => saveInputSchema.parse(data))
+  .validator((data: unknown) => saveInputSchema.parse(data))
   .handler(async ({ data }): Promise<{ ok: true }> => {
     if (!adminRateLimit(clientIp())) {
       throw new Error("Too many attempts. Try again later.");
@@ -228,7 +228,7 @@ export const saveSponsors = createServerFn({ method: "POST" })
 
 /** Password check for admin login. */
 export const checkAdminPassword = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => z.object({ password: z.string() }).parse(data))
+  .validator((data: unknown) => z.object({ password: z.string() }).parse(data))
   .handler(async ({ data }): Promise<{ ok: boolean }> => {
     if (!adminRateLimit(clientIp())) {
       throw new Error("Too many attempts. Try again later.");

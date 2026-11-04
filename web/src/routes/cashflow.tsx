@@ -77,6 +77,7 @@ import {
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { SITE_URL } from "@/lib/site-config";
+import { NOINDEX_ROBOTS } from "@/lib/seo";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Fab } from "@/components/design/fab";
 import { ResponsiveDialog } from "@/components/design/responsive-dialog";
@@ -98,6 +99,7 @@ export const Route = createFileRoute("/cashflow")({
         { property: "og:title", content: title },
         { property: "og:description", content: desc },
         { property: "og:url", content: url },
+        NOINDEX_ROBOTS,
       ],
       links: [{ rel: "canonical", href: url }],
     };

@@ -38,6 +38,7 @@ import {
 import { loadChatHistory, saveChatHistory, clearChatHistory } from "@/lib/ai/persistence";
 import { aiConfigFromSettings } from "@/lib/ai/config";
 import { SITE_URL } from "@/lib/site-config";
+import { NOINDEX_ROBOTS } from "@/lib/seo";
 
 export const Route = createFileRoute("/assistant")({
   head: () => {
@@ -56,6 +57,7 @@ export const Route = createFileRoute("/assistant")({
         { property: "og:title", content: title },
         { property: "og:description", content: desc },
         { property: "og:url", content: url },
+        NOINDEX_ROBOTS,
       ],
       links: [{ rel: "canonical", href: url }],
     };

@@ -23,6 +23,7 @@ import { NetWorthTimeline } from "@/components/net-worth-timeline";
 import { useTranslation } from "react-i18next";
 import i18n from "@/i18n";
 import { SITE_URL } from "@/lib/site-config";
+import { NOINDEX_ROBOTS } from "@/lib/seo";
 import {
   AppCard,
   AppCardContent,
@@ -51,6 +52,7 @@ export const Route = createFileRoute("/dashboard")({
         { property: "og:title", content: title },
         { property: "og:description", content: desc },
         { property: "og:url", content: url },
+        NOINDEX_ROBOTS,
       ],
       links: [{ rel: "canonical", href: url }],
     };
