@@ -383,6 +383,7 @@ const es: Translation = {
       guide: "Rastreador privado de patrimonio",
       compare: "Kubera, Empower y Ghostfolio",
       sourceCode: "Código fuente",
+      featuredOn: "Destacado en",
     },
     meta: {
       title: "Aurelia — Seguimiento privado de cartera y patrimonio (sin nube)",

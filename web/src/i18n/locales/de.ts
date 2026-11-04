@@ -383,6 +383,7 @@ const de: Translation = {
       guide: "Privater Vermögens-Tracker",
       compare: "Kubera, Empower und Ghostfolio",
       sourceCode: "Quellcode",
+      featuredOn: "Vorgestellt auf",
     },
     meta: {
       title: "Aurelia — Privates Portfolio- & Vermögens-Tracking (ohne Cloud)",

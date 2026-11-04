@@ -376,6 +376,7 @@ const en = {
       guide: "Private net worth tracker",
       compare: "Kubera, Empower and Ghostfolio",
       sourceCode: "Source code",
+      featuredOn: "Featured on",
     },
     meta: {
       title: "Aurelia — Private net worth tracker (free, no signup)",

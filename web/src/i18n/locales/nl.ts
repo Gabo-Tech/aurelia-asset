@@ -382,6 +382,7 @@ const nl: Translation = {
       guide: "Privé vermogens-tracker",
       compare: "Kubera, Empower en Ghostfolio",
       sourceCode: "Broncode",
+      featuredOn: "Uitgelicht op",
     },
     meta: {
       title: "Aurelia — Privé portefeuille- & vermogens-tracker (geen cloud)",

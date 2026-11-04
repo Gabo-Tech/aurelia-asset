@@ -78,11 +78,42 @@ export function MarketingHeader() {
   );
 }
 
+function FeaturedOnBadges() {
+  const { t } = useTranslation();
+  return (
+    <div className="mb-8 flex flex-col items-center gap-3 border-b border-border/40 pb-8">
+      <p className="text-xs tracking-wide text-muted-foreground">
+        {t("landing.footer.featuredOn")}
+      </p>
+      <div className="flex flex-wrap items-center justify-center gap-4">
+        <a href="https://tinylaunch.com" target="_blank" rel="noopener">
+          <img
+            src="https://tinylaunch.com/tinylaunch_badge_launching_soon.svg"
+            alt="TinyLaunch Badge"
+            width={202}
+            height={61}
+            style={{ width: 202, height: "auto" }}
+          />
+        </a>
+        <a href="https://fazier.com" target="_blank">
+          <img
+            src="https://fazier.com/api/v1//public/badges/launch_badges.svg?badge_type=launched&theme=light"
+            alt="Fazier badge"
+            width={120}
+            height={51}
+          />
+        </a>
+      </div>
+    </div>
+  );
+}
+
 export function MarketingFooter() {
   const { t } = useTranslation();
   return (
     <footer className="border-t border-border/50 bg-background">
       <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
+        <FeaturedOnBadges />
         <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <img
